@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificando Pago...</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container { max-width: 600px; width: 100%; }
+
+        .card {
+            background: #1e293b;
+            padding: 50px 30px;
+            border-radius: 20px;
+            border: 1px solid #334155;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .icon-box {
+            font-size: 5rem;
+            color: #f59e0b; /* Amarillo Ambar */
+            margin-bottom: 30px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        h1 { margin-bottom: 15px; font-size: 2.5rem; }
+        
+        p { color: #94a3b8; font-size: 1.1em; line-height: 1.6; margin-bottom: 30px; }
+
+        .steps { text-align: left; background: #0f172a; padding: 20px; border-radius: 10px; margin-bottom: 30px; border: 1px solid #334155; }
+        .step { display: flex; gap: 15px; margin-bottom: 15px; align-items: center; }
+        .step i { color: #3b82f6; width: 20px; }
+        .step:last-child { margin-bottom: 0; }
+
+        .btn-home {
+            display: inline-block;
+            padding: 15px 40px;
+            background: transparent;
+            border: 2px solid #475569;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .btn-home:hover { border-color: #fff; background: #334155; }
+
+        .contact-link { color: #f59e0b; font-weight: bold; text-decoration: none; }
+    </style>
+
+<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+    <script>
+        Weglot.initialize({
+            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
+            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
+            auto_switch: true            // Detecta idioma automático
+        });
+    </script>
+
+</head>
+<body>
+<div id="google_translate_element" style="display:none;"></div>
+
+<script type="text/javascript">
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'es', 
+            includedLanguages: 'en,fr,it,pt,de', // Idiomas permitidos
+            autoDisplay: false
+        }, 'google_translate_element');
+    }
+</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<script type="text/javascript">
+    window.addEventListener('load', function() {
+        // A. Detectamos el idioma del navegador del usuario (ej: 'en-US' o 'pt-BR')
+        var idiomaUsuario = navigator.language || navigator.userLanguage; 
+        idiomaUsuario = idiomaUsuario.split('-')[0]; // Nos quedamos solo con las dos letras ('en', 'pt', etc.)
+
+        // B. Si el usuario NO habla español, activamos la traducción
+        if (idiomaUsuario !== 'es') {
+            
+            // Esperamos un segundo a que Google cargue en el fondo
+            setTimeout(function() {
+                var select = document.querySelector('select.goog-te-combo');
+                if (select) {
+                    select.value = idiomaUsuario; // Seleccionamos su idioma
+                    select.dispatchEvent(new Event('change')); // ¡Clic virtual!
+                }
+            }, 1000); // 1000ms = 1 segundo de espera
+        }
+    });
+</script>
+
+<style>
+    .goog-te-banner-frame { display: none !important; }
+    body { top: 0px !important; }
+    #google_translate_element { display: none !important; }
+</style>
+
+    <div class="container">
+        <div class="card">
+            <div class="icon-box">
+                <i class="fas fa-clock"></i>
+            </div>
+            
+            <h1>Pago en Verificación</h1>
+            <p>Hemos registrado tu solicitud. Tu acceso PRO se activará una vez que nuestro equipo verifique la acreditación de la transferencia.</p>
+
+            <div class="steps">
+                <div class="step">
+                    <i class="fas fa-check-circle" style="color:#22c55e"></i>
+                    <span>Solicitud de acceso enviada.</span>
+                </div>
+                <div class="step">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Esperando comprobante por WhatsApp/Email.</span>
+                </div>
+                <div class="step">
+                    <i class="fas fa-user-check"></i>
+                    <span>Activación manual (Demora máx: 24hs).</span>
+                </div>
+            </div>
+
+            <p style="font-size:0.9em;">
+                ¿Olvidaste enviar el comprobante? Envíalo a <a href="mailto:climapro00@gmail.com" class="contact-link">climapro00@gmail.com</a> para acelerar el proceso.
+            </p>
+
+            <a href="/" class="btn-home">Volver al Inicio (Modo Gratuito)</a>
+        </div>
+    </div>
+
+</body>
+</html>
