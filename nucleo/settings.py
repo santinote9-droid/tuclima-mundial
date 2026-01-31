@@ -147,6 +147,8 @@ LOCALE_PATHS = [
 
 
 # OPTIMIZACIÓN DE ARCHIVOS ESTÁTICOS (WhiteNoise)
+STATIC_URL = 'static/'
+# Esta es la línea nueva que salva el día:
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-
