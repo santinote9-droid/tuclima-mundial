@@ -1,0 +1,485 @@
+{% load mathfilters %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor Espacial | NOAA Uplink</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- ESTILOS BASE --- */
+        body {
+            background-color: #000000;
+            background-image: radial-gradient(circle at 60% 20%, #1a1a2e 0%, #000 60%), url('https://www.transparenttextures.com/patterns/stardust.png');
+            color: #e2e8f0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 20px;
+            min-height: 100vh;
+        }
+        h1, h2, h3 { font-family: 'Orbitron', sans-serif; letter-spacing: 1px; text-transform: uppercase; }
+        .data-val { font-family: 'Roboto Mono', monospace; }
+
+        /* Header */
+        .header-space {
+            border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+            padding-bottom: 20px; margin-bottom: 30px;
+            display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px;
+        }
+
+        /* Tarjetas de Cristal (Glassmorphism) */
+        .glass-panel {
+            background: rgba(16, 16, 28, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s, border-color 0.3s;
+        }
+        .glass-panel:hover { border-color: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
+
+        /* Grid Layouts */
+        .dashboard-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; margin-bottom: 25px;
+        }
+        .visual-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px; margin-bottom: 25px;
+        }
+
+        /* KPI Cards Spec */
+        .kpi-card { display: flex; flex-direction: column; gap: 10px; position: relative; }
+        .kpi-header { display: flex; justify-content: space-between; align-items: center; }
+        .kpi-title { margin: 0; color: #94a3b8; font-size: 0.85em; letter-spacing: 1px; }
+        
+        /* Botón de Información (i) */
+        .info-btn {
+            background: rgba(255,255,255,0.1); border: none; color: #94a3b8; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; font-family: 'Roboto Mono'; font-weight: bold;
+        }
+        .info-btn:hover { background: #38bdf8; color: black; box-shadow: 0 0 10px #38bdf8; }
+
+        /* Animación de punto vivo */
+        @keyframes pulse-live { 0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); } 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); } }
+        .live-dot { width: 8px; height: 8px; background: #38bdf8; border-radius: 50%; display: inline-block; animation: pulse-live 2s infinite; margin-right: 8px; }
+
+        /* Botón Volver */
+        .btn-volver {
+            text-decoration: none; color: #cbd5e1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 12px 30px; border-radius: 30px; font-size: 0.9em; transition:0.3s; display: inline-block; margin-top: 30px; font-family: 'Orbitron'; letter-spacing: 1px;
+        }
+        .btn-volver:hover { background: #38bdf8; color: black; border-color: #38bdf8; box-shadow: 0 0 20px rgba(56, 189, 248, 0.4); }
+
+        /* --- VENTANAS MODALES (DIDÁCTICAS) --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 2000;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        
+        .didactic-window {
+            background: #0f172a; border: 1px solid #38bdf8; border-radius: 16px;
+            padding: 30px; max-width: 500px; width: 90%; position: relative;
+            box-shadow: 0 0 40px rgba(56, 189, 248, 0.2);
+            transform: translateY(20px); transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .didactic-window { transform: translateY(0); }
+        
+        .modal-close {
+            position: absolute; top: 15px; right: 15px; background: none; border: none; color: #64748b; font-size: 1.5em; cursor: pointer; transition: 0.2s;
+        }
+        .modal-close:hover { color: #ff4757; }
+        .didactic-title { color: #38bdf8; margin-top: 0; display: flex; align-items: center; gap: 10px; }
+        .didactic-text { line-height: 1.6; color: #cbd5e1; font-size: 0.95em; }
+        .didactic-highlight { color: #facc15; font-weight: bold; }
+
+        /* Botón Descarga Gráfico */
+        .chart-actions { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+        .btn-download {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 0.8em; display: flex; align-items: center; gap: 5px; transition: 0.2s;
+        }
+        .btn-download:hover { background: #334155; color: white; }
+        
+        /* Imagen Fallback */
+        .img-fallback { background: #1e293b; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 0.8em; min-height: 200px; border-radius: 12px; }
+
+        /* Ajustes Responsive */
+        @media (max-width: 768px) {
+            .header-space { flex-direction: column; align-items: flex-start; }
+            .visual-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+
+<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+    <script>
+        Weglot.initialize({
+            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
+            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
+            auto_switch: true            // Detecta idioma automático
+        });
+    </script>
+
+</head>
+<body>
+
+    <div class="header-space">
+        <div>
+            <div style="font-size: 0.8em; color: #38bdf8; margin-bottom: 5px; font-family: 'Roboto Mono';">
+                <span class="live-dot"></span>ENLACE SATELITAL ACTIVO: NOAA / NASA
+            </div>
+            <h1 style="margin: 0; font-size: 2.2em; background: linear-gradient(to right, #fff, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                Monitor de Clima Espacial
+            </h1>
+        </div>
+        <div style="text-align: right; border-right: 4px solid {{ kp_color }}; padding-right: 15px;">
+            <div style="font-size: 0.9em; color: #94a3b8; font-family: 'Orbitron';">ESTADO GEOMAGNÉTICO</div>
+            <div style="font-size: 1.3em; font-weight: bold; color: {{ kp_color }}; text-shadow: 0 0 15px {{ kp_color }}40;">
+                {{ kp_estado }}
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        
+        <div class="glass-panel kpi-card">
+            <div class="kpi-header">
+                <h3 class="kpi-title">ÍNDICE PLANETARIO Kp</h3>
+                <button class="info-btn" onclick="openModal('modal-kp')">i</button>
+            </div>
+            <div class="data-val" style="font-size: 3.5em; font-weight: bold; color: white; text-shadow: 0 0 20px {{ kp_color }}60;">
+                {{ kp }}<span style="font-size: 0.4em; color: #94a3b8;">/9</span>
+            </div>
+            <div style="font-size: 0.8em; color: #94a3b8;">Riesgo actual: <span style="color: {{ kp_color }}; font-weight: 600;">{{ kp_estado }}</span></div>
+            <div style="height: 4px; width: 100%; background: #334155; border-radius: 2px; margin-top: 10px; overflow: hidden;">
+                <div style="height: 100%; width: {{ kp|mul:11.1 }}%; background: {{ kp_color }}; box-shadow: 0 0 10px {{ kp_color }}; transition: width 1s;"></div>
+            </div>
+        </div>
+
+        <div class="glass-panel kpi-card">
+            <div class="kpi-header">
+                <h3 class="kpi-title">VELOCIDAD VIENTO SOLAR</h3>
+                <button class="info-btn" onclick="openModal('modal-wind')">i</button>
+            </div>
+            <div style="position: absolute; top: 15px; right: 50px; opacity: 0.3;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="1.5" class="icon-move-shake">
+                    <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/>
+                </svg>
+            </div>
+            <div class="data-val" style="font-size: 3.5em; font-weight: bold; color: #facc15; text-shadow: 0 0 20px rgba(250, 204, 21, 0.4);">
+                {{ velocidad|floatformat:0 }} <span style="font-size: 0.4em; color: #94a3b8;">km/s</span>
+            </div>
+            <div style="font-size: 0.8em; color: #94a3b8; display: flex; align-items: center; gap: 5px;">
+                <svg style="width:16px; color:#facc15;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                Tiempo de viaje Sol-Tierra: 
+                {% if velocidad > 0 %}
+                    ~{{ 150000000|div:velocidad|div:3600|floatformat:1 }} horas
+                {% else %}
+                    Calculando...
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="glass-panel kpi-card">
+            <div class="kpi-header">
+                <h3 class="kpi-title">DENSIDAD DE PLASMA</h3>
+                <button class="info-btn" onclick="openModal('modal-density')">i</button>
+            </div>
+            <div class="data-val" style="font-size: 3.5em; font-weight: bold; color: #a855f7; text-shadow: 0 0 20px rgba(168, 85, 247, 0.4);">
+                {{ densidad|floatformat:1 }} <span style="font-size: 0.4em; color: #94a3b8;">p/cm³</span>
+            </div>
+            <div style="font-size: 0.8em; color: #94a3b8;">Partículas por centímetro cúbico.</div>
+            <div style="margin-top: 10px;">
+                {% if densidad > 15 %}
+                    <span style="background: rgba(168, 85, 247, 0.2); color: #d8b4fe; padding: 4px 10px; border-radius: 10px; font-size: 0.7em; font-weight: 600;">ALTA DENSIDAD</span>
+                {% else %}
+                    <span style="background: rgba(46, 213, 115, 0.2); color: #2ed573; padding: 4px 10px; border-radius: 10px; font-size: 0.7em; font-weight: 600;">NORMAL</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="glass-panel kpi-card">
+            <div class="kpi-header">
+                <h3 class="kpi-title">MAGNETISMO (Bz)</h3>
+                <button class="info-btn" onclick="openModal('modal-bz')">i</button>
+            </div>
+            <div class="data-val" style="font-size: 3.5em; font-weight: bold; color: {{ bz_color }};">
+                {{ bz|floatformat:1 }} <span style="font-size:0.5em; color:#94a3b8;">nT</span>
+            </div>
+            <div style="font-size: 0.8em; color: #94a3b8;">Puerta Auroral: <span style="color:{{ bz_color }}; font-weight:bold;">{{ bz_estado }}</span></div>
+        </div>
+
+        <div class="glass-panel kpi-card">
+            <div class="kpi-header">
+                <h3 class="kpi-title">RAYOS X (FLARE)</h3>
+                <button class="info-btn" onclick="openModal('modal-xray')">i</button>
+            </div>
+            <div class="data-val" style="font-size: 3.5em; font-weight: bold; color: #ff6b81;">
+                {{ flare_class }}
+            </div>
+            <div style="font-size: 0.7em; color: #64748b; font-family: monospace;">Flux: {{ flare_val|stringformat:".1e" }}</div>
+        </div>
+
+        <div class="glass-panel kpi-card">
+            <div class="kpi-header">
+                <h3 class="kpi-title">RADIO FLUX (F10.7)</h3>
+                <button class="info-btn" onclick="openModal('modal-radio')">i</button>
+            </div>
+            <div class="data-val" style="font-size: 3.5em; font-weight: bold; color: #2ed573;">
+                78 <span style="font-size:0.5em; color:#94a3b8;">sfu</span>
+            </div>
+            <div style="font-size: 0.8em; color: #94a3b8;">Propagación de Radio: Estable</div>
+        </div>
+    </div>
+
+    <div class="glass-panel" style="margin-bottom: 30px;">
+        <div class="kpi-header" style="margin-bottom: 15px;">
+            <h3 style="color: #e2e8f0; margin: 0;">Historial Geomagnético (24 Horas)</h3>
+            <div class="chart-actions">
+                 <button class="btn-download" onclick="downloadChart()">
+                    <svg style="width:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Descargar Gráfico
+                </button>
+                 <button class="info-btn" style="margin-left: 10px;" onclick="openModal('modal-chart-info')">i</button>
+            </div>
+        </div>
+        <div style="height: 350px; position: relative;">
+            <canvas id="kpChart"></canvas>
+        </div>
+    </div>
+
+    <div class="visual-grid">
+        <div class="glass-panel" style="text-align: center;">
+            <h3 style="color: #facc15; margin-bottom: 20px;">Origen: El Sol (AIA 193Å)</h3>
+            <div style="position: relative; display: inline-block;">
+                <img src="{{ img_sol }}" style="width: 80%; max-width: 400px; border-radius: 50%; border: 3px solid #facc15; box-shadow: 0 0 50px rgba(250, 204, 21, 0.3);" onerror="this.onerror=null; this.src='https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0193.jpg';">
+                 <div style="position: absolute; top:0; left:0; width:100%; height:100%; border-radius: 50%; box-shadow: inset 0 0 50px rgba(250, 204, 21, 0.5);"></div>
+            </div>
+            <div style="font-size: 0.8em; color: #94a3b8; margin-top: 15px;">Imagen en Rayos X Extremos (NASA SDO)</div>
+        </div>
+
+        <div class="glass-panel" style="text-align: center;">
+            <h3 style="color: #38bdf8; margin-bottom: 20px;">Destino: La Tierra (DSCOVR)</h3>
+            <div style="position: relative; display: inline-block;">
+                <img src="{{ img_tierra }}" style="width: 80%; max-width: 400px; border-radius: 50%; border: 3px solid #38bdf8; box-shadow: 0 0 50px rgba(56, 189, 248, 0.3);">
+                <div style="position: absolute; top:0; left:0; width:100%; height:100%; border-radius: 50%; box-shadow: inset 0 0 30px rgba(56, 189, 248, 0.6);"></div>
+            </div>
+            <div style="font-size: 0.8em; color: #94a3b8; margin-top: 15px;">Cámara EPIC a 1.5 millones de km (NASA)</div>
+        </div>
+    </div>
+
+     <div class="glass-panel">
+        <h3 style="color: #2ed573; margin-bottom: 20px; text-align: center;">Pronóstico de Auroras (Ovalo Auroral 30min)</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+            <div style="flex: 1; min-width: 300px; max-width: 500px; text-align: center;">
+                <div style="font-family: 'Orbitron'; color: #94a3b8; margin-bottom: 10px;">HEMISFERIO SUR (Antártida)</div>
+                <img src="{{ img_aurora_sur }}" style="width: 100%; border-radius: 12px; border: 1px solid #334155;" onerror="this.style.display='none'; this.parentElement.innerHTML+='<div class=\'img-fallback\'>Imagen actualizando...</div>'">
+            </div>
+            <div style="flex: 1; min-width: 300px; max-width: 500px; text-align: center;">
+                <div style="font-family: 'Orbitron'; color: #94a3b8; margin-bottom: 10px;">HEMISFERIO NORTE (Ártico)</div>
+                <img src="{{ img_aurora_norte }}" style="width: 100%; border-radius: 12px; border: 1px solid #334155;" onerror="this.style.display='none'; this.parentElement.innerHTML+='<div class=\'img-fallback\'>Imagen actualizando...</div>'">
+            </div>
+        </div>
+    </div>
+
+    <center>
+        <a href="/" class="btn-volver">
+            <svg style="width:18px; margin-right: 8px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Salir
+        </a>
+    </center>
+
+    <div class="modal-overlay" id="modal-kp">
+        <div class="didactic-window">
+            <button class="modal-close" onclick="closeModal('modal-kp')">&times;</button>
+            <h3 class="didactic-title">
+                <svg style="width:24px; color:{{kp_color}};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                ¿Qué es el Índice Kp?
+            </h3>
+            <p class="didactic-text">
+                El <b>Índice Planetario K</b> cuantifica las perturbaciones en el campo magnético de la Tierra. Es la escala principal para medir <span class="didactic-highlight">Tormentas Geomagnéticas</span>.
+                <br><br>
+                Va del 0 al 9. Un valor de <span style="color:#ff4757; font-weight:bold;">Kp 5 o superior</span> indica una tormenta que puede afectar satélites, GPS y redes eléctricas, además de generar auroras visibles en latitudes más bajas.
+            </p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-wind">
+        <div class="didactic-window">
+            <button class="modal-close" onclick="closeModal('modal-wind')">&times;</button>
+            <h3 class="didactic-title" style="color: #facc15;">
+                <svg style="width:24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16.2 7.8l-2 6.3-6.4 2.1 2-6.3z"/></svg>
+                Viento Solar
+            </h3>
+            <p class="didactic-text">
+                Es una corriente continua de partículas cargadas (plasma) que el Sol expulsa al espacio. Viaja a velocidades increíbles.
+                <br><br>
+                Una velocidad "normal" es de <span class="didactic-highlight">300 a 400 km/s</span>. Cuando el Sol está activo (erupciones), esta velocidad puede superar los <span style="color:#facc15; font-weight:bold;">600 o 700 km/s</span>, golpeando el campo magnético terrestre con más fuerza y provocando tormentas.
+            </p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-density">
+        <div class="didactic-window">
+            <button class="modal-close" onclick="closeModal('modal-density')">&times;</button>
+            <h3 class="didactic-title" style="color: #a855f7;">
+                 <svg style="width:24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+                Densidad de Plasma
+            </h3>
+            <p class="didactic-text">
+                Mide qué tan "espeso" es el viento solar. Indica cuántos protones hay en un centímetro cúbico de espacio.
+                <br><br>
+                Una densidad alta (mayor a 10-15 p/cm³) significa que la nube de partículas que nos golpea es más compacta, lo que puede comprimir la magnetósfera de la Tierra y permitir el paso de energía.
+            </p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-bz">
+        <div class="didactic-window">
+            <button class="modal-close" onclick="closeModal('modal-bz')">&times;</button>
+            <h3 class="didactic-title" style="color: #ff4757;">
+                Magnetismo (Bz)
+            </h3>
+            <p class="didactic-text">
+                Es la dirección del campo magnético interplanetario (IMF). Es la "llave" de las auroras.
+                <br><br>
+                Si el Bz es <span style="color:#ff4757; font-weight:bold;">Negativo (Sur)</span>, cancela el campo magnético de la Tierra y permite que entre la energía solar. Si es Positivo (Norte), actúa como un escudo y rebota la energía.
+            </p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-xray">
+        <div class="didactic-window">
+            <button class="modal-close" onclick="closeModal('modal-xray')">&times;</button>
+            <h3 class="didactic-title" style="color: #ff6b81;">
+                Rayos X (Solar Flares)
+            </h3>
+            <p class="didactic-text">
+                Clasifica las erupciones solares por su potencia de rayos X.
+                <br>
+                <b>Clase A, B, C:</b> Comunes y de bajo impacto.<br>
+                <b>Clase M:</b> Moderadas, pueden causar bloqueos de radio leves en los polos.<br>
+                <b>Clase X:</b> <span style="color:#ff0000; font-weight:bold;">Severas</span>, pueden causar apagones de radio globales y tormentas de radiación.
+            </p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-radio">
+        <div class="didactic-window">
+            <button class="modal-close" onclick="closeModal('modal-radio')">&times;</button>
+            <h3 class="didactic-title" style="color: #2ed573;">
+                Radio Flux (F10.7)
+            </h3>
+            <p class="didactic-text">
+                Es la emisión de ruido de radio que proviene del Sol en la longitud de onda de 10.7 cm.
+                <br><br>
+                Es un excelente indicador de la actividad solar general. Un flujo alto (>150 sfu) indica un Sol muy activo con muchas manchas solares, lo que mejora la propagación de las ondas de radio en la Tierra (bueno para radioaficionados).
+            </p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-chart-info">
+        <div class="didactic-window">
+            <button class="modal-close" onclick="closeModal('modal-chart-info')">&times;</button>
+            <h3 class="didactic-title" style="color: #e2e8f0;">
+                Sobre este Gráfico
+            </h3>
+            <p class="didactic-text">
+                Muestra la evolución del Índice Kp en las últimas 24 horas. Las barras cambian de color automáticamente según la severidad de la actividad.
+                <br><br>
+                Usa el botón <b>"Descargar Gráfico"</b> para guardar una imagen PNG de la situación actual para tus reportes o redes sociales.
+            </p>
+        </div>
+    </div>
+
+
+    <script>
+        // --- CONFIGURACIÓN DEL GRÁFICO CHART.JS ---
+        const ctx = document.getElementById('kpChart').getContext('2d');
+        const labels = {{ labels_kp|safe }};
+        const data = {{ data_kp|safe }};
+        
+        // Degradado para el fondo del gráfico
+        let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(56, 189, 248, 0.2)');
+        gradient.addColorStop(1, 'rgba(56, 189, 248, 0)');
+
+        const myChart = new Chart(ctx, {
+            type: 'line', // Cambiado a línea para aspecto más técnico
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Índice Kp',
+                    data: data,
+                    borderColor: '#38bdf8',
+                    backgroundColor: gradient,
+                    fill: true,
+                    pointBackgroundColor: data.map(val => val >= 5 ? '#ff4757' : (val >= 4 ? '#ffa502' : '#38bdf8')),
+                    pointBorderColor: '#fff',
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    tension: 0.4 // Línea curva
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleFont: { family: 'Orbitron' },
+                        bodyFont: { family: 'Roboto Mono' },
+                        callbacks: {
+                            label: function(context) { return ' Kp: ' + context.parsed.y; }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true, max: 9,
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#64748b', font: { family: 'Roboto Mono' } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#64748b', maxTicksLimit: 8, font: { family: 'Roboto Mono' } }
+                    }
+                }
+            }
+        });
+
+        // --- FUNCIONES PARA LAS VENTANAS MODALES ---
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            document.body.style.overflow = 'hidden'; // Evitar scroll de fondo
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Cerrar modal si se hace clic fuera de la ventana
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // --- FUNCIÓN DE DESCARGA DEL GRÁFICO ---
+        function downloadChart() {
+            const imageLink = document.createElement('a');
+            // Convierte el canvas a una imagen PNG base64
+            imageLink.href = myChart.toBase64Image();
+             // Nombre del archivo con fecha
+            const date = new Date().toISOString().slice(0,10);
+            imageLink.download = `Reporte_Geomagnetico_${date}.png`;
+            // Simula el clic para descargar
+            imageLink.click();
+        }
+    </script>
+
+</body>
+</html>

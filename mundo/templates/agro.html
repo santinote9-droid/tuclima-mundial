@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agro Intelligence | TuClima Pro</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/dark-unica.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+
+
+    <style>
+        /* ================================================= */
+        /* 1. CORE STYLES (MODO ENERGY / DARK OPS)           */
+        /* ================================================= */
+        :root {
+            --bg-dark: #0f172a;       /* Slate 900 */
+            --card-bg: #1e293b;       /* Slate 800 */
+            --border: #334155;        /* Slate 700 */
+            --accent: #4ade80;        /* Verde Agro (Green 400) */
+            --text-main: #e2e8f0;     /* Slate 200 */
+            --text-muted: #94a3b8;    /* Slate 400 */
+            --danger: #ef4444;
+            --warning: #facc15;
+            --info: #3b82f6;
+        }
+
+        body { 
+            background-color: var(--bg-dark); 
+            color: var(--text-main); 
+            font-family: 'Poppins', sans-serif; 
+            margin: 0; 
+            padding-bottom: 80px; /* Espacio para scroll */
+        }
+
+        /* SCROLLBAR PERSONALIZADA */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* HEADER TÉCNICO */
+        .header-eng {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 15px 30px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        .brand-box { display: flex; align-items: center; gap: 12px; }
+        .brand-title { 
+            font-family: 'JetBrains Mono', monospace; 
+            font-size: 1.5em; font-weight: 700; color: #fff; letter-spacing: -1px; 
+        }
+        .brand-title span { color: var(--accent); }
+        .badge-pro { 
+            background: rgba(250, 204, 21, 0.15); color: var(--warning); border: 1px solid rgba(250, 204, 21, 0.3);
+            padding: 4px 8px; border-radius: 4px; font-size: 0.7em; font-weight: bold; letter-spacing: 1px;
+        }
+
+        .user-panel { font-family: 'JetBrains Mono', monospace; font-size: 0.85em; text-align: right; color: var(--text-muted); }
+        .user-panel b { color: #fff; }
+
+        /* CONTENEDOR PRINCIPAL */
+        .dashboard-container {
+            max-width: 1600px; margin: 0 auto; padding: 30px;
+        }
+
+        /* ================================================= */
+        /* 2. GRID SYSTEM & CARDS (TARJETAS)                 */
+        /* ================================================= */
+        .agro-grid {
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); 
+            gap: 25px; 
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            display: flex; flex-direction: column; justify-content: space-between;
+            min-height: 220px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(145deg, #1e293b, #24344d);
+        }
+
+        /* Header de Tarjeta */
+        .c-head {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 12px;
+        }
+        .c-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85em; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .c-icon { color: var(--accent); opacity: 0.9; }
+
+        /* Cuerpo de Tarjeta */
+        .c-main { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 15px; }
+        
+        .val-big {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.8em; font-weight: 700; color: #fff;
+            line-height: 1; margin-bottom: 5px;
+            text-shadow: 0 0 20px rgba(0,0,0,0.2);
+        }
+        .val-sub { font-size: 0.9em; color: var(--text-muted); font-weight: 500; }
+
+        .status-pill {
+            display: inline-block; padding: 5px 12px; border-radius: 20px;
+            font-size: 0.75em; font-weight: bold; text-transform: uppercase;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            margin-top: 10px; align-self: flex-start;
+        }
+
+        /* Tabla Mini (Data Rows) */
+        .data-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9em;
+        }
+        .dr-lbl { color: var(--text-muted); font-size: 0.9em; }
+        .dr-val { color: #fff; font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+
+        /* ================================================= */
+        /* 3. FORECAST & ANALYSIS BARS                       */
+        /* ================================================= */
+        .analysis-btn {
+            width: 100%; padding: 20px; margin: 40px 0;
+            background: linear-gradient(90deg, rgba(74, 222, 128, 0.1) 0%, rgba(74, 222, 128, 0.05) 100%);
+            border: 1px solid var(--accent); border-radius: 12px;
+            color: var(--accent); font-family: 'JetBrains Mono'; font-weight: bold; letter-spacing: 1px;
+            cursor: pointer; text-align: center; transition: 0.3s;
+            display: flex; justify-content: center; align-items: center; gap: 15px;
+        }
+        .analysis-btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 20px rgba(74, 222, 128, 0.4); }
+
+        .forecast-section {
+            background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 30px;
+        }
+        .fs-title {
+            color: #fff; font-family: 'JetBrains Mono'; font-size: 1.2em; border-left: 4px solid var(--accent); padding-left: 15px; margin-bottom: 25px;
+        }
+        .forecast-scroll {
+            display: flex; gap: 20px; overflow-x: auto; padding-bottom: 15px;
+        }
+        .day-card {
+            min-width: 140px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 10px; padding: 15px; text-align: center;
+            transition: 0.2s;
+        }
+        .day-card:hover { border-color: var(--info); transform: translateY(-3px); }
+        .dc-date { color: var(--accent); font-weight: bold; font-size: 0.9em; margin-bottom: 10px; text-transform: uppercase; }
+        .dc-icon { width: 40px; height: 40px; margin: 10px auto; display: block; }
+        .dc-temp { font-family: 'JetBrains Mono'; font-weight: bold; font-size: 1.2em; color: #fff; }
+        .dc-rain { color: var(--info); font-size: 0.85em; margin-top: 8px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; }
+
+        /* ================================================= */
+        /* 4. VENTANAS MODALES (DIDÁCTICAS Y TÉCNICAS)       */
+        /* ================================================= */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            z-index: 2000; display: none; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: #1e293b; border: 1px solid var(--border); width: 90%; max-width: 900px; max-height: 90vh;
+            border-radius: 16px; padding: 40px; overflow-y: auto; position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .btn-close {
+            position: absolute; top: 25px; right: 25px; background: none; border: none; 
+            color: var(--text-muted); font-size: 2em; cursor: pointer; transition: 0.2s; line-height: 0.5;
+        }
+        .btn-close:hover { color: #fff; transform: rotate(90deg); }
+
+        .pop-title {
+            font-family: 'JetBrains Mono'; color: var(--accent); font-size: 1.6em; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 15px;
+        }
+        .pop-subtitle { color: var(--text-muted); font-size: 0.95em; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        
+        .pop-text { line-height: 1.8; color: #cbd5e1; margin-bottom: 25px; font-size: 1em; }
+        .pop-text strong { color: #fff; }
+
+        /* TABLAS TÉCNICAS DENTRO DE MODALES */
+        .tech-table {
+            width: 100%; border-collapse: separate; border-spacing: 0; margin: 20px 0;
+            background: #0f172a; border-radius: 8px; overflow: hidden; border: 1px solid var(--border);
+        }
+        .tech-table th {
+            background: #334155; color: #fff; font-family: 'JetBrains Mono'; font-weight: bold;
+            text-transform: uppercase; font-size: 0.8em; padding: 15px; text-align: left; letter-spacing: 0.5px;
+        }
+        .tech-table td {
+            padding: 15px; border-bottom: 1px solid var(--border); color: #cbd5e1; font-size: 0.95em;
+        }
+        .tech-table tr:last-child td { border-bottom: none; }
+        .tech-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .highlight-box {
+            background: rgba(59, 130, 246, 0.1); border-left: 4px solid var(--info);
+            padding: 20px; border-radius: 0 8px 8px 0; color: #fff; font-weight: 500;
+            display: flex; align-items: center; gap: 15px; margin-top: 20px;
+        }
+
+        /* Colores de Riesgo para Tablas */
+        .risk-ok { color: var(--accent); font-weight: bold; }
+        .risk-warn { color: var(--warning); font-weight: bold; }
+        .risk-crit { color: var(--danger); font-weight: bold; }
+
+    </style>
+
+<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+    <script>
+        Weglot.initialize({
+            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
+            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
+            auto_switch: true            // Detecta idioma automático
+        });
+    </script>
+</head>
+<body>
+
+    <div id="google_translate_element" style="display:none;"></div>
+    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+    <header class="header-eng">
+        <div class="brand-box">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5a4 4 0 0 1 5.66 0"/><path d="M10 10a2 2 0 0 1 2.83 0"/></svg>
+            <div class="brand-title">AGRO <span>INTELLIGENCE</span></div>
+            <span class="badge-pro">PRO</span>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 20px;">
+            
+            <div style="text-align: right; font-family: 'JetBrains Mono'; font-size: 0.8em; color: #64748b; line-height: 1.2;">
+                <div style="display:flex; align-items:center; gap:5px; justify-content: flex-end;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    LAT: {{ lat|floatformat:4 }}
+                </div>
+                <div>LON: {{ lon|floatformat:4 }}</div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="copiarReporte()" title="Copiar Resumen al Portapapeles" style="background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.borderColor='#3b82f6'; this.style.color='#fff'" onmouseout="this.style.borderColor='#334155'; this.style.color='#94a3b8'">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                    <span style="font-family:'JetBrains Mono'; font-size:0.8em;">COPIAR</span>
+                </button>
+
+                <button onclick="window.print()" title="Imprimir / Guardar PDF" style="background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.borderColor='#4ade80'; this.style.color='#fff'" onmouseout="this.style.borderColor='#334155'; this.style.color='#94a3b8'">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    <span style="font-family:'JetBrains Mono'; font-size:0.8em;">PDF</span>
+                </button>
+                
+                <a href="/" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 8px; border-radius: 6px; display: flex; align-items: center;" title="Salir">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+
+        <div class="agro-grid">
+
+            <div class="card" onclick="openModal('modGDD')">
+                <div class="c-head">
+                    <span class="c-title">Crecimiento (GDD)</span>
+                    <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22h20"/><path d="M12 22V10a5 5 0 0 1 5-5"/><path d="M12 12a5 5 0 0 0-5-5"/></svg>
+                </div>
+                <div class="c-main">
+                    <div class="val-big" style="color: var(--warning);">{{ gdd.valor }}</div>
+                    <div class="val-sub">Grados Día Acumulados (7d)</div>
+                    <span class="status-pill" style="color: var(--warning);">{{ gdd.estado }}</span>
+                </div>
+            </div>
+
+            <div class="card" onclick="openModal('modAgua')">
+                <div class="c-head">
+                    <span class="c-title">Perfil de Suelo</span>
+                    <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/><path d="M12 22v-6"/></svg>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size:0.75em; color:#94a3b8; font-weight:bold; margin-bottom:5px;">HUMEDAD (VOLUMÉTRICA)</div>
+                    <div class="data-row">
+                        <span class="dr-lbl">Sup. (0-1cm)</span>
+                        <span class="dr-val" style="color: #60a5fa;">{{ suelo.sup_hum }}%</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="dr-lbl">Prof. (3-9cm)</span>
+                        <span class="dr-val" style="color: #3b82f6;">{{ suelo.prof_hum }}%</span>
+                    </div>
+                </div>
+
+                <div>
+                    <div style="font-size:0.75em; color:#94a3b8; font-weight:bold; margin-bottom:5px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">TERMOMETRÍA POR CAPAS</div>
+                    <div style="display:flex; justify-content: space-between; text-align: center; margin-top:5px;">
+                        <div>
+                            <div style="font-size:0.7em; color:#94a3b8;">0cm</div>
+                            <div style="font-family:'JetBrains Mono'; color:#fbbf24; font-weight:bold;">{{ suelo.temp_0 }}°</div>
+                        </div>
+                        <div>
+                            <div style="font-size:0.7em; color:#94a3b8;">6cm (Siembra)</div>
+                            <div style="font-family:'JetBrains Mono'; color:#4ade80; font-weight:bold;">{{ suelo.temp_6 }}°</div>
+                        </div>
+                        <div>
+                            <div style="font-size:0.7em; color:#94a3b8;">18cm</div>
+                            <div style="font-family:'JetBrains Mono'; color:#fff; font-weight:bold;">{{ suelo.temp_18 }}°</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" onclick="openModal('modPulv')">
+                <div class="c-head">
+                    <span class="c-title">Pulverización</span>
+                    <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                </div>
+                <div class="c-main">
+                    <div class="val-big" style="color: {{ pulverizacion.color }};">{{ pulverizacion.delta_t }}</div>
+                    <div class="val-sub">Delta T (Calidad)</div>
+                    <span class="status-pill" style="color: {{ pulverizacion.color }}; border-color: {{ pulverizacion.color }};">{{ pulverizacion.estado }}</span>
+                </div>
+                <div class="data-row">
+                    <span class="dr-lbl">Viento Sup.</span>
+                    <span class="dr-val">{{ pulverizacion.viento }} km/h</span>
+                </div>
+            </div>
+
+            <div class="card" onclick="openModal('modAtm')">
+                <div class="c-head">
+                    <span class="c-title">Atmósfera</span>
+                    <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+                </div>
+                <div class="data-row">
+                    <span class="dr-lbl">Pto. Rocío</span>
+                    <span class="dr-val">{{ atmosfera.rocio }}°C</span>
+                </div>
+                <div class="data-row">
+                    <span class="dr-lbl">Presión (QNH)</span>
+                    <span class="dr-val">{{ atmosfera.presion }} hPa</span>
+                </div>
+                <div class="data-row">
+                    <span class="dr-lbl">Nubosidad</span>
+                    <span class="dr-val">{{ atmosfera.nubes }}%</span>
+                </div>
+                <div class="data-row">
+                    <span class="dr-lbl">Humedad Amb.</span>
+                    <span class="dr-val">{{ ambiente.humedad }}%</span>
+                </div>
+            </div>
+
+            <div class="card" onclick="openModal('modRad')">
+                <div class="c-head">
+                    <span class="c-title">Radiación Solar</span>
+                    <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                </div>
+                <div class="c-main">
+                    <div class="val-big" style="color: #fbbf24;">{{ radiacion.watts }}</div>
+                    <div class="val-sub">W/m² (Irradiancia)</div>
+                </div>
+                <div class="data-row">
+                    <span class="dr-lbl">Potencial</span>
+                    <span class="dr-val">{{ radiacion.estado }}</span>
+                </div>
+            </div>
+
+            <div class="card" onclick="openModal('modBal')">
+                <div class="c-head">
+                    <span class="c-title">Balance (7 Días)</span>
+                    <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+                </div>
+                <div style="display:flex; justify-content: space-around; text-align: center; margin: 10px 0;">
+                    <div>
+                        <div style="color: #60a5fa; font-weight: bold; font-size: 0.8em;">LLUVIA</div>
+                        <div style="color: #fff; font-weight: bold; font-size: 1.4em;">{{ balance.lluvia }}</div>
+                    </div>
+                    <div style="border-right: 1px solid rgba(255,255,255,0.1);"></div>
+                    <div>
+                        <div style="color: #fbbf24; font-weight: bold; font-size: 0.8em;">EVAPO</div>
+                        <div style="color: #fff; font-weight: bold; font-size: 1.4em;">{{ balance.evapo }}</div>
+                    </div>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; text-align: center; font-family: 'JetBrains Mono'; font-weight: bold; color: {{ balance.color_diff }};">
+                    NETO: {{ balance.diff }} mm
+                </div>
+            </div>
+
+            <div class="card" onclick="openModal('modRaiz')">
+                <div class="c-head">
+                    <span class="c-title">Zona Radicular (-18cm)</span>
+                    <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>
+                </div>
+                <div class="c-main">
+                    <div class="val-big" style="color: var(--accent);">{{ raices.temp }}°</div>
+                    <div class="val-sub">Temperatura Profunda</div>
+                </div>
+                <div class="data-row">
+                    <span class="dr-lbl">Humedad (18-27cm)</span>
+                    <span class="dr-val" style="color: #3b82f6;">{{ raices.hum }}%</span>
+                </div>
+            </div>
+
+            <div class="card" onclick="openModal('modVPD')">
+                <div class="c-head">
+                    <span class="c-title">Estrés (VPD)</span>
+                    <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                </div>
+                <div class="c-main">
+                    <div class="val-big" style="color: {{ estres.color }};">{{ estres.vpd }}</div>
+                    <div class="val-sub">kPa (Déficit de Vapor)</div>
+                </div>
+                <span class="status-pill" style="color: {{ estres.color }}; border-color: {{ estres.color }};">{{ estres.estado }}</span>
+            </div>
+
+            <div class="card" onclick="openModal('modETo')">
+                <div class="c-head">
+                    <span class="c-title">Evapotranspiración</span>
+                    <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.74 5.89c.98 1.01 1.52 2.38 1.52 3.82 0 2.96-2.26 5.6-5.78 5.6-3.51 0-7.48-2.64-7.48-5.6 0-1.44.54-2.81 1.52-3.82L12 2.69z"/></svg>
+                </div>
+                <div class="c-main">
+                    <div class="val-big" style="color: #a78bfa;">{{ eto.hoy }}</div>
+                    <div class="val-sub">mm / día (Hoy)</div>
+                </div>
+                <div class="data-row">
+                    <span class="dr-lbl">Proyección Sem.</span>
+                    <span class="dr-val">~{{ eto.proyeccion }} mm</span>
+                </div>
+            </div>
+
+        </div> <div class="analysis-btn" onclick="openModal('modGraph')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>
+            ABRIR ANÁLISIS DE BALANCE HÍDRICO (GRÁFICO)
+        </div>
+
+
+        <section class="forecast-section">
+            <div class="fs-title">PRONÓSTICO EXTENDIDO DE CULTIVO (14 DÍAS)</div>
+            <div class="forecast-scroll">
+                {% for fecha, max, min, lluvia, prob, code in dias_extendidos %}
+                <div class="day-card">
+                    <div class="dc-date">{{ fecha|slice:"5:" }}</div>
+                    <svg class="dc-icon" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+                        {% if code < 3 %}
+                            <circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2"/>
+                        {% elif code < 50 %}
+                            <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+                        {% elif code < 80 %}
+                            <line x1="16" y1="13" x2="16" y2="21"/><line x1="8" y1="13" x2="8" y2="21"/><line x1="12" y1="15" x2="12" y2="23"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/>
+                        {% else %}
+                             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                        {% endif %}
+                    </svg>
+                    <div class="dc-temp">{{ max }}° <span style="font-size:0.7em; color:var(--text-muted); font-weight:normal;">{{ min }}°</span></div>
+                    <div class="dc-rain">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.74 5.89c.98 1.01 1.52 2.38 1.52 3.82 0 2.96-2.26 5.6-5.78 5.6-3.51 0-7.48-2.64-7.48-5.6 0-1.44.54-2.81 1.52-3.82L12 2.69z"/></svg>
+                        {{ lluvia }}mm
+                    </div>
+                    <div style="font-size:0.75em; color:var(--text-muted); margin-top:4px;">{{ prob }}%</div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+    </div> <div id="modGraph" class="modal-overlay">
+        <div class="modal-content">
+            <button class="btn-close" onclick="closeModal('modGraph')">×</button>
+            <div class="pop-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                Balance Hídrico Proyectado
+            </div>
+            <div class="pop-subtitle">Análisis de Ingresos (Lluvia) vs Egresos (ETo) para los próximos 14 días.</div>
+            
+            <div id="container-agro" style="width:100%; height:400px;"></div>
+            
+            <div class="highlight-box">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <div>
+                    <strong>Interpretación:</strong> Las barras azules representan el agua disponible. La línea amarilla es la demanda de la atmósfera. Si la línea supera las barras consistentemente, se recomienda riego suplementario.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modGDD" class="modal-overlay">
+        <div class="modal-content">
+            <button class="btn-close" onclick="closeModal('modGDD')">×</button>
+            <div class="pop-title">Grados Día de Crecimiento (GDD)</div>
+            <div class="pop-text">
+                Unidad biológica de tiempo. El GDD mide la acumulación de calor útil para la fotosíntesis, descartando temperaturas extremas que detienen el metabolismo.
+                <br>Fórmula: <code>((Tmáx + Tmín) / 2) - Tbase</code>.
+            </div>
+            
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Cultivo</th><th>T. Base</th><th>T. Óptima</th><th>Riesgo Calor</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Trigo / Cebada</td><td>0 - 4°C</td><td>15 - 20°C</td><td class="risk-crit">> 28°C</td></tr>
+                    <tr><td>Maíz (Zea Mays)</td><td>10°C</td><td>25 - 30°C</td><td class="risk-crit">> 35°C</td></tr>
+                    <tr><td>Soja (Glycine max)</td><td>10°C</td><td>22 - 28°C</td><td class="risk-crit">> 38°C</td></tr>
+                    <tr><td>Girasol</td><td>6°C</td><td>20 - 25°C</td><td class="risk-crit">> 32°C</td></tr>
+                    <tr><td>Algodón</td><td>15°C</td><td>28 - 32°C</td><td class="risk-crit">> 40°C</td></tr>
+                </tbody>
+            </table>
+            
+            <div class="highlight-box" style="border-left-color: var(--warning);">
+                <strong>ESTADO ACTUAL:</strong> {{ gdd.valor }} GDD Acumulados ({{ gdd.estado }})
+            </div>
+        </div>
+    </div>
+
+    <div id="modAgua" class="modal-overlay">
+        <div class="modal-content">
+            <button class="btn-close" onclick="closeModal('modAgua')">×</button>
+            <div class="pop-title">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                Física de Suelos: Agua y Temperatura
+            </div>
+            <div class="pop-text">
+                Monitorización estratificada del perfil del suelo. La interacción entre humedad y temperatura a distintas profundidades determina la viabilidad de la siembra y la eficiencia radicular.
+            </div>
+
+            <div style="color:#fff; font-family:'JetBrains Mono'; font-weight:bold; margin-bottom:10px; border-left:4px solid #fbbf24; padding-left:10px; margin-top:30px;">
+                PERFIL TÉRMICO (GÉNESIS RADICULAR)
+            </div>
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Profundidad</th><th>Valor Actual</th><th>Importancia Agronómica</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>0 cm (Superficie)</td>
+                        <td style="color:#fbbf24; font-weight:bold;">{{ suelo.temp_0 }}°C</td>
+                        <td>Riesgo de "golpe de calor" en cuello de plántula. Volatilidad de herbicidas.</td>
+                    </tr>
+                    <tr>
+                        <td>6 cm (Cama Siembra)</td>
+                        <td style="color:#4ade80; font-weight:bold;">{{ suelo.temp_6 }}°C</td>
+                        <td><strong>CRÍTICO GERMINACIÓN.</strong><br>Maíz requiere >10°C estables a esta prof.</td>
+                    </tr>
+                    <tr>
+                        <td>18 cm (Raíz Activa)</td>
+                        <td style="color:#fff; font-weight:bold;">{{ suelo.temp_18 }}°C</td>
+                        <td>Absorción de nutrientes. <br>Si T < 15°C, el Fósforo se bloquea (hojas violetas).</td>
+                    </tr>
+                    <tr>
+                        <td>54 cm (Profundo)</td>
+                        <td style="color:#94a3b8; font-weight:bold;">{{ suelo.temp_54 }}°C</td>
+                        <td>Inercia térmica y reserva de agua.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="color:#fff; font-family:'JetBrains Mono'; font-weight:bold; margin-bottom:10px; border-left:4px solid #3b82f6; padding-left:10px; margin-top:30px;">
+                CONSTANTES HÍDRICAS
+            </div>
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Tipo de Suelo</th><th>Cap. Campo (CC)</th><th>Pto. Marchitez (PMP)</th><th>Agua Útil (AU)</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Arcilloso</td><td>40 - 50%</td><td>25 - 30%</td><td class="risk-ok">Alta Retención</td></tr>
+                    <tr><td>Franco (Ideal)</td><td>25 - 35%</td><td>10 - 15%</td><td class="risk-ok">Equilibrado</td></tr>
+                    <tr><td>Arenoso</td><td>10 - 15%</td><td>3 - 5%</td><td class="risk-crit">Baja (Drenaje rápido)</td></tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box">
+                <div>
+                    <div><strong>Humedad Cama Siembra:</strong> {{ suelo.sup_hum }}%</div>
+                    <div><strong>Temp. Cama Siembra:</strong> {{ suelo.temp_6 }}°C</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modPulv" class="modal-overlay">
+        <div class="modal-content">
+            <button class="btn-close" onclick="closeModal('modPulv')">×</button>
+            <div class="pop-title">Calidad de Aplicación (Delta T)</div>
+            <div class="pop-text">
+                El Delta T relaciona la Temperatura Seca y Húmeda para predecir la vida útil de la gota pulverizada. Es el estándar global para evitar derivas y evaporación.
+            </div>
+            
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Valor Delta T</th><th>Condición</th><th>Consecuencia Físico-Química</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>0 - 2</td><td class="risk-warn">RIESGO INVERSIÓN</td><td>La gota no desciende, queda suspendida. Deriva masiva.</td></tr>
+                    <tr><td>2 - 8</td><td class="risk-ok">EXCELENTE</td><td>Máxima absorción sistémica. Supervivencia ideal.</td></tr>
+                    <tr><td>8 - 10</td><td class="risk-warn">MARGINAL</td><td>Usar gota gruesa o coadyuvantes antievaporantes.</td></tr>
+                    <tr><td>> 10</td><td class="risk-crit">CRÍTICO</td><td>Evaporación instantánea. Pérdida económica total.</td></tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box" style="border-left-color: {{ pulverizacion.color }};">
+                 <strong>CONDICIÓN ACTUAL:</strong> Delta T {{ pulverizacion.delta_t }} ({{ pulverizacion.estado }}) | Viento: {{ pulverizacion.viento }} km/h
+            </div>
+        </div>
+    </div>
+
+    <div id="modAtm" class="modal-overlay">
+        <div class="modal-content">
+            <button class="btn-close" onclick="closeModal('modAtm')">×</button>
+            <div class="pop-title">Dinámica Atmosférica</div>
+            <div class="pop-text">
+                Variables que afectan la presión de plagas y enfermedades.
+            </div>
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Variable</th><th>Valor Actual</th><th>Impacto Agronómico</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Punto de Rocío</td><td>{{ atmosfera.rocio }}°C</td><td>Si T° Ambiente = P. Rocío => Hoja Mojada (Riesgo Fúngico).</td></tr>
+                    <tr><td>Presión QNH</td><td>{{ atmosfera.presion }} hPa</td><td>Baja presión (<1010) favorece emergencia de insectos.</td></tr>
+                    <tr><td>Nubosidad</td><td>{{ atmosfera.nubes }}%</td><td>Afecta la tasa fotosintética neta.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="modRad" class="modal-overlay">
+        <div class="modal-content">
+            <button class="btn-close" onclick="closeModal('modRad')">×</button>
+            <div class="pop-title">Radiación Solar (PAR)</div>
+            <div class="pop-text">
+                No toda la luz sirve. La Radiación Fotosintéticamente Activa (PAR) es la fracción que la planta usa para producir biomasa.
+            </div>
+            <div class="highlight-box" style="background: rgba(251, 191, 36, 0.1); border-left-color: #fbbf24;">
+                <strong>POTENCIA ACTUAL:</strong> {{ radiacion.watts }} W/m² <br>
+                Estado: {{ radiacion.estado }}
+            </div>
+        </div>
+    </div>
+
+    <div id="modBal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="btn-close" onclick="closeModal('modBal')">×</button>
+            <div class="pop-title">Detalle de Balance Hídrico (14 Días)</div>
+            <div class="pop-text">Registro contable de cada milímetro de agua que entra y sale del sistema suelo-planta.</div>
+            
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Fecha</th><th>Ingreso (Lluvia)</th><th>Egreso (ETo)</th><th>Saldo Diario</th></tr>
+                </thead>
+                <tbody>
+                    {% for dia in tabla_balance %}
+                    <tr>
+                        <td>{{ dia.fecha }}</td>
+                        <td style="color:#60a5fa;">{{ dia.lluvia }} mm</td>
+                        <td style="color:#fbbf24;">{{ dia.eto }} mm</td>
+                        <td style="font-weight:bold; color:{{ dia.color }};">
+                            {% if dia.diff > 0 %}+{% endif %}{{ dia.diff }} mm
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="modRaiz" class="modal-overlay">
+        <div class="modal-content">
+            <button class="btn-close" onclick="closeModal('modRaiz')">×</button>
+            <div class="pop-title">Fisiología Radicular (-18cm)</div>
+            <div class="pop-text">
+                Las raíces detienen su absorción de nutrientes (especialmente Fósforo) con temperaturas bajas.
+            </div>
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Cultivo</th><th>T. Suelo Mínima</th><th>Consecuencia</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Maíz</td><td>< 12°C</td><td class="risk-crit">Coloración violácea (Déficit Fósforo)</td></tr>
+                    <tr><td>Soja</td><td>< 18°C</td><td class="risk-warn">Menor actividad de nódulos (Fijación N)</td></tr>
+                    <tr><td>Trigo</td><td>< 4°C</td><td class="risk-ok">Tolerante (Crecimiento lento)</td></tr>
+                </tbody>
+            </table>
+            <div class="highlight-box">
+                TEMP SUELO ACTUAL: {{ raices.temp }}°C
+            </div>
+        </div>
+    </div>
+
+    <div id="modVPD" class="modal-overlay">
+        <div class="modal-content">
+            <button class="btn-close" onclick="closeModal('modVPD')">×</button>
+            <div class="pop-title">Déficit de Presión de Vapor (VPD)</div>
+            <div class="pop-text">
+                Mide la "sed" de la atmósfera. Es mucho más preciso que la humedad relativa para determinar si la planta cierra sus estomas.
+            </div>
+            <table class="tech-table">
+                <thead>
+                    <tr><th>VPD (kPa)</th><th>Estado Planta</th><th>Fisiología</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>< 0.4</td><td class="risk-warn">Pasiva</td><td>Transpiración casi nula. Riesgo Moho.</td></tr>
+                    <tr><td>0.4 - 1.2</td><td class="risk-ok">SALUDABLE</td><td>Máxima apertura estomática. Crecimiento.</td></tr>
+                    <tr><td>1.2 - 1.6</td><td class="risk-warn">Alerta</td><td>Comienza regulación estomática.</td></tr>
+                    <tr><td>> 1.6</td><td class="risk-crit">ESTRÉS</td><td>Cierre de estomas. Detención fotosíntesis.</td></tr>
+                </tbody>
+            </table>
+             <div class="highlight-box" style="border-left-color: {{ estres.color }};">
+                VALOR ACTUAL: {{ estres.vpd }} kPa ({{ estres.estado }})
+            </div>
+        </div>
+    </div>
+
+    <div id="modETo" class="modal-overlay">
+        <div class="modal-content">
+            <button class="btn-close" onclick="closeModal('modETo')">×</button>
+            <div class="pop-title">Evapotranspiración (Penman-Monteith)</div>
+            <div class="pop-text">
+                Cálculo combinado de radiación + temperatura + viento + humedad para determinar la demanda de agua de un cultivo de referencia (Pasto).
+                <br><strong>Fórmula de Riego:</strong> ETo x Kc (Coeficiente cultivo).
+            </div>
+             <div class="highlight-box" style="background: rgba(167, 139, 250, 0.1); border-left-color: #a78bfa;">
+                PÉRDIDA HOY: {{ eto.hoy }} mm <br>
+                PROYECCIÓN SEMANAL: {{ eto.proyeccion }} mm
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // ------------------------------------------
+        // 1. LÓGICA DE VENTANAS MODALES (DIDÁCTICAS)
+        // ------------------------------------------
+        function openModal(id) { 
+            const modal = document.getElementById(id);
+            if(modal) {
+                modal.style.display = 'flex';
+            } else {
+                console.error("No se encuentra el modal con ID:", id);
+            }
+        }
+
+        function closeModal(id) { 
+            const modal = document.getElementById(id);
+            if(modal) modal.style.display = 'none'; 
+        }
+
+        // Cerrar al hacer clic en el fondo oscuro
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.style.display = "none";
+            }
+        }
+
+        // ------------------------------------------
+        // 2. TRADUCTOR AUTOMÁTICO
+        // ------------------------------------------
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'es', includedLanguages: 'en,fr,it,pt,de', autoDisplay: false
+            }, 'google_translate_element');
+        }
+
+        window.addEventListener('load', function() {
+            var idiomaUsuario = (navigator.language || navigator.userLanguage).split('-')[0];
+            if (idiomaUsuario !== 'es') {
+                setTimeout(function() {
+                    var select = document.querySelector('select.goog-te-combo');
+                    if (select) { select.value = idiomaUsuario; select.dispatchEvent(new Event('change')); }
+                }, 1000);
+            }
+        });
+
+        // ------------------------------------------
+        // 3. GRÁFICO HIGHCHARTS (CON EXPORTACIÓN)
+        // ------------------------------------------
+        document.addEventListener("DOMContentLoaded", function() {
+            const labels = {{ grafico_agro.fechas|safe }};
+            const dataLluvia = {{ grafico_agro.lluvia|safe }};
+            const dataEto = {{ grafico_agro.eto|safe }};
+
+            Highcharts.chart('container-agro', {
+                chart: { 
+                    type: 'column', 
+                    backgroundColor: 'transparent', 
+                    style: { fontFamily: 'Poppins' } 
+                },
+                
+                // CONFIGURACIÓN DE DESCARGA (EXPORTING)
+                exporting: {
+                    enabled: true,
+                    filename: 'TuClima_Balance_Hidrico',
+                    buttons: {
+                        contextButton: {
+                            menuItems: ['downloadPNG', 'downloadPDF', 'downloadCSV'],
+                            symbolStroke: '#4ade80', // Color del icono hamburguesa
+                            theme: {
+                                fill: '#1e293b' // Fondo del botón
+                            }
+                        }
+                    },
+                    chartOptions: {
+                        chart: { backgroundColor: '#1e293b' } // Fondo oscuro al descargar
+                    }
+                },
+
+                title: { text: '' },
+                xAxis: { 
+                    categories: labels, 
+                    lineColor: '#334155', 
+                    labels: { style: { color: '#94a3b8', fontFamily:'JetBrains Mono' } } 
+                },
+                yAxis: { 
+                    title: { text: 'Milímetros (mm)', style: { color: '#94a3b8' } }, 
+                    gridLineColor: '#334155',
+                    labels: { style: { color: '#e2e8f0' } }
+                },
+                legend: { itemStyle: { color: '#e2e8f0' } },
+                tooltip: { shared: true, backgroundColor: '#1e293b', style: { color: '#fff' }, borderColor: '#4ade80' },
+                series: [{
+                    name: 'Lluvia (Ingreso)',
+                    data: dataLluvia,
+                    color: '#3b82f6',
+                    borderRadius: 4,
+                    borderWidth: 0
+                }, {
+                    name: 'Evapotranspiración (Demanda)',
+                    type: 'spline',
+                    data: dataEto,
+                    color: '#facc15',
+                    lineWidth: 3,
+                    marker: { fillColor: '#1e293b', lineWidth: 2, lineColor: '#facc15', radius: 4 }
+                }],
+                credits: { enabled: false }
+            });
+        });
+
+        // ------------------------------------------
+        // 4. GENERADOR DE REPORTE (COPIAR)
+        // ------------------------------------------
+        function copiarReporte() {
+            const reporte = `
+📡 AGRO INTELLIGENCE - REPORTE TÉCNICO INTEGRAL
+===============================================
+📍 Ubicación: {{ lat|floatformat:4 }}, {{ lon|floatformat:4 }}
+📅 Fecha: ${new Date().toLocaleString()}
+👤 Operador: {{ user.username|upper }}
+
+🌤️ ATMÓSFERA Y AMBIENTE
+-----------------------
+• Humedad Ambiente: {{ ambiente.humedad }}%
+• Presión (QNH): {{ atmosfera.presion }} hPa
+• Punto de Rocío: {{ atmosfera.rocio }}°C
+• Nubosidad: {{ atmosfera.nubes }}%
+• Radiación: {{ radiacion.watts }} W/m² ({{ radiacion.estado }})
+
+🚜 INDICES AGRONÓMICOS
+----------------------
+• Crecimiento (GDD): {{ gdd.valor }} ({{ gdd.estado }})
+• Estrés (VPD): {{ estres.vpd }} kPa ({{ estres.estado }})
+• Evapotranspiración (ETo): {{ eto.hoy }} mm/día
+• ETo Proyectada (7d): ~{{ eto.proyeccion }} mm
+
+💨 CONDICIONES DE PULVERIZACIÓN
+-------------------------------
+• Delta T: {{ pulverizacion.delta_t }}
+• Estado: {{ pulverizacion.estado }}
+• Viento: {{ pulverizacion.viento }} km/h
+
+🌱 FÍSICA DE SUELOS (Perfil Completo)
+-------------------------------------
+[Humedad Volumétrica]
+• Superficial (0-1cm): {{ suelo.sup_hum }}%
+• Profunda (3-9cm): {{ suelo.prof_hum }}%
+• Radicular (9-27cm): {{ raices.hum }}%
+
+[Termometría por Capas]
+• 0 cm (Sup): {{ suelo.temp_0 }}°C
+• 6 cm (Cama Siembra): {{ suelo.temp_6 }}°C
+• 18 cm (Raíz Activa): {{ suelo.temp_18 }}°C
+• 54 cm (Reserva): {{ suelo.temp_54 }}°C
+
+⚖️ BALANCE HÍDRICO (7 Días)
+---------------------------
+• Ingresos (Lluvia): {{ balance.lluvia }} mm
+• Egresos (Evapo): {{ balance.evapo }} mm
+• SALDO NETO: {{ balance.diff }} mm
+
+🗓️ PRONÓSTICO EXTENDIDO (Próximos 5 días)
+-----------------------------------------
+{% for fecha, max, min, lluvia, prob, code in dias_extendidos|slice:":5" %}
+• {{ fecha|slice:"5:" }}: Máx {{ max }}° / Mín {{ min }}° | 💧 {{ lluvia }}mm ({{ prob }}%) {% endfor %}
+
+-----------------------------------------------
+Generado por TuClima Pro - www.tuclima.com
+            `;
+
+            navigator.clipboard.writeText(reporte).then(() => {
+                alert("✅ ¡Reporte Completo Copiado!");
+            }).catch(err => {
+                console.error('Error al copiar:', err);
+                alert("❌ Error de permisos.");
+            });
+        }
+    </script>
+
+
+
+</body>
+</html>

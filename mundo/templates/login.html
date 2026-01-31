@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar Sesión | Weather Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* MISMOS ESTILOS QUE EL REGISTRO PARA COHERENCIA */
+        body {
+            background-color: #0f172a; color: #fff; font-family: 'Segoe UI', sans-serif;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 80%);
+        }
+        .container { width: 100%; max-width: 400px; padding: 20px; }
+        .card {
+            background: #1e293b; padding: 40px; border-radius: 20px; border: 1px solid #334155;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+        .brand { text-align: center; font-size: 1.8rem; font-weight: 800; margin-bottom: 30px; letter-spacing: -1px; }
+        .brand span { color: #3b82f6; }
+        h2 { text-align: center; margin-bottom: 20px; font-size: 1.1rem; color: #94a3b8; font-weight: normal; }
+        
+        form { display: flex; flex-direction: column; gap: 20px; }
+        label { display: none; } /* En login podemos ocultar labels y usar placeholders si queremos, o dejarlos */
+        
+        input {
+            width: 100%; padding: 15px; background: #0f172a; border: 1px solid #334155;
+            border-radius: 8px; color: #fff; font-size: 1rem; box-sizing: border-box; transition: 0.3s;
+        }
+        input:focus { outline: none; border-color: #22c55e; box-shadow: 0 0 10px rgba(34, 197, 94, 0.2); }
+
+        button {
+            width: 100%; padding: 15px; background: #22c55e; color: #000; border: none;
+            border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.3s;
+            margin-top: 10px;
+        }
+        button:hover { background: #16a34a; box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); }
+
+        .bottom-link { text-align: center; margin-top: 25px; font-size: 0.9em; color: #94a3b8; }
+        .bottom-link a { color: #22c55e; text-decoration: none; font-weight: bold; }
+    </style>
+
+<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+    <script>
+        Weglot.initialize({
+            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
+            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
+            auto_switch: true            // Detecta idioma automático
+        });
+    </script>
+
+</head>
+<body>
+<div id="google_translate_element" style="display:none;"></div>
+
+<script type="text/javascript">
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'es', 
+            includedLanguages: 'en,fr,it,pt,de', // Idiomas permitidos
+            autoDisplay: false
+        }, 'google_translate_element');
+    }
+</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<script type="text/javascript">
+    window.addEventListener('load', function() {
+        // A. Detectamos el idioma del navegador del usuario (ej: 'en-US' o 'pt-BR')
+        var idiomaUsuario = navigator.language || navigator.userLanguage; 
+        idiomaUsuario = idiomaUsuario.split('-')[0]; // Nos quedamos solo con las dos letras ('en', 'pt', etc.)
+
+        // B. Si el usuario NO habla español, activamos la traducción
+        if (idiomaUsuario !== 'es') {
+            
+            // Esperamos un segundo a que Google cargue en el fondo
+            setTimeout(function() {
+                var select = document.querySelector('select.goog-te-combo');
+                if (select) {
+                    select.value = idiomaUsuario; // Seleccionamos su idioma
+                    select.dispatchEvent(new Event('change')); // ¡Clic virtual!
+                }
+            }, 1000); // 1000ms = 1 segundo de espera
+        }
+    });
+</script>
+
+<style>
+    .goog-te-banner-frame { display: none !important; }
+    body { top: 0px !important; }
+    #google_translate_element { display: none !important; }
+</style>
+
+    <div class="container">
+        <div class="card">
+            <div class="brand"><i class="fas fa-cloud"></i> Tu<span>Clima</span></div>
+            <h2>Bienvenido de nuevo</h2>
+
+            <form method="post">
+                {% csrf_token %}
+                
+                <div>
+                    <input type="text" name="username" placeholder="Usuario" required autofocus>
+                </div>
+                
+                <div>
+                    <input type="password" name="password" placeholder="Contraseña" required>
+                </div>
+
+                <button type="submit">Ingresar</button>
+            </form>
+
+            <div class="bottom-link">
+                ¿No tienes cuenta? <a href="/registro/">Regístrate aquí</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

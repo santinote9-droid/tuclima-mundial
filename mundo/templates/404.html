@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 | Señal Perdida</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000000;
+            background-image: radial-gradient(circle at 50% 50%, #0f172a 0%, #000 80%);
+            color: #e2e8f0;
+            font-family: 'Segoe UI', sans-serif;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 6em; margin: 0; color: #38bdf8; text-shadow: 0 0 30px rgba(56, 189, 248, 0.5); }
+        h2 { font-family: 'Orbitron', sans-serif; font-size: 1.5em; margin: 10px 0 20px 0; color: #cbd5e1; letter-spacing: 2px; }
+        p { color: #94a3b8; max-width: 400px; line-height: 1.6; }
+
+        /* RADAR DE ERROR */
+        .radar-container {
+            width: 150px; height: 150px;
+            border: 2px solid rgba(56, 189, 248, 0.3);
+            border-radius: 50%;
+            position: relative;
+            margin-bottom: 30px;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
+            background: radial-gradient(circle, rgba(56,189,248,0.1) 0%, transparent 70%);
+        }
+        
+        .radar-scan {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: conic-gradient(from 0deg, transparent 0deg, rgba(56, 189, 248, 0.4) 60deg, transparent 61deg);
+            animation: radar-spin 2s linear infinite;
+            position: absolute; top: 0; left: 0;
+        }
+
+        .error-dot {
+            width: 8px; height: 8px; background: #e74c3c; border-radius: 50%;
+            position: absolute; top: 30%; right: 30%;
+            box-shadow: 0 0 10px #e74c3c;
+            animation: blink 1s infinite;
+        }
+
+        /* BOTÓN VOLVER */
+        .btn-home {
+            margin-top: 30px;
+            text-decoration: none;
+            padding: 12px 30px;
+            border: 1px solid #38bdf8;
+            color: #38bdf8;
+            font-family: 'Orbitron', sans-serif;
+            border-radius: 50px;
+            transition: 0.3s;
+            background: rgba(56, 189, 248, 0.05);
+        }
+        .btn-home:hover {
+            background: #38bdf8;
+            color: #000;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+        }
+
+        @keyframes radar-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    </style>
+
+<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+    <script>
+        Weglot.initialize({
+            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
+            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
+            auto_switch: true            // Detecta idioma automático
+        });
+    </script>
+
+</head>
+<body>
+
+    <div class="radar-container">
+        <div class="radar-scan"></div>
+        <div class="error-dot"></div>
+    </div>
+
+    <h1>404</h1>
+    <h2>SEÑAL PERDIDA</h2>
+    
+    <p>
+        Las coordenadas que buscas no existen en nuestra base de datos meteorológica. 
+        Has salido del área de cobertura.
+    </p>
+
+    <a href="/" class="btn-home">VOLVER AL INICIO</a>
+
+</body>
+</html>

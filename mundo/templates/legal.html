@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Términos y Condiciones | TuClima</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #020617;
+            color: #94a3b8;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0; padding: 40px 20px;
+            line-height: 1.8;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        h1 { color: #fff; font-family: 'Orbitron', sans-serif; border-bottom: 2px solid #38bdf8; padding-bottom: 20px; margin-bottom: 40px; }
+        h2 { color: #38bdf8; font-family: 'Orbitron', sans-serif; margin-top: 40px; font-size: 1.2em; }
+        p { margin-bottom: 20px; text-align: justify; }
+        
+        .btn-back {
+            display: inline-block; margin-bottom: 30px; 
+            color: #38bdf8; text-decoration: none; border: 1px solid #38bdf8;
+            padding: 8px 20px; border-radius: 4px; transition: 0.3s;
+        }
+        .btn-back:hover { background: #38bdf8; color: #000; }
+    </style>
+
+<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+    <script>
+        Weglot.initialize({
+            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
+            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
+            auto_switch: true            // Detecta idioma automático
+        });
+    </script>
+
+</head>
+<body>
+
+    <div class="container">
+        <a href="{% url 'home' %}" class="btn-back">← Volver al Inicio</a>
+        
+        <h1>AVISO LEGAL Y PRIVACIDAD</h1>
+
+        <h2>1. TÉRMINOS DE USO</h2>
+        <p>
+            Bienvenido a TuClima. Al acceder a nuestra plataforma de inteligencia meteorológica, usted acepta que los datos presentados (provenientes de NASA, NOAA, GFS, ARPEGE, ICON, OpenWeather, Windy) son para fines informativos y de referencia. TuClima no se hace responsable de decisiones críticas tomadas basadas únicamente en esta información experimental.
+        </p>
+
+        <h2>2. POLÍTICA DE PRIVACIDAD</h2>
+        <p>
+            En TuClima, la privacidad de sus datos es prioritaria. No recopilamos información personal identificable sin su consentimiento. Los datos de geolocalización utilizados para mostrar el clima local son procesados de forma anónima y no se almacenan en nuestros servidores permanentes.
+        </p>
+
+        <h2>3. USO DE COOKIES</h2>
+        <p>
+            Utilizamos cookies técnicas esenciales para garantizar el funcionamiento del sitio (como recordar su última ubicación consultada). No utilizamos cookies publicitarias de terceros ni vendemos sus datos de navegación.
+        </p>
+
+        <h2>4. PROPIEDAD INTELECTUAL</h2>
+        <p>
+            El código fuente, diseño y algoritmos de visualización son propiedad de TuClima Labs. Los datos meteorológicos pertenecen a sus respectivos proveedores (NASA, NOAA, GFS, AREPGE, ICON, OpenWeatherMap, Windy) y se utilizan bajo sus respectivas licencias de API abierta.
+        </p>
+        
+        <p style="margin-top: 50px; font-size: 0.8em; opacity: 0.6; text-align: center;">
+            Última actualización: {% now "Y" %}
+        </p>
+    </div>
+
+</body>
+</html>

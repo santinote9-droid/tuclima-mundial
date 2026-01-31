@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suscripción | Weather Pro</title>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
+            padding: 20px;
+        }
+
+        .container { text-align: center; max-width: 1100px; width: 100%; }
+        
+        h1 { font-size: 3rem; margin-bottom: 10px; background: linear-gradient(90deg, #60a5fa, #c084fc); -webkit-background-clip: text; color: transparent; }
+        p.subtitle { color: #94a3b8; font-size: 1.2rem; margin-bottom: 50px; }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            align-items: start; /* Alineación superior para que no se estiren */
+        }
+
+        /* CARD GRATIS */
+        .card-free {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            padding: 40px;
+            border-radius: 20px;
+            color: #94a3b8;
+            text-align: left;
+        }
+
+        /* CARD PRO (DESTACADA) */
+        .card-pro {
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid #3b82f6;
+            padding: 40px;
+            border-radius: 20px;
+            position: relative;
+            box-shadow: 0 0 50px rgba(59, 130, 246, 0.2);
+            transform: scale(1.02);
+            text-align: left;
+        }
+
+        .badge-pop {
+            position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+            background: #3b82f6; color: #fff; padding: 5px 15px;
+            border-radius: 20px; font-weight: bold; font-size: 0.8em;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .card-title { text-align: center; font-size: 1.5em; font-weight: bold; margin-bottom: 10px; color: #fff; }
+        .price { text-align: center; font-size: 3.5rem; font-weight: 800; color: #fff; margin: 20px 0; }
+        .period { font-size: 1rem; color: #64748b; font-weight: normal; }
+
+        ul { list-style: none; padding: 0; margin: 30px 0; }
+        
+        /* ESTILO DE LISTA MEJORADO */
+        li { 
+            margin-bottom: 20px; 
+            display: flex; 
+            align-items: flex-start; /* Alinea el icono arriba */
+            gap: 12px; 
+            font-size: 1.05em; 
+        }
+        
+        .check { color: #22c55e; font-weight: bold; min-width: 20px; margin-top: 2px; }
+        .cross { color: #ef4444; font-weight: bold; min-width: 20px; margin-top: 2px; }
+
+        /* TEXTO PEQUEÑO DE DESCRIPCIÓN */
+        .mode-desc {
+            display: block;
+            font-size: 0.75em; /* Letra pequeña */
+            color: #94a3b8;    /* Color gris suave */
+            margin-top: 5px;
+            line-height: 1.4;
+            font-weight: normal;
+        }
+
+        .btn {
+            display: block; width: 100%; padding: 15px; border-radius: 10px;
+            font-weight: bold; font-size: 1.1em; text-decoration: none; cursor: pointer; transition: 0.3s;
+            text-align: center; box-sizing: border-box; margin-top: 30px;
+        }
+        
+        .btn-pro { background: #3b82f6; color: #fff; border: none; }
+        .btn-pro:hover { background: #2563eb; box-shadow: 0 0 20px rgba(37, 99, 235, 0.5); }
+        
+        .btn-free { background: transparent; border: 1px solid #475569; color: #fff; }
+        .btn-free:hover { border-color: #fff; }
+
+        /* Responsive */
+        @media (max-width: 768px) { .pricing-grid { grid-template-columns: 1fr; } }
+
+    </style>
+
+<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+    <script>
+        Weglot.initialize({
+            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
+            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
+            auto_switch: true            // Detecta idioma automático
+        });
+    </script>
+
+</head>
+<body>
+
+<div id="google_translate_element" style="display:none;"></div>
+
+<script type="text/javascript">
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'es', 
+            includedLanguages: 'en,fr,it,pt,de', // Idiomas permitidos
+            autoDisplay: false
+        }, 'google_translate_element');
+    }
+</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<script type="text/javascript">
+    window.addEventListener('load', function() {
+        // A. Detectamos el idioma del navegador del usuario (ej: 'en-US' o 'pt-BR')
+        var idiomaUsuario = navigator.language || navigator.userLanguage; 
+        idiomaUsuario = idiomaUsuario.split('-')[0]; // Nos quedamos solo con las dos letras ('en', 'pt', etc.)
+
+        // B. Si el usuario NO habla español, activamos la traducción
+        if (idiomaUsuario !== 'es') {
+            
+            // Esperamos un segundo a que Google cargue en el fondo
+            setTimeout(function() {
+                var select = document.querySelector('select.goog-te-combo');
+                if (select) {
+                    select.value = idiomaUsuario; // Seleccionamos su idioma
+                    select.dispatchEvent(new Event('change')); // ¡Clic virtual!
+                }
+            }, 1000); // 1000ms = 1 segundo de espera
+        }
+    });
+</script>
+
+<style>
+    .goog-te-banner-frame { display: none !important; }
+    body { top: 0px !important; }
+    #google_translate_element { display: none !important; }
+</style>
+
+<div style="position: absolute; top: 20px; right: 20px; z-index: 1000; font-family: sans-serif;">
+        {% if user.is_authenticated %}
+            <span style="color: #94a3b8;">Hola,</span> 
+            <strong style="color: #fff;">{{ user.username }}</strong> 
+            <span style="margin: 0 10px; color: #334155;">|</span>
+            <a href="/logout/" style="color: #ef4444; text-decoration: none; font-weight: bold;">Salir <i class="fas fa-sign-out-alt"></i></a>
+        {% else %}
+            <a href="/login/" style="color: #3b82f6; text-decoration: none; font-weight: bold; background: rgba(15, 23, 42, 0.8); padding: 8px 15px; border-radius: 20px; border: 1px solid #3b82f6;">Ingresar</a>
+        {% endif %}
+    </div>
+
+    <div class="container">
+        <h1>SUSCRIPCIÓN</h1>
+        <p class="subtitle">Desbloquea el poder de los datos meteorológicos profesionales.</p>
+
+        <div class="pricing-grid">
+            
+            <div class="card-free">
+                <div class="card-title">Visitante</div>
+                <div class="price">$0</div>
+                <ul>
+                    <li><span class="check">✓</span> Clima Básico Actual</li>
+                    <li><span class="cross">✕</span> Modo Agro</li>
+                    <li><span class="cross">✕</span> Modo Aéreo</li>
+                    <li><span class="cross">✕</span> Modo Naval</li>
+                    <li><span class="cross">✕</span> Modo Energías</li>
+                </ul>
+                <a href="/" class="btn btn-free">Volver al Inicio</a>
+            </div>
+
+            <div class="card-pro">
+                <span class="badge-pop">Recomendado</span>
+                <div class="card-title">PRO SUITE</div>
+                <div class="price">$15uds <span class="period">/ mes</span></div>
+                <ul>
+                    <li>
+                        <span class="check">✓</span> 
+                        <div>
+                            <strong>Acceso Total a los 4 Modos</strong>
+                        </div>
+                    </li>
+                    
+                    <li>
+                        <span class="check">✓</span>
+                        <div>
+                            <strong>Modo Agro</strong>
+                            <small class="mode-desc">Crecimiento GDD, perfil hídrico, pulverización (Delta T), atmósfera, radiación solar, balance hídrico, zona radicular, estrés cultivo, evapotranspiración, pronóstico 14 días.</small>
+                        </div>
+                    </li>
+
+                    <li>
+                        <span class="check">✓</span>
+                        <div>
+                            <strong>Modo Aéreo</strong>
+                            <small class="mode-desc">Metar virtual, categoría de vuelo, altimetría, viento en pista, techo de nubes, riesgos (hielo/shear), vientos en altura, luz/astros, ambiente, sigmet, visibilidad.</small>
+                        </div>
+                    </li>
+
+                    <li>
+                        <span class="check">✓</span>
+                        <div>
+                            <strong>Modo Naval</strong>
+                            <small class="mode-desc">Condición de puerto, estado del mar (Douglas), viento superficie (Beaufort), dinámica de ola, swell, ambiente, visibilidad, oleaje.</small>
+                        </div>
+                    </li>
+
+                    <li>
+                        <span class="check">✓</span>
+                        <div>
+                            <strong>Modo Energías</strong>
+                            <small class="mode-desc">Fotovoltaica (DNI/GHI), potencia eólica (80m/120m), curva de generación, eficiencia estimada, recurso solar.</small>
+                        </div>
+                    </li>
+                </ul>
+                <div class="card-action">
+    {% if user.is_authenticated %}
+        <a href="{% url 'metodos_pago' %}" class="btn btn-pro">Elegir Plan PRO</a>
+    {% else %}
+        <a href="{% url 'registro' %}" class="btn btn-pro">Crear cuenta para comprar</a>
+    {% endif %}
+</div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

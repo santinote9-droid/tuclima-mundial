@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Soporte | TuClima</title> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ESTILO GENERAL */
+        body { font-family: 'Poppins', sans-serif; background-color: #0f172a; color: #e2e8f0; margin: 0; }
+        
+        /* HEADER */
+        .header { background: #1e293b; padding: 20px 40px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+        .brand { color: #fff; font-weight: bold; font-size: 1.4em; text-decoration: none; letter-spacing: 1px;}
+        .brand span { color: #3b82f6; } /* Azul TuClima */
+        
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        
+        /* FAQ */
+        .faq-section h2 { color: #fff; border-bottom: 2px solid #3b82f6; display: inline-block; padding-bottom: 10px; margin-bottom: 30px; }
+        .faq-item { background: #1e293b; border: 1px solid #334155; border-radius: 8px; margin-bottom: 15px; overflow: hidden; }
+        .faq-question { padding: 15px; cursor: pointer; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+        .faq-question:hover { background: #2d3b4e; }
+        .faq-answer { padding: 15px; color: #94a3b8; font-size: 0.95em; line-height: 1.6; display: none; border-top: 1px solid #334155; background: #0f172a; }
+        
+        /* FORMULARIO */
+        .contact-box { background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #3b82f6; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        
+        select, textarea, input { width: 100%; background: #0f172a; border: 1px solid #475569; color: #fff; padding: 12px; border-radius: 6px; font-family: inherit; box-sizing: border-box; margin-bottom: 15px; }
+        .btn-submit { width: 100%; background: #3b82f6; color: white; font-weight: bold; padding: 12px; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .btn-submit:hover { background: #2563eb; }
+
+        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+    </style>
+
+<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+    <script>
+        Weglot.initialize({
+            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
+            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
+            auto_switch: true            // Detecta idioma automático
+        });
+    </script>
+
+</head>
+<body>
+
+    <div class="header">
+        <a href="/" class="brand">Tu<span>Clima</span></a>
+        <a href="/" style="color: #cbd5e1; text-decoration: none; font-size: 0.9em; border: 1px solid #475569; padding: 8px 15px; border-radius: 20px; transition:0.3s;">⬅ Volver al Inicio</a>
+    </div>
+
+    <div class="container">
+        
+        <div class="faq-section">
+            <h2>Preguntas Frecuentes</h2>
+            
+           <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">¿Qué incluye el Modo Gratuito? <span>▼</span></div>
+                <div class="faq-answer">
+                    El Plan Gratuito te da acceso total al <strong>Panel General</strong> (pronóstico local, temperatura actual, alertas y previsión a 7 días). <br><br>
+                    Los modos especializados (<strong>Agro, Naval, Aéreo y Energía</strong>) contienen herramientas técnicas avanzadas y requieren una suscripción Profesional.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">¿De dónde salen los datos? <span>▼</span></div>
+                <div class="faq-answer">TuClima utiliza conexiones satelitales en tiempo real (APIs Open-Meteo y NOAA) para garantizar precisión global.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">Encontré un error en un mapa... <span>▼</span></div>
+                <div class="faq-answer">Por favor, repórtalo usando el formulario de la derecha seleccionando "Reportar Error Técnico". Tu feedback nos ayuda a mejorar.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">¿Puedo usar TuClima en el celular? <span>▼</span></div>
+                <div class="faq-answer">¡Sí! TuClima es una PWA (Progressive Web App). Puedes acceder desde cualquier navegador móvil y se adaptará a tu pantalla.</div>
+            </div>
+        </div>
+
+        <div class="contact-box">
+            <h3 style="margin-top: 0; color: #fff; display: flex; align-items: center; gap: 10px;">
+                <svg style="width:24px; height:24px; color: #f472b6;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                Centro de Soporte
+            </h3>
+            <p style="color: #94a3b8; font-size: 0.9em; margin-bottom: 20px;">Dudas, sugerencias o problemas técnicos. Te leemos.</p>
+            
+            <form action="/enviar-reporte/" method="POST">
+                {% csrf_token %}
+                <label style="display:block; margin-bottom:5px; color:#cbd5e1; font-size:0.9em;">Motivo</label>
+                <select name="tipo_reporte">
+                    <option value="IDEA"> Sugerencia General</option>
+                    <option value="BUG"> Reportar Error Técnico</option>
+                    <option value="CUENTA"> Problema con mi Cuenta</option>
+                    <option value="OTRO"> Otro</option>
+                </select>
+
+                <label style="display:block; margin-bottom:5px; color:#cbd5e1; font-size:0.9em;">Mensaje</label>
+                <textarea name="mensaje_reporte" rows="5" placeholder="Describe tu consulta..." required></textarea>
+
+                <button type="submit" class="btn-submit">ENVIAR</button>
+            </form>
+        </div>
+    </div>
+
+    {% if mostrar_exito %}
+    <div onclick="this.style.display='none'" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #22c55e; color: white; padding: 15px 30px; border-radius: 50px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); z-index: 4000; cursor: pointer; animation: fadeIn 0.5s;">
+        ✅ ¡Mensaje Recibido! El equipo de TuClima te responderá pronto.
+    </div>
+    {% endif %}
+
+<div style="width: 100%; margin-top: 60px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 40px; clear: both;">
+    
+    <h2 style="color: #fff; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; justify-content: center;">
+        <svg style="width:28px; height:28px; color: #38bdf8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+        Arquitectura del Proyecto
+    </h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto;">
+        
+        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; padding: 30px; border-radius: 16px;">
+            <h3 style="color: #cbd5e1; font-size: 1.2em; display: flex; align-items: center; gap: 10px; margin-top: 0;">
+                <svg style="width:20px; height:20px; color: #facc15;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                El Equipo
+            </h3>
+            <p style="color: #94a3b8; line-height: 1.6; font-size: 0.95em;">
+                Somos un equipo de desarrollo vinculado al ámbito académico (UBA), enfocados en la intersección entre la <strong>Meteorología, la Física y la Data Science</strong>. 
+                <br><br>
+                Nuestro objetivo es democratizar el acceso a datos climáticos complejos, transformando variables crudas de satélites en paneles de control intuitivos para la toma de decisiones críticas (Agro, Naval, Aeronáutica y Energías Renovables).
+            </p>
+        </div>
+
+        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; padding: 30px; border-radius: 16px;">
+            <h3 style="color: #cbd5e1; font-size: 1.2em; display: flex; align-items: center; gap: 10px; margin-top: 0;">
+                <svg style="width:20px; height:20px; color: #22c55e;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                Stack Tecnológico
+            </h3>
+            <p style="color: #94a3b8; line-height: 1.6; font-size: 0.95em; margin-bottom: 15px;">
+                Este sistema no utiliza "widgets" prefabricados. Todo el motor de cálculo es propio:
+            </p>
+            <ul style="color: #94a3b8; font-size: 0.9em; padding-left: 20px; margin: 0; display: flex; flex-direction: column; gap: 8px;">
+                <li><strong style="color:#cbd5e1;">Backend:</strong> Python + Django (Cálculo Físico).</li>
+                <li><strong style="color:#cbd5e1;">Data Sources:</strong> Open-Meteo API, NASA ADS, ArXiv API.</li>
+                <li><strong style="color:#cbd5e1;">Frontend:</strong> HTML5 + Chart.js (Renderizado vectorial).</li>
+                <li><strong style="color:#cbd5e1;">Física:</strong> Ecuaciones reales de termodinámica.</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <div style="margin-top: 40px; background: rgba(56, 189, 248, 0.05); border: 1px dashed #38bdf8; padding: 15px; border-radius: 10px; text-align: center; color: #cbd5e1; font-size: 0.9em; max-width: 800px; margin-left: auto; margin-right: auto;">
+    <strong style="color: #38bdf8;">
+        <svg style="width:16px; height:16px; vertical-align: middle; margin-right: 4px; margin-bottom: 2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path></svg>
+        Tu opinión es combustible.
+    </strong> Este proyecto está en constante evolución. Si detectas un error en los cálculos o tienes una idea, utiliza el formulario de arriba.
+</div>
+
+</div>
+
+
+    <script>
+        function toggleFaq(element) {
+            var answer = element.nextElementSibling;
+            if (answer.style.display === "block") {
+                answer.style.display = "none";
+                element.querySelector('span').innerText = "▼";
+            } else {
+                answer.style.display = "block";
+                element.querySelector('span').innerText = "▲";
+            }
+        }
+    </script>
+</body>
+</html>

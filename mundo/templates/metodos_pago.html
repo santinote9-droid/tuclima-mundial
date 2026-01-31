@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elegir Forma de Pago</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { background: #0f172a; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .box { text-align: center; max-width: 900px; width: 100%; }
+        h2 { margin-bottom: 40px; font-size: 2.2rem; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        
+        .option {
+            background: #1e293b; border: 2px solid #334155; border-radius: 20px;
+            padding: 40px 30px; cursor: pointer; text-decoration: none; color: #fff; transition: 0.3s;
+            display: flex; flex-direction: column; align-items: center;
+            position: relative; overflow: hidden;
+        }
+        
+        /* Efectos Hover */
+        .option:hover { transform: translateY(-5px); background: #252f40; }
+        .option-paypal:hover { border-color: #0070ba; }
+        .option-bank:hover { border-color: #10b981; }
+        
+        /* Estilos de los Iconos */
+        .icon-container { margin-bottom: 25px; }
+        
+        /* Icono PayPal (Azul Oficial) */
+        .fa-paypal { font-size: 4rem; color: #0070ba; }
+        
+        /* Icono Banco (Verde Esmeralda) */
+        .fa-university { font-size: 4rem; color: #10b981; }
+        
+        h3 { margin: 0 0 15px 0; font-size: 1.5rem; }
+        p { color: #94a3b8; font-size: 0.95em; line-height: 1.5; margin-bottom: 30px; }
+        
+        .btn-go { 
+            padding: 12px 30px; border-radius: 10px; font-weight: bold; margin-top: auto; width: 100%; text-align: center; box-sizing: border-box; transition: 0.3s;
+        }
+        
+        .btn-paypal { background: #0070ba; color: white; }
+        .btn-paypal:hover { background: #005ea6; box-shadow: 0 0 20px rgba(0, 112, 186, 0.4); }
+        
+        .btn-bank { background: #10b981; color: white; }
+        .btn-bank:hover { background: #059669; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+
+    </style>
+
+<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+    <script>
+        Weglot.initialize({
+            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
+            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
+            auto_switch: true            // Detecta idioma automático
+        });
+    </script>
+
+</head>
+<body>
+
+<div id="google_translate_element" style="display:none;"></div>
+
+<script type="text/javascript">
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'es', 
+            includedLanguages: 'en,fr,it,pt,de', // Idiomas permitidos
+            autoDisplay: false
+        }, 'google_translate_element');
+    }
+</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<script type="text/javascript">
+    window.addEventListener('load', function() {
+        // A. Detectamos el idioma del navegador del usuario (ej: 'en-US' o 'pt-BR')
+        var idiomaUsuario = navigator.language || navigator.userLanguage; 
+        idiomaUsuario = idiomaUsuario.split('-')[0]; // Nos quedamos solo con las dos letras ('en', 'pt', etc.)
+
+        // B. Si el usuario NO habla español, activamos la traducción
+        if (idiomaUsuario !== 'es') {
+            
+            // Esperamos un segundo a que Google cargue en el fondo
+            setTimeout(function() {
+                var select = document.querySelector('select.goog-te-combo');
+                if (select) {
+                    select.value = idiomaUsuario; // Seleccionamos su idioma
+                    select.dispatchEvent(new Event('change')); // ¡Clic virtual!
+                }
+            }, 1000); // 1000ms = 1 segundo de espera
+        }
+    });
+</script>
+
+<style>
+    .goog-te-banner-frame { display: none !important; }
+    body { top: 0px !important; }
+    #google_translate_element { display: none !important; }
+</style>
+    
+<div style="position: absolute; top: 20px; right: 20px; z-index: 1000; font-family: sans-serif;">
+        {% if user.is_authenticated %}
+            <span style="color: #94a3b8;">Hola,</span> 
+            <strong style="color: #fff;">{{ user.username }}</strong> 
+            <span style="margin: 0 10px; color: #334155;">|</span>
+            <a href="/logout/" style="color: #ef4444; text-decoration: none; font-weight: bold;">Salir <i class="fas fa-sign-out-alt"></i></a>
+        {% else %}
+            <a href="/login/" style="color: #3b82f6; text-decoration: none; font-weight: bold; background: rgba(15, 23, 42, 0.8); padding: 8px 15px; border-radius: 20px; border: 1px solid #3b82f6;">Ingresar</a>
+        {% endif %}
+    </div>
+
+<div class="box">
+        <h2>Selecciona tu método de pago seguro</h2>
+        <div class="grid">
+            
+            <a href="/pagar-paypal/" class="option option-paypal">
+                <div class="icon-container">
+                    <i class="fab fa-paypal"></i>
+                </div>
+                <h3>PayPal / Tarjeta</h3>
+                <p>Pago internacional automático en Dólares (USD). Activación inmediata del servicio.</p>
+                <div class="btn-go btn-paypal">Pagar $15 USD con PayPal</div>
+            </a>
+
+            <a href="/transferencia/" class="option option-bank">
+                <div class="icon-container">
+                    <i class="fas fa-university"></i>
+                </div>
+                <h3>Transferencia Bancaria</h3>
+                <p>Transferencia local en Pesos Argentinos (ARS). Requiere envío de comprobante.</p>
+                <div class="btn-go btn-bank">Ver Datos de CBU</div>
+            </a>
+        </div>
+        <br><br>
+        <a href="/pricing/" style="color:#64748b; text-decoration:none; font-weight:bold;">← Volver a los planes</a>
+    </div>
+</body>
+</html>

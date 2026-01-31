@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datos de Transferencia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { background: #0f172a; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        
+        .container { max-width: 500px; width: 100%; }
+        
+        h2 { text-align: center; margin-bottom: 30px; }
+        
+        /* SELECTOR DE BANCOS (TABS) */
+        .bank-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn {
+            flex: 1; padding: 15px; border: none; border-radius: 10px; cursor: pointer;
+            font-weight: bold; color: #94a3b8; background: #1e293b; transition: 0.3s;
+            border: 2px solid #334155; display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        
+        /* Estilo Activo Brubank */
+        .tab-btn.active-brubank { background: #6f2dbd; color: white; border-color: #a663cc; }
+        /* Estilo Activo MP */
+        .tab-btn.active-mp { background: #0ea5e9; color: white; border-color: #38bdf8; }
+
+        /* TARJETA DE DATOS */
+        .account-card {
+            background: #1e293b; padding: 30px; border-radius: 20px; border: 1px solid #334155;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none; /* Oculto por defecto */
+            animation: fadeIn 0.5s;
+        }
+        .account-card.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .row { margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .row:last-child { border: none; }
+        
+        .label { color: #94a3b8; font-size: 0.85em; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .value { color: #fff; font-size: 1.1em; font-family: monospace; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; word-break: break-all; }
+
+        .copy-btn {
+            background: none; border: none; color: #64748b; cursor: pointer; font-size: 1.2em; transition: 0.2s; margin-left: 10px;
+        }
+        .copy-btn:hover { color: #fff; transform: scale(1.1); }
+
+        /* BOTÓN CONFIRMAR */
+        .btn-confirm { 
+            display: block; width: 100%; padding: 15px; margin-top: 30px;
+            background: #22c55e; color: #000; text-align: center; text-decoration: none;
+            border-radius: 10px; font-weight: bold; transition: 0.3s;
+        }
+        .btn-confirm:hover { background: #16a34a; box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); }
+
+        .email-info { text-align: center; color: #94a3b8; font-size: 0.9em; margin-top: 20px; }
+        .email-link { color: #38bdf8; text-decoration: none; font-weight: bold; }
+    </style>
+
+<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+    <script>
+        Weglot.initialize({
+            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
+            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
+            auto_switch: true            // Detecta idioma automático
+        });
+    </script>
+
+</head>
+<body>
+
+<div id="google_translate_element" style="display:none;"></div>
+
+<script type="text/javascript">
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'es', 
+            includedLanguages: 'en,fr,it,pt,de', // Idiomas permitidos
+            autoDisplay: false
+        }, 'google_translate_element');
+    }
+</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<script type="text/javascript">
+    window.addEventListener('load', function() {
+        // A. Detectamos el idioma del navegador del usuario (ej: 'en-US' o 'pt-BR')
+        var idiomaUsuario = navigator.language || navigator.userLanguage; 
+        idiomaUsuario = idiomaUsuario.split('-')[0]; // Nos quedamos solo con las dos letras ('en', 'pt', etc.)
+
+        // B. Si el usuario NO habla español, activamos la traducción
+        if (idiomaUsuario !== 'es') {
+            
+            // Esperamos un segundo a que Google cargue en el fondo
+            setTimeout(function() {
+                var select = document.querySelector('select.goog-te-combo');
+                if (select) {
+                    select.value = idiomaUsuario; // Seleccionamos su idioma
+                    select.dispatchEvent(new Event('change')); // ¡Clic virtual!
+                }
+            }, 1000); // 1000ms = 1 segundo de espera
+        }
+    });
+</script>
+
+<style>
+    .goog-te-banner-frame { display: none !important; }
+    body { top: 0px !important; }
+    #google_translate_element { display: none !important; }
+</style>
+
+    <div class="container">
+        <h2>Destino de Fondos</h2>
+
+        <div class="bank-tabs">
+            <button class="tab-btn active-brubank" onclick="showBank('brubank')">
+                <i class="fas fa-wallet"></i> Brubank
+            </button>
+            <button class="tab-btn" onclick="showBank('mp')">
+                <i class="fas fa-hand-holding-dollar"></i> Mercado Pago
+            </button>
+        </div>
+
+        <div id="card-brubank" class="account-card active">
+            <div style="text-align:center; margin-bottom:20px; color:#a663cc; font-size:3em;">
+                <i class="fas fa-university"></i>
+            </div>
+            
+            <div class="row">
+                <span class="label">Banco</span>
+                <div class="value">Brubank (Digital)</div>
+            </div>
+
+            <div class="row">
+                <span class="label">Titular</span>
+                <div class="value">Santino Gioffre</div>
+            </div>
+            
+            <div class="row">
+                <span class="label">CVU (Copia esto)</span>
+                <div class="value">
+                    <span>1430001713031490640018</span>
+                    <button class="copy-btn" onclick="copyText('1430001713031490640018')"><i class="far fa-copy"></i></button>
+                </div>
+            </div>
+
+            <div class="row">
+                <span class="label">Alias</span>
+                <div class="value">
+                    <span>santigioffre</span>
+                    <button class="copy-btn" onclick="copyText('santigioffre')"><i class="far fa-copy"></i></button>
+                </div>
+            </div>
+
+            <div class="row">
+                <span class="label">Monto Total</span>
+                <div class="value" style="color:#a663cc; font-weight:bold;">$20000 ARS</div>
+            </div>
+        </div>
+
+        <div id="card-mp" class="account-card">
+            <div style="text-align:center; margin-bottom:20px; color:#0ea5e9; font-size:3em;">
+                <i class="fas fa-qrcode"></i>
+            </div>
+            
+            <div class="row">
+                <span class="label">Billetera</span>
+                <div class="value">Mercado Pago</div>
+            </div>
+
+            <div class="row">
+                <span class="label">Titular</span>
+                <div class="value">Santino Gioffre</div>
+            </div>
+
+            <div class="row">
+                <span class="label">CVU (Copia esto)</span>
+                <div class="value">
+                    <span>0000003100089409598541</span>
+                    <button class="copy-btn" onclick="copyText('0000003100089409598541')"><i class="far fa-copy"></i></button>
+                </div>
+            </div>
+            <div class="row">
+                <span class="label">Alias</span>
+                <div class="value">
+                    <span>santiigioffre</span>
+                    <button class="copy-btn" onclick="copyText('santiigioffre')"><i class="far fa-copy"></i></button>
+                </div>
+            </div>
+            <div class="row">
+                <span class="label">Monto Total</span>
+                <div class="value" style="color:#0ea5e9; font-weight:bold;">$20000 ARS</div>
+            </div>
+        </div>
+
+        <div class="email-info">
+            Enviar comprobante a:<br>
+            <a href="mailto:climapro00@gmail.com" class="email-link">climapro00@gmail.com</a>
+        </div>
+
+        <a href="/confirmar-manual/" class="btn-confirm">
+            <i class="fas fa-check-circle"></i> YA TRANSFERÍ EL DINERO
+        </a>
+        
+        <div style="text-align:center; margin-top:20px;">
+            <a href="/metodos-pago/" style="color:#64748b; text-decoration:none;">Cancelar</a>
+        </div>
+
+    </div>
+
+    <script>
+        function showBank(bank) {
+            // Ocultar todas
+            document.querySelectorAll('.account-card').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('active-brubank');
+                el.classList.remove('active-mp');
+                // Restaurar estilo base gris
+                el.style.background = '#1e293b';
+                el.style.color = '#94a3b8';
+            });
+
+            // Mostrar seleccionada
+            if(bank === 'brubank') {
+                document.getElementById('card-brubank').classList.add('active');
+                const btn = document.querySelector('button[onclick="showBank(\'brubank\')"]');
+                btn.classList.add('active-brubank');
+                btn.style.background = '#6f2dbd'; 
+                btn.style.color = '#fff';
+            } else {
+                document.getElementById('card-mp').classList.add('active');
+                const btn = document.querySelector('button[onclick="showBank(\'mp\')"]');
+                btn.classList.add('active-mp');
+                btn.style.background = '#0ea5e9';
+                btn.style.color = '#fff';
+            }
+        }
+
+        function copyText(text) {
+            navigator.clipboard.writeText(text);
+            alert("Copiado al portapapeles: " + text);
+        }
+    </script>
+</body>
+</html>
