@@ -745,32 +745,64 @@
         </div>
     </div>
 
-<div id="traducciones-grafico" style="opacity: 0; position: absolute; z-index: -10;">
+<div id="traducciones-grafico" style="display: none;">
     <span id="txt-lluvia">Lluvia (Ingreso)</span>
     <span id="txt-eto">Evapotranspiración (Demanda)</span>
     <span id="txt-mm">Milímetros (mm)</span>
 </div>
 
 <script>
-    // Variables Globales para los datos (vienen de Django una sola vez)
-    const chartData = {
-        labels: {{ grafico_agro.fechas|safe }},
-        lluvia: {{ grafico_agro.lluvia|safe }},
-        eto: {{ grafico_agro.eto|safe }}
-    };
-
-    let chartAgro; // Variable para guardar el gráfico
+    let chartAgro; // Variable global para el gráfico
 
     // ------------------------------------------
-    // FUNCIÓN PARA DIBUJAR EL GRÁFICO
+    // 1. FUNCIÓN PARA ABRIR MODAL (Recuperada y Blindada)
+    // ------------------------------------------
+    function openModal(id) { 
+        const modal = document.getElementById(id);
+        if(modal) {
+            modal.style.display = 'flex';
+            // TRUCO CLAVE: Si el gráfico ya existe, obligarlo a ajustarse al tamaño del modal
+            if (chartAgro) {
+                setTimeout(() => { chartAgro.reflow(); }, 10);
+            }
+        } else {
+            console.error("No encuentro el modal con ID:", id);
+        }
+    }
+
+    function closeModal(id) { 
+        const modal = document.getElementById(id);
+        if(modal) modal.style.display = 'none'; 
+    }
+
+    // Cerrar al hacer clic afuera
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal-overlay')) {
+            event.target.style.display = "none";
+        }
+    }
+
+    // ------------------------------------------
+    // 2. DIBUJAR GRÁFICO (Con protección anti-errores)
     // ------------------------------------------
     function renderChart() {
-        // 1. Leemos el texto ACTUAL de los spans (Ya traducido por Weglot)
-        const labelLluvia = document.getElementById('txt-lluvia').innerText;
-        const labelEto = document.getElementById('txt-eto').innerText;
-        const labelAxis = document.getElementById('txt-mm').innerText;
+        // Datos básicos (protegidos)
+        const labels = {{ grafico_agro.fechas|safe }};
+        const dataLluvia = {{ grafico_agro.lluvia|safe }};
+        const dataEto = {{ grafico_agro.eto|safe }};
 
-        // 2. Configuración de Highcharts
+        // Intentar leer traducciones (si fallan, usa español por defecto)
+        let txtLluvia = "Lluvia (Ingreso)";
+        let txtEto = "Evapotranspiración (Demanda)";
+        let txtAxis = "Milímetros (mm)";
+
+        try {
+            if(document.getElementById('txt-lluvia')) txtLluvia = document.getElementById('txt-lluvia').innerText;
+            if(document.getElementById('txt-eto')) txtEto = document.getElementById('txt-eto').innerText;
+            if(document.getElementById('txt-mm')) txtAxis = document.getElementById('txt-mm').innerText;
+        } catch (e) { console.log("Usando textos por defecto"); }
+
+        // Configuración Highcharts
         chartAgro = Highcharts.chart('container-agro', {
             chart: { 
                 type: 'column', 
@@ -780,60 +812,47 @@
             exporting: {
                 enabled: true,
                 filename: 'TuClima_Balance_Hidrico',
-                buttons: {
-                    contextButton: {
-                        menuItems: ['downloadPNG', 'downloadPDF', 'downloadCSV'],
-                        symbolStroke: '#4ade80',
-                        theme: { fill: '#1e293b' }
-                    }
-                },
+                buttons: { contextButton: { theme: { fill: '#1e293b' } } },
                 chartOptions: { chart: { backgroundColor: '#1e293b' } }
             },
             title: { text: '' },
             xAxis: { 
-                categories: chartData.labels, 
+                categories: labels, 
                 lineColor: '#334155', 
                 labels: { style: { color: '#94a3b8', fontFamily:'JetBrains Mono' } } 
             },
             yAxis: { 
-                title: { text: labelAxis, style: { color: '#94a3b8' } }, // Eje Y traducido
+                title: { text: txtAxis, style: { color: '#94a3b8' } }, 
                 gridLineColor: '#334155',
                 labels: { style: { color: '#e2e8f0' } }
             },
             legend: { itemStyle: { color: '#e2e8f0' } },
-            tooltip: { 
-                shared: true, 
-                backgroundColor: '#1e293b', 
-                style: { color: '#fff' }, 
-                borderColor: '#4ade80' 
-            },
+            tooltip: { shared: true, backgroundColor: '#1e293b', style: { color: '#fff' }, borderColor: '#4ade80' },
             series: [{
-                name: labelLluvia, // Nombre traducido
-                data: chartData.lluvia,
+                name: txtLluvia,
+                data: dataLluvia,
                 color: '#3b82f6',
                 borderRadius: 4,
                 borderWidth: 0
             }, {
-                name: labelEto, // Nombre traducido
+                name: txtEto,
                 type: 'spline',
-                data: chartData.eto,
+                data: dataEto,
                 color: '#facc15',
                 lineWidth: 3,
-                marker: { fillColor: '#1e293b', lineWidth: 2, lineColor: '#facc15', radius: 4 }
+                marker: { fillColor: '#1e293b', lineWidth: 2, lineColor: '#facc15' }
             }],
             credits: { enabled: false }
         });
     }
 
     // ------------------------------------------
-    // INICIALIZACIÓN INTELIGENTE (Detecta Weglot)
+    // 3. INICIAR TODO
     // ------------------------------------------
     document.addEventListener("DOMContentLoaded", function() {
-        
-        // Dibujar primera vez (por si Weglot tarda o no está)
-        renderChart();
+        renderChart(); // Dibujar al cargar
 
-        // Si Weglot existe, le decimos: "Cuando cambies el idioma, redibuja el gráfico"
+        // Sincronizar con Weglot (si existe)
         if (typeof Weglot !== 'undefined') {
             Weglot.on('initialized', renderChart);
             Weglot.on('languageChanged', renderChart);
@@ -841,7 +860,7 @@
     });
 
     // ------------------------------------------
-    // 3. GENERADOR DE REPORTE (COPIAR)
+    // 4. GENERADOR DE REPORTE (COPIAR)
     // ------------------------------------------
     function copiarReporte() {
         const reporte = `
