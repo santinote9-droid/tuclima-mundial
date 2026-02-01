@@ -745,55 +745,38 @@
         </div>
     </div>
 
-<span id="texto-lluvia" style="display:none;">Lluvia (Ingreso)</span>
-<span id="texto-eto" style="display:none;">Evapotranspiración (Demanda)</span>
+<div id="traducciones-grafico" style="opacity: 0; position: absolute; z-index: -10;">
+    <span id="txt-lluvia">Lluvia (Ingreso)</span>
+    <span id="txt-eto">Evapotranspiración (Demanda)</span>
+    <span id="txt-mm">Milímetros (mm)</span>
+</div>
 
 <script>
-    // ------------------------------------------
-    // 1. LÓGICA DE VENTANAS MODALES (DIDÁCTICAS)
-    // ------------------------------------------
-    function openModal(id) { 
-        const modal = document.getElementById(id);
-        if(modal) {
-            modal.style.display = 'flex';
-        } else {
-            console.error("No se encuentra el modal con ID:", id);
-        }
-    }
+    // Variables Globales para los datos (vienen de Django una sola vez)
+    const chartData = {
+        labels: {{ grafico_agro.fechas|safe }},
+        lluvia: {{ grafico_agro.lluvia|safe }},
+        eto: {{ grafico_agro.eto|safe }}
+    };
 
-    function closeModal(id) { 
-        const modal = document.getElementById(id);
-        if(modal) modal.style.display = 'none'; 
-    }
-
-    // Cerrar al hacer clic en el fondo oscuro
-    window.onclick = function(event) {
-        if (event.target.classList.contains('modal-overlay')) {
-            event.target.style.display = "none";
-        }
-    }
+    let chartAgro; // Variable para guardar el gráfico
 
     // ------------------------------------------
-    // 2. GRÁFICO HIGHCHARTS (INTEGRADO CON WEGLOT)
+    // FUNCIÓN PARA DIBUJAR EL GRÁFICO
     // ------------------------------------------
-    document.addEventListener("DOMContentLoaded", function() {
-        // Datos desde Django
-        const labels = {{ grafico_agro.fechas|safe }};
-        const dataLluvia = {{ grafico_agro.lluvia|safe }};
-        const dataEto = {{ grafico_agro.eto|safe }};
-        
-        // Capturamos el texto traducido de los spans fantasmas
-        var nombreLluvia = document.getElementById('texto-lluvia').innerText;
-        var nombreEto = document.getElementById('texto-eto').innerText;
+    function renderChart() {
+        // 1. Leemos el texto ACTUAL de los spans (Ya traducido por Weglot)
+        const labelLluvia = document.getElementById('txt-lluvia').innerText;
+        const labelEto = document.getElementById('txt-eto').innerText;
+        const labelAxis = document.getElementById('txt-mm').innerText;
 
-        Highcharts.chart('container-agro', {
+        // 2. Configuración de Highcharts
+        chartAgro = Highcharts.chart('container-agro', {
             chart: { 
                 type: 'column', 
                 backgroundColor: 'transparent', 
                 style: { fontFamily: 'Poppins' } 
             },
-            
-            // CONFIGURACIÓN DE DESCARGA (EXPORTING)
             exporting: {
                 enabled: true,
                 filename: 'TuClima_Balance_Hidrico',
@@ -804,40 +787,57 @@
                         theme: { fill: '#1e293b' }
                     }
                 },
-                chartOptions: {
-                    chart: { backgroundColor: '#1e293b' }
-                }
+                chartOptions: { chart: { backgroundColor: '#1e293b' } }
             },
-
             title: { text: '' },
             xAxis: { 
-                categories: labels, 
+                categories: chartData.labels, 
                 lineColor: '#334155', 
                 labels: { style: { color: '#94a3b8', fontFamily:'JetBrains Mono' } } 
             },
             yAxis: { 
-                title: { text: 'Milímetros (mm)', style: { color: '#94a3b8' } }, 
+                title: { text: labelAxis, style: { color: '#94a3b8' } }, // Eje Y traducido
                 gridLineColor: '#334155',
                 labels: { style: { color: '#e2e8f0' } }
             },
             legend: { itemStyle: { color: '#e2e8f0' } },
-            tooltip: { shared: true, backgroundColor: '#1e293b', style: { color: '#fff' }, borderColor: '#4ade80' },
+            tooltip: { 
+                shared: true, 
+                backgroundColor: '#1e293b', 
+                style: { color: '#fff' }, 
+                borderColor: '#4ade80' 
+            },
             series: [{
-                name: nombreLluvia, // <--- Aquí usa el texto fantasma
-                data: dataLluvia,
+                name: labelLluvia, // Nombre traducido
+                data: chartData.lluvia,
                 color: '#3b82f6',
                 borderRadius: 4,
                 borderWidth: 0
             }, {
-                name: nombreEto,    // <--- Aquí usa el texto fantasma
+                name: labelEto, // Nombre traducido
                 type: 'spline',
-                data: dataEto,
+                data: chartData.eto,
                 color: '#facc15',
                 lineWidth: 3,
                 marker: { fillColor: '#1e293b', lineWidth: 2, lineColor: '#facc15', radius: 4 }
             }],
             credits: { enabled: false }
         });
+    }
+
+    // ------------------------------------------
+    // INICIALIZACIÓN INTELIGENTE (Detecta Weglot)
+    // ------------------------------------------
+    document.addEventListener("DOMContentLoaded", function() {
+        
+        // Dibujar primera vez (por si Weglot tarda o no está)
+        renderChart();
+
+        // Si Weglot existe, le decimos: "Cuando cambies el idioma, redibuja el gráfico"
+        if (typeof Weglot !== 'undefined') {
+            Weglot.on('initialized', renderChart);
+            Weglot.on('languageChanged', renderChart);
+        }
     });
 
     // ------------------------------------------
