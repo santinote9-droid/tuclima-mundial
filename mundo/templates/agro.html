@@ -745,120 +745,106 @@
         </div>
     </div>
 
+<span id="texto-lluvia" style="display:none;">Lluvia (Ingreso)</span>
+<span id="texto-eto" style="display:none;">Evapotranspiración (Demanda)</span>
 
-    <script>
-        // ------------------------------------------
-        // 1. LÓGICA DE VENTANAS MODALES (DIDÁCTICAS)
-        // ------------------------------------------
-        function openModal(id) { 
-            const modal = document.getElementById(id);
-            if(modal) {
-                modal.style.display = 'flex';
-            } else {
-                console.error("No se encuentra el modal con ID:", id);
-            }
+<script>
+    // ------------------------------------------
+    // 1. LÓGICA DE VENTANAS MODALES (DIDÁCTICAS)
+    // ------------------------------------------
+    function openModal(id) { 
+        const modal = document.getElementById(id);
+        if(modal) {
+            modal.style.display = 'flex';
+        } else {
+            console.error("No se encuentra el modal con ID:", id);
         }
+    }
 
-        function closeModal(id) { 
-            const modal = document.getElementById(id);
-            if(modal) modal.style.display = 'none'; 
+    function closeModal(id) { 
+        const modal = document.getElementById(id);
+        if(modal) modal.style.display = 'none'; 
+    }
+
+    // Cerrar al hacer clic en el fondo oscuro
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal-overlay')) {
+            event.target.style.display = "none";
         }
+    }
 
-        // Cerrar al hacer clic en el fondo oscuro
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal-overlay')) {
-                event.target.style.display = "none";
-            }
-        }
+    // ------------------------------------------
+    // 2. GRÁFICO HIGHCHARTS (INTEGRADO CON WEGLOT)
+    // ------------------------------------------
+    document.addEventListener("DOMContentLoaded", function() {
+        // Datos desde Django
+        const labels = {{ grafico_agro.fechas|safe }};
+        const dataLluvia = {{ grafico_agro.lluvia|safe }};
+        const dataEto = {{ grafico_agro.eto|safe }};
+        
+        // Capturamos el texto traducido de los spans fantasmas
+        var nombreLluvia = document.getElementById('texto-lluvia').innerText;
+        var nombreEto = document.getElementById('texto-eto').innerText;
 
-        // ------------------------------------------
-        // 2. TRADUCTOR AUTOMÁTICO
-        // ------------------------------------------
-        function googleTranslateElementInit() {
-            new google.translate.TranslateElement({
-                pageLanguage: 'es', includedLanguages: 'en,fr,it,pt,de', autoDisplay: false
-            }, 'google_translate_element');
-        }
-
-        window.addEventListener('load', function() {
-            var idiomaUsuario = (navigator.language || navigator.userLanguage).split('-')[0];
-            if (idiomaUsuario !== 'es') {
-                setTimeout(function() {
-                    var select = document.querySelector('select.goog-te-combo');
-                    if (select) { select.value = idiomaUsuario; select.dispatchEvent(new Event('change')); }
-                }, 1000);
-            }
-        });
-
-        // ------------------------------------------
-        // 3. GRÁFICO HIGHCHARTS (CON EXPORTACIÓN)
-        // ------------------------------------------
-        document.addEventListener("DOMContentLoaded", function() {
-            const labels = {{ grafico_agro.fechas|safe }};
-            const dataLluvia = {{ grafico_agro.lluvia|safe }};
-            const dataEto = {{ grafico_agro.eto|safe }};
-
-            Highcharts.chart('container-agro', {
-                chart: { 
-                    type: 'column', 
-                    backgroundColor: 'transparent', 
-                    style: { fontFamily: 'Poppins' } 
-                },
-                
-                // CONFIGURACIÓN DE DESCARGA (EXPORTING)
-                exporting: {
-                    enabled: true,
-                    filename: 'TuClima_Balance_Hidrico',
-                    buttons: {
-                        contextButton: {
-                            menuItems: ['downloadPNG', 'downloadPDF', 'downloadCSV'],
-                            symbolStroke: '#4ade80', // Color del icono hamburguesa
-                            theme: {
-                                fill: '#1e293b' // Fondo del botón
-                            }
-                        }
-                    },
-                    chartOptions: {
-                        chart: { backgroundColor: '#1e293b' } // Fondo oscuro al descargar
+        Highcharts.chart('container-agro', {
+            chart: { 
+                type: 'column', 
+                backgroundColor: 'transparent', 
+                style: { fontFamily: 'Poppins' } 
+            },
+            
+            // CONFIGURACIÓN DE DESCARGA (EXPORTING)
+            exporting: {
+                enabled: true,
+                filename: 'TuClima_Balance_Hidrico',
+                buttons: {
+                    contextButton: {
+                        menuItems: ['downloadPNG', 'downloadPDF', 'downloadCSV'],
+                        symbolStroke: '#4ade80',
+                        theme: { fill: '#1e293b' }
                     }
                 },
+                chartOptions: {
+                    chart: { backgroundColor: '#1e293b' }
+                }
+            },
 
-                title: { text: '' },
-                xAxis: { 
-                    categories: labels, 
-                    lineColor: '#334155', 
-                    labels: { style: { color: '#94a3b8', fontFamily:'JetBrains Mono' } } 
-                },
-                yAxis: { 
-                    title: { text: 'Milímetros (mm)', style: { color: '#94a3b8' } }, 
-                    gridLineColor: '#334155',
-                    labels: { style: { color: '#e2e8f0' } }
-                },
-                legend: { itemStyle: { color: '#e2e8f0' } },
-                tooltip: { shared: true, backgroundColor: '#1e293b', style: { color: '#fff' }, borderColor: '#4ade80' },
-                series: [{
-                    name: 'Lluvia (Ingreso)',
-                    data: dataLluvia,
-                    color: '#3b82f6',
-                    borderRadius: 4,
-                    borderWidth: 0
-                }, {
-                    name: 'Evapotranspiración (Demanda)',
-                    type: 'spline',
-                    data: dataEto,
-                    color: '#facc15',
-                    lineWidth: 3,
-                    marker: { fillColor: '#1e293b', lineWidth: 2, lineColor: '#facc15', radius: 4 }
-                }],
-                credits: { enabled: false }
-            });
+            title: { text: '' },
+            xAxis: { 
+                categories: labels, 
+                lineColor: '#334155', 
+                labels: { style: { color: '#94a3b8', fontFamily:'JetBrains Mono' } } 
+            },
+            yAxis: { 
+                title: { text: 'Milímetros (mm)', style: { color: '#94a3b8' } }, 
+                gridLineColor: '#334155',
+                labels: { style: { color: '#e2e8f0' } }
+            },
+            legend: { itemStyle: { color: '#e2e8f0' } },
+            tooltip: { shared: true, backgroundColor: '#1e293b', style: { color: '#fff' }, borderColor: '#4ade80' },
+            series: [{
+                name: nombreLluvia, // <--- Aquí usa el texto fantasma
+                data: dataLluvia,
+                color: '#3b82f6',
+                borderRadius: 4,
+                borderWidth: 0
+            }, {
+                name: nombreEto,    // <--- Aquí usa el texto fantasma
+                type: 'spline',
+                data: dataEto,
+                color: '#facc15',
+                lineWidth: 3,
+                marker: { fillColor: '#1e293b', lineWidth: 2, lineColor: '#facc15', radius: 4 }
+            }],
+            credits: { enabled: false }
         });
+    });
 
-        // ------------------------------------------
-        // 4. GENERADOR DE REPORTE (COPIAR)
-        // ------------------------------------------
-        function copiarReporte() {
-            const reporte = `
+    // ------------------------------------------
+    // 3. GENERADOR DE REPORTE (COPIAR)
+    // ------------------------------------------
+    function copiarReporte() {
+        const reporte = `
 📡 AGRO INTELLIGENCE - REPORTE TÉCNICO INTEGRAL
 ===============================================
 📍 Ubicación: {{ lat|floatformat:4 }}, {{ lon|floatformat:4 }}
@@ -912,17 +898,16 @@
 
 -----------------------------------------------
 Generado por TuClima Pro - www.tuclima.com
-            `;
+        `;
 
-            navigator.clipboard.writeText(reporte).then(() => {
-                alert("✅ ¡Reporte Completo Copiado!");
-            }).catch(err => {
-                console.error('Error al copiar:', err);
-                alert("❌ Error de permisos.");
-            });
-        }
-    </script>
-
+        navigator.clipboard.writeText(reporte).then(() => {
+            alert("✅ ¡Reporte Completo Copiado!");
+        }).catch(err => {
+            console.error('Error al copiar:', err);
+            alert("❌ Error de permisos.");
+        });
+    }
+</script>
 
 
 </body>
