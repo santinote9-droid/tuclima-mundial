@@ -1,0 +1,187 @@
+body {
+    background-color: #f0f2f5;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+/* Busca esto en tu style.css y REEMPLÁZALO todo */
+.chat-container {
+    width: 100%;
+    min-height: 600px;
+    margin: 20px 0;
+    background: #ffffff;
+    border-radius: 5px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #ddd;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.chat-header {
+    background: #007bff;
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-messages {
+    body {
+        background-color: #0f172a;
+        font-family: 'Poppins', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        margin: 0;
+        color: #e2e8f0;
+    }
+
+    .chat-container {
+        width: 100%;
+        min-height: 600px;
+        margin: 20px 0;
+        background: #1e293b;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid #334155;
+        font-family: 'Poppins', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .chat-header {
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 18px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #334155;
+    }
+
+    .chat-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        background: #1e293b;
+        color: #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .message {
+        margin-bottom: 10px;
+        padding: 14px 20px;
+        border-radius: 10px;
+        max-width: 80%;
+        font-size: 16px;
+        line-height: 1.5;
+        font-family: 'Poppins', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .bot-msg {
+        background: #334155;
+        color: #e2e8f0;
+        align-self: flex-start;
+        border-bottom-left-radius: 2px;
+    }
+
+    .user-msg {
+        background: #3b82f6;
+        color: #fff;
+        align-self: flex-end;
+        border-bottom-right-radius: 2px;
+    }
+
+    .chat-input-area {
+        padding: 18px;
+        background: #0f172a;
+        border-top: 1px solid #334155;
+        display: flex;
+        gap: 10px;
+    }
+
+    .chat-input-area input[type="text"] {
+        flex: 1;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #334155;
+        background: #1e293b;
+        color: #e2e8f0;
+        font-size: 16px;
+        outline: none;
+        font-family: 'Poppins', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        transition: border 0.2s;
+    }
+    .chat-input-area input[type="text"]:focus {
+        border: 1.5px solid #3b82f6;
+    }
+
+    .chat-input-area button {
+        padding: 12px 25px;
+        background: #3b82f6;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 16px;
+        font-family: 'Poppins', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        transition: background 0.2s, color 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .chat-input-area button:hover {
+        background: #2563eb;
+        color: #fff;
+    }
+
+    /* Botón de descarga de archivos en el chat */
+    .chat-messages a.download-link {
+        display: inline-block;
+        background: #3b82f6;
+        color: #fff !important;
+        padding: 10px 22px;
+        border-radius: 6px;
+        font-weight: 600;
+        text-decoration: none !important;
+        box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+        margin-top: 8px;
+        margin-bottom: 2px;
+        transition: background 0.2s, box-shadow 0.2s;
+        border: none;
+        font-family: 'Poppins', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    .chat-messages a.download-link:hover {
+        background: #1e293b;
+        color: #3b82f6 !important;
+        box-shadow: 0 4px 16px rgba(59,130,246,0.18);
+        border: 1.5px solid #3b82f6;
+    }
+
+    /* Mensaje de error en el chat */
+    .chat-error {
+        color: #ef4444 !important;
+        background: #fff0f0;
+        border-left: 5px solid #ef4444;
+        padding: 14px 20px;
+        border-radius: 10px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Poppins', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        margin-bottom: 10px;
+    }
+    .chat-error svg {
+        flex-shrink: 0;
+        margin-right: 6px;
+    }
