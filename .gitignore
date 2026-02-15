@@ -1,5 +1,43 @@
+# Archivos de Python
 __pycache__/
-*.pyc
-*.pyo
-db.sqlite3
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Archivos de entorno y configuración
+.env
+.env.local
+.env.production
+*.env
+
+# Base de datos
+*.sqlite3
+*.db
+
+# Archivos de logs
+*.log
+
+# Archivos de sistema
 .DS_Store
+Thumbs.db
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Media files (si tienes uploads)
+media/
+
+# Archivos estáticos compilados
+staticfiles/
+collected-static/
+
+# Variables de entorno específicas
+supabase_keys.txt
+
