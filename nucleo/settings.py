@@ -25,7 +25,12 @@ SECRET_KEY = 'django-insecure-q5drmer^4i%i@l#iv4x5=&v&3^%qzp_pj+aq&=i$3y343w-v$9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    'localhost', 
+    '127.0.0.1', 
+    'tuclima-mundial.onrender.com',
+    '*'  # Solo para desarrollo
+]
 
 
 # Application definition
@@ -118,14 +123,34 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
-# Al final de settings.py
+import os
+
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'mundo/static')]
+
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# En modo desarrollo, no se define STATICFILES_STORAGE (usa el default de Django)
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/6.0/howto/static-files/
+
+import os
+
+# Configuraciones de archivos estáticos
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'mundo/static')]
+
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Configuraciones de autenticación
 LOGIN_URL = '/login/'
 
-
-
-# Idioma por defecto
-LANGUAGE_CODE = 'en' 
+# Configuraciones de idioma
+LANGUAGE_CODE = 'es'  # Cambiado a español como principal
 
 # Activamos la traducción
 USE_I18N = True
@@ -139,16 +164,9 @@ LANGUAGES = [
     ('en', _('English')),
 ]
 
-# Carpeta donde guardaremos el diccionario de traducciones
-import os
-LOCALE_PATHS = [
-    os.path.join(BASE_DIR, 'locale'),
+# Configuraciones de CSRF para producción y desarrollo
+CSRF_TRUSTED_ORIGINS = [
+    'https://tuclima-mundial.onrender.com',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000'
 ]
-
-
-# OPTIMIZACIÓN DE ARCHIVOS ESTÁTICOS (WhiteNoise)
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-CSRF_TRUSTED_ORIGINS = ['https://tuclima-mundial.onrender.com']
