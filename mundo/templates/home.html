@@ -9,11 +9,31 @@
     <title data-wg-notranslate>Tu Clima Mundial</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div class="user-info" style="font-size:0.9em; color:#94a3b8;">
+<div class="user-info" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; font-family: 'Segoe UI', sans-serif;">
     {% if user.is_authenticated %}
-        Hola, <b>{{ user.username }}</b> | <a href="/logout/" style="color:#ef4444;">Salir</a>
+        <div style="display: flex; align-items: center; gap: 12px; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 25px; border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+            <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #38bdf8, #0ea5e9); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 0.9em; box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);">
+                {{ user.username|first|upper }}
+            </div>
+            
+            <div style="display: flex; flex-direction: column; line-height: 1.2;">
+                <span style="color: #f8fafc; font-weight: 600; font-size: 0.9em; letter-spacing: 0.5px;">Hola, {{ user.username }}</span>
+                <span style="color: #38bdf8; font-size: 0.7em; font-weight: 700; text-transform: uppercase;">PRO User</span>
+            </div>
+
+            <div style="width: 1px; height: 20px; background: rgba(56, 189, 248, 0.3); margin: 0 4px;"></div>
+
+            <a href="/logout/" style="color: #ef4444; text-decoration: none; font-weight: 700; font-size: 0.8em; padding: 5px 12px; border-radius: 15px; transition: all 0.3s; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2);" 
+               onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'; this.style.transform='scale(1.05)';" 
+               onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.transform='scale(1)';">
+               Salir
+            </a>
+        </div>
     {% else %}
-        <a href="/login/" style="color:#3b82f6;">Ingresar</a>
+        <a href="/login/" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; text-decoration: none; font-weight: 600; padding: 10px 24px; border-radius: 20px; border: 1.5px solid #38bdf8; backdrop-filter: blur(5px); transition: all 0.3s;"
+           onmouseover="this.style.background='#38bdf8'; this.style.color='white';">
+           Ingresar al Sistema
+        </a>
     {% endif %}
 </div>
 
@@ -27,11 +47,19 @@
             background-repeat: no-repeat;
             background-color: #1a2a3a;
             color: white;
-            text-align: center;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             box-shadow: inset 0 0 0 2000px rgba(0, 0, 0, 0.4);
             min-height: 100vh;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 10px 0 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         /* Buscador */
@@ -44,11 +72,12 @@
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             display: inline-block; 
-            padding: 30px; 
+            padding: 35px; 
             border-radius: 20px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-            min-width: 300px; 
-            max-width: 90%;
+            min-width: 420px; 
+            max-width: 500px;
+            width: 100%;
             position: relative;
         }
         
@@ -60,33 +89,135 @@
         .coord { font-size: 0.8em; color: #aaa; margin-top: 20px; }
 
         /* Carrusel Horario */
-        .carrusel-horas { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 20px; scrollbar-width: thin; scrollbar-color: #888 rgba(0,0,0,0.3); }
-        .carrusel-horas::-webkit-scrollbar { height: 6px; }
-        .carrusel-horas::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
-        .carrusel-horas::-webkit-scrollbar-thumb { background-color: #888; border-radius: 10px; }
+        .carrusel-horas { 
+            display: flex; 
+            overflow-x: auto; 
+            gap: 20px; 
+            padding: 25px 20px 25px 20px; 
+            scrollbar-width: thin; 
+            scrollbar-color: rgba(56, 189, 248, 0.6) rgba(15, 23, 42, 0.4);
+            border-radius: 15px;
+            background: rgba(15, 23, 42, 0.2);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
         
-        .item-hora { display: flex; flex-direction: column; align-items: center; min-width: 70px; padding: 10px; border-radius: 15px; transition: 0.3s; }
-        .icono-hora { width: 40px; height: 40px; margin: 5px 0; }
+        .carrusel-horas::-webkit-scrollbar { 
+            height: 10px; 
+        }
+        
+        .carrusel-horas::-webkit-scrollbar-track { 
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .carrusel-horas::-webkit-scrollbar-thumb { 
+            background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+            border-radius: 20px;
+            border: 2px solid rgba(15, 23, 42, 0.3);
+            box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .carrusel-horas::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.5);
+            transform: scaleY(1.2);
+        }
+        
+        .item-hora { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-width: 85px; 
+            padding: 15px 12px; 
+            border-radius: 18px; 
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        
+        .icono-hora { width: 48px; height: 48px; margin: 8px 0; }
 
         .hora-destacada { 
-            background: rgba(0, 210, 255, 0.2); 
+            background: rgba(0, 210, 255, 0.25); 
             border: 2px solid #00d2ff; 
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); 
-            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.5); 
+            transform: scale(1.08);
         }
 
         .evento-solar { 
-            background: rgba(255, 204, 0, 0.15); 
-            border: 1px solid rgba(255, 204, 0, 0.6);
-            min-width: 80px;
+            background: rgba(255, 204, 0, 0.2); 
+            border: 1px solid rgba(255, 204, 0, 0.7);
+            min-width: 95px;
+            box-shadow: 0 0 15px 3px rgba(255, 204, 0, 0.3);
+            margin: 0 3px;
+            padding: 15px 8px;
+            box-sizing: border-box;
         }
 
         /* Calendario */
-        .contenedor-dias { display: flex; overflow-x: auto; justify-content: center; gap: 15px; padding-bottom: 10px; }
-        .tarjeta-dia { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; width: 110px; cursor: pointer; transition: all 0.3s ease; }
-        .tarjeta-dia:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-5px); border-color: #ffcc00; }
-        .dia-activo { border: 2px solid #ffcc00; background: rgba(255, 204, 0, 0.1); box-shadow: 0 0 15px rgba(255, 204, 0, 0.3); transform: scale(1.05); }
-        .icono-chico { width: 50px; height: 50px; margin: 5px 0; }
+        .contenedor-dias { 
+            display: flex; 
+            overflow-x: auto; 
+            justify-content: center; 
+            gap: 25px; 
+            padding: 25px 60px; 
+            max-width: 1900px; 
+            margin: 0 auto; 
+            box-sizing: border-box;
+            background: rgba(15, 23, 42, 0.15);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 20px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(56, 189, 248, 0.6) rgba(15, 23, 42, 0.4);
+        }
+        
+        .contenedor-dias::-webkit-scrollbar {
+            height: 10px;
+        }
+        
+        .contenedor-dias::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .contenedor-dias::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+            border-radius: 20px;
+            border: 2px solid rgba(15, 23, 42, 0.3);
+            box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3);
+        }
+        
+        .contenedor-dias::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.5);
+        }
+        
+        .tarjeta-dia { 
+            background: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(8px); 
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.1); 
+            padding: 40px 20px 25px 20px; 
+            border-radius: 22px; 
+            width: 140px; 
+            height: 180px;
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            box-sizing: border-box; 
+            margin: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .tarjeta-dia:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-8px); border-color: #ffcc00; box-shadow: 0 8px 25px rgba(255, 204, 0, 0.3); }
+        .dia-activo { border: 2px solid #ffcc00; background: rgba(255, 204, 0, 0.15); box-shadow: 0 0 20px rgba(255, 204, 0, 0.4); transform: scale(1.08); }
+        .icono-chico { width: 60px; height: 60px; margin: 10px 0; }
         .max { color: #ff6b6b; font-weight: bold; } .min { color: #4ecdc4; font-weight: bold; }
         
         /* Noticias */
@@ -97,19 +228,38 @@
         .contenido-nota { padding: 15px; }
         .btn-leer { background: transparent; border: 1px solid #00d2ff; color: #00d2ff; padding: 5px 10px; border-radius: 20px; margin-top: 10px; cursor: pointer; font-size: 0.8em; text-decoration: none; display: inline-block; }
         
-        /* Estilo para la barra de scroll del Menú */
-        .sidebar::-webkit-scrollbar {
-        width: 6px; /* Finita */
+        /* Estilo para la barra de scroll del Menú - Diseño Profesional Glassmorphism */
+        #miSidebar::-webkit-scrollbar {
+            width: 12px;
         }
-        .sidebar::-webkit-scrollbar-track {
-        background: #0f172a; /* Fondo oscuro */
+        
+        #miSidebar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 20px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.2);
         }
-        .sidebar::-webkit-scrollbar-thumb {
-        background: #334155; /* Color de la barra */
-        border-radius: 10px;
+        
+        #miSidebar::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.8), rgba(14, 165, 233, 0.9));
+            border-radius: 20px;
+            border: 2px solid rgba(15, 23, 42, 0.4);
+            box-shadow: 0 3px 12px rgba(56, 189, 248, 0.4);
+            transition: all 0.3s ease;
         }
-        .sidebar::-webkit-scrollbar-thumb:hover {
-        background: #475569; /* Color al pasar el mouse */
+        
+        #miSidebar::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.9), rgba(2, 132, 199, 1));
+            box-shadow: 0 5px 20px rgba(56, 189, 248, 0.6);
+            transform: scaleY(1.1);
+            border-color: rgba(56, 189, 248, 0.3);
+        }
+        
+        /* Para Firefox - Sidebar */
+        #miSidebar {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(56, 189, 248, 0.8) rgba(15, 23, 42, 0.6);
         }
 
     </style>
@@ -122,8 +272,12 @@
             auto_switch: true            // Detecta idioma automático
         });
     </script>
+
+<meta name="google" content="notranslate">
 </head>
+
 <body>
+<div class="main-container">
 
 {% if opciones_ciudades %}
 <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
@@ -182,14 +336,28 @@
 
 <script type="text/javascript">
     function googleTranslateElementInit() {
-        new google.translate.TranslateElement({
-            pageLanguage: 'es', 
-            includedLanguages: 'en,fr,it,pt,de', // Idiomas permitidos
-            autoDisplay: false
-        }, 'google_translate_element');
+        try {
+            new google.translate.TranslateElement({
+                pageLanguage: 'es', 
+                includedLanguages: 'en,fr,it,pt,de', // Idiomas permitidos
+                autoDisplay: false
+            }, 'google_translate_element');
+        } catch (error) {
+            console.log('Google Translate no disponible:', error.message);
+        }
     }
+    
+    // Cargar Google Translate con manejo de errores
+    (function() {
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+        script.onerror = function() {
+            console.log('Google Translate bloqueado o no disponible');
+        };
+        document.head.appendChild(script);
+    })();
 </script>
-<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
 <script type="text/javascript">
     window.addEventListener('load', function() {
@@ -235,7 +403,7 @@
         </button>
 
 {% if user.is_authenticated and user.perfil.suscripcion_activa %}
-    <div style="
+    <div class="notranslate" style="
         background: rgba(0, 0, 0, 0.6);
         backdrop-filter: blur(5px);
         padding: 10px 20px;
@@ -252,108 +420,108 @@
 {% endif %} </div>
 
     <div id="miSidebar" style="
-        position: fixed; 
-        top: 0; 
-        left: -300px; /* Oculto a la izquierda */
-        width: 280px; 
-        height: 100%;
-        overflow-y: auto; 
-        background: rgba(15, 20, 35, 0.95); /* Color oscuro profundo */
-        backdrop-filter: blur(20px); 
-        border-right: 1px solid rgba(0, 210, 255, 0.3);
-        box-shadow: 5px 0 30px rgba(0,0,0,0.8);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Animación suave */
-        z-index: 10001; 
-        padding: 30px; 
+        position: fixed;
+        top: 0;
+        left: -300px;
+        width: 280px;
+        height: 100vh;
+        overflow-y: auto;
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(12px);
+        border-right: 1px solid rgba(56, 189, 248, 0.2);
+        box-shadow: 5px 0 30px rgba(0,0,0,0.7);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 10001;
+        padding: 28px 18px 18px 18px;
         text-align: left;
         display: flex;
         flex-direction: column;">
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
-    <span style="color: #fff; font-size: 1.1em; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">Navegación</span>
-    <button onclick="toggleMenu()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.2em; cursor: pointer; transition: 0.2s;" onmouseover="this.style.color='#fff'">✕</button>
-</div>
+        <div style="display: flex; justify-content: flex-start; align-items: center; margin-bottom: 30px; border-bottom: 1px solid rgba(56,189,248,0.1); padding-bottom: 15px; position: relative;">
+            <span style="color: #94a3b8; font-size: 0.75em; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.9;">NAVEGACIÓN</span>
+            <button onclick="toggleMenu()" style="background: transparent; border: none; color: #64748b; font-size: 1em; cursor: pointer; border-radius: 6px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; position: absolute; top: -8px; right: -8px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8'" onmouseout="this.style.background='transparent'; this.style.color='#64748b'">
+                <svg style="width:14px; height:14px; stroke-width:2;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
 
 <div style="display: flex; flex-direction: column; gap: 8px;">
     
-    <a href="/" style="text-decoration: none; color: #fff; padding: 12px 15px; border-radius: 8px; background: rgba(56, 189, 248, 0.1); border-left: 3px solid #38bdf8; display: flex; align-items: center; gap: 12px; transition: 0.2s;">
-        <svg style="width:18px; height:18px; color:#38bdf8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-        <span style="font-weight: 600; font-size: 0.9em;">Inicio / General</span>
+    <a href="/" style="text-decoration: none; color: #cbd5e1; padding: 12px 15px; border-radius: 8px; display: flex; align-items: center; gap: 12px; transition: 0.2s; position: relative; background: linear-gradient(90deg, rgba(56,189,248,0.10) 0%, rgba(56,189,248,0.03) 100%); border-left: 3px solid #38bdf8; box-shadow: 0 2px 8px 0 rgba(56,189,248,0.04);">
+        <span style="display:inline-flex; align-items:center; justify-content:center;">
+            <svg style="width:20px; height:20px; color:#38bdf8; stroke-width:1.7;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        </span>
+        <span style="font-weight: 600; font-size: 0.92em; letter-spacing: 0.5px;">Inicio / General</span>
+        <span style="position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: linear-gradient(180deg, #38bdf8 0%, #0ea5e9 100%); box-shadow: 0 0 8px #38bdf8; opacity: 1;"></span>
     </a>
 
-    <div style="color: #64748b; font-size: 0.75em; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding-left: 10px;">Modos Profesionales</div>
+    <div style="color: #64748b; font-size: 0.72em; margin-top: 18px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding-left: 8px; opacity: 0.8;">MODOS PROFESIONALES</div>
 
-    <a href="/agro?lat={{ lat }}&lon={{ lon }}" class="btn-menu" style="text-decoration: none; color: #cbd5e1; padding: 10px 15px; border-radius: 8px; transition: 0.2s; display: flex; align-items: center; gap: 12px;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#cbd5e1';">
-        <svg style="width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 6.5-5.2 14.6l-3.3 2.6C13.5 18.3 8 15 4 10"></path></svg>
-        <span style="font-size: 0.9em;">Modo Agro</span>
+    <a href="/agro?lat={{ lat }}&lon={{ lon }}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+        <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 6.5-5.2 14.6l-3.3 2.6C13.5 18.3 8 15 4 10"></path></svg>
+        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Modo Agro</span>
     </a>
     
-    <a href="/naval?lat={{ lat }}&lon={{ lon }}" class="btn-menu" style="text-decoration: none; color: #cbd5e1; padding: 10px 15px; border-radius: 8px; transition: 0.2s; display: flex; align-items: center; gap: 12px;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#cbd5e1';">
-        <svg style="width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"></circle><line x1="12" y1="22" x2="12" y2="8"></line><path d="M5 12H2a10 10 0 0 0 20 0h-3"></path></svg>
-        <span style="font-size: 0.9em;">Modo Naval</span>
+    <a href="/naval?lat={{ lat }}&lon={{ lon }}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+        <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="5" r="3"></circle><line x1="12" y1="22" x2="12" y2="8"></line><path d="M5 12H2a10 10 0 0 0 20 0h-3"></path></svg>
+        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Modo Naval</span>
     </a>
     
-    <a href="/aereo?lat={{ lat }}&lon={{ lon }}" class="btn-menu" style="text-decoration: none; color: #cbd5e1; padding: 10px 15px; border-radius: 8px; transition: 0.2s; display: flex; align-items: center; gap: 12px;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#cbd5e1';">
-    <svg style="width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <a href="/aereo?lat={{ lat }}&lon={{ lon }}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+    <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
         <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/>
     </svg>
-    <span style="font-size: 0.9em;">Modo Aéreo</span>
+    <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Modo Aéreo</span>
 </a>
     
-    <a href="/energia?lat={{ lat }}&lon={{ lon }}" class="btn-menu" style="text-decoration: none; color: #cbd5e1; padding: 10px 15px; border-radius: 8px; transition: 0.2s; display: flex; align-items: center; gap: 12px;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#cbd5e1';">
-        <svg style="width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-        <span style="font-size: 0.9em;">Modo Energías</span>
+    <a href="/energia?lat={{ lat }}&lon={{ lon }}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+        <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Modo Energías</span>
     </a>
 
-    <div style="color: #64748b; font-size: 0.75em; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding-left: 10px;">Ciencia</div>
+    <div style="color: #64748b; font-size: 0.72em; margin-top: 20px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding-left: 8px; opacity: 0.8;">CIENCIA</div>
 
-    <a href="/mapas/" style="text-decoration: none; color: #38bdf8; padding: 12px 15px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.2); display: flex; align-items: center; gap: 12px; transition: 0.2s; background: rgba(56, 189, 248, 0.05);" onmouseover="this.style.background='rgba(56, 189, 248, 0.15)'" onmouseout="this.style.background='rgba(56, 189, 248, 0.05)';">
-        <svg style="width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
-        <span style="font-weight: 600; font-size: 0.9em;">Mapas & Radar</span>
+    <a href="/mapas/" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+        <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Mapas & Radar</span>
     </a>
 
-    <a href="/ciencia/" style="text-decoration: none; color: #a5b4fc; padding: 12px 15px; border-radius: 8px; border: 1px solid rgba(165, 180, 252, 0.2); display: flex; align-items: center; gap: 12px; transition: 0.2s; background: rgba(165, 180, 252, 0.05);" onmouseover="this.style.background='rgba(165, 180, 252, 0.15)'" onmouseout="this.style.background='rgba(165, 180, 252, 0.05)';">
-        <svg style="width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
-        <span style="font-weight: 600; font-size: 0.9em;">Papers & ArXiv</span>
+    <a href="/ciencia/" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+        <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Papers & ArXiv</span>
     </a>
     
-<a href="/comparador/?lat={{ lat }}&lon={{ lon }}&ciudad={{ ciudad }}" style="padding: 15px 20px; text-decoration: none; font-size: 18px; color: #e2e8f0; display: flex; align-items: center; gap: 15px; transition: 0.3s; border-left: 3px solid transparent;" onmouseover="this.style.background='rgba(56, 189, 248, 0.1)'; this.style.borderLeft='3px solid #38bdf8'; this.style.color='#38bdf8'" onmouseout="this.style.background='transparent'; this.style.borderLeft='3px solid transparent'; this.style.color='#e2e8f0'">
-    
-    <svg style="width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<a href="/comparador/?lat={{ lat }}&lon={{ lon }}&ciudad={{ ciudad }}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+    <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
         <path d="M3 3v18h18"></path>
         <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
     </svg>
-    
-    <div>
-        <div style="font-weight: 600;">Comparador Científico</div>
-        <div style="font-size: 0.7em; color: #94a3b8;">GFS vs ARPEGE vs ICON</div>
-    </div>
+    <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Comparador Científico</span>
 </a>
 
-<a href="{% url 'espacio' %}" style="display: flex; align-items: center; gap: 10px; color: #e2e8f0; text-decoration: none; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); transition: 0.3s;">
-    <div style="background: linear-gradient(135deg, #667eea, #764ba2); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px #764ba2;">
-        <svg style="width:20px; height:20px; color:white;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg>
-    </div>
-    <span style="font-weight: 600; font-family: 'Segoe UI', sans-serif;">Meteorología Espacial</span>
+<a href="{% url 'espacio' %}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+    <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg>
+    <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Meteorología Espacial</span>
 </a>
 
-    <a href="/ayuda/" style="display: flex; align-items: center; gap: 12px; padding: 12px 15px; color: #94a3b8; text-decoration: none; border-radius: 8px; transition: 0.2s; margin-top: 10px;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94a3b8'">
-        <svg style="width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-        <span style="font-size: 0.9em;">Centro de Ayuda</span>
+    <div style="color: #64748b; font-size: 0.72em; margin-top: 20px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding-left: 8px; opacity: 0.8;">PLATAFORMA</div>
+
+    <a href="/ayuda/" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+        <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Centro de Ayuda</span>
     </a>
 
-<div class="sidebar-section" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+<div class="sidebar-section" style="margin-top: 25px; border-top: 1px solid rgba(56,189,248,0.1); padding-top: 15px;">
     
-    <div style="font-size: 0.75em; color: #64748b; margin-bottom: 10px; padding-left: 20px; font-family: 'Orbitron'; letter-spacing: 1px;">
+    <div style="font-size: 0.72em; color: #64748b; margin-bottom: 8px; padding-left: 8px; letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; opacity: 0.8;">
         CONFIGURACIÓN
     </div>
 
-    <div class="sidebar-link" onclick="toggleSidebarLang()" style="cursor: pointer; display: flex; align-items: center; padding: 12px 20px; color: #94a3b8; transition: 0.3s;">
-        <svg style="width:20px; height:20px; margin-right: 15px; color:#38bdf8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+    <div onclick="toggleSidebarLang()" style="cursor: pointer; display: flex; align-items: center; padding: 10px 16px; color: #94a3b8; transition: all 0.2s; border-radius: 8px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+        <svg style="width:17px; height:17px; margin-right: 12px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
         
-        <span style="font-family: 'Segoe UI', sans-serif;">Idioma / Language</span>
+        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Idioma / Language</span>
         
-        <svg id="lang-arrow" style="width:14px; height:14px; margin-left: auto; transition: 0.3s;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        <svg id="lang-arrow" style="width:12px; height:12px; margin-left: auto; transition: 0.3s; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6"/></svg>
     </div>
 
     <div id="sidebar-lang-list" style="display: none; background: rgba(0,0,0,0.3); margin: 5px 15px; border-radius: 8px; overflow: hidden;">
@@ -411,15 +579,9 @@
     }
 </style>
 
-
-
-
 </div>
 
-<div style="margin-top: auto; font-size: 0.7em; color: #475569; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-    <div style="font-weight: 700; letter-spacing: 1px;">FLIGHT DECK PRO</div>
-    <div style="margin-top: 5px;">v2.0 Stable • UBA</div>
-</div>
+
 
 </div> 
 
@@ -436,62 +598,284 @@
 
     <div style="height: 80px;"></div>    
     
-    <div class="buscador" style="display: flex; justify-content: center; gap: 15px; align-items: center; margin-bottom: 40px;">
-        <form action="" method="get" style="display: flex; gap: 10px; align-items: center;">
-            <input type="text" name="ciudad" placeholder="Buscar ciudad..." required style="padding: 15px 25px; width: 250px; border-radius: 30px; border: 2px solid rgba(0, 210, 255, 0.5); outline: none; text-align: center; font-size: 1.2em; background: rgba(0, 0, 0, 0.5); color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.5); transition: all 0.3s ease;">
-
-            <button type="submit" style="background: rgba(0, 0, 0, 0.7); border: 3px solid #00d2ff; width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 15px rgba(0, 210, 255, 0.4), inset 0 0 10px rgba(0, 210, 255, 0.2); transition: all 0.3s ease;" title="Buscar">
-                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#00d2ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 5px #00d2ff);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    <div class="buscador" style="display: flex; flex-direction: column; justify-content: center; gap: 20px; align-items: center; margin-bottom: 40px; padding: 30px 20px; width: 100%; max-width: 800px;">
+        
+        <!-- Buscador Principal (actual) -->
+        <div style="display: flex; justify-content: center; gap: 12px; align-items: center; width: 100%; max-width: 600px;">
+            <form action="" method="get" style="display: flex; gap: 12px; align-items: center; width: 100%;">
+            <input type="text" name="ciudad" placeholder="Buscar ciudad..." required 
+               style="flex: 1; padding: 14px 24px; border-radius: 25px; border: 1.5px solid rgba(56, 189, 248, 0.6); outline: none; font-size: 1.1em; background: rgba(15, 23, 42, 0.8); color: white; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(56, 189, 248, 0.1); transition: all 0.3s ease; backdrop-filter: blur(10px);" onfocus="this.style.borderColor='#38bdf8'; this.style.boxShadow='0 4px 25px rgba(56, 189, 248, 0.4), inset 0 0 15px rgba(56, 189, 248, 0.2)'" onblur="this.style.borderColor='rgba(56, 189, 248, 0.6)'; this.style.boxShadow='0 4px 20px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(56, 189, 248, 0.1)';">
+            <button type="submit" style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); border: 2px solid #ffffff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 8px 30px rgba(30, 64, 175, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1); transition: all 0.3s ease; flex-shrink: 0; position: relative; overflow: hidden;" onmouseover="this.style.transform='scale(1.1) translateY(-2px)'; this.style.boxShadow='0 12px 40px rgba(30, 64, 175, 0.6), 0 4px 15px rgba(255, 255, 255, 0.2)'; this.style.borderColor='#f8fafc';" onmouseout="this.style.transform='scale(1) translateY(0)'; this.style.boxShadow='0 8px 30px rgba(30, 64, 175, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1)'; this.style.borderColor='#ffffff';">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="#ffffff" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1 0 6.65 6.65a7.5 7.5 0 0 0 10.6 10.6z"/></svg>
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%); transform: translateX(-100%); transition: transform 0.6s ease;"></div>
             </button>
-        </form>
-        <button onclick="usarGPS()" style="background: rgba(0, 0, 0, 0.7); border: 3px solid #00d2ff; width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 15px rgba(0, 210, 255, 0.4), inset 0 0 10px rgba(0, 210, 255, 0.2); transition: all 0.3s ease;" title="Actualizar Ubicación">
-            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#00d2ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 5px #00d2ff);"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-        </button>
-    </div>
-<div style="display: flex; justify-content: center; gap: 10px; align-items: center; margin-bottom: 40px;">
-    <form method="get" style="display: flex; gap: 10px; align-items: center;">
-        <input type="number" step="any" name="lat" placeholder="Lat (Ej: -34.5)" required 
-               style="padding: 12px 15px; width: 140px; border-radius: 30px; border: 2px solid #00d2ff; background: rgba(0, 0, 0, 0.5); color: white; outline: none; text-align: center;">
+            </form>
+            <button onclick="usarGPS()" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%); border: 2px solid #ffffff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 8px 30px rgba(30, 58, 138, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1); transition: all 0.3s ease; flex-shrink: 0; position: relative; overflow: hidden;" title="Ubicación Actual" onmouseover="this.style.transform='scale(1.1) translateY(-2px)'; this.style.boxShadow='0 12px 40px rgba(30, 58, 138, 0.6), 0 4px 15px rgba(255, 255, 255, 0.2)'; this.style.borderColor='#f8fafc';" onmouseout="this.style.transform='scale(1) translateY(0)'; this.style.boxShadow='0 8px 30px rgba(30, 58, 138, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1)'; this.style.borderColor='#ffffff';">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="#ffffff" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+            </svg>
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%); transform: translateX(-100%); transition: transform 0.6s ease;"></div>
+            </button>
+        </div>
+
+        <div style="width: 100%; height: 2px;"></div>
+
+        <!-- Efectos hover para botones del buscador -->
+        <script>
+            // Añadir efecto de brillo a los botones del buscador
+            document.addEventListener('DOMContentLoaded', function() {
+                const searchButtons = document.querySelectorAll('button[type="submit"], button[onclick*="usarGPS"]');
+                
+                searchButtons.forEach(button => {
+                    button.addEventListener('mouseenter', function() {
+                        const shimmer = this.querySelector('div');
+                        if (shimmer && shimmer.style.background.includes('gradient')) {
+                            shimmer.style.transform = 'translateX(100%)';
+                        }
+                    });
+                    
+                    button.addEventListener('mouseleave', function() {
+                        const shimmer = this.querySelector('div');
+                        if (shimmer && shimmer.style.background.includes('gradient')) {
+                            setTimeout(() => {
+                                shimmer.style.transform = 'translateX(-100%)';
+                            }, 300);
+                        }
+                    });
+                });
+            });
+        </script>
+
+        <!-- Estilos para ocultar flechas nativas y personalizar inputs -->
+        <style>
+            /* Ocultar flechas nativas de los inputs number */
+            input[type="number"]::-webkit-outer-spin-button,
+            input[type="number"]::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+            input[type="number"] {
+                -moz-appearance: textfield;
+            }
+            
+            /* Estilos para las flechas personalizadas */
+            .coord-input-container {
+                position: relative;
+                width: 180px;
+            }
+            
+            .coord-arrows {
+                position: absolute;
+                right: 8px;
+                top: 50%;
+                transform: translateY(-50%);
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+            
+            .coord-arrow {
+                width: 24px;
+                height: 20px;
+                background: rgba(56, 189, 248, 0.1);
+                border: 1px solid rgba(56, 189, 248, 0.3);
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+            }
+            
+            .coord-arrow:hover {
+                background: rgba(56, 189, 248, 0.2);
+                border-color: rgba(56, 189, 248, 0.6);
+                transform: scale(1.1);
+                box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3);
+            }
+            
+            .coord-arrow:active {
+                transform: scale(0.95);
+                background: rgba(56, 189, 248, 0.3);
+            }
+            
+            .coord-arrow svg {
+                width: 12px;
+                height: 12px;
+                stroke: #38bdf8;
+                stroke-width: 2.5;
+                transition: all 0.2s ease;
+            }
+            
+            .coord-arrow:hover svg {
+                stroke: #0ea5e9;
+                transform: scale(1.1);
+            }
+        </style>
+
+        <div style="display: flex; justify-content: center; width: 100%; margin-top: 20px;">
+    <form method="get" style="display: flex; align-items: center; justify-content: center; gap: 40px; width: 100%; max-width: 700px; flex-wrap: nowrap;">
         
-        <input type="number" step="any" name="lon" placeholder="Lon (Ej: -58.5)" required 
-               style="padding: 12px 15px; width: 140px; border-radius: 30px; border: 2px solid #00d2ff; background: rgba(0, 0, 0, 0.5); color: white; outline: none; text-align: center;">
-        
-        <button type="submit" style="background: #00d2ff; border: none; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-weight: bold; color: #000; transition: 0.3s;">
-            IR 
+        <div class="coord-input-container">
+            <input type="number" step="any" name="lat" id="latInput" placeholder="Latitud" required 
+                style="padding: 12px 45px 12px 16px; width: 100%; border-radius: 20px; border: 1.5px solid rgba(56, 189, 248, 0.4); background: rgba(15, 23, 42, 0.7); color: white; outline: none; text-align: center; font-size: 1em; transition: all 0.3s ease; backdrop-filter: blur(5px); box-sizing: border-box;" 
+                onfocus="this.style.borderColor='#38bdf8'; this.style.boxShadow='0 0 15px rgba(56, 189, 248, 0.3)';" 
+                onblur="this.style.borderColor='rgba(56, 189, 248, 0.4)'; this.style.boxShadow='none'"
+                min="-90" max="90">
+            
+            <div class="coord-arrows">
+                <div class="coord-arrow" onclick="incrementInput('latInput')" title="Aumentar latitud">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M7 14l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="coord-arrow" onclick="decrementInput('latInput')" title="Disminuir latitud">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M7 10l5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="coord-input-container">
+            <input type="number" step="any" name="lon" id="lonInput" placeholder="Longitud" required 
+                style="padding: 12px 45px 12px 16px; width: 100%; border-radius: 20px; border: 1.5px solid rgba(56, 189, 248, 0.4); background: rgba(15, 23, 42, 0.7); color: white; outline: none; text-align: center; font-size: 1em; transition: all 0.3s ease; backdrop-filter: blur(5px); box-sizing: border-box;" 
+                onfocus="this.style.borderColor='#38bdf8'; this.style.boxShadow='0 0 15px rgba(56, 189, 248, 0.3)';" 
+                onblur="this.style.borderColor='rgba(56, 189, 248, 0.4)'; this.style.boxShadow='none'"
+                min="-180" max="180">
+            
+            <div class="coord-arrows">
+                <div class="coord-arrow" onclick="incrementInput('lonInput')" title="Aumentar longitud">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M7 14l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="coord-arrow" onclick="decrementInput('lonInput')" title="Disminuir longitud">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M7 10l5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" style="margin-left: 15px; background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); border: 2px solid #ffffff; padding: 12px 30px; border-radius: 20px; cursor: pointer; font-weight: 600; color: white; transition: all 0.3s ease; font-size: 1em; box-shadow: 0 6px 25px rgba(30, 64, 175, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; overflow: hidden;" 
+            onmouseover="this.style.transform='translateY(-3px) scale(1.08)'; this.style.boxShadow='0 10px 35px rgba(30, 64, 175, 0.6), 0 4px 15px rgba(255, 255, 255, 0.2)'; this.style.borderColor='#f8fafc';" 
+            onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 6px 25px rgba(30, 64, 175, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1)'; this.style.borderColor='#ffffff';">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#ffffff" stroke-width="2.8" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%); transform: translateX(-100%); transition: transform 0.6s ease;"></div>
         </button>
+
     </form>
 </div>
 
-    <script>
+        <script>
         window.onload = function() {
             if (window.location.search === "") {
-                usarGPS();
+            usarGPS();
             }
         };
 
         function usarGPS() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const latActual = urlParams.get('lat');
-                    if (!latActual) {
-                        window.location.href = `/?lat=${lat}&lon=${lon}`;
-                    }
-                }, function(error) { console.log("GPS no disponible"); });
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                const urlParams = new URLSearchParams(window.location.search);
+                const latActual = urlParams.get('lat');
+                if (!latActual) {
+                window.location.href = `/?lat=${lat}&lon=${lon}`;
+                }
+            }, function(error) { console.log("GPS no disponible"); });
             }
         }
-    </script>
+        
+        // Funciones para controlar las flechas personalizadas
+        function incrementInput(inputId) {
+            const input = document.getElementById(inputId);
+            const currentValue = parseFloat(input.value) || 0;
+            const step = 0.1;
+            let newValue = currentValue + step;
+            
+            // Validar límites según el tipo de coordenada
+            if (inputId === 'latInput') {
+                newValue = Math.min(90, newValue);
+            } else if (inputId === 'lonInput') {
+                newValue = Math.min(180, newValue);
+            }
+            
+            input.value = parseFloat(newValue.toFixed(6));
+            
+            // Animación de confirmación
+            input.style.borderColor = '#22c55e';
+            setTimeout(() => {
+                input.style.borderColor = '#38bdf8';
+            }, 200);
+        }
+        
+        function decrementInput(inputId) {
+            const input = document.getElementById(inputId);
+            const currentValue = parseFloat(input.value) || 0;
+            const step = 0.1;
+            let newValue = currentValue - step;
+            
+            // Validar límites según el tipo de coordenada
+            if (inputId === 'latInput') {
+                newValue = Math.max(-90, newValue);
+            } else if (inputId === 'lonInput') {
+                newValue = Math.max(-180, newValue);
+            }
+            
+            input.value = parseFloat(newValue.toFixed(6));
+            
+            // Animación de confirmación
+            input.style.borderColor = '#22c55e';
+            setTimeout(() => {
+                input.style.borderColor = '#38bdf8';
+            }, 200);
+        }
+        
+        // Funcionalidad de teclado para incrementar/decrementar con flechas
+        document.addEventListener('DOMContentLoaded', function() {
+            const latInput = document.getElementById('latInput');
+            const lonInput = document.getElementById('lonInput');
+            
+            if (latInput) {
+                latInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        incrementInput('latInput');
+                    } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        decrementInput('latInput');
+                    }
+                });
+            }
+            
+            if (lonInput) {
+                lonInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        incrementInput('lonInput');
+                    } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        decrementInput('lonInput');
+                    }
+                });
+            }
+        });
+        </script>
 
-    <div class="card">
+    <div class="card" style="margin: 0 auto; display: flex; flex-direction: column; align-items: center; text-align: center;">
         <h3>El clima en:</h3>
         <h1>{{ ciudad }}</h1>
         <p style="font-size: 1.1em; color: #ddd;">{{ pais }}</p>
         <div style="background: rgba(0,0,0,0.4); display: inline-block; padding: 5px 15px; border-radius: 20px; margin-top: 5px; border: 1px solid rgba(255,255,255,0.2);">
              Hora local: <span style="color: #ffcc00; font-weight: bold;">{{ hora_local|date:"H:i" }}</span>
         </div>
-        <hr style="border-color: #aaa; opacity: 0.3; margin-top: 15px;">
+        <hr style="border-color: #aaa; opacity: 0.3; margin-top: 15px; width: 80%;">
         <img src="{{ icono }}" class="icono-principal">
         <h2 style="color: #00d2ff; margin-top: -10px; margin-bottom: 20px;">{{ descripcion }}</h2>
         <div style="margin-bottom: 20px;">
@@ -499,36 +883,36 @@
             <div class="dato-grande" data-wg-notranslate style="line-height: 1;">{{ temp }}°C</div>
         </div>
         
-        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; margin: 20px 0; display: flex; justify-content: space-around; align-items: center; border: 1px solid rgba(255,255,255,0.1);">
-            <div style="text-align: center;">
+        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; margin: 20px 0; display: flex; justify-content: space-around; align-items: center; border: 1px solid rgba(255,255,255,0.1); gap: 15px;">
+            <div style="text-align: center; flex: 1;">
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/thermometer.svg" style="width: 35px; height: 35px; margin-bottom: 5px;">
                 <div style="font-size: 0.7em; color: #ddd;">SENSACIÓN</div>
                 <div style="font-weight: bold; font-size: 1.2em; color: #ffcc00;">{{ sensacion }}°</div>
             </div>
-            <div style="width: 1px; height: 40px; background: rgba(255,255,255,0.2);"></div>
-            <div style="text-align: center;">
+            <div style="width: 2px; height: 50px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.3), transparent); border-radius: 1px;"></div>
+            <div style="text-align: center; flex: 1;">
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/humidity.svg" style="width: 35px; height: 35px; margin-bottom: 5px;">
                 <div style="font-size: 0.7em; color: #ddd;">HUMEDAD</div>
                 <div style="font-weight: bold; font-size: 1.2em; color: #00d2ff;">{{ humedad }}%</div>
             </div>
-            <div style="width: 1px; height: 40px; background: rgba(255,255,255,0.2);"></div>
-            <div style="text-align: center;">
+            <div style="width: 2px; height: 50px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.3), transparent); border-radius: 1px;"></div>
+            <div style="text-align: center; flex: 1;">
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/raindrops.svg" style="width: 35px; height: 35px; margin-bottom: 5px;">
                 <div style="font-size: 0.7em; color: #ddd;">LLUVIA</div>
                 <div style="font-weight: bold; font-size: 1.2em; color: #fff;">{{ lluvia_hoy }}mm</div>
             </div>
         </div>
 
-        <div style="background: rgba(0,0,0,0.3); padding: 10px 20px; border-radius: 15px; margin: 15px 0; display: inline-flex; gap: 40px; align-items: center;">
+        <div style="background: rgba(0,0,0,0.3); padding: 15px 25px; border-radius: 18px; margin: 20px 0; display: inline-flex; gap: 50px; align-items: center;">
             <div style="text-align: center;">
-                <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunrise.svg" style="width: 50px; height: 50px; margin-bottom: 5px;">
-                <div style="font-size: 0.8em; color: #ddd;">AMANECER</div>
-                <div style="font-weight: bold; color: #ffcc00;">{{ sunrise }}</div>
+                <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunrise.svg" style="width: 55px; height: 55px; margin-bottom: 8px;">
+                <div style="font-size: 0.85em; color: #ddd;">AMANECER</div>
+                <div style="font-weight: bold; color: #ffcc00; font-size: 1.1em;">{{ sunrise }}</div>
             </div>
             <div style="text-align: center;">
-                <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunset.svg" style="width: 50px; height: 50px; margin-bottom: 5px;">
-                <div style="font-size: 0.8em; color: #ddd;">ATARDECER</div>
-                <div style="font-weight: bold; color: #ff6b6b;">{{ sunset }}</div>
+                <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunset.svg" style="width: 55px; height: 55px; margin-bottom: 8px;">
+                <div style="font-size: 0.85em; color: #ddd;">ATARDECER</div>
+                <div style="font-weight: bold; color: #ff6b6b; font-size: 1.1em;">{{ sunset }}</div>
             </div>
         </div>
 
@@ -549,7 +933,7 @@
     Calendario de Pronóstico
 </h2>
 
-<div class="contenedor-dias" id="listaDias">
+<div class="contenedor-dias" id="listaDias" style="margin: 0 auto; display: flex; justify-content: center; align-items: center;">
     {% for dia in pronostico %}
     <div class="tarjeta-dia {% if forloop.first %}dia-activo{% endif %}" 
          onclick="cambiarDia('{{ dia.fecha_full }}', '{{ dia.nombre_dia }}', '{{ dia.fecha_corta }}', this)">
@@ -566,32 +950,32 @@
 
     <br>
 
-    <div style="width: 90%; max-width: 800px; margin: 0 auto; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
-        <h3 id="tituloHoras" style="color: #00d2ff; margin-bottom: 15px;">Pronóstico por Horas (HOY)</h3>
+    <div style="width: 100%; max-width: 1000px; margin: 0 auto; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); padding: 30px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.5);">
+        <h3 id="tituloHoras" style="color: #00d2ff; margin-bottom: 20px; text-align: center; font-size: 1.3em;">Pronóstico por Horas (HOY)</h3>
         
         <div class="carrusel-horas" id="carruselHoras">
             {% for h in tira_horas %}
             {% if h.tipo == 'evento' %}
             <div class="item-hora evento-solar">
-                <span style="color: #fff; font-weight: bold; font-size: 0.9em;">{{ h.hora }}</span>
-                <img src="{{ h.icono }}" class="icono-hora" style="width: 50px; height: 50px;">
-                <span style="color: #ffcc00; font-weight: bold; font-size: 0.7em; margin-top: 5px;">{{ h.evento_titulo }}</span>
+                <span style="color: #fff; font-weight: bold; font-size: 1em;">{{ h.hora }}</span>
+                <img src="{{ h.icono }}" class="icono-hora">
+                <span style="color: #ffcc00; font-weight: bold; font-size: 0.8em; margin-top: 5px;">{{ h.evento_titulo }}</span>
             </div>
             {% else %}
             <div class="item-hora {% if h.es_actual %}hora-destacada{% endif %}">
-                <span style="color: #ccc; font-size: 0.8em;">{{ h.hora }}</span>
+                <span style="color: #ccc; font-size: 0.9em;">{{ h.hora }}</span>
                 <img src="{{ h.icono }}" class="icono-hora">
-                <span style="color: #ffcc00; font-weight: bold;">{{ h.temp }}°</span>
+                <span style="color: #ffcc00; font-weight: bold; font-size: 1.1em;">{{ h.temp }}°</span>
                 
-                <span style="font-size: 0.7em; color: #4ecdc4; margin-top: 2px; display: flex; align-items: center; justify-content: center; gap: 3px;">
-                    <svg style="width:10px; height:10px;" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <span style="font-size: 0.8em; color: #4ecdc4; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                    <svg style="width:12px; height:12px;" viewBox="0 0 24 24" fill="currentColor" stroke="none">
                         <path d="M12 2.69l5.74 5.82a7 7 0 0 1 0 9.88l-5.74 5.81l-5.74-5.81a7 7 0 0 1 0-9.88Z"/>
                     </svg>
                     {{ h.lluvia }}%
                 </span>
 
                 {% if h.es_actual %}
-                <div style="font-size: 0.6em; color: #00d2ff; font-weight: bold; margin-top: 5px;">AHORA</div>
+                <div style="font-size: 0.7em; color: #00d2ff; font-weight: bold; margin-top: 8px;">AHORA</div>
                 {% endif %}
             </div>
             {% endif %}
@@ -609,7 +993,7 @@
         Detalles y Precauciones
     </h2>
     
-    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 0 20px;">
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 0 20px; max-width: 1200px; margin: 0 auto;">
         
         <div style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; width: 250px; text-align: left;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -647,7 +1031,7 @@
             <div style="font-size: 1.2em; font-weight: bold; color: #fff; margin-bottom: 5px;">{{ tipo_nube }}</div>
             <div style="font-size: 0.8em; color: #aaa;">Observación Satelital</div>
             <div style="margin-top: 10px; text-align: right;">
-                <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/overcast.svg" style="width: 50px; height: 50px; opacity: 0.8;">
+                <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/overcast.svg" style="width: 55px; height: 55px; opacity: 0.8;">
             </div>
         </div>
 
@@ -755,20 +1139,247 @@
         <svg style="width:28px; height:28px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
         Alertas y Noticias Globales
     </h2>
-    
-    <div class="contenedor-noticias">
-        {% for nota in noticias %}
-        <div class="tarjeta-noticia">
-            <img src="{{ nota.imagen }}" class="foto-noticia">
-            <div class="contenido-nota">
-                <div class="cat-nota">{{ nota.categoria }}</div>
-                <h3>{{ nota.titulo }}</h3>
-                <p>{{ nota.resumen }}</p>
-                <a href="{{ nota.link }}" target="_blank" class="btn-leer">Leer más</a>
-            </div>
+
+    <div class="contenedor-noticias" id="noticias-container" style="display: flex; justify-content: center; align-items: center; min-height: 200px; max-width: 1200px; margin: 0 auto;">
+        <div style="text-align: center; color: #94a3b8;">
+            <svg style="width:40px; height:40px; animation: spin 2s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <p>Cargando noticias meteorológicas recientes...</p>
         </div>
-        {% endfor %}
     </div>
+
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .contenedor-noticias {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .tarjeta-noticia-mejorada {
+            background: #1e293b;
+            border-radius: 15px;
+            overflow: hidden;
+            text-align: left;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 480px;
+        }
+        
+        .tarjeta-noticia-mejorada:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(56, 189, 248, 0.2);
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+        
+        .foto-noticia-mejorada {
+            width: 100%;
+            height: 160px;
+            background: linear-gradient(135deg, #00d2ff, #0f172a);
+            object-fit: cover;
+            display: block;
+        }
+        
+        .contenido-nota {
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .contenido-nota > * {
+            margin: 0;
+        }
+        
+        .noticia-titulo {
+            color: #fff;
+            font-size: 0.95em;
+            line-height: 1.3;
+            font-weight: 600;
+            margin: 10px 0;
+            flex-shrink: 0;
+        }
+        
+        .noticia-descripcion {
+            font-size: 0.85em;
+            color: #cbd5e1;
+            line-height: 1.4;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            margin-bottom: 12px;
+        }
+        
+        .noticia-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            margin-top: auto;
+        }
+    </style>
+
+    <script>
+        function formatearFecha(fecha) {
+            const ahora = new Date();
+            const fechaNoticia = new Date(fecha);
+            const diferencia = Math.floor((ahora - fechaNoticia) / 1000);
+            
+            if (diferencia < 60) return 'Hace unos segundos';
+            if (diferencia < 3600) return `Hace ${Math.floor(diferencia / 60)} min`;
+            if (diferencia < 86400) return `Hace ${Math.floor(diferencia / 3600)} h`;
+            if (diferencia < 604800) return `Hace ${Math.floor(diferencia / 86400)} días`;
+            
+            return fechaNoticia.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+        }
+        
+        function esNoticiaMeteorologia(titulo, descripcion) {
+            const contenido = (titulo + ' ' + descripcion).toLowerCase();
+            const palabrasMeteo = ['clima', 'meteorolog', 'temperatura', 'lluvia', 'nieve', 'tormenta', 'viento', 'granizo', 'huracan', 'ciclon', 'presion', 'humedad', 'pronostico', 'frente frio', 'onda de calor', 'fenomeno', 'precipitacion', 'alerta', 'advertencia', 'temporal', 'desastre natural', 'inundacion', 'sequia', 'atmofera', 'clima'];
+            return palabrasMeteo.some(palabra => contenido.includes(palabra));
+        }
+        
+        async function cargarNoticias() {
+            try {
+                const container = document.getElementById('noticias-container');
+                const feedURL = 'https://news.google.com/rss/search?q=clima+meteorologia+temperatura&hl=es-419&gl=AR';
+                const rss2jsonAPI = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedURL)}`;
+                
+                const response = await fetch(rss2jsonAPI);
+                
+                if (!response.ok) throw new Error('Error al obtener noticias');
+                
+                const datos = await response.json();
+                let noticias = datos.items || [];
+                
+                // Filtrar solo noticias meteorológicas
+                noticias = noticias.filter(nota => 
+                    esNoticiaMeteorologia(nota.title || '', nota.description || '')
+                );
+                
+                if (noticias.length === 0) {
+                    container.innerHTML = '<p style="color: #94a3b8; text-align: center; padding: 40px; grid-column: 1/-1;">No hay noticias meteorológicas disponibles en este momento.</p>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                container.style.display = 'grid';
+                container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
+                container.style.gap = '20px';
+                container.style.padding = '20px';
+                container.style.maxWidth = '1200px';
+                container.style.margin = '0 auto';
+                
+                noticias.slice(0, 6).forEach((nota, index) => {
+                    const tarjeta = document.createElement('div');
+                    tarjeta.className = 'tarjeta-noticia-mejorada';
+                    tarjeta.style.animation = `fadeInUp 0.5s ease forwards`;
+                    tarjeta.style.animationDelay = `${index * 0.1}s`;
+                    
+                    // Extraer imagen del contenido si existe
+                    let imagenURL = '';
+                    let tieneImagen = false;
+                    if (nota.content) {
+                        const imgMatch = nota.content.match(/<img[^>]+src="([^">]+)"/);
+                        if (imgMatch && imgMatch[1]) {
+                            imagenURL = imgMatch[1];
+                            tieneImagen = true;
+                        }
+                    }
+                    
+                    // Crear contenido visual
+                    const contenidoVisual = tieneImagen ? 
+                        `<img src="${imagenURL}" alt="${nota.title}" class="foto-noticia-mejorada" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div style="display: none; width: 100%; height: 100%; background: linear-gradient(135deg, #0f172a, #1e293b); align-items: center; justify-content: center; flex-direction: column; color: #38bdf8; font-size: 1.2em;">
+                            <div style="font-size: 2em; margin-bottom: 8px;">🌦️</div>
+                            <div style="font-weight: 600; text-align: center;">Meteorología</div>
+                        </div>` :
+                        `<div style="width: 100%; height: 100%; background: linear-gradient(135deg, #0f172a, #1e293b); display: flex; align-items: center; justify-content: center; flex-direction: column; color: #38bdf8; font-size: 1.2em;">
+                            <div style="font-size: 2em; margin-bottom: 8px;">🌦️</div>
+                            <div style="font-weight: 600; text-align: center;">Meteorología</div>
+                        </div>`;
+                    
+                    tarjeta.innerHTML = `
+                        <div style="position: relative; width: 100%; height: 160px; background: linear-gradient(135deg, #0f172a, #1e293b); overflow: hidden;">
+                            ${contenidoVisual}
+                            <div style="position: absolute; top: 10px; right: 10px; background: rgba(255, 152, 0, 0.9); color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.7em; font-weight: bold;">
+                                🌦️ CLIMA
+                            </div>
+                        </div>
+                        <div class="contenido-nota">
+                            <div style="font-size: 0.75em; background: rgba(56, 189, 248, 0.25); color: #38bdf8; padding: 4px 10px; border-radius: 4px; display: inline-block; margin-bottom: 10px; font-weight: 600;">
+                                ${nota.source || 'Google News'}
+                            </div>
+                            <h3 class="noticia-titulo">
+                                ${nota.title}
+                            </h3>
+                            <p class="noticia-descripcion">
+                                ${nota.description || nota.content?.replace(/<[^>]*>/g, '').substring(0, 120) + '...'}
+                            </p>
+                            <div class="noticia-footer">
+                                <span style="font-size: 0.75em; color: #94a3b8;">
+                                    ${formatearFecha(nota.pubDate)}
+                                </span>
+                                <span style="font-size: 0.7em; color: #38bdf8; background: rgba(56, 189, 248, 0.15); padding: 2px 6px; border-radius: 3px;">
+                                    LIVE
+                                </span>
+                            </div>
+                            <a href="${nota.link}" target="_blank" rel="noopener noreferrer" style="background: transparent; border: 1px solid #00d2ff; color: #00d2ff; padding: 6px 12px; border-radius: 20px; margin-top: 10px; cursor: pointer; font-size: 0.8em; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: 0.3s; width: fit-content;">
+                                Leer más 
+                                <svg style="width:12px; height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </a>
+                        </div>
+                    `;
+                    container.appendChild(tarjeta);
+                });
+                
+                console.log(`✅ ${Math.min(noticias.length, 6)} noticias meteorológicas cargadas`);
+                
+            } catch (error) {
+                console.error('❌ Error al cargar noticias:', error);
+                const container = document.getElementById('noticias-container');
+                container.innerHTML = '<p style="color: #94a3b8; text-align: center; padding: 40px; grid-column: 1/-1;">Error al cargar las noticias.</p>';
+            }
+        }
+        
+        // Agregar animación fadeInUp
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Cargar noticias al iniciar
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', cargarNoticias);
+        } else {
+            cargarNoticias();
+        }
+        
+        // Actualizar noticias cada 30 minutos
+        setInterval(cargarNoticias, 30 * 60 * 1000);
+    </script>
 
     <script>
         const datosSemana = JSON.parse('{{ datos_json|safe }}');
@@ -825,20 +1436,20 @@
                     if (h.tipo === 'evento') {
                         htmlHora = `
                             <div class="item-hora evento-solar">
-                                <span style="color: #fff; font-weight: bold; font-size: 0.9em;">${h.hora}</span>
-                                <img src="${h.icono}" class="icono-hora" style="width: 50px; height: 50px;">
-                                <span style="color: #ffcc00; font-weight: bold; font-size: 0.7em; margin-top: 5px;">${h.evento_titulo}</span>
+                                <span style="color: #fff; font-weight: bold; font-size: 1em;">${h.hora}</span>
+                                <img src="${h.icono}" class="icono-hora">
+                                <span style="color: #ffcc00; font-weight: bold; font-size: 0.8em; margin-top: 5px;">${h.evento_titulo}</span>
                             </div>
                         `;
                     } else {
                         let claseExtra = h.es_actual ? 'hora-destacada' : '';
-                        let etiquetaAhora = h.es_actual ? '<div style="font-size: 0.6em; color: #00d2ff; font-weight: bold; margin-top: 5px;">AHORA</div>' : '';
+                        let etiquetaAhora = h.es_actual ? '<div style="font-size: 0.7em; color: #00d2ff; font-weight: bold; margin-top: 8px;">AHORA</div>' : '';
                         htmlHora = `
                             <div class="item-hora ${claseExtra}">
-                                <span style="color: #ccc; font-size: 0.8em;">${h.hora}</span>
+                                <span style="color: #ccc; font-size: 0.9em;">${h.hora}</span>
                                 <img src="${h.icono}" class="icono-hora">
-                                <span style="color: #ffcc00; font-weight: bold;">${h.temp}°</span>
-                                <span style="font-size: 0.7em; color: #4ecdc4; margin-top: 2px;">💧${h.lluvia}%</span>
+                                <span style="color: #ffcc00; font-weight: bold; font-size: 1.1em;">${h.temp}°</span>
+                                <span style="font-size: 0.8em; color: #4ecdc4; margin-top: 4px;">💧${h.lluvia}%</span>
                                 ${etiquetaAhora}
                             </div>
                         `;
@@ -860,24 +1471,97 @@
         <span style="font-size: 0.5em; background: #6c5ce7; padding: 2px 8px; border-radius: 10px; color: white;">ArXiv API</span>
     </h2>
     
-    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px;">
-        {% for paper in papers %}
-        <div style="background: rgba(10, 10, 20, 0.8); border-left: 4px solid #a29bfe; padding: 20px; border-radius: 10px; width: 350px; text-align: left; transition: transform 0.3s;">
-            <div style="font-size: 0.8em; color: #a29bfe; margin-bottom: 5px;">{{ paper.fecha }} | {{ paper.autor }}</div>
-            <h4 style="margin: 5px 0; color: #eee; line-height: 1.4;">{{ paper.titulo }}</h4>
-            <p style="font-size: 0.85em; color: #aaa; height: 60px; overflow: hidden; text-overflow: ellipsis;">{{ paper.resumen }}</p>
-            
-            <a href="{{ paper.link }}" target="_blank" style="text-decoration: none; color: #fff; background: #6c5ce7; padding: 5px 15px; border-radius: 20px; font-size: 0.8em; display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;">
-                <svg style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
-                Leer PDF Completo
-            </a>
-
+    <div id="papers-container" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; min-height: 200px; align-items: center; max-width: 1200px; margin: 0 auto;">
+        <div style="text-align: center; color: #94a3b8;">
+            <svg style="width:40px; height:40px; animation: spin 2s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <p>Cargando papers meteorológicos de ArXiv...</p>
         </div>
-        {% endfor %}
     </div>
+
+    <script>
+        async function cargarPapersArxiv() {
+            try {
+                const container = document.getElementById('papers-container');
+                const response = await fetch('/api/papers/');
+                
+                if (!response.ok) {
+                    throw new Error(`Error al obtener papers: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                const papers = data.papers || [];
+                
+                if (papers.length === 0) {
+                    container.innerHTML = '<p style="color: #94a3b8; grid-column: 1/-1;">No hay papers meteorológicos disponibles en este momento.</p>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                container.style.display = 'flex';
+                container.style.flexWrap = 'wrap';
+                container.style.justifyContent = 'center';
+                
+                papers.forEach((paper, index) => {
+                    const fecha = paper.fecha ? new Date(paper.fecha).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+                    const pdfLink = paper.link.replace('/abs/', '/pdf/') + '.pdf';
+                    
+                    const tarjeta = document.createElement('div');
+                    tarjeta.style.cssText = 'background: rgba(10, 10, 20, 0.8); border-left: 4px solid #a29bfe; padding: 20px; border-radius: 10px; width: 350px; text-align: left; transition: transform 0.3s, box-shadow 0.3s; animation: fadeInUp 0.5s ease forwards; cursor: pointer;';
+                    tarjeta.style.animationDelay = `${index * 0.1}s`;
+                    
+                    tarjeta.addEventListener('mouseenter', () => {
+                        tarjeta.style.transform = 'translateY(-5px)';
+                        tarjeta.style.boxShadow = '0 8px 20px rgba(162, 155, 254, 0.3)';
+                    });
+                    
+                    tarjeta.addEventListener('mouseleave', () => {
+                        tarjeta.style.transform = 'translateY(0)';
+                        tarjeta.style.boxShadow = 'none';
+                    });
+                    
+                    tarjeta.innerHTML = `
+                        <div style="font-size: 0.8em; color: #a29bfe; margin-bottom: 5px;">
+                            ${fecha} | ${paper.autor.split(' ')[0]}
+                        </div>
+                        <h4 style="margin: 5px 0; color: #eee; line-height: 1.4; font-size: 0.95em;">
+                            ${paper.titulo}
+                        </h4>
+                        <p style="font-size: 0.85em; color: #aaa; height: 60px; overflow: hidden; text-overflow: ellipsis; line-height: 1.5;">
+                            ${paper.resumen}
+                        </p>
+                        <a href="${pdfLink}" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: #fff; background: #6c5ce7; padding: 5px 15px; border-radius: 20px; font-size: 0.8em; display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; transition: 0.3s;" onmouseover="this.style.background='#7c69d0'" onmouseout="this.style.background='#6c5ce7'">
+                            <svg style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+                            Leer PDF
+                        </a>
+                    `;
+                    
+                    container.appendChild(tarjeta);
+                });
+                
+                console.log(`✅ ${papers.length} papers de ArXiv cargados`);
+                
+            } catch (error) {
+                console.error('❌ Error al cargar papers:', error);
+                const container = document.getElementById('papers-container');
+                container.innerHTML = '<p style="color: #ff4757; text-align: center; padding: 40px; width: 100%;">Error al cargar los papers de ArXiv. Intenta nuevamente más tarde.</p>';
+            }
+        }
+        
+        // Cargar papers al iniciar
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', cargarPapersArxiv);
+        } else {
+            cargarPapersArxiv();
+        }
+    </script>
     <br><br>
     
-    <footer style="background: rgba(0,0,0,0.8); padding: 20px; color: #555; font-size: 0.8em;">
+    <footer style="background: rgba(0,0,0,0.8); padding: 20px; color: #555; font-size: 0.8em; width: 100vw; margin: 0; text-align: center;">
         Desarrollado con Django, Open-Meteo y ArXiv | TuClima
     </footer>
 
@@ -907,197 +1591,274 @@
 </script>
 
 <style>
-        /* CSS DEL FOOTER */
-        .site-footer {
-            background-color: #020617; /* Fondo casi negro */
-            border-top: 1px solid rgba(56, 189, 248, 0.3);
-            padding: 60px 20px 30px 20px;
-            margin-top: 80px;
-            font-family: 'Segoe UI', sans-serif;
-            color: #94a3b8;
-            font-size: 0.9em;
-        }
+    .buscador {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    
+    .buscador form {
+        max-width: 900px !important;
+        width: 100% !important;
+    }
+</style>
 
+<style>
+    /* RESET GLOBAL */
+    * {
+        box-sizing: border-box;
+    }
+    
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    /* CSS DEL FOOTER CORREGIDO */
+    .site-footer {
+        background-color: #020617;
+        border-top: 1px solid rgba(56, 189, 248, 0.3);
+        padding: 60px 0 30px 0;
+        margin-top: 80px;
+        font-family: 'Segoe UI', sans-serif;
+        color: #94a3b8;
+        font-size: 0.9em;
+        width: 100%;
+        display: block;
+        clear: both;
+    }
+
+    .footer-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 40px;
+        margin-bottom: 50px;
+        padding: 0 20px;
+    }
+
+    /* BARRA INFERIOR LEGAL */
+    .footer-bottom {
+        padding: 25px 20px 0 20px;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        font-size: 0.8em;
+        color: #64748b;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .footer-col h4 {
+        color: #fff;
+        font-family: 'Orbitron', sans-serif;
+        margin-bottom: 25px;
+        font-size: 1.0em;
+        letter-spacing: 1px;
+        border-bottom: 2px solid rgba(56, 189, 248, 0.3);
+        display: inline-block;
+        padding-bottom: 5px;
+    }
+
+    .footer-col p { 
+        line-height: 1.6; 
+        opacity: 0.8; 
+        font-size: 0.95em; 
+    }
+
+    .footer-links { 
+        list-style: none; 
+        padding: 0; 
+        margin: 0; 
+    }
+
+    .footer-links li { 
+        margin-bottom: 12px; 
+    }
+
+    .footer-links a {
+        text-decoration: none;
+        color: #94a3b8;
+        transition: 0.3s;
+        display: flex; 
+        align-items: center; 
+        gap: 10px;
+    }
+
+    .footer-links a:hover { 
+        color: #38bdf8; 
+        transform: translateX(5px); 
+    }
+
+    .f-icon { 
+        width: 18px; 
+        height: 18px; 
+        stroke: currentColor; 
+        fill: none; 
+        stroke-width: 2; 
+        opacity: 0.9; 
+    }
+
+    .api-tag {
+        background: rgba(56, 189, 248, 0.15);
+        color: #38bdf8;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.85em;
+    }
+
+    .legal-links {
+        display: flex;
+        gap: 20px;
+    }
+
+    .legal-links a {
+        color: #64748b;
+        text-decoration: none;
+        transition: 0.3s;
+    }
+
+    .legal-links a:hover {
+        color: #38bdf8;
+    }
+
+    @media (max-width: 768px) {
         .footer-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 40px;
-            margin-bottom: 50px;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            padding: 0 15px;
         }
 
-        .footer-col h4 {
-            color: #fff;
-            font-family: 'Orbitron', sans-serif;
-            margin-bottom: 25px;
-            font-size: 1.0em;
-            letter-spacing: 1px;
-            border-bottom: 2px solid rgba(56, 189, 248, 0.3);
-            display: inline-block;
-            padding-bottom: 5px;
+        .footer-bottom { 
+            flex-direction: column; 
+            text-align: center;
+            padding: 25px 15px 0 15px;
         }
 
-        .footer-col p { line-height: 1.6; opacity: 0.8; font-size: 0.95em; }
+        .legal-links { 
+            flex-direction: column;
+            gap: 10px;
+        }
+    }
+</style>
 
-        .footer-links { list-style: none; padding: 0; margin: 0; }
-        .footer-links li { margin-bottom: 12px; }
-        .footer-links a {
-            text-decoration: none;
-            color: #94a3b8;
-            transition: 0.3s;
-            display: flex; align-items: center; gap: 10px;
-        }
-        .footer-links a:hover {
-            color: #38bdf8;
-            transform: translateX(5px);
-        }
-
-        .api-tag {
-            font-size: 0.75em;
-            background: rgba(255,255,255,0.05);
-            padding: 3px 8px;
-            border-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #64748b;
-            margin-left: auto;
-        }
-
-        /* BARRA INFERIOR LEGAL */
-        .footer-bottom {
-            padding-top: 25px;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            font-size: 0.8em;
-            color: #64748b;
-            display: flex;
-            justify-content: space-between; /* Separa texto izquierda y links derecha */
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
+    <footer class="site-footer" style="max-width: 1200px; margin: 0 auto;">
+    <div class="footer-content">
         
-        .legal-links a {
-            color: #64748b; text-decoration: none; margin-left: 15px; transition: 0.3s;
-        }
-        .legal-links a:hover { color: #38bdf8; }
-
-        .f-icon { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; opacity: 0.9; }
-
-        @media (max-width: 768px) {
-            .footer-bottom { flex-direction: column; text-align: center; }
-            .legal-links a { margin: 0 8px; }
-        }
-    </style>
-
-    <footer class="site-footer">
-        <div class="footer-content">
-            
-            <div class="footer-col">
-                <h4 style="color: #38bdf8; border-color: #38bdf8;">TuClima Pro</h4>
-                <p>
-                   <strong>Suite de inteligencia climática con Motor de Búsqueda Global.</strong><br>
+        <div class="footer-col">
+        <h4 style="color: #38bdf8; border-color: #38bdf8;">TuClima Pro</h4>
+        <p>
+           <strong>Suite de inteligencia climática con Motor de Búsqueda Global.</strong><br>
     Potenciamos 4 sectores críticos (Agro, Naval, Aéreo, Energías) integrando telemetría directa de <strong>NASA y OpenWeatherMap</strong>.
     <br><br>
     Toma de decisiones basada en datos atmosféricos reales y precisos.
-                </p>
-                
-            </div>
-
-            <div class="footer-col">
-                <h4>MODOS PRO</h4>
-                <ul class="footer-links">
-                    <li>
-                        <a href="#"> <svg class="f-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5a4 4 0 0 1 5.66 0"/><path d="M10 10a2 2 0 0 1 2.83 0"/></svg>
-                            Modo Agro
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#"> <svg class="f-icon" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></svg>
-                            Modo Naval
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#"> <svg class="f-icon" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>
-                            Modo Aéreo
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#"> <svg class="f-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                            Modo Energías
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="footer-col">
-                <h4>CIENCIA</h4>
-                <ul class="footer-links">
-                    <li>
-                        <a href="#"> 
-                            <svg class="f-icon" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-                            Mapas & Radar
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#"> 
-                            <svg class="f-icon" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-                            Papers & ArXiv
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#">
-                            <svg class="f-icon" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                            Comparador Científico
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'espacio' %}">
-                            <svg class="f-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M1 12h2"/><path d="M21 12h2"/></svg>
-                            Meteorología Espacial
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="footer-col">
-                <h4>PLATAFORMA</h4>
-                <ul class="footer-links">
-                    <li>
-                        <a href="{% url 'home' %}">
-                            <svg class="f-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                            Inicio / Dashboard
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#">
-                            <svg class="f-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            Centro de Ayuda
-                        </a>
-                    </li>
-                </ul>
-                
-                <div style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 0.85em;">
-                        <span style="opacity:0.6;">Datos:</span>
-                        <span class="api-tag">OpenWeather</span>
-                    </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85em;">
-                        <span style="opacity:0.6;">Versión:</span>
-                        <span class="api-tag">v2.1 Stable</span>
-                    </div>
-                </div>
-            </div>
-
+        </p>
+        
         </div>
 
-        <div class="footer-bottom">
-            <div>
-                &copy; {% now "Y" %} TuClima Labs. Todos los derechos reservados.
+        <div class="footer-col">
+        <h4>MODOS PRO</h4>
+        <ul class="footer-links">
+            <li>
+            <a href="#"> <svg class="f-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5a4 4 0 0 1 5.66 0"/><path d="M10 10a2 2 0 0 1 2.83 0"/></svg>
+                Modo Agro
+            </a>
+            </li>
+            <li>
+            <a href="#"> <svg class="f-icon" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></svg>
+                Modo Naval
+            </a>
+            </li>
+            <li>
+            <a href="#"> <svg class="f-icon" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>
+                Modo Aéreo
+            </a>
+            </li>
+            <li>
+            <a href="#"> <svg class="f-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                Modo Energías
+            </a>
+            </li>
+        </ul>
+        </div>
+
+        <div class="footer-col">
+        <h4>CIENCIA</h4>
+        <ul class="footer-links">
+            <li>
+            <a href="#"> 
+                <svg class="f-icon" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+                Mapas & Radar
+            </a>
+            </li>
+            <li>
+            <a href="#"> 
+                <svg class="f-icon" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                Papers & ArXiv
+            </a>
+            </li>
+            <li>
+            <a href="#">
+                <svg class="f-icon" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                Comparador Científico
+            </a>
+            </li>
+            <li>
+            <a href="{% url 'espacio' %}">
+                <svg class="f-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M1 12h2"/><path d="M21 12h2"/></svg>
+                Meteorología Espacial
+            </a>
+            </li>
+        </ul>
+        </div>
+
+        <div class="footer-col">
+        <h4>PLATAFORMA</h4>
+        <ul class="footer-links">
+            <li>
+            <a href="{% url 'home' %}">
+                <svg class="f-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Inicio / Dashboard
+            </a>
+            </li>
+            <li>
+            <a href="#">
+                <svg class="f-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Centro de Ayuda
+            </a>
+            </li>
+        </ul>
+        
+        <div style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 0.85em;">
+            <span style="opacity:0.6;">Datos:</span>
+            <span class="api-tag">OpenWeather</span>
             </div>
-            <div class="legal-links">
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85em;">
+            <span style="opacity:0.6;">Versión:</span>
+            <span class="api-tag">v2.1 Stable</span>
+            </div>
+        </div>
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+        <div>
+        &copy; {% now "Y" %} <span class="notranslate">TuClima</span> Labs. Todos los derechos reservados.
+        </div>
+        <div class="legal-links">
     <a href="{% url 'legal' %}">Privacidad</a>
     <a href="{% url 'legal' %}">Términos</a>
     <a href="{% url 'legal' %}">Cookies</a>
+        </div>
+    </div>
+    </footer>
 </div>
         </div>
     </footer>
@@ -1111,8 +1872,29 @@
             hide_switcher: true,  // Ocultamos el botón feo original
             auto_switch: false    // Lo ponemos en manual para probar
         });
-    </script>
-
+    </script> 
     
+    <script>
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const modals = document.querySelectorAll('.modal-overlay');
+
+        modals.forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none'; // Cierra el modal
+                }
+            });
+
+            const content = modal.querySelector('.modal-content');
+            if (content) {
+                content.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Previene el cierre del modal al hacer clic en el contenido
+                });
+            }
+        });
+    });
+    </script>
+</div>
 </body>
 </html>

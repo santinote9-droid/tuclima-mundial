@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TuClima Chat IA</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <h3>☁️ TuClima IA</h3>
+            <span class="status-dot"></span>
+        </div>
+        
+        <div class="chat-messages" id="chat-box">
+            <div class="message bot-msg">¡Hola, Capitán! ¿En qué puedo ayudarte hoy? 🌡️</div>
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="user-input" placeholder="Escribe tu mensaje aquí..." autocomplete="off">
+            <button onclick="enviarMensaje()">Enviar →</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from mundo import views  # Importamos las vistas
-from mundo.views import home, comparador_modelos
+from mundo.views import home, comparador_modelos, api_papers
 
 
 urlpatterns = [
@@ -37,6 +37,9 @@ urlpatterns = [
     path('mapas/', views.mapas, name='mapas'),
 
     path('comparador/', comparador_modelos, name='comparador'),
+
+    # Endpoint para papers de arXiv
+    path('api/papers/', api_papers, name='api_papers'),
 
     path('espacio/', views.meteorologia_espacial, name='espacio'),
 
