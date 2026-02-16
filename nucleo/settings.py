@@ -84,7 +84,7 @@ import dj_database_url
 
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgresql://postgres:Sangioff_23@db.lmumvstjdyaozewqygfx.supabase.co:5432/postgres'
+        default='postgresql://postgres.lmumvstjdyaozewqygfx:Sangioff_23@aws-1-us-east-2.pooler.supabase.com:5432/postgres'
     )
 }
 
