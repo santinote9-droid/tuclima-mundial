@@ -803,7 +803,7 @@
 <script>
     // --- CONFIGURACIÓN AGRO INTELLIGENCE PRO ---
 
-const urlN8N = "https://supervoluminous-unchained-nohemi.ngrok-free.dev/webhook/chat"; // URL de Producción (sin -test)
+const urlN8N = "http://localhost:5678/webhook/chat"; // URL de Desarrollo local
 let sessionId = localStorage.getItem("chatSessionId") || generateUUID();
 localStorage.setItem("chatSessionId", sessionId);
 
