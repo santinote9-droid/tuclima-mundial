@@ -776,11 +776,14 @@
         // Auto-geolocalización mejorada para carga instantánea
         window.onload = function() {
             // Ejecutar GPS si no hay parámetros o si las coordenadas son 0.0 (estado inicial)
+            // PERO NO si el usuario ha buscado una ciudad específica
             const urlParams = new URLSearchParams(window.location.search);
             const latActual = urlParams.get('lat');
             const lonActual = urlParams.get('lon');
+            const ciudadBuscada = urlParams.get('ciudad');
             
-            if (!latActual || !lonActual || latActual == '0' || lonActual == '0' || window.location.search === "") {
+            // Solo usar GPS si no hay búsqueda de ciudad activa
+            if ((!latActual || !lonActual || latActual == '0' || lonActual == '0' || window.location.search === "") && !ciudadBuscada) {
                 usarGPS();
             }
         };
