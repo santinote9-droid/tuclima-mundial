@@ -599,11 +599,16 @@
 
     <div style="height: 80px;"></div>    
     
+    <!-- Indicador de ubicación guardada -->
+    <div id="ubicacionGuardada" style="display: none; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 15px; padding: 10px 20px; margin: -20px auto 20px auto; max-width: 400px; text-align: center; backdrop-filter: blur(10px);">
+        <span style="color: #38bdf8; font-size: 0.9em; font-weight: 500;">📍 Cargando tu última ubicación...</span>
+    </div>
+    
     <div class="buscador" style="display: flex; flex-direction: column; justify-content: center; gap: 20px; align-items: center; margin-bottom: 40px; padding: 30px 20px; width: 100%; max-width: 800px;">
         
         <!-- Buscador Principal (actual) -->
         <div style="display: flex; justify-content: center; gap: 12px; align-items: center; width: 100%; max-width: 600px;">
-            <form action="" method="get" style="display: flex; gap: 12px; align-items: center; width: 100%;">
+            <form id="busquedaForm" action="" method="get" style="display: flex; gap: 12px; align-items: center; width: 100%;">
             <input type="text" name="ciudad" placeholder="Buscar ciudad..." required 
                style="flex: 1; padding: 14px 24px; border-radius: 25px; border: 1.5px solid rgba(56, 189, 248, 0.6); outline: none; font-size: 1.1em; background: rgba(15, 23, 42, 0.8); color: white; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(56, 189, 248, 0.1); transition: all 0.3s ease; backdrop-filter: blur(10px);" onfocus="this.style.borderColor='#38bdf8'; this.style.boxShadow='0 4px 25px rgba(56, 189, 248, 0.4), inset 0 0 15px rgba(56, 189, 248, 0.2)'" onblur="this.style.borderColor='rgba(56, 189, 248, 0.6)'; this.style.boxShadow='0 4px 20px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(56, 189, 248, 0.1)';">
             <button type="submit" style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); border: 2px solid #ffffff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 8px 30px rgba(30, 64, 175, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1); transition: all 0.3s ease; flex-shrink: 0; position: relative; overflow: hidden;" onmouseover="this.style.transform='scale(1.1) translateY(-2px)'; this.style.boxShadow='0 12px 40px rgba(30, 64, 175, 0.6), 0 4px 15px rgba(255, 255, 255, 0.2)'; this.style.borderColor='#f8fafc';" onmouseout="this.style.transform='scale(1) translateY(0)'; this.style.boxShadow='0 8px 30px rgba(30, 64, 175, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1)'; this.style.borderColor='#ffffff';">
@@ -611,6 +616,14 @@
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%); transform: translateX(-100%); transition: transform 0.6s ease;"></div>
             </button>
             </form>
+            
+            <script>
+            // Interceptar búsquedas para guardarlas como ubicaciones favoritas cuando se resuelvan
+            document.getElementById('busquedaForm').addEventListener('submit', function(e) {
+                // El guardado en localStorage se hará cuando la página se recargue con los nuevos datos
+                console.log('Buscando ciudad:', e.target.ciudad.value);
+            });
+            </script>
             <button onclick="usarGPS()" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%); border: 2px solid #ffffff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 8px 30px rgba(30, 58, 138, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1); transition: all 0.3s ease; flex-shrink: 0; position: relative; overflow: hidden;" title="Ubicación Actual" onmouseover="this.style.transform='scale(1.1) translateY(-2px)'; this.style.boxShadow='0 12px 40px rgba(30, 58, 138, 0.6), 0 4px 15px rgba(255, 255, 255, 0.2)'; this.style.borderColor='#f8fafc';" onmouseout="this.style.transform='scale(1) translateY(0)'; this.style.boxShadow='0 8px 30px rgba(30, 58, 138, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1)'; this.style.borderColor='#ffffff';">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="#ffffff" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -773,17 +786,55 @@
 </div>
 
         <script>
-        // Auto-geolocalización mejorada para carga instantánea
+        // Auto-geolocalización mejorada con memoria de ubicación
         window.onload = function() {
-            // Ejecutar GPS si no hay parámetros o si las coordenadas son 0.0 (estado inicial)
-            // PERO NO si el usuario ha buscado una ciudad específica
             const urlParams = new URLSearchParams(window.location.search);
             const latActual = urlParams.get('lat');
             const lonActual = urlParams.get('lon');
             const ciudadBuscada = urlParams.get('ciudad');
             
-            // Solo usar GPS si no hay búsqueda de ciudad activa
-            if ((!latActual || !lonActual || latActual == '0' || lonActual == '0' || window.location.search === "") && !ciudadBuscada) {
+            // Guardar ubicación actual en localStorage si tenemos coordenadas válidas
+            if (latActual && lonActual && latActual !== '0' && lonActual !== '0') {
+                const ubicacionActual = {
+                    lat: latActual,
+                    lon: lonActual,
+                    ciudad: '{{ ciudad }}' || 'Ubicación guardada',
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('ultimaUbicacion', JSON.stringify(ubicacionActual));
+            }
+            
+            // Si no hay parámetros, intentar cargar última ubicación guardada
+            if (window.location.search === "" || (!latActual && !lonActual)) {
+                const ultimaUbicacion = localStorage.getItem('ultimaUbicacion');
+                if (ultimaUbicacion) {
+                    try {
+                        const ubicacion = JSON.parse(ultimaUbicacion);
+                        // Usar ubicación guardada si es reciente (menos de 7 días)
+                        const diasTranscurridos = (Date.now() - ubicacion.timestamp) / (1000 * 60 * 60 * 24);
+                        if (diasTranscurridos < 7 && ubicacion.lat && ubicacion.lon) {
+                            // Mostrar indicador de carga
+                            const indicador = document.getElementById('ubicacionGuardada');
+                            if (indicador) {
+                                indicador.style.display = 'block';
+                                indicador.innerHTML = `<span style="color: #38bdf8; font-size: 0.9em; font-weight: 500;">📍 Cargando: ${ubicacion.ciudad}</span>`;
+                            }
+                            
+                            console.log('Cargando última ubicación:', ubicacion.ciudad);
+                            setTimeout(() => {
+                                window.location.href = `/?lat=${ubicacion.lat}&lon=${ubicacion.lon}`;
+                            }, 800); // Pequeña pausa para mostrar el mensaje
+                            return;
+                        }
+                    } catch (e) {
+                        console.log('Error al cargar ubicación guardada');
+                    }
+                }
+                // Si no hay ubicación guardada válida, usar GPS
+                usarGPS();
+            }
+            // Si hay búsqueda de ciudad, no interferir con GPS automático
+            else if (!ciudadBuscada && (!latActual || !lonActual || latActual == '0' || lonActual == '0')) {
                 usarGPS();
             }
         };
@@ -800,6 +851,16 @@
                 navigator.geolocation.getCurrentPosition(function(position) {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
+                    
+                    // Guardar nueva ubicación GPS en localStorage
+                    const ubicacionGPS = {
+                        lat: lat.toString(),
+                        lon: lon.toString(),
+                        ciudad: 'Mi ubicación actual',
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem('ultimaUbicacion', JSON.stringify(ubicacionGPS));
+                    
                     // Redirección inmediata con nuevas coordenadas
                     window.location.href = `/?lat=${lat}&lon=${lon}`;
                 }, function(error) { 
@@ -1615,9 +1676,14 @@
         font-family: 'Segoe UI', sans-serif;
         color: #94a3b8;
         font-size: 0.9em;
-        width: 100%;
+        width: 100vw;
         display: block;
         clear: both;
+        position: relative;
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw;
+        margin-right: -50vw;
     }
 
     .footer-content {
@@ -1738,7 +1804,7 @@
     }
 </style>
 
-    <footer class="site-footer" style="max-width: 1200px; margin: 0 auto;">
+    <footer class="site-footer" style="width: 100vw; margin: 0;">
     <div class="footer-content">
         
         <div class="footer-col">
