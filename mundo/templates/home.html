@@ -9,34 +9,6 @@
     <title data-wg-notranslate>Tu Clima Mundial</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div class="user-info" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; font-family: 'Segoe UI', sans-serif;">
-    {% if user.is_authenticated %}
-        <div style="display: flex; align-items: center; gap: 12px; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 25px; border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
-            <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #38bdf8, #0ea5e9); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 0.9em; box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);">
-                {{ user.username|first|upper }}
-            </div>
-            
-            <div style="display: flex; flex-direction: column; line-height: 1.2;">
-                <span style="color: #f8fafc; font-weight: 600; font-size: 0.9em; letter-spacing: 0.5px;">Hola, {{ user.username }}</span>
-                <span style="color: #38bdf8; font-size: 0.7em; font-weight: 700; text-transform: uppercase;">PRO User</span>
-            </div>
-
-            <div style="width: 1px; height: 20px; background: rgba(56, 189, 248, 0.3); margin: 0 4px;"></div>
-
-            <a href="/logout/" style="color: #ef4444; text-decoration: none; font-weight: 700; font-size: 0.8em; padding: 5px 12px; border-radius: 15px; transition: all 0.3s; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2);" 
-               onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'; this.style.transform='scale(1.05)';" 
-               onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.transform='scale(1)';">
-               Salir
-            </a>
-        </div>
-    {% else %}
-        <a href="/login/" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; text-decoration: none; font-weight: 600; padding: 10px 24px; border-radius: 20px; border: 1.5px solid #38bdf8; backdrop-filter: blur(5px); transition: all 0.3s;"
-           onmouseover="this.style.background='#38bdf8'; this.style.color='white';">
-           Ingresar al Sistema
-        </a>
-    {% endif %}
-</div>
-
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -277,6 +249,35 @@
 </head>
 
 <body>
+
+<div class="user-info" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; font-family: 'Segoe UI', sans-serif;">
+    {% if user.is_authenticated %}
+        <div style="display: flex; align-items: center; gap: 12px; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 25px; border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+            <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #38bdf8, #0ea5e9); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 0.9em; box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);">
+                {{ user.username|first|upper }}
+            </div>
+            
+            <div style="display: flex; flex-direction: column; line-height: 1.2;">
+                <span style="color: #f8fafc; font-weight: 600; font-size: 0.9em; letter-spacing: 0.5px;">Hola, {{ user.username }}</span>
+                <span style="color: #38bdf8; font-size: 0.7em; font-weight: 700; text-transform: uppercase;">PRO User</span>
+            </div>
+
+            <div style="width: 1px; height: 20px; background: rgba(56, 189, 248, 0.3); margin: 0 4px;"></div>
+
+            <a href="/logout/" style="color: #ef4444; text-decoration: none; font-weight: 700; font-size: 0.8em; padding: 5px 12px; border-radius: 15px; transition: all 0.3s; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2);" 
+               onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'; this.style.transform='scale(1.05)';" 
+               onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.transform='scale(1)';">
+               Salir
+            </a>
+        </div>
+    {% else %}
+        <a href="/login/" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; text-decoration: none; font-weight: 600; padding: 10px 24px; border-radius: 20px; border: 1.5px solid #38bdf8; backdrop-filter: blur(5px); transition: all 0.3s;"
+           onmouseover="this.style.background='#38bdf8'; this.style.color='white';">
+           Ingresar al Sistema
+        </a>
+    {% endif %}
+</div>
+
 <div class="main-container">
 
 {% if opciones_ciudades %}
