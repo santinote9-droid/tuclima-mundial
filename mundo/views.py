@@ -305,153 +305,152 @@ def home(request):
             url_clima = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,weathercode,precipitation_probability,is_day&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto"
             
             response = requests.get(url_clima, timeout=3).json()
-        actual = response['current']
-        hourly = response['hourly']
-        daily = response['daily']
+            actual = response['current']
+            hourly = response['hourly']
+            daily = response['daily']
 
-        # Variables Críticas
-        code = actual['weather_code']
-        uv = daily['uv_index_max'][0]
-        vis_metros = actual['visibility']
-        vis_km = round(vis_metros / 1000, 1)
-        
-        # --- AQUÍ USAMOS TU FUNCIÓN Y TU LÓGICA ---
-        nube_txt, alerta_txt, icono_alerta = analizar_detalles(code, uv, vis_metros)
-        
-        contexto['tipo_nube'] = nube_txt
-        contexto['alerta_texto'] = alerta_txt
-        
-        # DETERMINAMOS EL COLOR SEGÚN LA MISMA LÓGICA DE TU FUNCIÓN
-        # Así aseguramos que si sale UV extremo, el color sea ROJO y no verde.
-        alerta_color = "#2ed573" # Verde por defecto (Disfruta el día)
-        alerta_tipo = "normal"
+            # Variables Críticas
+            code = actual['weather_code']
+            uv = daily['uv_index_max'][0]
+            vis_metros = actual['visibility']
+            vis_km = round(vis_metros / 1000, 1)
+            
+            # --- AQUÍ USAMOS TU FUNCIÓN Y TU LÓGICA ---
+            nube_txt, alerta_txt, icono_alerta = analizar_detalles(code, uv, vis_metros)
+            
+            contexto['tipo_nube'] = nube_txt
+            contexto['alerta_texto'] = alerta_txt
+            
+            # DETERMINAMOS EL COLOR SEGÚN LA MISMA LÓGICA DE TU FUNCIÓN
+            # Así aseguramos que si sale UV extremo, el color sea ROJO y no verde.
+            alerta_color = "#2ed573" # Verde por defecto (Disfruta el día)
+            alerta_tipo = "normal"
 
-        if code >= 95: # Tormenta
-            alerta_color = "#ff4757" # Rojo
-            alerta_tipo = "tormenta"
-        elif uv > 7: # UV Extremo
-            alerta_color = "#ff4757" # Rojo
-            alerta_tipo = "calor"
-        elif vis_metros < 1000: # Niebla
-            alerta_color = "#a4b0be" # Gris
-            alerta_tipo = "niebla"
-        elif code in [51, 61, 80, 53, 55, 63, 65, 81, 82]: # Lluvia
-            alerta_color = "#5352ed" # Azul
-            alerta_tipo = "lluvia"
+            if code >= 95: # Tormenta
+                alerta_color = "#ff4757" # Rojo
+                alerta_tipo = "tormenta"
+            elif uv > 7: # UV Extremo
+                alerta_color = "#ff4757" # Rojo
+                alerta_tipo = "calor"
+            elif vis_metros < 1000: # Niebla
+                alerta_color = "#a4b0be" # Gris
+                alerta_tipo = "niebla"
+            elif code in [51, 61, 80, 53, 55, 63, 65, 81, 82]: # Lluvia
+                alerta_color = "#5352ed" # Azul
+                alerta_tipo = "lluvia"
 
-        contexto['alerta_color'] = alerta_color
-        contexto['alerta_tipo'] = alerta_tipo
+            contexto['alerta_color'] = alerta_color
+            contexto['alerta_tipo'] = alerta_tipo
 
-        # Resto de variables
-        contexto['temp'] = actual['temperature_2m']
-        contexto['sensacion'] = actual['apparent_temperature']
-        contexto['humedad'] = actual['relative_humidity_2m']
-        contexto['viento'] = actual['wind_speed_10m']
-        contexto['presion'] = actual['surface_pressure']
-        contexto['visibilidad'] = vis_km
-        contexto['uv_index'] = uv
-        contexto['lluvia_hoy'] = actual['precipitation']
-        
-        contexto['icono'] = obtener_icono_url(code, actual['is_day'])
-        contexto['fondo'] = obtener_fondo(code, actual['is_day'])
-        contexto['descripcion'] = descifrar_desc(code)
+            # Resto de variables
+            contexto['temp'] = actual['temperature_2m']
+            contexto['sensacion'] = actual['apparent_temperature']
+            contexto['humedad'] = actual['relative_humidity_2m']
+            contexto['viento'] = actual['wind_speed_10m']
+            contexto['presion'] = actual['surface_pressure']
+            contexto['visibilidad'] = vis_km
+            contexto['uv_index'] = uv
+            contexto['lluvia_hoy'] = actual['precipitation']
+            
+            contexto['icono'] = obtener_icono_url(code, actual['is_day'])
+            contexto['fondo'] = obtener_fondo(code, actual['is_day'])
+            contexto['descripcion'] = descifrar_desc(code)
 
-        # Hora Local
-        offset = response['utc_offset_seconds']
-        now_utc = datetime.utcnow()
-        hora_local_dt = now_utc + timedelta(seconds=offset)
-        contexto['hora_local'] = hora_local_dt
-        
-        fecha_hoy = hora_local_dt.strftime('%Y-%m-%d')
-        hora_key = hora_local_dt.strftime('%H:00')
+            # Hora Local
+            offset = response['utc_offset_seconds']
+            now_utc = datetime.utcnow()
+            hora_local_dt = now_utc + timedelta(seconds=offset)
+            contexto['hora_local'] = hora_local_dt
+            
+            fecha_hoy = hora_local_dt.strftime('%Y-%m-%d')
+            hora_key = hora_local_dt.strftime('%H:00')
 
-        contexto['sunrise'] = daily['sunrise'][0].split('T')[1]
-        contexto['sunset'] = daily['sunset'][0].split('T')[1]
+            contexto['sunrise'] = daily['sunrise'][0].split('T')[1]
+            contexto['sunset'] = daily['sunset'][0].split('T')[1]
 
-        # Carrusel y Gráfico
-        datos_por_dia = {}
-        for i in range(len(hourly['time'])):
-            dt_obj = datetime.strptime(hourly['time'][i], '%Y-%m-%dT%H:%M')
-            f_clave = dt_obj.strftime('%Y-%m-%d')
-            if f_clave not in datos_por_dia: datos_por_dia[f_clave] = []
-            es_act = (f_clave == fecha_hoy and dt_obj.strftime('%H:%M') == hora_key)
-            item = {'tipo': 'normal', 'hora': dt_obj.strftime('%H:%M'), 'orden': dt_obj.timestamp(), 'temp': hourly['temperature_2m'][i], 'icono': obtener_icono_url(hourly['weathercode'][i], hourly['is_day'][i]), 'lluvia': hourly['precipitation_probability'][i], 'es_actual': es_act}
-            datos_por_dia[f_clave].append(item)
+            # Carrusel y Gráfico
+            datos_por_dia = {}
+            for i in range(len(hourly['time'])):
+                dt_obj = datetime.strptime(hourly['time'][i], '%Y-%m-%dT%H:%M')
+                f_clave = dt_obj.strftime('%Y-%m-%d')
+                if f_clave not in datos_por_dia: datos_por_dia[f_clave] = []
+                es_act = (f_clave == fecha_hoy and dt_obj.strftime('%H:%M') == hora_key)
+                item = {'tipo': 'normal', 'hora': dt_obj.strftime('%H:%M'), 'orden': dt_obj.timestamp(), 'temp': hourly['temperature_2m'][i], 'icono': obtener_icono_url(hourly['weathercode'][i], hourly['is_day'][i]), 'lluvia': hourly['precipitation_probability'][i], 'es_actual': es_act}
+                datos_por_dia[f_clave].append(item)
 
-        for i in range(len(daily['time'])):
-            f_clave = daily['time'][i]
-            if f_clave in datos_por_dia:
-                if daily['sunrise'][i]:
-                    sr = datetime.strptime(daily['sunrise'][i], '%Y-%m-%dT%H:%M')
-                    datos_por_dia[f_clave].append({'tipo': 'evento', 'hora': sr.strftime('%H:%M'), 'orden': sr.timestamp(), 'evento_titulo': 'Amanecer', 'icono': 'https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunrise.svg'})
-                if daily['sunset'][i]:
-                    ss = datetime.strptime(daily['sunset'][i], '%Y-%m-%dT%H:%M')
-                    datos_por_dia[f_clave].append({'tipo': 'evento', 'hora': ss.strftime('%H:%M'), 'orden': ss.timestamp(), 'evento_titulo': 'Atardecer', 'icono': 'https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunset.svg'})
-                datos_por_dia[f_clave].sort(key=lambda x: x['orden'])
+            for i in range(len(daily['time'])):
+                f_clave = daily['time'][i]
+                if f_clave in datos_por_dia:
+                    if daily['sunrise'][i]:
+                        sr = datetime.strptime(daily['sunrise'][i], '%Y-%m-%dT%H:%M')
+                        datos_por_dia[f_clave].append({'tipo': 'evento', 'hora': sr.strftime('%H:%M'), 'orden': sr.timestamp(), 'evento_titulo': 'Amanecer', 'icono': 'https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunrise.svg'})
+                    if daily['sunset'][i]:
+                        ss = datetime.strptime(daily['sunset'][i], '%Y-%m-%dT%H:%M')
+                        datos_por_dia[f_clave].append({'tipo': 'evento', 'hora': ss.strftime('%H:%M'), 'orden': ss.timestamp(), 'evento_titulo': 'Atardecer', 'icono': 'https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunset.svg'})
+                    datos_por_dia[f_clave].sort(key=lambda x: x['orden'])
 
-        tira_hoy = datos_por_dia.get(fecha_hoy, [])
-        contexto['tira_horas'] = tira_hoy
-        contexto['datos_json'] = json.dumps(datos_por_dia)
-        contexto['horas_grafico'] = [h['hora'] for h in tira_hoy if h['tipo'] == 'normal']
-        contexto['temps_grafico'] = [h['temp'] for h in tira_hoy if h['tipo'] == 'normal']
+            tira_hoy = datos_por_dia.get(fecha_hoy, [])
+            contexto['tira_horas'] = tira_hoy
+            contexto['datos_json'] = json.dumps(datos_por_dia)
+            contexto['horas_grafico'] = [h['hora'] for h in tira_hoy if h['tipo'] == 'normal']
+            contexto['temps_grafico'] = [h['temp'] for h in tira_hoy if h['tipo'] == 'normal']
 
-        # Pronóstico
-        lista_pronostico = []
-        dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-        for i in range(6):
-            dt = datetime.strptime(daily['time'][i], '%Y-%m-%d')
-            nom = "HOY" if i == 0 else dias[dt.weekday()]
-            lista_pronostico.append({
-                'nombre_dia': nom, 'fecha_corta': dt.strftime('%d/%m'), 'fecha_full': daily['time'][i],
-                'max': daily['temperature_2m_max'][i], 'min': daily['temperature_2m_min'][i],
-                'icono': obtener_icono_url(daily['weathercode'][i], 1), 'desc': descifrar_desc(daily['weathercode'][i])
-            })
-        contexto['pronostico'] = lista_pronostico
-        
-        # Carga opcional de noticias y papers - no bloquea la carga principal
-        try:
-            contexto['noticias'] = obtener_noticias_reales()
-        except: 
-            contexto['noticias'] = []
-        
-        try:
-            contexto['papers'] = obtener_papers_cientificos()
-        except:
-            contexto['papers'] = []
+            # Pronóstico
+            lista_pronostico = []
+            dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+            for i in range(6):
+                dt = datetime.strptime(daily['time'][i], '%Y-%m-%d')
+                nom = "HOY" if i == 0 else dias[dt.weekday()]
+                lista_pronostico.append({
+                    'nombre_dia': nom, 'fecha_corta': dt.strftime('%d/%m'), 'fecha_full': daily['time'][i],
+                    'max': daily['temperature_2m_max'][i], 'min': daily['temperature_2m_min'][i],
+                    'icono': obtener_icono_url(daily['weathercode'][i], 1), 'desc': descifrar_desc(daily['weathercode'][i])
+                })
+            contexto['pronostico'] = lista_pronostico
+            
+            # Carga opcional de noticias y papers - no bloquea la carga principal
+            try:
+                contexto['noticias'] = obtener_noticias_reales()
+            except: 
+                contexto['noticias'] = []
+            
+            try:
+                contexto['papers'] = obtener_papers_cientificos()
+            except:
+                contexto['papers'] = []
 
-        # Anomalía - Solo si tenemos ubicación válida
-        try:
-            if lat != 0.0 and lon != 0.0:
+            # Anomalía - Solo si tenemos ubicación válida
+            try:
                 fr = hora_local_dt.replace(year=2024).strftime('%Y-%m-%d')
                 uh = f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={lon}&start_date={fr}&end_date={fr}&hourly=temperature_2m&timezone=auto"
                 rh = requests.get(uh, timeout=1).json()
                 if 'hourly' in rh:
                     ta = rh['hourly']['temperature_2m'][hora_local_dt.hour]
                     if ta: contexto['delta_temp'] = round(actual['temperature_2m'] - ta, 1)
-        except: pass
+            except: pass
 
-    else:
-        # Si no tenemos coordenadas válidas, mostrar valores por defecto
-        contexto.update({
-            'temp': '--', 'sensacion': '--', 'humedad': '--', 'viento': '--', 'presion': '--', 
-            'visibilidad': '--', 'uv_index': '--', 'lluvia_hoy': '--',
-            'icono': 'https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/not-available.svg',
-            'fondo': 'img/dia_radiante.jpg',
-            'descripcion': 'Esperando geolocalización...',
-            'tipo_nube': 'Detectando...',
-            'alerta_texto': 'Obteniendo su ubicación',
-            'alerta_color': '#a4b0be',
-            'alerta_tipo': 'normal',
-            'sunrise': '--:--',
-            'sunset': '--:--',
-            'noticias': [],
-            'papers': [],
-            'pronostico': [],
-            'tira_horas': [],
-            'datos_json': '{}',
-            'horas_grafico': [],
-            'temps_grafico': []
-        })
+        else:
+            # Si no tenemos coordenadas válidas, mostrar valores por defecto
+            contexto.update({
+                'temp': '--', 'sensacion': '--', 'humedad': '--', 'viento': '--', 'presion': '--', 
+                'visibilidad': '--', 'uv_index': '--', 'lluvia_hoy': '--',
+                'icono': 'https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/not-available.svg',
+                'fondo': 'img/dia_radiante.jpg',
+                'descripcion': 'Esperando geolocalización...',
+                'tipo_nube': 'Detectando...',
+                'alerta_texto': 'Obteniendo su ubicación',
+                'alerta_color': '#a4b0be',
+                'alerta_tipo': 'normal',
+                'sunrise': '--:--',
+                'sunset': '--:--',
+                'noticias': [],
+                'papers': [],
+                'pronostico': [],
+                'tira_horas': [],
+                'datos_json': '{}',
+                'horas_grafico': [],
+                'temps_grafico': []
+            })
 
     except Exception as e:
         print(f"Error home: {e}")
