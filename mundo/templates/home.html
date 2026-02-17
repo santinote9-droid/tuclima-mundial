@@ -773,23 +773,35 @@
 </div>
 
         <script>
+        // Auto-geolocalización mejorada para carga instantánea
         window.onload = function() {
-            if (window.location.search === "") {
-            usarGPS();
+            // Ejecutar GPS si no hay parámetros o si las coordenadas son 0.0 (estado inicial)
+            const urlParams = new URLSearchParams(window.location.search);
+            const latActual = urlParams.get('lat');
+            const lonActual = urlParams.get('lon');
+            
+            if (!latActual || !lonActual || latActual == '0' || lonActual == '0' || window.location.search === "") {
+                usarGPS();
             }
         };
 
         function usarGPS() {
             if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                const urlParams = new URLSearchParams(window.location.search);
-                const latActual = urlParams.get('lat');
-                if (!latActual) {
-                window.location.href = `/?lat=${lat}&lon=${lon}`;
-                }
-            }, function(error) { console.log("GPS no disponible"); });
+                // Opciones optimizadas para máxima velocidad
+                const options = {
+                    enableHighAccuracy: false, // Más rápido pero menos preciso
+                    timeout: 3000, // 3 segundos máximo
+                    maximumAge: 300000 // Cache por 5 minutos
+                };
+                
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    // Redirección inmediata con nuevas coordenadas
+                    window.location.href = `/?lat=${lat}&lon=${lon}`;
+                }, function(error) { 
+                    console.log("GPS no disponible, manteniendo ubicación por defecto"); 
+                }, options);
             }
         }
         
@@ -1565,31 +1577,6 @@
     <footer style="background: rgba(0,0,0,0.8); padding: 20px; color: #555; font-size: 0.8em; width: 100vw; margin: 0; text-align: center;">
         Desarrollado con Django, Open-Meteo y ArXiv | TuClima
     </footer>
-
-<script>
-    function usarGPS() {
-        // 1. Preguntamos si el navegador tiene GPS
-        if (navigator.geolocation) {
-            // 2. Pedimos la posición
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    // ÉXITO: Obtenemos coordenadas
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    
-                    // 3. Recargamos la página mandando los datos a tu Python
-                    window.location.href = "/?lat=" + lat + "&lon=" + lon;
-                },
-                function(error) {
-                    // ERROR: Si el usuario bloqueó el permiso
-                    alert("⚠️ Error: No pudimos acceder a tu ubicación. Verifica los permisos del navegador.");
-                }
-            );
-        } else {
-            alert("Tu navegador no soporta geolocalización.");
-        }
-    }
-</script>
 
 <style>
     .buscador {

@@ -242,11 +242,11 @@ def obtener_barrio_exacto(lat, lon):
 
 # --- VISTA HOME (PÚBLICA) ---
 def home(request):
-    # Configuración Default
-    lat = -34.6037
-    lon = -58.3816
-    nombre_ciudad = "Buenos Aires"
-    pais = "Argentina"
+    # Configuración Default - Sin ubicación predeterminada para carga instantánea
+    lat = 0.0
+    lon = 0.0
+    nombre_ciudad = "Detectando ubicación..."
+    pais = ""
     opciones_ciudades = None
     mensaje_error = None
     
@@ -286,7 +286,7 @@ def home(request):
                 q_pais = partes[1].strip().lower()
 
             url_s = f"https://geocoding-api.open-meteo.com/v1/search?name={q_ciudad}&count=10&language=es&format=json"
-            res_s = requests.get(url_s, timeout=4).json()
+            res_s = requests.get(url_s, timeout=2).json()
             if 'results' in res_s and res_s['results']:
                 resultados = res_s['results']
                 sel = resultados[0]
@@ -300,9 +300,11 @@ def home(request):
 
     # --- CLIMA ---
     try:
-        url_clima = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,weathercode,precipitation_probability,is_day&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto"
-        
-        response = requests.get(url_clima, timeout=6).json()
+        # Solo obtener datos del clima si tenemos coordenadas válidas
+        if lat != 0.0 and lon != 0.0:
+            url_clima = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,weathercode,precipitation_probability,is_day&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto"
+            
+            response = requests.get(url_clima, timeout=3).json()
         actual = response['current']
         hourly = response['hourly']
         daily = response['daily']
@@ -406,20 +408,50 @@ def home(request):
             })
         contexto['pronostico'] = lista_pronostico
         
+        # Carga opcional de noticias y papers - no bloquea la carga principal
         try:
             contexto['noticias'] = obtener_noticias_reales()
+        except: 
+            contexto['noticias'] = []
+        
+        try:
             contexto['papers'] = obtener_papers_cientificos()
+        except:
+            contexto['papers'] = []
+
+        # Anomalía - Solo si tenemos ubicación válida
+        try:
+            if lat != 0.0 and lon != 0.0:
+                fr = hora_local_dt.replace(year=2024).strftime('%Y-%m-%d')
+                uh = f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={lon}&start_date={fr}&end_date={fr}&hourly=temperature_2m&timezone=auto"
+                rh = requests.get(uh, timeout=1).json()
+                if 'hourly' in rh:
+                    ta = rh['hourly']['temperature_2m'][hora_local_dt.hour]
+                    if ta: contexto['delta_temp'] = round(actual['temperature_2m'] - ta, 1)
         except: pass
 
-        # Anomalía
-        try:
-            fr = hora_local_dt.replace(year=2024).strftime('%Y-%m-%d')
-            uh = f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={lon}&start_date={fr}&end_date={fr}&hourly=temperature_2m&timezone=auto"
-            rh = requests.get(uh, timeout=2).json()
-            if 'hourly' in rh:
-                ta = rh['hourly']['temperature_2m'][hora_local_dt.hour]
-                if ta: contexto['delta_temp'] = round(actual['temperature_2m'] - ta, 1)
-        except: pass
+    else:
+        # Si no tenemos coordenadas válidas, mostrar valores por defecto
+        contexto.update({
+            'temp': '--', 'sensacion': '--', 'humedad': '--', 'viento': '--', 'presion': '--', 
+            'visibilidad': '--', 'uv_index': '--', 'lluvia_hoy': '--',
+            'icono': 'https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/not-available.svg',
+            'fondo': 'img/dia_radiante.jpg',
+            'descripcion': 'Esperando geolocalización...',
+            'tipo_nube': 'Detectando...',
+            'alerta_texto': 'Obteniendo su ubicación',
+            'alerta_color': '#a4b0be',
+            'alerta_tipo': 'normal',
+            'sunrise': '--:--',
+            'sunset': '--:--',
+            'noticias': [],
+            'papers': [],
+            'pronostico': [],
+            'tira_horas': [],
+            'datos_json': '{}',
+            'horas_grafico': [],
+            'temps_grafico': []
+        })
 
     except Exception as e:
         print(f"Error home: {e}")
