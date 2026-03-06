@@ -1,0 +1,13 @@
+{
+  "ubicacion": "Puerto de Buenos Aires",
+  "altura_olas": 2.5,
+  "corriente_marina": "15 km/h Norte",
+  "salinidad": 35.2,
+  "marea": "alta",
+  "puerto": "BUENOS_AIRES",
+  "navegacion": "comercial",
+  "barco": "carguero",
+  "oceano": "Atlántico",
+  "temperatura_mar": 18.5,
+  "profundidad": 15.0
+}

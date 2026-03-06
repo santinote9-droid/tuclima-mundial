@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carga Sectorial - Sistema Multisectorial</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-cloud"></i> Sistema Clima
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Inicio</a>
+                <a class="nav-link" href="/carga-sectorial/">Carga Sectorial</a>
+                <a class="nav-link" href="/probar-n8n/">Prueba n8n</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="fas fa-upload"></i> Carga de Datos Sectoriales</h4>
+                    <p class="mb-0">Sistema de detección automática con IA</p>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Formulario de carga -->
+                    <form id="formCargaSectorial" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="archivo" class="form-label">
+                                <strong>Seleccionar Archivo</strong>
+                            </label>
+                            <input type="file" 
+                                   class="form-control" 
+                                   id="archivo" 
+                                   name="archivo" 
+                                   accept=".csv,.json,.txt,.xlsx,.xls"
+                                   required>
+                            <div class="form-text">
+                                Formatos permitidos: CSV, JSON, TXT, Excel (.xlsx/.xls)
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-magic"></i> Detección Automática de Sector</h6>
+                                <p class="mb-0">
+                                    El sistema detectará automáticamente si sus datos pertenecen a:
+                                </p>
+                                <ul class="mb-0 mt-2">
+                                    <li><strong>NAVAL:</strong> Datos marítimos, oceanográficos</li>
+                                    <li><strong>ENERGÍA:</strong> Datos energéticos, eléctricos</li>
+                                    <li><strong>AÉREO:</strong> Datos aeronáuticos, meteorológicos</li>
+                                    <li><strong>AGRO:</strong> Datos agrícolas, ganaderos</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success btn-lg w-100">
+                            <i class="fas fa-cogs"></i> Procesar con IA
+                        </button>
+                    </form>
+                    
+                    <!-- Área de resultados -->
+                    <div id="resultados" class="mt-4" style="display: none;">
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-check-circle"></i> Procesamiento Completado</h6>
+                            <div id="contenidoResultados"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Área de errores -->
+                    <div id="errores" class="mt-4" style="display: none;">
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Error en Procesamiento</h6>
+                            <div id="contenidoErrores"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Loading spinner -->
+                    <div id="loading" class="text-center mt-4" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Procesando...</span>
+                        </div>
+                        <p class="mt-2">Analizando archivo con IA...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Datos recientes del usuario -->
+    {% if usuarios_recientes %}
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="fas fa-history"></i> Sus Últimas Cargas</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Sector</th>
+                                    <th>Archivo</th>
+                                    <th>Ubicación</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dato in usuarios_recientes %}
+                                <tr>
+                                    <td>
+                                        <span class="badge 
+                                              {% if dato.sector == 'NAVAL' %}bg-info
+                                              {% elif dato.sector == 'ENERGIA' %}bg-warning
+                                              {% elif dato.sector == 'AEREO' %}bg-primary
+                                              {% else %}bg-success{% endif %}">
+                                            {{ dato.sector }}
+                                        </span>
+                                    </td>
+                                    <td>{{ dato.archivo_origen|default:"Sin archivo" }}</td>
+                                    <td>{{ dato.ubicacion }}</td>
+                                    <td>{{ dato.procesado_en|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.getElementById('formCargaSectorial').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    const archivo = document.getElementById('archivo').files[0];
+    
+    if (!archivo) {
+        alert('Por favor seleccione un archivo');
+        return;
+    }
+    
+    formData.append('archivo', archivo);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    // Mostrar loading
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('resultados').style.display = 'none';
+    document.getElementById('errores').style.display = 'none';
+    
+    fetch('/procesar-archivo-sectorial/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('loading').style.display = 'none';
+        
+        if (data.success) {
+            document.getElementById('contenidoResultados').innerHTML = `
+                <p><strong>Sector Detectado:</strong> <span class="badge bg-primary">${data.sector}</span></p>
+                <p><strong>ID del Registro:</strong> #${data.id}</p>
+                <p><strong>BigQuery:</strong> ${data.bigquery_success ? 
+                    '<span class="text-success">✓ Enviado correctamente</span>' : 
+                    '<span class="text-warning">⚠ Error en envío</span>'}</p>
+                <div class="mt-3">
+                    <h6>Análisis IA:</h6>
+                    <div class="bg-light p-3 rounded">
+                        ${data.analisis.replace(/\n/g, '<br>')}
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <h6>Metadatos Extraídos:</h6>
+                    <pre class="bg-light p-2 rounded">${JSON.stringify(data.metadatos, null, 2)}</pre>
+                </div>
+            `;
+            document.getElementById('resultados').style.display = 'block';
+            
+            // Limpiar formulario
+            document.getElementById('formCargaSectorial').reset();
+        } else {
+            document.getElementById('contenidoErrores').innerHTML = `
+                <p>${data.error}</p>
+            `;
+            document.getElementById('errores').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('contenidoErrores').innerHTML = `
+            <p>Error de conexión: ${error.message}</p>
+        `;
+        document.getElementById('errores').style.display = 'block';
+    });
+});
+</script>
+
+<!-- CSRF Token para JavaScript -->
+{% csrf_token %}
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

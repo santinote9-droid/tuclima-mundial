@@ -1,0 +1,2895 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<link rel="icon" type="image/jpeg" href="{% static 'img/logo.jpg' %}">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-wg-notranslate>Tu Clima Mundial</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            background-attachment: fixed;
+            color: #1a202c;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Patrón hexagonal sutil de fondo global */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23cbd5e1' fill-opacity='0.03'%3E%3Cpath d='M60 30l30 17.32v34.64L60 90 30 72.68V38.04L60 30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.6;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Layout Horizontal Hexagonal Meteorológico */
+        .main-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            grid-template-rows: auto auto 1fr;
+            gap: 24px;
+            min-height: calc(100vh - 120px);
+            align-items: start;
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.01); /* Para forzar el apilamiento */
+        }
+
+        .header-section {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.01); /* Para forzar el apilamiento */
+        }
+
+        .left-panel {
+            grid-column: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            z-index: 15;
+        }
+
+        .main-weather-panel {
+            grid-column: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            position: relative;
+            z-index: 15;
+        }
+
+        .right-panel {
+            grid-column: 3;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            z-index: 15;
+        }
+
+        /* Buscador Hexagonal Meteorológico */
+        .buscador { 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.95));
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 32px;
+            padding: 32px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.08),
+                0 2px 16px rgba(0, 0, 0, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 30;
+        }
+
+        .buscador::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            right: -20px;
+            bottom: -20px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.03), rgba(14, 165, 233, 0.02));
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .buscador:hover::before {
+            opacity: 1;
+        }
+
+        .buscador:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 8px 24px rgba(0, 0, 0, 0.06),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        /* Efectos de fondo integrados y optimizados */
+        .integrated-background-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -10;
+            overflow: hidden;
+        }
+
+        /* Aurora boreal con partículas violetas integradas */
+        .integrated-background-effects::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                /* Aurora boreal superior */
+                linear-gradient(
+                    135deg,
+                    transparent 0%,
+                    rgba(168, 85, 247, 0.06) 15%,
+                    rgba(139, 92, 246, 0.04) 30%,
+                    rgba(56, 189, 248, 0.05) 45%,
+                    rgba(34, 197, 94, 0.03) 60%,
+                    rgba(168, 85, 247, 0.06) 75%,
+                    rgba(139, 92, 246, 0.04) 90%,
+                    transparent 100%
+                ),
+                /* Partículas flotantes */
+                radial-gradient(circle 1px at 15% 25%, rgba(168, 85, 247, 0.4), transparent),
+                radial-gradient(circle 2px at 85% 10%, rgba(139, 92, 246, 0.3), transparent),
+                radial-gradient(circle 1px at 45% 75%, rgba(255, 255, 255, 0.5), transparent),
+                radial-gradient(circle 1.5px at 75% 50%, rgba(56, 189, 248, 0.3), transparent),
+                radial-gradient(circle 0.5px at 25% 90%, rgba(168, 85, 247, 0.3), transparent);
+            background-size: 
+                100% 300px,
+                300px 200px, 
+                290px 180px, 
+                320px 220px, 
+                310px 190px, 
+                280px 210px;
+            animation: integrated-effects 20s infinite ease-in-out;
+        }
+
+        /* Ondas violetas inferiores */
+        .integrated-background-effects::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 200px;
+            background: 
+                linear-gradient(
+                    0deg,
+                    rgba(168, 85, 247, 0.03) 0%,
+                    rgba(139, 92, 246, 0.015) 30%,
+                    transparent 60%
+                ),
+                radial-gradient(ellipse 800px 80px at 30% 100%, rgba(168, 85, 247, 0.06), transparent),
+                radial-gradient(ellipse 600px 60px at 70% 100%, rgba(139, 92, 246, 0.04), transparent);
+            animation: gentle-waves 25s infinite ease-in-out;
+        }
+
+        @keyframes integrated-effects {
+            0% { 
+                transform: translateX(-10%) skewX(2deg);
+                opacity: 0.7;
+            }
+            25% { 
+                transform: translateX(5%) skewX(-1deg);
+                opacity: 0.9;
+            }
+            50% { 
+                transform: translateX(2%) skewX(1deg);
+                opacity: 0.8;
+            }
+            75% { 
+                transform: translateX(-3%) skewX(-2deg);
+                opacity: 0.85;
+            }
+            100% { 
+                transform: translateX(-10%) skewX(2deg);
+                opacity: 0.7;
+            }
+        }
+
+        @keyframes gentle-waves {
+            0%, 100% { 
+                transform: translateY(5px) scale(1);
+                opacity: 0.6;
+            }
+            50% { 
+                transform: translateY(-3px) scale(1.01);
+                opacity: 0.8;
+            }
+        }
+
+        .search-input-hex {
+            background: rgba(15, 23, 42, 0.9);
+            border: 2px solid rgba(56, 189, 248, 0.4);
+            border-radius: 24px;
+            padding: 16px 24px;
+            color: #fff;
+            font-size: 1.1em;
+            outline: none;
+            width: 100%;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .search-input-hex:focus {
+            border-color: #38bdf8;
+            box-shadow: 
+                0 8px 32px rgba(56, 189, 248, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .search-button-hex {
+            background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 
+                0 8px 24px rgba(30, 64, 175, 0.4),
+                0 2px 8px rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .search-button-hex:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 
+                0 20px 40px rgba(30, 64, 175, 0.6),
+                0 4px 16px rgba(255, 255, 255, 0.2);
+            border-color: #f8fafc;
+        }
+
+        .gps-button-hex {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+            border: 2px solid rgba(56, 189, 248, 0.6);
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 
+                0 8px 24px rgba(30, 58, 138, 0.4),
+                0 2px 8px rgba(56, 189, 248, 0.1);
+        }
+
+        .gps-button-hex:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 
+                0 20px 40px rgba(30, 58, 138, 0.6),
+                0 4px 16px rgba(56, 189, 248, 0.2);
+            border-color: #38bdf8;
+        }
+
+        /* Responsividad mejorada para dispositivos móviles */
+        @media (max-width: 768px) {
+            .weather-particles::before {
+                animation: drift 15s infinite linear;
+                background-size: 150px 75px;
+            }
+
+            .aurora-effect {
+                height: 100px;
+                animation: aurora-dance 12s infinite ease-in-out;
+            }
+
+            /* Layout móvil: volver a vertical */
+            .main-container {
+                max-width: 100vw;
+                padding: 10px;
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                grid-template-columns: none;
+                grid-template-rows: none;
+            }
+
+            .header-section {
+                grid-column: none;
+            }
+
+            .left-panel, .main-weather-panel, .right-panel {
+                grid-column: none;
+                width: 100%;
+            }
+
+            .card {
+                min-width: 280px;
+                padding: 24px;
+                margin: 8px;
+            }
+
+            .card:hover {
+                transform: translateY(-3px) scale(1.01);
+            }
+
+            .weather-hex {
+                padding: 16px;
+                margin: 8px;
+            }
+
+            .weather-hex:hover {
+                transform: translateY(-2px) scale(1.01);
+            }
+
+            .tarjeta-dia:hover {
+                transform: translateY(-2px) scale(1.01);
+            }
+
+            .buscador {
+                padding: 20px;
+                margin-bottom: 16px;
+            }
+
+            .search-input-hex {
+                font-size: 1em;
+                padding: 12px 16px;
+            }
+
+            .search-button-hex, .gps-button-hex {
+                width: 44px;
+                height: 44px;
+            }
+        }
+
+        /* Estilos específicos para el layout hexagonal horizontal */
+        .hex-main-weather {
+            clip-path: polygon(15% 0%, 85% 0%, 100% 25%, 100% 75%, 85% 100%, 15% 100%, 0% 75%, 0% 25%);
+            border-radius: 0;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.95));
+        }
+
+        .hex-main-weather:hover {
+            clip-path: polygon(10% 0%, 90% 0%, 100% 20%, 100% 80%, 90% 100%, 10% 100%, 0% 80%, 0% 20%);
+        }
+
+        @keyframes hexagon-pulse {
+            0%, 100% { 
+                transform: translateY(0) scale(1);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+            }
+            50% { 
+                transform: translateY(-2px) scale(1.005);
+                box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08);
+            }
+        }
+
+        .weather-hex {
+            animation: hexagon-pulse 6s infinite ease-in-out;
+        }
+
+        .weather-hex:nth-child(2n) {
+            animation-delay: 2s;
+        }
+
+        .weather-hex:nth-child(3n) {
+            animation-delay: 4s;
+        }
+
+        /* Tarjeta Principal - Estilo Apple Weather con hexágono sutil */
+        .card { 
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(248, 252, 255, 0.95));
+            border: 1px solid rgba(59, 130, 246, 0.08);
+            display: inline-block; 
+            padding: 48px; 
+            border-radius: 32px; 
+            box-shadow: 
+                0 12px 40px rgba(59, 130, 246, 0.08),
+                0 4px 20px rgba(30, 64, 175, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.95); 
+            min-width: 420px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(25px);
+            margin: 20px;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .card:hover {
+            transform: translateY(-12px) scale(1.03);
+            box-shadow: 
+                0 28px 60px rgba(59, 130, 246, 0.15),
+                0 12px 40px rgba(30, 64, 175, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.99), rgba(248, 252, 255, 0.98));
+        }
+
+        /* Patrón hexagonal sutil de fondo */
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e2e8f0' fill-opacity='0.1'%3E%3Cpath d='M30 15l15 8.66v17.28L30 45 15 36.34V19.06L30 15z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.3;
+            z-index: 0;
+        }
+
+        /* Ventana hexagonal meteorológica */
+        .weather-hex {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 252, 255, 0.92));
+            position: relative;
+            padding: 28px;
+            margin: 16px;
+            box-shadow: 
+                0 8px 28px rgba(34, 197, 94, 0.06),
+                0 3px 12px rgba(16, 185, 129, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(34, 197, 94, 0.12);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 20px;
+        }
+
+        .weather-hex:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                0 24px 48px rgba(34, 197, 94, 0.12),
+                0 10px 28px rgba(16, 185, 129, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 252, 255, 0.95));
+        }
+
+        /* Formas hexagonales usando clip-path */
+        .hex-shape {
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+            border-radius: 12px;
+        }
+
+        /* Hexágono más equilibrado para tarjetas pequeñas */
+        .hex-balanced {
+            clip-path: polygon(20% 0%, 80% 0%, 100% 35%, 80% 100%, 20% 100%, 0% 35%);
+        }
+
+        .weather-hex:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 
+                0 8px 35px rgba(37, 99, 235, 0.1),
+                0 2px 16px rgba(0, 0, 0, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        /* Grid meteorológico hexagonal */
+        .weather-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Fondos animados según el clima */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0.05;
+            z-index: 0;
+            transition: all 0.3s ease;
+        }
+
+        .card > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Clima soleado */
+        .clima-soleado::before {
+            background: radial-gradient(circle at 20% 20%, #fbbf24 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, #f59e0b 0%, transparent 50%),
+                        linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+            animation: pulsoSoleado 4s ease-in-out infinite;
+        }
+
+        @keyframes pulsoSoleado {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.05; }
+            50% { transform: scale(1.05) rotate(2deg); opacity: 0.08; }
+        }
+
+        /* Clima nublado */
+        .clima-nublado::before {
+            background: radial-gradient(ellipse at 30% 30%, #9ca3af 0%, transparent 60%),
+                        radial-gradient(ellipse at 70% 70%, #6b7280 0%, transparent 60%);
+            animation: movimientoNubes 8s ease-in-out infinite;
+        }
+
+        @keyframes movimientoNubes {
+            0%, 100% { transform: translateX(0px) translateY(0px); }
+            50% { transform: translateX(10px) translateY(-5px); }
+        }
+
+        /* Clima lluvioso */
+        .clima-lluvia::before {
+            background: linear-gradient(180deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+            background-size: 2px 20px;
+            animation: lluvia 1.5s linear infinite;
+        }
+
+        @keyframes lluvia {
+            0% { background-position: 0px 0px; }
+            100% { background-position: 0px 20px; }
+        }
+
+        /* Clima nevado */
+        .clima-nieve::before {
+            background: radial-gradient(circle at 20% 10%, #e5e7eb 2px, transparent 2px),
+                        radial-gradient(circle at 80% 30%, #f3f4f6 1px, transparent 1px),
+                        radial-gradient(circle at 50% 70%, #e5e7eb 1px, transparent 1px);
+            background-size: 50px 50px, 30px 30px, 40px 40px;
+            animation: nieve 6s linear infinite;
+        }
+
+        @keyframes nieve {
+            0% { background-position: 0px 0px, 0px 0px, 0px 0px; }
+            100% { background-position: 50px 50px, 30px 30px, 40px 40px; }
+        }
+
+        /* Continuación de estilos */
+        
+        .icono-principal { width: 120px; height: 120px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.3)); margin: 10px 0; }
+        h1 { margin: 0; color: #2563eb; font-size: 2.5em; font-weight: 600; }
+        h3 { color: #64748b; font-weight: 500; margin-top: 5px; }
+        .dato-grande { font-size: 4em; font-weight: 700; margin: 10px 0; color: #1e293b; }
+        .etiqueta { color: #6b7280; text-transform: uppercase; font-size: 0.8em; letter-spacing: 2px; font-weight: 600; }
+        .coord { font-size: 0.8em; color: #9ca3af; margin-top: 20px; }
+
+        /* Carrusel Horario - Estilo meteorológico hexagonal */
+        .carrusel-horas { 
+            display: flex; 
+            overflow-x: auto; 
+            gap: 18px; 
+            padding: 28px 24px; 
+            scrollbar-width: thin; 
+            scrollbar-color: rgba(37, 99, 235, 0.3) rgba(248, 250, 252, 0.5);
+            border-radius: 24px;
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            border: none;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.06),
+                0 2px 16px rgba(0, 0, 0, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        
+        .carrusel-horas::-webkit-scrollbar { 
+            height: 4px; 
+        }
+        
+        .carrusel-horas::-webkit-scrollbar-track { 
+            background: rgba(248, 250, 252, 0.5);
+            border-radius: 10px;
+        }
+        
+        .carrusel-horas::-webkit-scrollbar-thumb { 
+            background: linear-gradient(90deg, rgba(37, 99, 235, 0.3), rgba(59, 130, 246, 0.3));
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .carrusel-horas::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(90deg, rgba(37, 99, 235, 0.5), rgba(59, 130, 246, 0.5));
+        }
+        
+        /* Items de hora con diseño hexagonal sutil */
+        .item-hora { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-width: 82px; 
+            padding: 18px 12px; 
+            border-radius: 18px; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            flex-shrink: 0;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.8));
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 3px 15px rgba(0, 0, 0, 0.04),
+                0 1px 6px rgba(0, 0, 0, 0.02),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Patrón hexagonal sutil para items de hora */
+        .item-hora::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.02), rgba(59, 130, 246, 0.01));
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .item-hora:hover::before {
+            opacity: 1;
+        }
+
+        .item-hora:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 
+                0 8px 25px rgba(37, 99, 235, 0.08),
+                0 2px 12px rgba(0, 0, 0, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9));
+        }
+        
+        .icono-hora { width: 44px; height: 44px; margin: 6px 0; }
+
+        /* Hora destacada con efecto hexagonal meteorológico */
+        .hora-destacada { 
+            background: linear-gradient(145deg, rgba(37, 99, 235, 0.08), rgba(59, 130, 246, 0.05)); 
+            border: 2px solid rgba(37, 99, 235, 0.3); 
+            box-shadow: 
+                0 6px 25px rgba(37, 99, 235, 0.12),
+                0 2px 12px rgba(37, 99, 235, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9); 
+            transform: scale(1.05);
+        }
+
+        .hora-destacada::before {
+            opacity: 0.8;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(59, 130, 246, 0.04));
+        }
+
+        /* Eventos solares con estilo meteorológico */
+        .evento-solar { 
+            background: linear-gradient(145deg, rgba(245, 158, 11, 0.08), rgba(251, 191, 36, 0.05)); 
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            min-width: 90px;
+            box-shadow: 
+                0 4px 20px rgba(245, 158, 11, 0.06),
+                0 1px 8px rgba(245, 158, 11, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            margin: 0 3px;
+            padding: 16px 10px;
+            box-sizing: border-box;
+        }
+
+        .evento-solar::before {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.04), rgba(251, 191, 36, 0.03));
+        }
+
+        /* Calendario - Estilo meteorológico avanzado */
+        .contenedor-dias { 
+            display: flex; 
+            overflow-x: auto; 
+            justify-content: center; 
+            gap: 24px; 
+            padding: 32px 40px; 
+            max-width: 1900px; 
+            margin: 0 auto; 
+            box-sizing: border-box;
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            border: none;
+            border-radius: 28px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.06),
+                0 2px 16px rgba(0, 0, 0, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            scrollbar-width: thin;
+            scrollbar-color: rgba(37, 99, 235, 0.3) rgba(248, 250, 252, 0.5);
+            backdrop-filter: blur(20px);
+        }
+        
+        .contenedor-dias::-webkit-scrollbar {
+            height: 4px;
+        }
+        
+        .contenedor-dias::-webkit-scrollbar-track {
+            background: rgba(248, 250, 252, 0.5);
+            border-radius: 10px;
+        }
+        
+        .contenedor-dias::-webkit-scrollbar-thumb {
+            background: linear-gradient(90deg, rgba(37, 99, 235, 0.3), rgba(59, 130, 246, 0.3));
+            border-radius: 10px;
+        }
+        
+        .contenedor-dias::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(90deg, rgba(37, 99, 235, 0.5), rgba(59, 130, 246, 0.5));
+        }
+        
+        /* Tarjetas diarias con diseño hexagonal meteorológico */
+        .tarjeta-dia { 
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9)); 
+            border: 1px solid rgba(255, 255, 255, 0.3); 
+            padding: 28px 18px 22px 18px; 
+            width: 130px; 
+            height: 170px;
+            cursor: pointer; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-sizing: border-box; 
+            margin: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.05),
+                0 1px 8px rgba(0, 0, 0, 0.03),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+        }
+
+        /* Forma hexagonal sutil para días */
+        .tarjeta-dia::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.03), rgba(59, 130, 246, 0.02));
+            clip-path: polygon(20% 0%, 80% 0%, 100% 35%, 80% 100%, 20% 100%, 0% 35%);
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .tarjeta-dia:hover::before {
+            opacity: 1;
+        }
+
+        .tarjeta-dia:hover { 
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.95)); 
+            transform: translateY(-6px) scale(1.03); 
+            box-shadow: 
+                0 12px 40px rgba(37, 99, 235, 0.08),
+                0 4px 20px rgba(0, 0, 0, 0.06),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            border-color: rgba(37, 99, 235, 0.2);
+        }
+
+        /* Día activo con efecto meteorológico */
+        .dia-activo { 
+            border: 2px solid rgba(37, 99, 235, 0.4); 
+            background: linear-gradient(145deg, rgba(37, 99, 235, 0.05), rgba(59, 130, 246, 0.03)); 
+            box-shadow: 
+                0 8px 30px rgba(37, 99, 235, 0.15),
+                0 2px 16px rgba(37, 99, 235, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9); 
+            transform: scale(1.05); 
+        }
+
+        .dia-activo::before {
+            opacity: 0.6;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(59, 130, 246, 0.06));
+        }
+        .icono-chico { width: 60px; height: 60px; margin: 10px 0; }
+        .max { color: #dc2626; font-weight: 600; } .min { color: #0891b2; font-weight: 600; }
+        
+        /* Noticias */
+        .contenedor-noticias { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; }
+        .tarjeta-noticia { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; width: 300px; overflow: hidden; text-align: left; transition: transform 0.3s; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); }
+        .tarjeta-noticia:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); }
+        .foto-noticia { width: 100%; height: 160px; object-fit: cover; }
+        .contenido-nota { padding: 20px; }
+        .btn-leer { background: transparent; border: 1px solid #2563eb; color: #2563eb; padding: 8px 16px; border-radius: 12px; margin-top: 12px; cursor: pointer; font-size: 0.8em; text-decoration: none; display: inline-block; font-weight: 500; }
+        
+        /* Estilo para la barra de scroll del Menú - Diseño moderno */
+        #miSidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #miSidebar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        
+        #miSidebar::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.8), rgba(14, 165, 233, 0.9));
+            border-radius: 20px;
+            border: 2px solid rgba(15, 23, 42, 0.4);
+            box-shadow: 0 3px 12px rgba(56, 189, 248, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        #miSidebar::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.9), rgba(2, 132, 199, 1));
+            box-shadow: 0 5px 20px rgba(56, 189, 248, 0.6);
+            transform: scaleY(1.1);
+            border-color: rgba(56, 189, 248, 0.3);
+        }
+        
+        /* Para Firefox - Sidebar */
+        #miSidebar {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(56, 189, 248, 0.8) rgba(15, 23, 42, 0.6);
+        }
+
+    </style>
+
+<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+    <script>
+        Weglot.initialize({
+            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
+            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
+            auto_switch: true            // Detecta idioma automático
+        });
+    </script>
+
+<meta name="google" content="notranslate">
+</head>
+
+<body>
+
+<!-- Efectos de fondo integrados y optimizados -->
+<div class="integrated-background-effects"></div>
+
+<div class="user-info" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; font-family: 'Segoe UI', sans-serif;">
+    {% if user.is_authenticated %}
+        <div style="display: flex; align-items: center; gap: 12px; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 25px; border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+            <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #38bdf8, #0ea5e9); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 0.9em; box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);">
+                {{ user.username|first|upper }}
+            </div>
+            
+            <div style="display: flex; flex-direction: column; line-height: 1.2;">
+                <span style="color: #f8fafc; font-weight: 600; font-size: 0.9em; letter-spacing: 0.5px;">Hola, {{ user.username }}</span>
+                <span style="color: #38bdf8; font-size: 0.7em; font-weight: 700; text-transform: uppercase;">PRO User</span>
+            </div>
+
+            <div style="width: 1px; height: 20px; background: rgba(56, 189, 248, 0.3); margin: 0 4px;"></div>
+
+            <a href="/logout/" style="color: #ef4444; text-decoration: none; font-weight: 700; font-size: 0.8em; padding: 5px 12px; border-radius: 15px; transition: all 0.3s; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2);" 
+               onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'; this.style.transform='scale(1.05)';" 
+               onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.transform='scale(1)';">
+               Salir
+            </a>
+        </div>
+    {% else %}
+        <a href="/login/" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; text-decoration: none; font-weight: 600; padding: 10px 24px; border-radius: 20px; border: 1.5px solid #38bdf8; backdrop-filter: blur(5px); transition: all 0.3s;"
+           onmouseover="this.style.background='#38bdf8'; this.style.color='white';">
+           Ingresar al Sistema
+        </a>
+    {% endif %}
+</div>
+
+<div class="main-container">
+
+{% if opciones_ciudades %}
+<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+    
+    <div style="background: #1e293b; border: 1px solid #334155; width: 90%; max-width: 500px; border-radius: 20px; box-shadow: 0 0 50px rgba(56, 189, 248, 0.2); overflow: hidden; animation: fadeIn 0.3s ease-out;">
+        
+        <div style="background: #0f172a; padding: 20px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; color: #fff; display: flex; align-items: center; gap: 10px;">
+                <svg style="width:20px; height:20px; color:#38bdf8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                Resultados encontrados
+            </h3>
+            <button onclick="this.closest('div').parentElement.parentElement.style.display='none'" style="background: none; border: none; color: #64748b; font-size: 1.5em; cursor: pointer;">&times;</button>
+        </div>
+
+        <div style="max-height: 60vh; overflow-y: auto; padding: 10px;">
+            <p style="color: #94a3b8; font-size: 0.9em; padding: 0 10px; margin-bottom: 15px;">
+                Hemos encontrado varias ubicaciones para tu búsqueda. Por favor, selecciona la correcta:
+            </p>
+
+            {% for ciudad in opciones_ciudades %}
+            <a href="/?lat={{ ciudad.latitude }}&lon={{ ciudad.longitude }}" style="text-decoration: none;">
+                <div class="item-ciudad" style="display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 10px; transition: 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 5px;">
+                    
+                    {% if ciudad.country_code %}
+                    <img src="https://flagcdn.com/w40/{{ ciudad.country_code|lower }}.png" style="width: 25px; border-radius: 4px; box-shadow: 0 0 5px rgba(0,0,0,0.5);">
+                    {% else %}
+                    <span style="font-size: 1.5em;">🌍</span>
+                    {% endif %}
+
+                    <div style="flex: 1;">
+                        <div style="color: #fff; font-weight: 700; font-size: 1.1em;">{{ ciudad.name }}</div>
+                        <div style="color: #94a3b8; font-size: 0.85em;">
+                            {{ ciudad.admin1|default:"" }} {% if ciudad.admin1 %}|{% endif %} {{ ciudad.country }}
+                        </div>
+                    </div>
+                    
+                    <svg style="width:18px; height:18px; color: #38bdf8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .item-ciudad:hover {
+        background: rgba(56, 189, 248, 0.1);
+        transform: translateX(5px);
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+</style>
+{% endif %}
+
+
+<div id="google_translate_element" style="display:none;"></div>
+
+<script type="text/javascript">
+    function googleTranslateElementInit() {
+        try {
+            new google.translate.TranslateElement({
+                pageLanguage: 'es', 
+                includedLanguages: 'en,fr,it,pt,de', // Idiomas permitidos
+                autoDisplay: false
+            }, 'google_translate_element');
+        } catch (error) {
+            console.log('Google Translate no disponible:', error.message);
+        }
+    }
+    
+    // Cargar Google Translate con manejo de errores
+    (function() {
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+        script.onerror = function() {
+            console.log('Google Translate bloqueado o no disponible');
+        };
+        document.head.appendChild(script);
+    })();
+</script>
+
+<script type="text/javascript">
+    window.addEventListener('load', function() {
+        // A. Detectamos el idioma del navegador del usuario (ej: 'en-US' o 'pt-BR')
+        var idiomaUsuario = navigator.language || navigator.userLanguage; 
+        idiomaUsuario = idiomaUsuario.split('-')[0]; // Nos quedamos solo con las dos letras ('en', 'pt', etc.)
+
+        // B. Si el usuario NO habla español, activamos la traducción
+        if (idiomaUsuario !== 'es') {
+            
+            // Esperamos un segundo a que Google cargue en el fondo
+            setTimeout(function() {
+                var select = document.querySelector('select.goog-te-combo');
+                if (select) {
+                    select.value = idiomaUsuario; // Seleccionamos su idioma
+                    select.dispatchEvent(new Event('change')); // ¡Clic virtual!
+                }
+            }, 1000); // 1000ms = 1 segundo de espera
+        }
+    });
+</script>
+
+<style>
+    .goog-te-banner-frame { display: none !important; }
+    body { top: 0px !important; }
+    #google_translate_element { display: none !important; }
+</style>
+
+<div style="position: fixed; top: 20px; left: 20px; z-index: 10000; display: flex; align-items: center; gap: 15px;">
+        
+        <button onclick="toggleMenu()" style="
+            background: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(0, 210, 255, 0.5); 
+            color: #00d2ff; 
+            font-size: 1.5em; 
+            padding: 10px 15px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            transition: 0.3s;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);">
+            ☰
+        </button>
+
+{% if user.is_authenticated and user.perfil.suscripcion_activa %}
+    <div class="notranslate" style="
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(5px);
+        padding: 10px 20px;
+        border-radius: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        font-weight: bold;
+        color: #fff;
+        display: flex; align-items: center; gap: 10px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.5);">
+        
+        <div style="width: 10px; height: 10px; background: #00d2ff; border-radius: 50%; box-shadow: 0 0 10px #00d2ff;"></div>
+        TuClima <span style="color: #ffcc00;">PRO</span>
+    </div>
+{% endif %} </div>
+
+    <div id="miSidebar" style="
+        position: fixed;
+        top: 0;
+        left: -300px;
+        width: 280px;
+        height: 100vh;
+        overflow-y: auto;
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(12px);
+        border-right: 1px solid rgba(56, 189, 248, 0.2);
+        box-shadow: 5px 0 30px rgba(0,0,0,0.7);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 10001;
+        padding: 28px 18px 18px 18px;
+        text-align: left;
+        display: flex;
+        flex-direction: column;">
+
+        <div style="display: flex; justify-content: flex-start; align-items: center; margin-bottom: 30px; border-bottom: 1px solid rgba(56,189,248,0.1); padding-bottom: 15px; position: relative;">
+            <span style="color: #94a3b8; font-size: 0.75em; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.9;">NAVEGACIÓN</span>
+            <button onclick="toggleMenu()" style="background: transparent; border: none; color: #64748b; font-size: 1em; cursor: pointer; border-radius: 6px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; position: absolute; top: -8px; right: -8px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8'" onmouseout="this.style.background='transparent'; this.style.color='#64748b'">
+                <svg style="width:14px; height:14px; stroke-width:2;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+    
+    <a href="/" style="text-decoration: none; color: #cbd5e1; padding: 12px 15px; border-radius: 8px; display: flex; align-items: center; gap: 12px; transition: 0.2s; position: relative; background: linear-gradient(90deg, rgba(56,189,248,0.10) 0%, rgba(56,189,248,0.03) 100%); border-left: 3px solid #38bdf8; box-shadow: 0 2px 8px 0 rgba(56,189,248,0.04);">
+        <span style="display:inline-flex; align-items:center; justify-content:center;">
+            <svg style="width:20px; height:20px; color:#38bdf8; stroke-width:1.7;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        </span>
+        <span style="font-weight: 600; font-size: 0.92em; letter-spacing: 0.5px;">Inicio / General</span>
+        <span style="position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: linear-gradient(180deg, #38bdf8 0%, #0ea5e9 100%); box-shadow: 0 0 8px #38bdf8; opacity: 1;"></span>
+    </a>
+
+    <div style="color: #64748b; font-size: 0.72em; margin-top: 18px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding-left: 8px; opacity: 0.8;">MODOS PROFESIONALES</div>
+
+    <a href="/agro?lat={{ lat }}&lon={{ lon }}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+        <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 6.5-5.2 14.6l-3.3 2.6C13.5 18.3 8 15 4 10"></path></svg>
+        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Modo Agro</span>
+    </a>
+    
+    <a href="/naval?lat={{ lat }}&lon={{ lon }}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+        <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="5" r="3"></circle><line x1="12" y1="22" x2="12" y2="8"></line><path d="M5 12H2a10 10 0 0 0 20 0h-3"></path></svg>
+        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Modo Naval</span>
+    </a>
+    
+    <a href="/aereo?lat={{ lat }}&lon={{ lon }}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+    <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/>
+    </svg>
+    <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Modo Aéreo</span>
+</a>
+    
+    <a href="/energia?lat={{ lat }}&lon={{ lon }}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+        <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Modo Energías</span>
+    </a>
+
+    <div style="color: #64748b; font-size: 0.72em; margin-top: 20px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding-left: 8px; opacity: 0.8;">CIENCIA</div>
+
+    <a href="/mapas/" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+        <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Mapas & Radar</span>
+    </a>
+
+    <a href="/ciencia/" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+        <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Papers & ArXiv</span>
+    </a>
+    
+<a href="/comparador/?lat={{ lat }}&lon={{ lon }}&ciudad={{ ciudad }}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+    <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M3 3v18h18"></path>
+        <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
+    </svg>
+    <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Comparador Científico</span>
+</a>
+
+<a href="{% url 'espacio' %}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+    <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg>
+    <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Meteorología Espacial</span>
+</a>
+
+    <div style="color: #64748b; font-size: 0.72em; margin-top: 20px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding-left: 8px; opacity: 0.8;">PLATAFORMA</div>
+
+    <a href="/ayuda/" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+        <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Centro de Ayuda</span>
+    </a>
+
+<div class="sidebar-section" style="margin-top: 25px; border-top: 1px solid rgba(56,189,248,0.1); padding-top: 15px;">
+    
+    <div style="font-size: 0.72em; color: #64748b; margin-bottom: 8px; padding-left: 8px; letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; opacity: 0.8;">
+        CONFIGURACIÓN
+    </div>
+
+    <div onclick="toggleSidebarLang()" style="cursor: pointer; display: flex; align-items: center; padding: 10px 16px; color: #94a3b8; transition: all 0.2s; border-radius: 8px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+        <svg style="width:17px; height:17px; margin-right: 12px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        
+        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Idioma / Language</span>
+        
+        <svg id="lang-arrow" style="width:12px; height:12px; margin-left: auto; transition: 0.3s; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+
+    <div id="sidebar-lang-list" style="display: none; background: rgba(0,0,0,0.3); margin: 5px 15px; border-radius: 8px; overflow: hidden;">
+        
+        <a href="#" onclick="Weglot.switchTo('es'); return false;" class="sl-item">
+            <img src="https://flagcdn.com/w20/ar.png" width="20" style="margin-right:10px; opacity:0.8;"> 
+            Español
+        </a>
+        
+        <a href="#" onclick="Weglot.switchTo('en'); return false;" class="sl-item">
+            <img src="https://flagcdn.com/w20/us.png" width="20" style="margin-right:10px; opacity:0.8;"> 
+            English
+        </a>
+
+    </div>
+</div>
+
+<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+<script>
+    // 1. INICIALIZAR MOTOR
+    Weglot.initialize({
+        api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // Tu clave real
+        hide_switcher: true,
+        auto_switch: false 
+    });
+
+    // 2. FUNCIÓN VISUAL DEL MENÚ
+    function toggleSidebarLang() {
+        const list = document.getElementById('sidebar-lang-list');
+        const arrow = document.getElementById('lang-arrow');
+        
+        if (list.style.display === 'none') {
+            list.style.display = 'block';
+            arrow.style.transform = 'rotate(180deg)';
+        } else {
+            list.style.display = 'none';
+            arrow.style.transform = 'rotate(0deg)';
+        }
+    }
+</script>
+
+<style>
+    .sl-item {
+        display: flex; align-items: center;
+        padding: 12px 20px;
+        color: #cbd5e1; text-decoration: none; font-size: 0.9em;
+        font-family: 'Segoe UI', sans-serif;
+        border-bottom: 1px solid rgba(255,255,255,0.02);
+        transition: 0.2s;
+    }
+    .sl-item:hover {
+        background: rgba(56, 189, 248, 0.1);
+        color: #38bdf8;
+        padding-left: 25px;
+    }
+</style>
+
+</div>
+
+
+
+</div> 
+
+    <script>
+        function toggleMenu() {
+            const sidebar = document.getElementById('miSidebar');
+            if (sidebar.style.left === '0px') {
+                sidebar.style.left = '-300px'; // Cerrar
+            } else {
+                sidebar.style.left = '0px'; // Abrir
+            }
+        }
+    </script>
+
+    <div style="height: 80px;"></div>    
+    
+    <!-- ESTRUCTURA HORIZONTAL HEXAGONAL METEOROLÓGICA -->
+    <div class="header-section">
+        <!-- Buscador Hexagonal Meteorológico Redesignado -->
+        <div class="buscador">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h2 style="color: #1e293b; margin: 0 0 8px 0; font-weight: 800; font-size: 1.5em; display: flex; align-items: center; justify-content: center; gap: 12px;">
+                    <svg style="width:28px; height:28px; color:#38bdf8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    Explorador Meteorológico
+                </h2>
+                <p style="color: #64748b; margin: 0; font-size: 0.9em; font-weight: 500;">Descubre el clima global con precisión hexagonal</p>
+            </div>
+
+            <div style="display: flex; justify-content: center; gap: 16px; align-items: center; width: 100%; max-width: 600px; margin: 0 auto;">
+                <form id="busquedaForm" action="" method="get" style="display: flex; gap: 16px; align-items: center; flex: 1;">
+                    <input 
+                        type="text" 
+                        name="ciudad" 
+                        placeholder="Buscar ciudad..." 
+                        required 
+                        class="search-input-hex"
+                    >
+                    <button type="submit" class="search-button-hex">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="#ffffff">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1 0 6.65 6.65a7.5 7.5 0 0 0 10.6 10.6z"/>
+                        </svg>
+                    </button>
+                </form>
+                
+                <button onclick="usarGPS()" class="gps-button-hex" title="📍 Ubicación Meteorológica Actual">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="#ffffff">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                    </svg>
+                </button>
+            </div>
+
+            <script>
+            // Interceptar búsquedas para guardarlas como ubicaciones favoritas cuando se resuelvan
+            document.getElementById('busquedaForm').addEventListener('submit', function(e) {
+                // El guardado en localStorage se hará cuando la página se recargue con los nuevos datos
+            });
+            </script>
+
+            <!-- Separador visual elegante -->
+            <div style="margin: 32px 0 24px 0; display: flex; align-items: center; justify-content: center; gap: 16px;">
+                <div style="height: 1px; background: linear-gradient(90deg, transparent, rgba(100, 116, 139, 0.3), transparent); flex: 1;"></div>
+                <div style="color: #64748b; font-size: 0.8em; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; display: flex; align-items: center; gap: 8px;">
+                    <svg style="width:14px; height:14px; color:#a855f7;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    O por Coordenadas
+                </div>
+                <div style="height: 1px; background: linear-gradient(90deg, transparent, rgba(100, 116, 139, 0.3), transparent); flex: 1;"></div>
+            </div>
+
+            <!-- Sección de Búsqueda por Coordenadas Integrada -->
+            <div style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(139, 92, 246, 0.03)); border: 1px solid rgba(168, 85, 247, 0.15); border-radius: 20px; padding: 24px; margin-top: 16px;">
+                <form method="get" style="display: flex; justify-content: center; gap: 16px; align-items: center; width: 100%; max-width: 600px; margin: 0 auto; flex-wrap: wrap;">
+                    
+                    <div class="coord-input-container">
+                        <input type="number" step="any" name="lat" id="latInput" placeholder="Latitud" required 
+                            style="padding: 12px 45px 12px 16px; width: 100%; border-radius: 18px; border: 1.5px solid rgba(168, 85, 247, 0.4); background: rgba(15, 23, 42, 0.85); color: white; outline: none; text-align: center; font-size: 1em; transition: all 0.3s ease; backdrop-filter: blur(8px); box-sizing: border-box;" 
+                            onfocus="this.style.borderColor='#a855f7'; this.style.boxShadow='0 0 20px rgba(168, 85, 247, 0.3)';" 
+                            onblur="this.style.borderColor='rgba(168, 85, 247, 0.4)'; this.style.boxShadow='none'"
+                            min="-90" max="90">
+                        
+                        <div class="coord-arrows">
+                            <div class="coord-arrow" onclick="incrementInput('latInput')" title="Aumentar latitud">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M7 14l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="coord-arrow" onclick="decrementInput('latInput')" title="Disminuir latitud">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M7 10l5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="coord-input-container">
+                        <input type="number" step="any" name="lon" id="lonInput" placeholder="Longitud" required 
+                            style="padding: 12px 45px 12px 16px; width: 100%; border-radius: 18px; border: 1.5px solid rgba(168, 85, 247, 0.4); background: rgba(15, 23, 42, 0.85); color: white; outline: none; text-align: center; font-size: 1em; transition: all 0.3s ease; backdrop-filter: blur(8px); box-sizing: border-box;" 
+                            onfocus="this.style.borderColor='#a855f7'; this.style.boxShadow='0 0 20px rgba(168, 85, 247, 0.3)';" 
+                            onblur="this.style.borderColor='rgba(168, 85, 247, 0.4)'; this.style.boxShadow='none'"
+                            min="-180" max="180">
+                        
+                        <div class="coord-arrows">
+                            <div class="coord-arrow" onclick="incrementInput('lonInput')" title="Aumentar longitud">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M7 14l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="coord-arrow" onclick="decrementInput('lonInput')" title="Disminuir longitud">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M7 10l5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" style="background: linear-gradient(135deg, #a855f7 0%, #8b5cf6 100%); border: 2px solid rgba(255, 255, 255, 0.8); border-radius: 50%; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 8px 24px rgba(168, 85, 247, 0.4), 0 2px 8px rgba(255, 255, 255, 0.1);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#ffffff" stroke-width="2.8">
+                            <path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+
+                </form>
+                
+                <!-- Funciones JavaScript para coordenadas -->
+                <script>
+                    function incrementInput(inputId) {
+                        const input = document.getElementById(inputId);
+                        let value = parseFloat(input.value) || 0;
+                        if (inputId === 'latInput') {
+                            value = Math.min(90, value + 1);
+                        } else {
+                            value = Math.min(180, value + 1);
+                        }
+                        input.value = value;
+                        
+                        // Efecto visual de confirmación
+                        input.style.borderColor = '#22c55e';
+                        setTimeout(() => {
+                            input.style.borderColor = '#a855f7';
+                        }, 300);
+                    }
+
+                    function decrementInput(inputId) {
+                        const input = document.getElementById(inputId);
+                        let value = parseFloat(input.value) || 0;
+                        if (inputId === 'latInput') {
+                            value = Math.max(-90, value - 1);
+                        } else {
+                            value = Math.max(-180, value - 1);
+                        }
+                        input.value = value;
+                        
+                        // Efecto visual de confirmación
+                        input.style.borderColor = '#22c55e';
+                        setTimeout(() => {
+                            input.style.borderColor = '#a855f7';
+                        }, 300);
+                    }
+
+                    // Funcionalidad de teclado
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const latInput = document.getElementById('latInput');
+                        const lonInput = document.getElementById('lonInput');
+                        
+                        if (latInput) {
+                            latInput.addEventListener('keydown', function(e) {
+                                if (e.key === 'ArrowUp') {
+                                    e.preventDefault();
+                                    incrementInput('latInput');
+                                } else if (e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                    decrementInput('latInput');
+                                }
+                            });
+                        }
+                        
+                        if (lonInput) {
+                            lonInput.addEventListener('keydown', function(e) {
+                                if (e.key === 'ArrowUp') {
+                                    e.preventDefault();
+                                    incrementInput('lonInput');
+                                } else if (e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                    decrementInput('lonInput');
+                                }
+                            });
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+        <script>
+            // Añadir efecto de brillo a los botones del buscador
+            document.addEventListener('DOMContentLoaded', function() {
+                const searchButtons = document.querySelectorAll('button[type="submit"], button[onclick*="usarGPS"]');
+                
+                searchButtons.forEach(button => {
+                    button.addEventListener('mouseenter', function() {
+                        const shimmer = this.querySelector('div');
+                        if (shimmer && shimmer.style.background.includes('gradient')) {
+                            shimmer.style.transform = 'translateX(100%)';
+                        }
+                    });
+                    
+                    button.addEventListener('mouseleave', function() {
+                        const shimmer = this.querySelector('div');
+                        if (shimmer && shimmer.style.background.includes('gradient')) {
+                            setTimeout(() => {
+                                shimmer.style.transform = 'translateX(-100%)';
+                            }, 300);
+                        }
+                    });
+                });
+            });
+        </script>
+
+        <!-- Estilos para ocultar flechas nativas y personalizar inputs -->
+        <style>
+            /* Ocultar flechas nativas de los inputs number */
+            input[type="number"]::-webkit-outer-spin-button,
+            input[type="number"]::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+            input[type="number"] {
+                -moz-appearance: textfield;
+            }
+            
+            /* Estilos para las flechas personalizadas */
+            .coord-input-container {
+                position: relative;
+                width: 180px;
+            }
+            
+            .coord-arrows {
+                position: absolute;
+                right: 8px;
+                top: 50%;
+                transform: translateY(-50%);
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+            
+            .coord-arrow {
+                width: 24px;
+                height: 20px;
+                background: rgba(56, 189, 248, 0.1);
+                border: 1px solid rgba(56, 189, 248, 0.3);
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+            }
+            
+            .coord-arrow:hover {
+                background: rgba(56, 189, 248, 0.2);
+                border-color: rgba(56, 189, 248, 0.6);
+                transform: scale(1.1);
+                box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3);
+            }
+            
+            .coord-arrow:active {
+                transform: scale(0.95);
+                background: rgba(37, 99, 235, 0.2);
+            }
+            
+            .coord-arrow svg {
+                width: 12px;
+                height: 12px;
+                stroke: #2563eb;
+                stroke-width: 2.5;
+                transition: all 0.2s ease;
+            }
+            
+            .coord-arrow:hover svg {
+                stroke: #1d4ed8;
+                transform: scale(1.1);
+            }
+        </style>
+
+
+
+        <script>
+        // Auto-geolocalización mejorada con memoria de ubicación
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const latActual = urlParams.get('lat');
+            const lonActual = urlParams.get('lon');
+            const ciudadBuscada = urlParams.get('ciudad');
+            
+            // Mostrar inmediatamente la última ubicación guardada en el título
+            mostrarUltimaUbicacionEnTitulo();
+            
+            // Verificar nuevamente después de que todo esté cargado
+            setTimeout(() => {
+                mostrarUltimaUbicacionEnTitulo();
+                aplicarFondoClimatico(); // Aplicar fondo según el clima
+            }, 300);
+            
+            // Verificar periódicamente por si Django actualiza el contenido
+            const intervaloVerificacion = setInterval(() => {
+                const ciudadElement = document.querySelector('h1');
+                if (ciudadElement) {
+                    const texto = ciudadElement.textContent.trim();
+                    if (texto.includes('Detectando') || texto.includes('Esperando') || texto.includes('Cargando')) {
+                        mostrarUltimaUbicacionEnTitulo();
+                    } else if (!texto.includes('Detectando') && !texto.includes('Esperando') && !texto.includes('Cargando') && texto !== '') {
+                        clearInterval(intervaloVerificacion); // Dejar de verificar una vez que ya no hay texto temporal
+                    }
+                }
+            }, 500);
+            
+            // Guardar ubicación actual en localStorage si tenemos coordenadas válidas
+            if (latActual && lonActual && latActual !== '0' && lonActual !== '0') {
+                const ubicacionActual = {
+                    lat: latActual,
+                    lon: lonActual,
+                    ciudad: '{{ ciudad }}' || 'Ubicación guardada',
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('ultimaUbicacion', JSON.stringify(ubicacionActual));
+            }
+            
+            // Si no hay parámetros, intentar cargar última ubicación guardada
+            if (window.location.search === "" || (!latActual && !lonActual)) {
+                const ultimaUbicacion = localStorage.getItem('ultimaUbicacion');
+                if (ultimaUbicacion) {
+                    try {
+                        const ubicacion = JSON.parse(ultimaUbicacion);
+                        // Usar ubicación guardada si es reciente (menos de 7 días)
+                        const diasTranscurridos = (Date.now() - ubicacion.timestamp) / (1000 * 60 * 60 * 24);
+                        if (diasTranscurridos < 7 && ubicacion.lat && ubicacion.lon) {
+                            console.log('Cargando última ubicación:', ubicacion.ciudad);
+                            // Cargar página con ubicación anterior y solicitar actualización GPS
+                            window.location.href = `/?lat=${ubicacion.lat}&lon=${ubicacion.lon}&update_gps=1`;
+                            return;
+                        }
+                    } catch (e) {
+                        console.log('Error al cargar ubicación guardada');
+                    }
+                }
+                // Si no hay ubicación guardada válida, usar GPS
+                usarGPS();
+            }
+            // Si hay búsqueda de ciudad, no interferir con GPS automático
+            else if (!ciudadBuscada && (!latActual || !lonActual || latActual == '0' || lonActual == '0')) {
+                usarGPS();
+            }
+            // Si se solicitó actualización GPS, iniciarla en background
+            else if (window.location.search.includes('update_gps=1')) {
+                console.log('Iniciando actualización GPS en segundo plano...');
+                setTimeout(() => {
+                    usarGPSBackground();
+                }, 1500); // Dar tiempo para que termine de cargar la página
+            }
+        };
+
+        function mostrarUltimaUbicacionEnTitulo() {
+            const ciudadElement = document.querySelector('h1');
+            if (ciudadElement) {
+                const textoActual = ciudadElement.textContent.trim();
+                // Verificar si el texto indica que está cargando o detectando
+                const esTextoTemp = textoActual.includes('Cargando') || 
+                                   textoActual.includes('Detectando') || 
+                                   textoActual.includes('Esperando') || 
+                                   textoActual.includes('ubicación') ||
+                                   textoActual === '' ||
+                                   textoActual === 'N/A';
+                
+                if (esTextoTemp) {
+                    const ultimaUbicacion = localStorage.getItem('ultimaUbicacion');
+                    if (ultimaUbicacion) {
+                        try {
+                            const ubicacion = JSON.parse(ultimaUbicacion);
+                            if (ubicacion.ciudad) {
+                                ciudadElement.textContent = ubicacion.ciudad;
+                                console.log('Reemplazando texto temporal con última ubicación:', ubicacion.ciudad);
+                                
+                                // También actualizar otros elementos si están presentes
+                                const paisElement = document.querySelector('p[style*="color: #64748b"]');
+                                if (paisElement && (paisElement.textContent.includes('Detectando') || paisElement.textContent === '')) {
+                                    paisElement.textContent = 'Ubicación anterior';
+                                }
+                            }
+                        } catch (e) {
+                            console.log('Error al mostrar última ubicación en título');
+                        }
+                    }
+                }
+            }
+        }
+
+        function aplicarFondoClimatico() {
+            const descripcionClima = '{{ descripcion }}'.toLowerCase();
+            const tarjeta = document.getElementById('tarjeta-clima');
+            
+            if (tarjeta) {
+                // Limpiar clases anteriores
+                tarjeta.classList.remove('clima-soleado', 'clima-nublado', 'clima-lluvia', 'clima-nieve');
+                
+                // Aplicar clase según el clima
+                if (descripcionClima.includes('sol') || descripcionClima.includes('despejado') || descripcionClima.includes('claro')) {
+                    tarjeta.classList.add('clima-soleado');
+                } else if (descripcionClima.includes('lluvia') || descripcionClima.includes('llovizna') || descripcionClima.includes('tormenta')) {
+                    tarjeta.classList.add('clima-lluvia');
+                } else if (descripcionClima.includes('nieve') || descripcionClima.includes('nevando')) {
+                    tarjeta.classList.add('clima-nieve');
+                } else if (descripcionClima.includes('nube') || descripcionClima.includes('nublado') || descripcionClima.includes('cubierto')) {
+                    tarjeta.classList.add('clima-nublado');
+                } else {
+                    // Por defecto, soleado
+                    tarjeta.classList.add('clima-soleado');
+                }
+                
+                console.log('Fondo climático aplicado:', descripcionClima);
+            }
+        }
+
+        function usarGPS() {
+            if (navigator.geolocation) {
+                // Opciones optimizadas para máxima velocidad
+                const options = {
+                    enableHighAccuracy: false, // Más rápido pero menos preciso
+                    timeout: 3000, // 3 segundos máximo
+                    maximumAge: 300000 // Cache por 5 minutos
+                };
+                
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    
+                    // Guardar nueva ubicación GPS en localStorage
+                    const ubicacionGPS = {
+                        lat: lat.toString(),
+                        lon: lon.toString(),
+                        ciudad: 'Mi ubicación actual',
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem('ultimaUbicacion', JSON.stringify(ubicacionGPS));
+                    
+                    // Redirección inmediata con nuevas coordenadas
+                    window.location.href = `/?lat=${lat}&lon=${lon}`;
+                }, function(error) { 
+                    console.log("GPS no disponible, manteniendo ubicación por defecto"); 
+                }, options);
+            }
+        }
+
+        function usarGPSBackground() {
+            if (navigator.geolocation) {
+                // Opciones optimizadas para máxima precisión
+                const options = {
+                    enableHighAccuracy: true, // Mayor precisión para actualización en background
+                    timeout: 8000, // Más tiempo para obtener mejor precisión
+                    maximumAge: 60000 // Cache de 1 minuto para actualización
+                };
+                
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    
+                    // Verificar si la nueva ubicación es diferente a la actual
+                    const latActual = parseFloat('{{ lat }}');
+                    const lonActual = parseFloat('{{ lon }}');
+                    
+                    // Calcular diferencia (aproximadamente en metros)
+                    const diferencia = Math.sqrt(Math.pow(lat - latActual, 2) + Math.pow(lon - lonActual, 2)) * 111000;
+                    
+                    // Solo actualizar si hay una diferencia significativa (más de 100 metros)
+                    if (diferencia > 0.1) {
+                        console.log('Nueva ubicación detectada, actualizando...');
+                        
+                        // Guardar nueva ubicación GPS en localStorage
+                        const ubicacionGPS = {
+                            lat: lat.toString(),
+                            lon: lon.toString(),
+                            ciudad: 'Mi ubicación actual',
+                            timestamp: Date.now()
+                        };
+                        localStorage.setItem('ultimaUbicacion', JSON.stringify(ubicacionGPS));
+                        
+                        // Actualizar a la nueva ubicación
+                        window.location.href = `/?lat=${lat}&lon=${lon}`;
+                    } else {
+                        console.log('Ubicación sin cambios significativos, manteniendo actual');
+                        // Limpiar el parámetro update_gps de la URL sin recargar
+                        const url = new URL(window.location);
+                        url.searchParams.delete('update_gps');
+                        window.history.replaceState({}, '', url);
+                    }
+                }, function(error) { 
+                    console.log("GPS no disponible para actualización, manteniendo ubicación anterior");
+                    // Limpiar el parámetro update_gps de la URL
+                    const url = new URL(window.location);
+                    url.searchParams.delete('update_gps');
+                    window.history.replaceState({}, '', url);
+                }, options);
+            }
+        }
+        
+        </script>
+
+    </div>
+
+
+
+    <!-- LAYOUT HORIZONTAL PRINCIPAL CON PANELES LATERALES -->
+    <div class="main-container">
+        <div class="left-panel">
+            <!-- Panel Izquierdo: Próximas Horas -->
+            <div class="weather-hex">
+                <h3 style="color: #1e293b; margin: 0 0 16px 0; font-weight: 700; font-size: 1.1em; display: flex; align-items: center; gap: 8px;">
+                    <svg style="width:20px; height:20px; color:#38bdf8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path></svg>
+                    Próximas Horas
+                </h3>
+                <div style="max-height: 300px; overflow-y: auto;">
+                    {% for hora in proximas_horas_compactas %}
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; margin-bottom: 8px; background: {% if hora.es_actual %}linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(14, 165, 233, 0.08)){% else %}linear-gradient(135deg, rgba(100, 116, 139, 0.05), rgba(148, 163, 184, 0.02)){% endif %}; border-radius: 12px; border: 1px solid {% if hora.es_actual %}rgba(56, 189, 248, 0.2){% else %}rgba(100, 116, 139, 0.1){% endif %};">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="font-size: 0.85em; font-weight: 600; color: {% if hora.es_actual %}#38bdf8{% else %}#64748b{% endif %}; min-width: 40px;">{{ hora.hora }}</div>
+                            <img src="{{ hora.icono }}" style="width: 24px; height: 24px;" alt="Clima">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="font-size: 1.1em; font-weight: 700; color: #1e293b;">{{ hora.temp }}°</div>
+                            <div style="font-size: 0.75em; color: #06b6d4; display: flex; align-items: center; gap: 2px;">
+                                <svg style="width:10px; height:10px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 2.69l5.74 5.82a7 7 0 0 1 0 9.88l-5.74 5.81l-5.74-5.81a7 7 0 0 1 0-9.88Z"/></svg>
+                                {{ hora.lluvia }}%
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div style="text-align: center; padding: 20px; color: #94a3b8; font-size: 0.9em;">Sin datos de horas disponibles</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Panel Izquierdo: Datos Atmosféricos -->
+            <div class="weather-hex">
+                <h3 style="color: #1e293b; margin: 0 0 16px 0; font-weight: 700; font-size: 1.1em; display: flex; align-items: center; gap: 8px;">
+                    <svg style="width:20px; height:20px; color:#38bdf8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+                    Atmósfera
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0;">
+                        <span style="color: #64748b; font-size: 0.9em;">Presión</span>
+                        <span style="font-weight: 600; color: #2563eb;">{{ presion }} hPa</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px solid rgba(100, 116, 139, 0.1);">
+                        <span style="color: #64748b; font-size: 0.9em;">Viento</span>
+                        <span style="font-weight: 600; color: #059669;">{{ viento }} km/h</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <div class="main-weather-panel">
+        <!-- Ventana Principal del Clima Hexagonal -->
+        <div class="card hex-main-weather" id="tarjeta-clima" style="width: 100%; max-width: 480px; margin: 0; position: relative;">
+            <!-- Header Meteorológico -->
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h3 style="color: #64748b; margin: 0; font-size: 0.9em; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Estación Meteorológica</h3>
+                <h1 style="color: #1e293b; margin: 8px 0 4px 0; font-size: 2em; font-weight: 800;">{{ ciudad }}</h1>
+                <p style="font-size: 1em; color: #64748b; margin: 0; font-weight: 500;">{{ pais }}</p>
+                <div style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(59, 130, 246, 0.06)); display: inline-block; padding: 8px 18px; border-radius: 20px; margin-top: 12px; border: 1px solid rgba(37, 99, 235, 0.15);">
+                    <span style="color: #2563eb; font-weight: 700; font-size: 0.9em;">🕐 {{ hora_local|date:"H:i" }}</span>
+                </div>
+            </div>
+
+            <!-- Icono y Temperatura Central -->
+            <div style="text-align: center; margin: 32px 0;">
+                <div style="position: relative; display: inline-block;">
+                    <img src="{{ icono }}" style="width: 120px; height: 120px; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.1));" alt="Clima actual">
+                    <div style="position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: linear-gradient(135deg, #38bdf8, #0ea5e9); border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
+                </div>
+                <h2 style="color: #1e293b; margin: 16px 0 8px 0; font-weight: 700; font-size: 1.4em;">{{ descripcion }}</h2>
+                <div style="margin: 20px 0;">
+                    <div style="font-size: 0.7em; color: #64748b; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;">Temperatura Actual</div>
+                    <div style="font-size: 4em; font-weight: 900; color: #1e293b; line-height: 0.9; text-shadow: 0 2px 8px rgba(0,0,0,0.1);" data-wg-notranslate>{{ temp }}°C</div>
+                </div>
+            </div>
+
+            <!-- Datos Meteorológicos en Grid Hexagonal -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 24px;">
+                <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.05)); padding: 16px; border-radius: 16px; text-align: center; border: 1px solid rgba(239, 68, 68, 0.15);">
+                    <svg style="width: 28px; height: 28px; color: #ef4444; margin-bottom: 8px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <div style="font-size: 0.7em; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Sensación</div>
+                    <div style="font-weight: 700; font-size: 1.4em; color: #ef4444;">{{ sensacion }}°</div>
+                </div>
+
+                <div style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(59, 130, 246, 0.05)); padding: 16px; border-radius: 16px; text-align: center; border: 1px solid rgba(37, 99, 235, 0.15);">
+                    <svg style="width: 28px; height: 28px; color: #2563eb; margin-bottom: 8px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line><path d="M12 1C8.5 6 9 12 12 17c3-5 3.5-11 0-16z"></path></svg>
+                    <div style="font-size: 0.7em; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Humedad</div>
+                    <div style="font-weight: 700; font-size: 1.4em; color: #2563eb;">{{ humedad }}%</div>
+                </div>
+
+                <div style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(14, 165, 233, 0.05)); padding: 16px; border-radius: 16px; text-align: center; border: 1px solid rgba(6, 182, 212, 0.15);">
+                    <svg style="width: 28px; height: 28px; color: #06b6d4; margin-bottom: 8px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 13v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2h1a2 2 0 0 1 2 2v1"></path><line x1="7" y1="7" x2="7" y2="11"></line><line x1="17" y1="11" x2="17" y2="15"></line></svg>
+                    <div style="font-size: 0.7em; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Lluvia</div>
+                    <div style="font-weight: 700; font-size: 1.4em; color: #06b6d4;">{{ lluvia_hoy }}mm</div>
+                </div>
+            </div>
+
+            <!-- Sol y Luna -->
+            <div style="display: flex; justify-content: space-around; margin-top: 24px; padding: 20px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(245, 158, 11, 0.05)); border-radius: 20px; border: 1px solid rgba(251, 191, 36, 0.15);">
+                <div style="text-align: center;">
+                    <svg style="width: 40px; height: 40px; color: #f59e0b; margin-bottom: 8px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-6z"></path><path d="M12 6.04V4"></path><path d="M6.34 6.34L4.93 4.93"></path><path d="M6.34 17.66L4.93 19.07"></path><path d="M12 19.96V22"></path><path d="M17.66 17.66L19.07 19.07"></path><path d="M17.66 6.34L19.07 4.93"></path></svg>
+                    <div style="font-size: 0.8em; color: #64748b; font-weight: 600;">AMANECER</div>
+                    <div style="font-weight: 700; color: #f59e0b; font-size: 1.2em;">{{ sunrise }}</div>
+                </div>
+                <div style="text-align: center;">
+                    <svg style="width: 40px; height: 40px; color: #ef4444; margin-bottom: 8px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 18a5 5 0 0 0-10 0"></path><line x1="12" y1="9" x2="12" y2="2"></line><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line><line x1="1" y1="18" x2="3" y2="18"></line><line x1="21" y1="18" x2="23" y2="18"></line><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line><line x1="23" y1="22" x2="1" y2="22"></line><polyline points="16,5 12,9 8,5"></polyline></svg>
+                    <div style="font-size: 0.8em; color: #64748b; font-weight: 600;">ATARDECER</div>
+                    <div style="font-weight: 700; color: #ef4444; font-size: 1.2em;">{{ sunset }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <!-- Panel Derecho: Pronóstico Semanal -->
+        <div class="weather-hex">
+            <h3 style="color: #1e293b; margin: 0 0 16px 0; font-weight: 700; font-size: 1.1em; display: flex; align-items: center; gap: 8px;">
+                <svg style="width:20px; height:20px; color:#38bdf8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                Próximos Días
+            </h3>
+            <div style="max-height: 350px; overflow-y: auto;">
+                {% for dia in proximos_dias_compactos %}
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin-bottom: 8px; background: linear-gradient(135deg, rgba(100, 116, 139, 0.05), rgba(148, 163, 184, 0.02)); border-radius: 12px; border: 1px solid rgba(100, 116, 139, 0.1); transition: all 0.2s;" onmouseover="this.style.background='linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(14, 165, 233, 0.04))'" onmouseout="this.style.background='linear-gradient(135deg, rgba(100, 116, 139, 0.05), rgba(148, 163, 184, 0.02))'">
+                    <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                        <div style="font-size: 0.85em; font-weight: 600; color: #64748b; min-width: 35px;">{{ dia.nombre }}</div>
+                        <img src="{{ dia.icono }}" style="width: 28px; height: 28px;" alt="{{ dia.desc }}" title="{{ dia.desc }}">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="text-align: right;">
+                            <div style="font-size: 1em; font-weight: 700; color: #1e293b;">{{ dia.max }}°</div>
+                            <div style="font-size: 0.8em; color: #64748b;">{{ dia.min }}°</div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div style="text-align: center; padding: 20px; color: #94a3b8; font-size: 0.9em;">Sin pronóstico disponible</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Panel Derecho: Alertas Meteorológicas -->
+        <div class="weather-hex">
+            <h3 style="color: #1e293b; margin: 0 0 16px 0; font-weight: 700; font-size: 1.1em; display: flex; align-items: center; gap: 8px;">
+                <svg style="width:20px; height:20px; color:#ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Alertas Activas
+                {% if total_alertas > 0 %}
+                <span style="background: #ef4444; color: white; font-size: 0.7em; padding: 2px 6px; border-radius: 10px; font-weight: 700;">{{ total_alertas }}</span>
+                {% endif %}
+            </h3>
+            
+            {% if alertas_activas %}
+                <div style="max-height: 280px; overflow-y: auto;">
+                    {% for alerta in alertas_activas %}
+                    <div style="padding: 12px; margin-bottom: 8px; background: linear-gradient(135deg, {{ alerta.color }}15, {{ alerta.color }}08); border-radius: 12px; border-left: 4px solid {{ alerta.color }}; position: relative;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                            <div style="width: 24px; height: 24px; background: {{ alerta.color }}; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                {% if alerta.icono == 'sun' %}
+                                    <svg style="width:12px; height:12px; color: white;" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/></svg>
+                                {% elif alerta.icono == 'wind' %}
+                                    <svg style="width:12px; height:12px; color: white;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2"/></svg>
+                                {% elif alerta.icono == 'thermometer' %}
+                                    <svg style="width:12px; height:12px; color: white;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+                                {% elif alerta.icono == 'snowflake' %}
+                                    <svg style="width:12px; height:12px; color: white;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="20.66" y1="7" x2="3.34" y2="17"/></svg>
+                                {% elif alerta.icono == 'fog' %}
+                                    <svg style="width:12px; height:12px; color: white;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M4 18h16M6 6h12"/></svg>
+                                {% elif alerta.icono == 'rain' %}
+                                    <svg style="width:12px; height:12px; color: white;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="16" y1="13" x2="16" y2="21"/><line x1="8" y1="13" x2="8" y2="21"/></svg>
+                                {% elif alerta.icono == 'thunderstorm' %}
+                                    <svg style="width:12px; height:12px; color: white;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                                {% else %}
+                                    <svg style="width:12px; height:12px; color: white;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                                {% endif %}
+                            </div>
+                            <div style="font-size: 0.85em; font-weight: 700; color: {{ alerta.color }};">{{ alerta.mensaje }}</div>
+                        </div>
+                        <div style="font-size: 0.75em; color: #64748b; line-height: 1.3;">{{ alerta.descripcion }}</div>
+                        
+                        {% if alerta.severidad == 'crítica' %}
+                        <div style="position: absolute; top: 8px; right: 8px; background: #ef4444; color: white; font-size: 0.6em; padding: 2px 4px; border-radius: 4px; font-weight: 700;">CRÍTICO</div>
+                        {% elif alerta.severidad == 'alta' %}
+                        <div style="position: absolute; top: 8px; right: 8px; background: #f59e0b; color: white; font-size: 0.6em; padding: 2px 4px; border-radius: 4px; font-weight: 700;">ALTO</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 20px; color: #64748b; font-size: 0.9em;">
+                    <svg style="width:32px; height:32px; margin-bottom: 8px; opacity: 0.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div>Sin alertas meteorológicas activas</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    </div> <!-- Cierre de main-container -->
+
+    <!-- EFECTOS ATMOSFÉRICOS -->
+    <div class="weather-particles"></div>
+    <div class="weather-droplets"></div>
+    <div class="aurora-effect"></div>
+
+<h2 style="color: #1e293b; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 24px;">
+    <svg style="width:24px; height:24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+    Calendario de Pronóstico
+</h2>
+
+<div class="contenedor-dias" id="listaDias" style="margin: 0 auto; display: flex; justify-content: center; align-items: center;">
+    {% for dia in pronostico %}
+    <div class="tarjeta-dia {% if forloop.first %}dia-activo{% endif %}" 
+         onclick="cambiarDia('{{ dia.fecha_full }}', '{{ dia.nombre_dia }}', '{{ dia.fecha_corta }}', this)">
+        <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 5px;">{{ dia.nombre_dia }}</div>
+        <div class="fecha" style="font-size: 0.8em; color: #ccc;">{{ dia.fecha_corta }}</div>
+        <img src="{{ dia.icono }}" class="icono-chico">
+        <div class="temp-rango">
+            <span class="max">{{ dia.max }}°</span> 
+            <span class="min">{{ dia.min }}°</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+    <br>
+
+    <div style="width: 100%; max-width: 1000px; margin: 0 auto; background: linear-gradient(145deg, #ffffff, #f8fafc); border: none; padding: 40px; border-radius: 28px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06), 0 2px 16px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px);">
+        <h3 id="tituloHoras" style="color: #1e293b; margin-bottom: 28px; text-align: center; font-size: 1.4em; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px;">
+            <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #2563eb, #3b82f6); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 12px rgba(37, 99, 235, 0.3);">
+                <svg style="width: 16px; height: 16px; color: white;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+            </div>
+            Pronóstico por Horas (HOY)
+        </h3>
+        
+        <div class="carrusel-horas" id="carruselHoras">
+            {% for h in tira_horas %}
+            {% if h.tipo == 'evento' %}
+            <div class="item-hora evento-solar">
+                <span style="color: #fff; font-weight: bold; font-size: 1em;">{{ h.hora }}</span>
+                <img src="{{ h.icono }}" class="icono-hora">
+                <span style="color: #ffcc00; font-weight: bold; font-size: 0.8em; margin-top: 5px;">{{ h.evento_titulo }}</span>
+            </div>
+            {% else %}
+            <div class="item-hora {% if h.es_actual %}hora-destacada{% endif %}">
+                <span style="color: #ccc; font-size: 0.9em;">{{ h.hora }}</span>
+                <img src="{{ h.icono }}" class="icono-hora">
+                <span style="color: #ffcc00; font-weight: bold; font-size: 1.1em;">{{ h.temp }}°</span>
+                
+                <span style="font-size: 0.8em; color: #4ecdc4; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                    <svg style="width:12px; height:12px;" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                        <path d="M12 2.69l5.74 5.82a7 7 0 0 1 0 9.88l-5.74 5.81l-5.74-5.81a7 7 0 0 1 0-9.88Z"/>
+                    </svg>
+                    {{ h.lluvia }}%
+                </span>
+
+                {% if h.es_actual %}
+                <div style="font-size: 0.7em; color: #00d2ff; font-weight: bold; margin-top: 8px;">AHORA</div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        <canvas id="graficoHoras" style="margin-top: 20px;"></canvas>
+    </div>
+
+    <br><br><hr style="border-color: #aaa; margin: 40px 0; opacity: 0.5;">
+
+    <h2 style="color: #1e293b; font-weight: 600; text-align: left; margin-left: 20px; display: flex; align-items: center; gap: 10px; margin-bottom: 24px;">
+        <svg style="width:28px; height:28px; color: #64748b;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+        Detalles y Precauciones
+    </h2>
+    
+    <div class="weather-grid">
+        
+        <!-- Ventana UV con diseño hexagonal meteorológico -->
+        <div class="weather-hex hex-balanced" style="background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.95)); backdrop-filter: blur(20px); position: relative;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #f59e0b, #fbbf24); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 12px rgba(245, 158, 11, 0.3);">
+                    <svg style="width: 20px; height: 20px; color: white;" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><path d="M12 1v6m0 10v6m-7-7h6m10 0h6m-15.364-.636l4.243-4.243m8.484 8.484l-4.243-4.243M5.636 5.636l4.243 4.243m8.484-8.484l-4.243 4.243"/></svg>
+                </div>
+                <div style="color: #64748b; font-size: 0.8em; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;">ÍNDICE UV</div>
+            </div>
+            
+            <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px;">
+                <div style="font-size: 3em; font-weight: 800; color: {% if uv_index > 7 %}#dc2626{% elif uv_index > 4 %}#f59e0b{% else %}#059669{% endif %}; line-height: 1;">{{ uv_index }}</div>
+                <div style="font-size: 0.75em; color: #6b7280; font-weight: 500;">
+                    {% if uv_index > 10 %}Extremo{% elif uv_index > 7 %}Muy Alto{% elif uv_index > 5 %}Alto{% elif uv_index > 2 %}Moderado{% else %}Bajo{% endif %}
+                </div>
+            </div>
+            
+            <div style="width: 100%; height: 3px; background: rgba(241, 245, 249, 0.8); border-radius: 3px; overflow: hidden;">
+                <div style="width: {% widthratio uv_index 12 100 %}%; height: 100%; background: linear-gradient(90deg, #059669, #f59e0b, #dc2626); border-radius: 3px; transition: width 0.8s ease;"></div>
+            </div>
+        </div>
+
+        <!-- Ventana Nubes con diseño meteorológico -->
+        <div class="weather-hex hex-balanced" style="background: linear-gradient(145deg, rgba(148, 163, 184, 0.08), rgba(203, 213, 225, 0.05));">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #64748b, #94a3af); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 12px rgba(100, 116, 139, 0.2);">
+                    <svg style="width: 20px; height: 20px; color: white;" viewBox="0 0 24 24" fill="currentColor"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                </div>
+                <div style="color: #64748b; font-size: 0.8em; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;">COBERTURA</div>
+            </div>
+            
+            <div style="font-size: 1.4em; font-weight: 700; color: #1e293b; margin-bottom: 8px;">{{ tipo_nube }}</div>
+            <div style="font-size: 0.75em; color: #6b7280; font-weight: 500;">Observación Satelital</div>
+            
+            <div style="position: absolute; top: 16px; right: 16px; opacity: 0.6;">
+                <svg style="width: 32px; height: 32px; color: #94a3af;" viewBox="0 0 24 24" fill="currentColor"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+            </div>
+        </div>
+
+        <!-- Ventana Visibilidad con diseño hexagonal -->
+        <div class="weather-hex hex-balanced" style="background: linear-gradient(145deg, rgba(59, 130, 246, 0.06), rgba(37, 99, 235, 0.03));">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #2563eb, #3b82f6); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 12px rgba(37, 99, 235, 0.3);">
+                    <svg style="width: 18px; height: 18px; color: white;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </div>
+                <div style="color: #64748b; font-size: 0.8em; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;">VISIBILIDAD</div>
+            </div>
+            
+            <div style="font-size: 2.2em; font-weight: 800; color: #1e293b; margin-bottom: 4px;">{{ visibilidad }}</div>
+            <div style="font-size: 0.9em; color: #64748b; font-weight: 500;">kilómetros</div>
+            
+            <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(37, 99, 235, 0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="color: #64748b; font-size: 0.7em; font-weight: 600; text-transform: uppercase;">PRESIÓN</div>
+                    <div style="font-size: 1.1em; font-weight: 700; color: #2563eb;">{{ presion }} hPa</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ventana Precaución Sugerida hexagonal -->
+        <div class="weather-hex hex-balanced" style="background: linear-gradient(145deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.05)); border: 2px solid rgba({{ alerta_color|slice:'1:' }}, 0.3); position: relative; overflow: hidden;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="width: 38px; height: 38px; background: linear-gradient(135deg, {{ alerta_color }}, rgba({{ alerta_color|slice:'1:' }}, 0.8)); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 12px rgba({{ alerta_color|slice:'1:' }}, 0.3);">
+                    {% if alerta_tipo == 'tormenta' %}
+                        <svg style="width:20px; height:20px; color: white;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    {% elif alerta_tipo == 'nieve' %}
+                        <svg style="width:20px; height:20px; color: white;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"></line><line x1="20.66" y1="7" x2="3.34" y2="17"></line><line x1="20.66" y1="17" x2="3.34" y2="7"></line></svg>
+                    {% elif alerta_tipo == 'lluvia' %}
+                        <svg style="width:20px; height:20px; color: white;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="16" y1="13" x2="16" y2="21"></line><line x1="8" y1="13" x2="8" y2="21"></line><line x1="12" y1="15" x2="12" y2="23"></line><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg>
+                    {% elif alerta_tipo == 'niebla' %}
+                        <svg style="width:20px; height:20px; color: white;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="M4 18h16"></path><path d="M6 6h12"></path></svg>
+                    {% elif alerta_tipo == 'calor' %}
+                        <svg style="width:20px; height:20px; color: white;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/><path d="M12 2v2"/><path d="M12 14v.01"/></svg>
+                    {% else %}
+                        <svg style="width:20px; height:20px; color: white;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    {% endif %}
+                </div>
+                <div style="color: {{ alerta_color }}; font-size: 0.8em; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;">PRECAUCIÓN SUGERIDA</div>
+            </div>
+            
+            <div style="font-size: 1.1em; font-weight: 600; color: #1e293b; line-height: 1.4; margin-bottom: 12px;">{{ alerta_texto }}</div>
+            
+            <div style="position: absolute; top: 16px; right: 16px; opacity: 0.1;">
+                <svg style="width: 48px; height: 48px; color: {{ alerta_color }};" viewBox="0 0 24 24" fill="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+            </div>
+        </div>
+
+        <!-- Ventana Anomalía Climática hexagonal -->
+        <div class="weather-hex hex-balanced" style="background: linear-gradient(145deg, {% if delta_temp > 1.5 %}rgba(255, 71, 87, 0.06), rgba(220, 38, 38, 0.03){% elif delta_temp < -1.5 %}rgba(56, 189, 248, 0.06), rgba(14, 165, 233, 0.03){% else %}rgba(46, 213, 115, 0.06), rgba(34, 197, 94, 0.03){% endif %}); position: relative; overflow: hidden;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="width: 38px; height: 38px; background: linear-gradient(135deg, {% if delta_temp > 1.5 %}#ff4757, #dc2626{% elif delta_temp < -1.5 %}#38bdf8, #0ea5e9{% else %}#2ed573, #22c55e{% endif %}); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 12px {% if delta_temp > 1.5 %}rgba(255, 71, 87, 0.3){% elif delta_temp < -1.5 %}rgba(56, 189, 248, 0.3){% else %}rgba(46, 213, 115, 0.3){% endif %};">
+                    {% if delta_temp > 1.5 %}
+                        <svg style="width:18px; height:18px; color: white;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                    {% elif delta_temp < -1.5 %}
+                        <svg style="width:18px; height:18px; color: white;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                    {% else %}
+                        <svg style="width:18px; height:18px; color: white;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    {% endif %}
+                </div>
+                <div style="color: #64748b; font-size: 0.8em; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;">ANOMALÍA CLIMÁTICA</div>
+            </div>
+            
+            <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px;">
+                <div style="font-size: 2.0em; font-weight: 800; color: {% if delta_temp > 1.5 %}#ff4757{% elif delta_temp < -1.5 %}#38bdf8{% else %}#2ed573{% endif %}; line-height: 1; text-shadow: 0 0 15px {% if delta_temp > 1.5 %}rgba(255, 71, 87, 0.3){% elif delta_temp < -1.5 %}rgba(56, 189, 248, 0.3){% else %}rgba(46, 213, 115, 0.3){% endif %};">
+                    {% if delta_temp > 1.5 %}+{% endif %}{{ delta_temp }}°C
+                </div>
+            </div>
+            
+            <div style="font-size: 0.85em; color: {% if delta_temp > 1.5 %}#ff4757{% elif delta_temp < -1.5 %}#38bdf8{% else %}#2ed573{% endif %}; font-weight: 600; margin-bottom: 12px;">
+                {% if delta_temp > 1.5 %}
+                    Sobre el promedio histórico
+                {% elif delta_temp < -1.5 %}
+                    Bajo el promedio histórico
+                {% else %}
+                    Dentro del rango normal
+                {% endif %}
+            </div>
+            
+            <div style="font-size: 0.7em; color: #64748b; border-top: 1px solid rgba(100, 116, 139, 0.1); padding-top: 8px;">
+                Comparativa: Promedio de los últimos 3 años
+            </div>
+            
+            <div style="position: absolute; top: 16px; right: 16px; opacity: 0.1;">
+                <svg style="width: 40px; height: 40px; color: {% if delta_temp > 1.5 %}#ff4757{% elif delta_temp < -1.5 %}#38bdf8{% else %}#2ed573{% endif %};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/><path d="M12 2v2"/><path d="M12 14v.01"/></svg>
+            </div>
+        </div>
+
+    </div>
+
+    <br><br><hr style="border-color: #aaa; margin: 40px 0; opacity: 0.5;">
+    
+    <h2 style="color: #ffcc00; text-align: left; margin-left: 20px; text-shadow: 1px 1px 2px black; display: flex; align-items: center; gap: 10px;">
+        <svg style="width:28px; height:28px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
+        Alertas y Noticias Globales
+    </h2>
+
+    <div class="contenedor-noticias" id="noticias-container" style="display: flex; justify-content: center; align-items: center; min-height: 200px; max-width: 1200px; margin: 0 auto;">
+        <div style="text-align: center; color: #94a3b8;">
+            <svg style="width:40px; height:40px; animation: spin 2s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <p>Cargando noticias meteorológicas recientes...</p>
+        </div>
+    </div>
+
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .contenedor-noticias {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .tarjeta-noticia-mejorada {
+            background: #1e293b;
+            border-radius: 15px;
+            overflow: hidden;
+            text-align: left;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 480px;
+        }
+        
+        .tarjeta-noticia-mejorada:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(56, 189, 248, 0.2);
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+        
+        .foto-noticia-mejorada {
+            width: 100%;
+            height: 160px;
+            background: linear-gradient(135deg, #00d2ff, #0f172a);
+            object-fit: cover;
+            display: block;
+        }
+        
+        .contenido-nota {
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .contenido-nota > * {
+            margin: 0;
+        }
+        
+        .noticia-titulo {
+            color: #fff;
+            font-size: 0.95em;
+            line-height: 1.3;
+            font-weight: 600;
+            margin: 10px 0;
+            flex-shrink: 0;
+        }
+        
+        .noticia-descripcion {
+            font-size: 0.85em;
+            color: #cbd5e1;
+            line-height: 1.4;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            margin-bottom: 12px;
+        }
+        
+        .noticia-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            margin-top: auto;
+        }
+    </style>
+
+    <script>
+        function formatearFecha(fecha) {
+            const ahora = new Date();
+            const fechaNoticia = new Date(fecha);
+            const diferencia = Math.floor((ahora - fechaNoticia) / 1000);
+            
+            if (diferencia < 60) return 'Hace unos segundos';
+            if (diferencia < 3600) return `Hace ${Math.floor(diferencia / 60)} min`;
+            if (diferencia < 86400) return `Hace ${Math.floor(diferencia / 3600)} h`;
+            if (diferencia < 604800) return `Hace ${Math.floor(diferencia / 86400)} días`;
+            
+            return fechaNoticia.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+        }
+        
+        function esNoticiaMeteorologia(titulo, descripcion) {
+            const contenido = (titulo + ' ' + descripcion).toLowerCase();
+            const palabrasMeteo = ['clima', 'meteorolog', 'temperatura', 'lluvia', 'nieve', 'tormenta', 'viento', 'granizo', 'huracan', 'ciclon', 'presion', 'humedad', 'pronostico', 'frente frio', 'onda de calor', 'fenomeno', 'precipitacion', 'alerta', 'advertencia', 'temporal', 'desastre natural', 'inundacion', 'sequia', 'atmofera', 'clima'];
+            return palabrasMeteo.some(palabra => contenido.includes(palabra));
+        }
+        
+        async function cargarNoticias() {
+            try {
+                const container = document.getElementById('noticias-container');
+                const feedURL = 'https://news.google.com/rss/search?q=clima+meteorologia+temperatura&hl=es-419&gl=AR';
+                const rss2jsonAPI = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedURL)}`;
+                
+                const response = await fetch(rss2jsonAPI);
+                
+                if (!response.ok) throw new Error('Error al obtener noticias');
+                
+                const datos = await response.json();
+                let noticias = datos.items || [];
+                
+                // Filtrar solo noticias meteorológicas
+                noticias = noticias.filter(nota => 
+                    esNoticiaMeteorologia(nota.title || '', nota.description || '')
+                );
+                
+                if (noticias.length === 0) {
+                    container.innerHTML = '<p style="color: #94a3b8; text-align: center; padding: 40px; grid-column: 1/-1;">No hay noticias meteorológicas disponibles en este momento.</p>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                container.style.display = 'grid';
+                container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
+                container.style.gap = '20px';
+                container.style.padding = '20px';
+                container.style.maxWidth = '1200px';
+                container.style.margin = '0 auto';
+                
+                noticias.slice(0, 6).forEach((nota, index) => {
+                    const tarjeta = document.createElement('div');
+                    tarjeta.className = 'tarjeta-noticia-mejorada';
+                    tarjeta.style.animation = `fadeInUp 0.5s ease forwards`;
+                    tarjeta.style.animationDelay = `${index * 0.1}s`;
+                    
+                    // Extraer imagen del contenido si existe
+                    let imagenURL = '';
+                    let tieneImagen = false;
+                    if (nota.content) {
+                        const imgMatch = nota.content.match(/<img[^>]+src="([^">]+)"/);
+                        if (imgMatch && imgMatch[1]) {
+                            imagenURL = imgMatch[1];
+                            tieneImagen = true;
+                        }
+                    }
+                    
+                    // Crear contenido visual
+                    const contenidoVisual = tieneImagen ? 
+                        `<img src="${imagenURL}" alt="${nota.title}" class="foto-noticia-mejorada" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div style="display: none; width: 100%; height: 100%; background: linear-gradient(135deg, #0f172a, #1e293b); align-items: center; justify-content: center; flex-direction: column; color: #38bdf8; font-size: 1.2em;">
+                            <div style="font-size: 2em; margin-bottom: 8px;">🌦️</div>
+                            <div style="font-weight: 600; text-align: center;">Meteorología</div>
+                        </div>` :
+                        `<div style="width: 100%; height: 100%; background: linear-gradient(135deg, #0f172a, #1e293b); display: flex; align-items: center; justify-content: center; flex-direction: column; color: #38bdf8; font-size: 1.2em;">
+                            <div style="font-size: 2em; margin-bottom: 8px;">🌦️</div>
+                            <div style="font-weight: 600; text-align: center;">Meteorología</div>
+                        </div>`;
+                    
+                    tarjeta.innerHTML = `
+                        <div style="position: relative; width: 100%; height: 160px; background: linear-gradient(135deg, #0f172a, #1e293b); overflow: hidden;">
+                            ${contenidoVisual}
+                            <div style="position: absolute; top: 10px; right: 10px; background: rgba(255, 152, 0, 0.9); color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.7em; font-weight: bold;">
+                                🌦️ CLIMA
+                            </div>
+                        </div>
+                        <div class="contenido-nota">
+                            <div style="font-size: 0.75em; background: rgba(56, 189, 248, 0.25); color: #38bdf8; padding: 4px 10px; border-radius: 4px; display: inline-block; margin-bottom: 10px; font-weight: 600;">
+                                ${nota.source || 'Google News'}
+                            </div>
+                            <h3 class="noticia-titulo">
+                                ${nota.title}
+                            </h3>
+                            <p class="noticia-descripcion">
+                                ${nota.description || nota.content?.replace(/<[^>]*>/g, '').substring(0, 120) + '...'}
+                            </p>
+                            <div class="noticia-footer">
+                                <span style="font-size: 0.75em; color: #94a3b8;">
+                                    ${formatearFecha(nota.pubDate)}
+                                </span>
+                                <span style="font-size: 0.7em; color: #38bdf8; background: rgba(56, 189, 248, 0.15); padding: 2px 6px; border-radius: 3px;">
+                                    LIVE
+                                </span>
+                            </div>
+                            <a href="${nota.link}" target="_blank" rel="noopener noreferrer" style="background: transparent; border: 1px solid #00d2ff; color: #00d2ff; padding: 6px 12px; border-radius: 20px; margin-top: 10px; cursor: pointer; font-size: 0.8em; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: 0.3s; width: fit-content;">
+                                Leer más 
+                                <svg style="width:12px; height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </a>
+                        </div>
+                    `;
+                    container.appendChild(tarjeta);
+                });
+                
+                console.log(`✅ ${Math.min(noticias.length, 6)} noticias meteorológicas cargadas`);
+                
+            } catch (error) {
+                console.error('❌ Error al cargar noticias:', error);
+                const container = document.getElementById('noticias-container');
+                container.innerHTML = '<p style="color: #94a3b8; text-align: center; padding: 40px; grid-column: 1/-1;">Error al cargar las noticias.</p>';
+            }
+        }
+        
+        // Agregar animación fadeInUp
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Cargar noticias al iniciar
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', cargarNoticias);
+        } else {
+            cargarNoticias();
+        }
+        
+        // Actualizar noticias cada 30 minutos
+        setInterval(cargarNoticias, 30 * 60 * 1000);
+    </script>
+
+    <script>
+        const datosSemana = JSON.parse('{{ datos_json|safe }}');
+        let labelsIniciales = {{ horas_grafico|safe }};
+        let tempsIniciales = {{ temps_grafico|safe }};
+        
+        const ctx = document.getElementById('graficoHoras');
+        let chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labelsIniciales, 
+                datasets: [{
+                    label: 'Temperatura (°C)',
+                    data: tempsIniciales,
+                    borderWidth: 3,
+                    borderColor: '#ffcc00',
+                    backgroundColor: 'rgba(255, 204, 0, 0.2)',
+                    tension: 0.4,
+                    pointRadius: 0,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#ccc' }, grid: { display: false } },
+                    y: { ticks: { color: '#ccc' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                }
+            }
+        });
+
+        function cambiarDia(fechaFull, nombreDia, fechaCorta, elementoClick) {
+            document.querySelectorAll('.tarjeta-dia').forEach(el => el.classList.remove('dia-activo'));
+            elementoClick.classList.add('dia-activo');
+            document.getElementById('tituloHoras').innerText = `Pronóstico por Horas (${nombreDia} ${fechaCorta})`;
+
+            const datosDelDia = datosSemana[fechaFull];
+            
+            if (datosDelDia) {
+                const contenedor = document.getElementById('carruselHoras');
+                contenedor.innerHTML = '';
+                
+                let nuevosLabels = [];
+                let nuevasTemps = [];
+
+                datosDelDia.forEach(h => {
+                    if (h.tipo === 'normal') {
+                        nuevosLabels.push(h.hora);
+                        nuevasTemps.push(h.temp);
+                    }
+
+                    let htmlHora = '';
+                    if (h.tipo === 'evento') {
+                        htmlHora = `
+                            <div class="item-hora evento-solar">
+                                <span style="color: #fff; font-weight: bold; font-size: 1em;">${h.hora}</span>
+                                <img src="${h.icono}" class="icono-hora">
+                                <span style="color: #ffcc00; font-weight: bold; font-size: 0.8em; margin-top: 5px;">${h.evento_titulo}</span>
+                            </div>
+                        `;
+                    } else {
+                        let claseExtra = h.es_actual ? 'hora-destacada' : '';
+                        let etiquetaAhora = h.es_actual ? '<div style="font-size: 0.7em; color: #00d2ff; font-weight: bold; margin-top: 8px;">AHORA</div>' : '';
+                        htmlHora = `
+                            <div class="item-hora ${claseExtra}">
+                                <span style="color: #ccc; font-size: 0.9em;">${h.hora}</span>
+                                <img src="${h.icono}" class="icono-hora">
+                                <span style="color: #ffcc00; font-weight: bold; font-size: 1.1em;">${h.temp}°</span>
+                                <span style="font-size: 0.8em; color: #4ecdc4; margin-top: 4px;">💧${h.lluvia}%</span>
+                                ${etiquetaAhora}
+                            </div>
+                        `;
+                    }
+                    contenedor.innerHTML += htmlHora;
+                });
+
+                chartInstance.data.labels = nuevosLabels;
+                chartInstance.data.datasets[0].data = nuevasTemps;
+                chartInstance.update();
+            }
+        }
+    </script>
+<br><br><hr style="border-color: #aaa; margin: 40px 0; opacity: 0.3;">
+
+    <h2 id="papers" style="color: #a29bfe; text-align: left; margin-left: 20px; text-shadow: 1px 1px 2px black; display: flex; align-items: center; gap: 10px;">
+        <svg style="width:32px; height:32px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+        Papers y Publicaciones Científicas
+        <span style="font-size: 0.5em; background: #6c5ce7; padding: 2px 8px; border-radius: 10px; color: white;">ArXiv API</span>
+    </h2>
+    
+    <div id="papers-container" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; min-height: 200px; align-items: center; max-width: 1200px; margin: 0 auto;">
+        <div style="text-align: center; color: #94a3b8;">
+            <svg style="width:40px; height:40px; animation: spin 2s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <p>Cargando papers meteorológicos de ArXiv...</p>
+        </div>
+    </div>
+
+    <script>
+        async function cargarPapersArxiv() {
+            try {
+                const container = document.getElementById('papers-container');
+                const response = await fetch('/api/papers/');
+                
+                if (!response.ok) {
+                    throw new Error(`Error al obtener papers: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                const papers = data.papers || [];
+                
+                if (papers.length === 0) {
+                    container.innerHTML = '<p style="color: #94a3b8; grid-column: 1/-1;">No hay papers meteorológicos disponibles en este momento.</p>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                container.style.display = 'flex';
+                container.style.flexWrap = 'wrap';
+                container.style.justifyContent = 'center';
+                
+                papers.forEach((paper, index) => {
+                    const fecha = paper.fecha ? new Date(paper.fecha).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+                    const pdfLink = paper.link.replace('/abs/', '/pdf/') + '.pdf';
+                    
+                    const tarjeta = document.createElement('div');
+                    tarjeta.style.cssText = 'background: rgba(10, 10, 20, 0.8); border-left: 4px solid #a29bfe; padding: 20px; border-radius: 10px; width: 350px; text-align: left; transition: transform 0.3s, box-shadow 0.3s; animation: fadeInUp 0.5s ease forwards; cursor: pointer;';
+                    tarjeta.style.animationDelay = `${index * 0.1}s`;
+                    
+                    tarjeta.addEventListener('mouseenter', () => {
+                        tarjeta.style.transform = 'translateY(-5px)';
+                        tarjeta.style.boxShadow = '0 8px 20px rgba(162, 155, 254, 0.3)';
+                    });
+                    
+                    tarjeta.addEventListener('mouseleave', () => {
+                        tarjeta.style.transform = 'translateY(0)';
+                        tarjeta.style.boxShadow = 'none';
+                    });
+                    
+                    tarjeta.innerHTML = `
+                        <div style="font-size: 0.8em; color: #a29bfe; margin-bottom: 5px;">
+                            ${fecha} | ${paper.autor.split(' ')[0]}
+                        </div>
+                        <h4 style="margin: 5px 0; color: #eee; line-height: 1.4; font-size: 0.95em;">
+                            ${paper.titulo}
+                        </h4>
+                        <p style="font-size: 0.85em; color: #aaa; height: 60px; overflow: hidden; text-overflow: ellipsis; line-height: 1.5;">
+                            ${paper.resumen}
+                        </p>
+                        <a href="${pdfLink}" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: #fff; background: #6c5ce7; padding: 5px 15px; border-radius: 20px; font-size: 0.8em; display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; transition: 0.3s;" onmouseover="this.style.background='#7c69d0'" onmouseout="this.style.background='#6c5ce7'">
+                            <svg style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+                            Leer PDF
+                        </a>
+                    `;
+                    
+                    container.appendChild(tarjeta);
+                });
+                
+                console.log(`✅ ${papers.length} papers de ArXiv cargados`);
+                
+            } catch (error) {
+                console.error('❌ Error al cargar papers:', error);
+                const container = document.getElementById('papers-container');
+                container.innerHTML = '<p style="color: #ff4757; text-align: center; padding: 40px; width: 100%;">Error al cargar los papers de ArXiv. Intenta nuevamente más tarde.</p>';
+            }
+        }
+        
+        // Cargar papers al iniciar
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', cargarPapersArxiv);
+        } else {
+            cargarPapersArxiv();
+        }
+    </script>
+    <br><br>
+    
+</div> <!-- Cierre de main-container -->
+    
+<style>
+    .buscador {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    
+    .buscador form {
+        max-width: 900px !important;
+        width: 100% !important;
+    }
+</style>
+
+<style>
+    /* RESET GLOBAL */
+    * {
+        box-sizing: border-box;
+    }
+    
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        overflow-x: hidden;
+        position: relative;
+    }
+
+    /* CSS DEL FOOTER CORREGIDO PARA OCUPAR TODO EL ANCHO Y ESTAR CENTRADO */
+    .site-footer {
+        background-color: #020617;
+        border-top: 1px solid rgba(56, 189, 248, 0.3);
+        padding: 60px 0 30px 0;
+        margin-top: 0;
+        font-family: 'Segoe UI', sans-serif;
+        color: #94a3b8;
+        font-size: 0.9em;
+        width: 100vw;
+        margin-left: calc(-50vw + 50%);
+        margin-right: calc(-50vw + 50%);
+        box-sizing: border-box;
+        clear: both;
+        position: relative;
+        left: 0;
+        right: 0;
+    }
+
+    .footer-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 40px;
+        margin-bottom: 50px;
+        padding: 0 20px;
+    }
+
+    /* BARRA INFERIOR LEGAL */
+    .footer-bottom {
+        padding: 25px 20px 0 20px;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        font-size: 0.8em;
+        color: #64748b;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .footer-col h4 {
+        color: #fff;
+        font-family: 'Orbitron', sans-serif;
+        margin-bottom: 25px;
+        font-size: 1.0em;
+        letter-spacing: 1px;
+        border-bottom: 2px solid rgba(56, 189, 248, 0.3);
+        display: inline-block;
+        padding-bottom: 5px;
+    }
+
+    .footer-col p { 
+        line-height: 1.6; 
+        opacity: 0.8; 
+        font-size: 0.95em; 
+    }
+
+    .footer-links { 
+        list-style: none; 
+        padding: 0; 
+        margin: 0; 
+    }
+
+    .footer-links li { 
+        margin-bottom: 12px; 
+    }
+
+    .footer-links a {
+        text-decoration: none;
+        color: #94a3b8;
+        transition: 0.3s;
+        display: flex; 
+        align-items: center; 
+        gap: 10px;
+    }
+
+    .footer-links a:hover { 
+        color: #38bdf8; 
+        transform: translateX(5px); 
+    }
+
+    .f-icon { 
+        width: 18px; 
+        height: 18px; 
+        stroke: currentColor; 
+        fill: none; 
+        stroke-width: 2; 
+        opacity: 0.9; 
+    }
+
+    .api-tag {
+        background: rgba(56, 189, 248, 0.15);
+        color: #38bdf8;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.85em;
+    }
+
+    .legal-links {
+        display: flex;
+        gap: 20px;
+    }
+
+    .legal-links a {
+        color: #64748b;
+        text-decoration: none;
+        transition: 0.3s;
+    }
+
+    .legal-links a:hover {
+        color: #38bdf8;
+    }
+
+    @media (max-width: 768px) {
+        .footer-content {
+            grid-template-columns: 1fr;
+            gap: 30px;
+            padding: 0 15px;
+        }
+
+        .footer-bottom { 
+            flex-direction: column; 
+            text-align: center;
+            padding: 25px 15px 0 15px;
+        }
+
+        .legal-links { 
+            flex-direction: column;
+            gap: 10px;
+        }
+    }
+</style>
+
+    <!-- Etiqueta de desarrollo arriba del footer -->
+    <div style="
+        background: rgba(15, 23, 42, 0.9);
+        color: #94a3b8;
+        text-align: center;
+        padding: 12px 0;
+        font-size: 0.85em;
+        font-weight: 500;
+        border-top: 1px solid rgba(56, 189, 248, 0.2);
+        border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+        backdrop-filter: blur(10px);
+        margin: 60px 0 20px 0;
+        width: 100vw;
+        margin-left: calc(-50vw + 50%);
+        margin-right: calc(-50vw + 50%);
+        box-sizing: border-box;
+        clear: both;
+        position: relative;
+        left: 0;
+        right: 0;
+    ">
+        Desarrollado con Django, Open-Meteo y ArXiv | TuClima
+    </div>
+
+    <footer class="site-footer">
+    <div class="footer-content">
+        
+        <div class="footer-col">
+        <h4 style="color: #38bdf8; border-color: #38bdf8;">TuClima Pro</h4>
+        <p>
+           <strong>Suite de inteligencia climática con Motor de Búsqueda Global.</strong><br>
+    Potenciamos 4 sectores críticos (Agro, Naval, Aéreo, Energías) integrando telemetría directa de <strong>NASA y OpenWeatherMap</strong>.
+    <br><br>
+    Toma de decisiones basada en datos atmosféricos reales y precisos.
+        </p>
+        
+        </div>
+
+        <div class="footer-col">
+        <h4>MODOS PRO</h4>
+        <ul class="footer-links">
+            <li>
+            <a href="#"> <svg class="f-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5a4 4 0 0 1 5.66 0"/><path d="M10 10a2 2 0 0 1 2.83 0"/></svg>
+                Modo Agro
+            </a>
+            </li>
+            <li>
+            <a href="#"> <svg class="f-icon" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></svg>
+                Modo Naval
+            </a>
+            </li>
+            <li>
+            <a href="#"> <svg class="f-icon" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>
+                Modo Aéreo
+            </a>
+            </li>
+            <li>
+            <a href="#"> <svg class="f-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                Modo Energías
+            </a>
+            </li>
+        </ul>
+        </div>
+
+        <div class="footer-col">
+        <h4>CIENCIA</h4>
+        <ul class="footer-links">
+            <li>
+            <a href="#"> 
+                <svg class="f-icon" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+                Mapas & Radar
+            </a>
+            </li>
+            <li>
+            <a href="#"> 
+                <svg class="f-icon" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                Papers & ArXiv
+            </a>
+            </li>
+            <li>
+            <a href="#">
+                <svg class="f-icon" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                Comparador Científico
+            </a>
+            </li>
+            <li>
+            <a href="{% url 'espacio' %}">
+                <svg class="f-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M1 12h2"/><path d="M21 12h2"/></svg>
+                Meteorología Espacial
+            </a>
+            </li>
+        </ul>
+        </div>
+
+        <div class="footer-col">
+        <h4>PLATAFORMA</h4>
+        <ul class="footer-links">
+            <li>
+            <a href="{% url 'home' %}">
+                <svg class="f-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Inicio / Dashboard
+            </a>
+            </li>
+            <li>
+            <a href="#">
+                <svg class="f-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Centro de Ayuda
+            </a>
+            </li>
+        </ul>
+        
+        <div style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 0.85em;">
+            <span style="opacity:0.6;">Datos:</span>
+            <span class="api-tag">OpenWeather</span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85em;">
+            <span style="opacity:0.6;">Versión:</span>
+            <span class="api-tag">v2.1 Stable</span>
+            </div>
+        </div>
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+        <div>
+        &copy; {% now "Y" %} <span class="notranslate">TuClima</span> Labs. Todos los derechos reservados.
+        </div>
+        <div class="legal-links">
+    <a href="{% url 'legal' %}">Privacidad</a>
+    <a href="{% url 'legal' %}">Términos</a>
+    <a href="{% url 'legal' %}">Cookies</a>
+        </div>
+    </div>
+    </footer>
+
+<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+    <script>
+        Weglot.initialize({
+            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU CLAVE REAL
+            hide_switcher: true,  // Ocultamos el botón feo original
+            auto_switch: false    // Lo ponemos en manual para probar
+        });
+    </script> 
+    
+    <script>
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const modals = document.querySelectorAll('.modal-overlay');
+
+        modals.forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none'; // Cierra el modal
+                }
+            });
+
+            const content = modal.querySelector('.modal-content');
+            if (content) {
+                content.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Previene el cierre del modal al hacer clic en el contenido
+                });
+            }
+        });
+    });
+    </script>
+</body>
+</html>

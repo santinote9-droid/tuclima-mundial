@@ -173,21 +173,19 @@
             backdrop-filter: blur(8px); 
             -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(255,255,255,0.1); 
-            padding: 15px 12px; 
+            padding: 40px 20px 25px 20px; 
             border-radius: 22px; 
             width: 140px; 
-            min-height: 180px;
+            height: 180px;
             cursor: pointer; 
             transition: all 0.3s ease; 
             box-sizing: border-box; 
             margin: 5px;
             display: flex;
             flex-direction: column;
-            justify-content: space-evenly;
+            justify-content: center;
             align-items: center;
             flex-shrink: 0;
-            overflow: hidden;
-            text-align: center;
         }
         .tarjeta-dia:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-8px); border-color: #ffcc00; box-shadow: 0 8px 25px rgba(255, 204, 0, 0.3); }
         .dia-activo { border: 2px solid #ffcc00; background: rgba(255, 204, 0, 0.15); box-shadow: 0 0 20px rgba(255, 204, 0, 0.4); transform: scale(1.08); }
@@ -614,7 +612,14 @@
             </button>
             </form>
             
-            <button id="btnGPS" onclick="usarGPSAsincrono()" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%); border: 2px solid #ffffff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 8px 30px rgba(30, 58, 138, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1); transition: all 0.3s ease; flex-shrink: 0; position: relative; overflow: hidden;" title="Mi Ubicación Actual" onmouseover="this.style.transform='scale(1.1) translateY(-2px)'; this.style.boxShadow='0 12px 40px rgba(30, 58, 138, 0.6), 0 4px 15px rgba(255, 255, 255, 0.2)'; this.style.borderColor='#f8fafc';" onmouseout="this.style.transform='scale(1) translateY(0)'; this.style.boxShadow='0 8px 30px rgba(30, 58, 138, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1)'; this.style.borderColor='#ffffff';">
+            <script>
+            // Interceptar búsquedas para guardarlas como ubicaciones favoritas cuando se resuelvan
+            document.getElementById('busquedaForm').addEventListener('submit', function(e) {
+                // El guardado en localStorage se hará cuando la página se recargue con los nuevos datos
+                console.log('Buscando ciudad:', e.target.ciudad.value);
+            });
+            </script>
+            <button onclick="usarGPS()" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%); border: 2px solid #ffffff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 8px 30px rgba(30, 58, 138, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1); transition: all 0.3s ease; flex-shrink: 0; position: relative; overflow: hidden;" title="Ubicación Actual" onmouseover="this.style.transform='scale(1.1) translateY(-2px)'; this.style.boxShadow='0 12px 40px rgba(30, 58, 138, 0.6), 0 4px 15px rgba(255, 255, 255, 0.2)'; this.style.borderColor='#f8fafc';" onmouseout="this.style.transform='scale(1) translateY(0)'; this.style.boxShadow='0 8px 30px rgba(30, 58, 138, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1)'; this.style.borderColor='#ffffff';">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="#ffffff" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
@@ -775,237 +780,272 @@
     </form>
 </div>
 
-   <script>
-        let cargandoDatos = false;
-
-        // 1. FILTRO ANTI-COMAS
-        function limpiarCoordenada(coord) {
-            if (!coord) return null;
-            return String(coord).replace(',', '.').trim();
-        }
-
-        // 2. INICIO Y GESTIÓN DE RUTA
+        <script>
+        // Auto-geolocalización mejorada con memoria de ubicación
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const latActual = limpiarCoordenada(urlParams.get('lat'));
-            const lonActual = limpiarCoordenada(urlParams.get('lon'));
+            const latActual = urlParams.get('lat');
+            const lonActual = urlParams.get('lon');
             const ciudadBuscada = urlParams.get('ciudad');
             
-            console.log('🌍 Parámetros URL:', { latActual, lonActual, ciudadBuscada });
+            // Mostrar inmediatamente la última ubicación guardada en el título
+            mostrarUltimaUbicacionEnTitulo();
             
-            if (ciudadBuscada || (latActual && lonActual && latActual !== '0' && lonActual !== '0')) {
-                console.log('✅ Mostrando ubicación manual/buscada');
-                if (latActual && lonActual) {
-                    const ubicacionActual = { 
-                        lat: latActual, lon: lonActual, ciudad: '{{ ciudad }}' || ciudadBuscada || 'Ubicación guardada', timestamp: Date.now() 
-                    };
-                    localStorage.setItem('ultimaUbicacion', JSON.stringify(ubicacionActual));
+            // Verificar nuevamente después de que todo esté cargado
+            setTimeout(() => {
+                mostrarUltimaUbicacionEnTitulo();
+            }, 300);
+            
+            // Verificar periódicamente por si Django actualiza el contenido
+            const intervaloVerificacion = setInterval(() => {
+                const ciudadElement = document.querySelector('h1');
+                if (ciudadElement) {
+                    const texto = ciudadElement.textContent.trim();
+                    if (texto.includes('Detectando') || texto.includes('Esperando') || texto.includes('Cargando')) {
+                        mostrarUltimaUbicacionEnTitulo();
+                    } else if (!texto.includes('Detectando') && !texto.includes('Esperando') && !texto.includes('Cargando') && texto !== '') {
+                        clearInterval(intervaloVerificacion); // Dejar de verificar una vez que ya no hay texto temporal
+                    }
                 }
-                return; 
+            }, 500);
+            
+            // Guardar ubicación actual en localStorage si tenemos coordenadas válidas
+            if (latActual && lonActual && latActual !== '0' && lonActual !== '0') {
+                const ubicacionActual = {
+                    lat: latActual,
+                    lon: lonActual,
+                    ciudad: '{{ ciudad }}' || 'Ubicación guardada',
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('ultimaUbicacion', JSON.stringify(ubicacionActual));
             }
             
+            // Si no hay parámetros, intentar cargar última ubicación guardada
             if (window.location.search === "" || (!latActual && !lonActual)) {
                 const ultimaUbicacion = localStorage.getItem('ultimaUbicacion');
                 if (ultimaUbicacion) {
                     try {
                         const ubicacion = JSON.parse(ultimaUbicacion);
+                        // Usar ubicación guardada si es reciente (menos de 7 días)
                         const diasTranscurridos = (Date.now() - ubicacion.timestamp) / (1000 * 60 * 60 * 24);
                         if (diasTranscurridos < 7 && ubicacion.lat && ubicacion.lon) {
-                            console.log('📍 Cargando última ubicación (AJAX):', ubicacion.ciudad);
-                            cargarDatosClima(limpiarCoordenada(ubicacion.lat), limpiarCoordenada(ubicacion.lon));
+                            console.log('Cargando última ubicación:', ubicacion.ciudad);
+                            // Cargar página con ubicación anterior y solicitar actualización GPS
+                            window.location.href = `/?lat=${ubicacion.lat}&lon=${ubicacion.lon}&update_gps=1`;
                             return;
                         }
                     } catch (e) {
-                        console.log('Error localStorage');
+                        console.log('Error al cargar ubicación guardada');
                     }
                 }
-                console.log('🛰️ Activando GPS automático...');
-                usarGPSAsincrono();
+                // Si no hay ubicación guardada válida, usar GPS
+                usarGPS();
+            }
+            // Si hay búsqueda de ciudad, no interferir con GPS automático
+            else if (!ciudadBuscada && (!latActual || !lonActual || latActual == '0' || lonActual == '0')) {
+                usarGPS();
+            }
+            // Si se solicitó actualización GPS, iniciarla en background
+            else if (window.location.search.includes('update_gps=1')) {
+                console.log('Iniciando actualización GPS en segundo plano...');
+                setTimeout(() => {
+                    usarGPSBackground();
+                }, 1500); // Dar tiempo para que termine de cargar la página
             }
         };
 
-        // 3. MOTOR GPS (Conectado al botón)
-        window.usarGPSAsincrono = function() {
-            if (navigator.geolocation) {
-                mostrarLoader();
-                navigator.geolocation.getCurrentPosition(
-                    function(position) {
-                        const lat = limpiarCoordenada(position.coords.latitude);
-                        const lon = limpiarCoordenada(position.coords.longitude);
-                        console.log('📍 GPS obtenido:', lat, lon);
-                        localStorage.setItem('ultimaUbicacion', JSON.stringify({ lat: lat, lon: lon, timestamp: Date.now() }));
-                        cargarDatosClima(lat, lon);
-                    },
-                    function(error) {
-                        console.error('❌ Error GPS:', error);
-                        ocultarLoader();
-                        mostrarError('No se pudo obtener tu ubicación');
-                    },
-                    { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
-                );
-            } else {
-                mostrarError('Tu navegador no soporta geolocalización');
-            }
-        };
-
-        // Alias para el botón HTML
-        function usarGPS() { usarGPSAsincrono(); }
-
-        // 4. MOTOR AJAX (Fetch)
-        async function cargarDatosClima(lat, lon, ciudad = null) {
-            if (cargandoDatos) return;
-            cargandoDatos = true;
-            mostrarLoader();
-            
-            const safeLat = limpiarCoordenada(lat);
-            const safeLon = limpiarCoordenada(lon);
-            
-            try {
-                let url = `/api/clima-data/?lat=${safeLat}&lon=${safeLon}`;
-                if (ciudad) url += `&ciudad=${encodeURIComponent(ciudad)}`;
+        function mostrarUltimaUbicacionEnTitulo() {
+            const ciudadElement = document.querySelector('h1');
+            if (ciudadElement) {
+                const textoActual = ciudadElement.textContent.trim();
+                // Verificar si el texto indica que está cargando o detectando
+                const esTextoTemp = textoActual.includes('Cargando') || 
+                                   textoActual.includes('Detectando') || 
+                                   textoActual.includes('Esperando') || 
+                                   textoActual.includes('ubicación') ||
+                                   textoActual === '' ||
+                                   textoActual === 'N/A';
                 
-                console.log('📡 Fetching:', url);
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                if (data.success) {
-                    console.log('✅ Datos recibidos');
-                    actualizarInterfaz(data);
-                    
-                    const newUrl = `/?lat=${safeLat}&lon=${safeLon}`;
-                    window.history.pushState({lat: safeLat, lon: safeLon}, '', newUrl);
-                } else {
-                    console.error('❌ Error API:', data.error);
-                    // Red de seguridad: Si falla el AJAX, recargamos la página normal
-                    window.location.href = `/?lat=${safeLat}&lon=${safeLon}${ciudad ? '&ciudad='+ciudad : ''}`;
+                if (esTextoTemp) {
+                    const ultimaUbicacion = localStorage.getItem('ultimaUbicacion');
+                    if (ultimaUbicacion) {
+                        try {
+                            const ubicacion = JSON.parse(ultimaUbicacion);
+                            if (ubicacion.ciudad) {
+                                ciudadElement.textContent = ubicacion.ciudad;
+                                console.log('Reemplazando texto temporal con última ubicación:', ubicacion.ciudad);
+                                
+                                // También actualizar otros elementos si están presentes
+                                const paisElement = document.querySelector('p[style*="color: #ddd"]');
+                                if (paisElement && (paisElement.textContent.includes('Detectando') || paisElement.textContent === '')) {
+                                    paisElement.textContent = 'Ubicación anterior';
+                                }
+                            }
+                        } catch (e) {
+                            console.log('Error al mostrar última ubicación en título');
+                        }
+                    }
                 }
-            } catch (error) {
-                console.error('❌ Fallo Fetch:', error);
-                window.location.href = `/?lat=${safeLat}&lon=${safeLon}${ciudad ? '&ciudad='+ciudad : ''}`;
-            } finally {
-                cargandoDatos = false;
-                ocultarLoader();
             }
         }
 
-        // 5. ACTUALIZACIÓN VISUAL
-        function actualizarInterfaz(data) {
-            document.body.style.backgroundImage = `url('/static/${data.fondo}')`;
-            
-            const titulo = document.querySelector('h1');
-            if (titulo) titulo.textContent = data.ciudad;
-            
-            const pais = document.querySelector('p[style*="color: #ddd"]');
-            if (pais) pais.textContent = data.pais || '';
-            
-            const coord = document.querySelector('.coord');
-            if (coord) coord.innerHTML = ` <span class="notranslate">${data.lat.toFixed(6)}, ${data.lon.toFixed(6)}</span>`;
-            
-            const temp = document.querySelector('.dato-grande');
-            if (temp) temp.textContent = `${Math.round(data.temp)}°`;
-            
-            const icono = document.querySelector('.icono-principal');
-            if (icono) icono.src = data.icono;
-            
-            const desc = document.querySelector('h2[style*="color: #00d2ff"]');
-            if (desc) desc.textContent = data.descripcion;
-            
-            const meta = document.querySelectorAll('.main-container div[style*="background: rgba(255,255,255,0.1)"] div');
-            if(meta.length >= 3) {
-                const sensDiv = meta[0].querySelectorAll('div');
-                if(sensDiv.length >= 2) sensDiv[1].textContent = `${Math.round(data.sensacion)}°`;
-                const humDiv = meta[1].querySelectorAll('div');
-                if(humDiv.length >= 2) humDiv[1].textContent = `${data.humedad}%`;
-                const lluDiv = meta[2].querySelectorAll('div');
-                if(lluDiv.length >= 2) lluDiv[1].textContent = `${data.lluvia_hoy}mm`;
+        function usarGPS() {
+            if (navigator.geolocation) {
+                // Opciones optimizadas para máxima velocidad
+                const options = {
+                    enableHighAccuracy: false, // Más rápido pero menos preciso
+                    timeout: 3000, // 3 segundos máximo
+                    maximumAge: 300000 // Cache por 5 minutos
+                };
+                
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    
+                    // Guardar nueva ubicación GPS en localStorage
+                    const ubicacionGPS = {
+                        lat: lat.toString(),
+                        lon: lon.toString(),
+                        ciudad: 'Mi ubicación actual',
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem('ultimaUbicacion', JSON.stringify(ubicacionGPS));
+                    
+                    // Redirección inmediata con nuevas coordenadas
+                    window.location.href = `/?lat=${lat}&lon=${lon}`;
+                }, function(error) { 
+                    console.log("GPS no disponible, manteniendo ubicación por defecto"); 
+                }, options);
             }
-            
-            if(data.tira_horas) actualizarCarruselHorario(data.tira_horas);
-            if(data.pronostico) actualizarPronostico(data.pronostico);
-            
-            if (window.chartInstance && data.horas_grafico && data.temps_grafico) {
-                chartInstance.data.labels = data.horas_grafico;
-                chartInstance.data.datasets[0].data = data.temps_grafico;
-                chartInstance.update();
-            }
-            
-            if(document.getElementById('latInput')) document.getElementById('latInput').value = data.lat.toFixed(6);
-            if(document.getElementById('lonInput')) document.getElementById('lonInput').value = data.lon.toFixed(6);
         }
 
-        // 6. MANEJO DE FORMULARIOS Y FLECHAS
+        function usarGPSBackground() {
+            if (navigator.geolocation) {
+                // Opciones optimizadas para máxima precisión
+                const options = {
+                    enableHighAccuracy: true, // Mayor precisión para actualización en background
+                    timeout: 8000, // Más tiempo para obtener mejor precisión
+                    maximumAge: 60000 // Cache de 1 minuto para actualización
+                };
+                
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    
+                    // Verificar si la nueva ubicación es diferente a la actual
+                    const latActual = parseFloat('{{ lat }}');
+                    const lonActual = parseFloat('{{ lon }}');
+                    
+                    // Calcular diferencia (aproximadamente en metros)
+                    const diferencia = Math.sqrt(Math.pow(lat - latActual, 2) + Math.pow(lon - lonActual, 2)) * 111000;
+                    
+                    // Solo actualizar si hay una diferencia significativa (más de 100 metros)
+                    if (diferencia > 0.1) {
+                        console.log('Nueva ubicación detectada, actualizando...');
+                        
+                        // Guardar nueva ubicación GPS en localStorage
+                        const ubicacionGPS = {
+                            lat: lat.toString(),
+                            lon: lon.toString(),
+                            ciudad: 'Mi ubicación actual',
+                            timestamp: Date.now()
+                        };
+                        localStorage.setItem('ultimaUbicacion', JSON.stringify(ubicacionGPS));
+                        
+                        // Actualizar a la nueva ubicación
+                        window.location.href = `/?lat=${lat}&lon=${lon}`;
+                    } else {
+                        console.log('Ubicación sin cambios significativos, manteniendo actual');
+                        // Limpiar el parámetro update_gps de la URL sin recargar
+                        const url = new URL(window.location);
+                        url.searchParams.delete('update_gps');
+                        window.history.replaceState({}, '', url);
+                    }
+                }, function(error) { 
+                    console.log("GPS no disponible para actualización, manteniendo ubicación anterior");
+                    // Limpiar el parámetro update_gps de la URL
+                    const url = new URL(window.location);
+                    url.searchParams.delete('update_gps');
+                    window.history.replaceState({}, '', url);
+                }, options);
+            }
+        }
+        
+        // Funciones para controlar las flechas personalizadas
+        function incrementInput(inputId) {
+            const input = document.getElementById(inputId);
+            const currentValue = parseFloat(input.value) || 0;
+            const step = 0.1;
+            let newValue = currentValue + step;
+            
+            // Validar límites según el tipo de coordenada
+            if (inputId === 'latInput') {
+                newValue = Math.min(90, newValue);
+            } else if (inputId === 'lonInput') {
+                newValue = Math.min(180, newValue);
+            }
+            
+            input.value = parseFloat(newValue.toFixed(6));
+            
+            // Animación de confirmación
+            input.style.borderColor = '#22c55e';
+            setTimeout(() => {
+                input.style.borderColor = '#38bdf8';
+            }, 200);
+        }
+        
+        function decrementInput(inputId) {
+            const input = document.getElementById(inputId);
+            const currentValue = parseFloat(input.value) || 0;
+            const step = 0.1;
+            let newValue = currentValue - step;
+            
+            // Validar límites según el tipo de coordenada
+            if (inputId === 'latInput') {
+                newValue = Math.max(-90, newValue);
+            } else if (inputId === 'lonInput') {
+                newValue = Math.max(-180, newValue);
+            }
+            
+            input.value = parseFloat(newValue.toFixed(6));
+            
+            // Animación de confirmación
+            input.style.borderColor = '#22c55e';
+            setTimeout(() => {
+                input.style.borderColor = '#38bdf8';
+            }, 200);
+        }
+        
+        // Funcionalidad de teclado para incrementar/decrementar con flechas
         document.addEventListener('DOMContentLoaded', function() {
-            const formBusqueda = document.getElementById('busquedaForm');
-            if (formBusqueda) {
-                formBusqueda.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const inputCiudad = this.querySelector('input[name="ciudad"]');
-                    if (inputCiudad && inputCiudad.value.trim()) cargarDatosClima(0, 0, inputCiudad.value.trim());
-                });
-            }
-            
-            const formCoord = document.querySelector('.buscador form[method="get"]:not(#busquedaForm)');
-            if (formCoord) {
-                formCoord.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const lat = parseFloat(document.getElementById('latInput').value);
-                    const lon = parseFloat(document.getElementById('lonInput').value);
-                    if (!isNaN(lat) && !isNaN(lon)) cargarDatosClima(lat, lon);
-                });
-            }
-
-            // Flechas de inputs
             const latInput = document.getElementById('latInput');
             const lonInput = document.getElementById('lonInput');
             
-            function updateVal(input, delta, min, max) {
-                let val = (parseFloat(input.value) || 0) + delta;
-                val = Math.max(min, Math.min(max, val));
-                input.value = val.toFixed(6);
-                input.style.borderColor = '#22c55e';
-                setTimeout(() => input.style.borderColor = '#38bdf8', 200);
+            if (latInput) {
+                latInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        incrementInput('latInput');
+                    } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        decrementInput('latInput');
+                    }
+                });
             }
-
-            if (latInput) latInput.addEventListener('keydown', e => {
-                if (e.key === 'ArrowUp') { e.preventDefault(); updateVal(latInput, 0.1, -90, 90); }
-                if (e.key === 'ArrowDown') { e.preventDefault(); updateVal(latInput, -0.1, -90, 90); }
-            });
-            if (lonInput) lonInput.addEventListener('keydown', e => {
-                if (e.key === 'ArrowUp') { e.preventDefault(); updateVal(lonInput, 0.1, -180, 180); }
-                if (e.key === 'ArrowDown') { e.preventDefault(); updateVal(lonInput, -0.1, -180, 180); }
-            });
+            
+            if (lonInput) {
+                lonInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        incrementInput('lonInput');
+                    } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        decrementInput('lonInput');
+                    }
+                });
+            }
         });
-
-        // Exponer funciones de incremento para los botones SVG
-        window.incrementInput = (id) => {
-            const input = document.getElementById(id);
-            if(id === 'latInput') updateVal(input, 0.1, -90, 90);
-            else updateVal(input, 0.1, -180, 180);
-        };
-        window.decrementInput = (id) => {
-            const input = document.getElementById(id);
-            if(id === 'latInput') updateVal(input, -0.1, -90, 90);
-            else updateVal(input, -0.1, -180, 180);
-        };
-        
-        function updateVal(input, delta, min, max) {
-            let val = (parseFloat(input.value) || 0) + delta;
-            val = Math.max(min, Math.min(max, val));
-            input.value = val.toFixed(6);
-            input.style.borderColor = '#22c55e';
-            setTimeout(() => input.style.borderColor = '#38bdf8', 200);
-        }
-
-        // Navegación atrás/adelante del navegador
-        window.addEventListener('popstate', event => {
-            if (event.state && event.state.lat && event.state.lon) cargarDatosClima(event.state.lat, event.state.lon);
-        });
-
-        // Utilidades UI (Asegurate de que estas existan en tu HTML, si no, puedes dejarlas así)
-        function mostrarLoader() { /* Tu lógica de loader original */ }
-        function ocultarLoader() { /* Tu lógica de loader original */ }
-        function mostrarError(msg) { console.warn(msg); }
-    </script>
+        </script>
 
     <div class="card" style="margin: 0 auto; display: flex; flex-direction: column; align-items: center; text-align: center;">
         <h3>El clima en:</h3>
@@ -1076,14 +1116,13 @@
     {% for dia in pronostico %}
     <div class="tarjeta-dia {% if forloop.first %}dia-activo{% endif %}" 
          onclick="cambiarDia('{{ dia.fecha_full }}', '{{ dia.nombre_dia }}', '{{ dia.fecha_corta }}', this)">
-        <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 3px; width: 100%;">{{ dia.nombre_dia }}</div>
-        <div class="fecha" style="font-size: 0.75em; color: #ccc; margin-bottom: 8px; width: 100%;">{{ dia.fecha_corta }}</div>
-        <img src="{{ dia.icono }}" class="icono-chico" style="margin: 8px 0;">
-        <div class="temp-rango" style="margin-top: 6px; width: 100%;">
-            <span class="max">{{ dia.max }}°</span> / 
+        <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 5px;">{{ dia.nombre_dia }}</div>
+        <div class="fecha" style="font-size: 0.8em; color: #ccc;">{{ dia.fecha_corta }}</div>
+        <img src="{{ dia.icono }}" class="icono-chico">
+        <div class="temp-rango">
+            <span class="max">{{ dia.max }}°</span> 
             <span class="min">{{ dia.min }}°</span>
         </div>
-        <div style="font-size: 0.7em; opacity: 0.8; margin-top: 6px; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ dia.desc }}</div>
     </div>
     {% endfor %}
 </div>
@@ -1387,54 +1426,33 @@
         
         function esNoticiaMeteorologia(titulo, descripcion) {
             const contenido = (titulo + ' ' + descripcion).toLowerCase();
-            
-            // Diccionario ampliado: Clima + Medio Ambiente
-            const palabrasClave = [
-                'clima', 'meteorolog', 'temperatura', 'lluvia', 'nieve', 'tormenta', 
-                'viento', 'granizo', 'huracán', 'ciclón', 'presión', 'humedad', 
-                'pronóstico', 'frente frío', 'onda de calor', 'fenómeno', 'precipitación', 
-                'alerta', 'temporal', 'desastre natural', 'inundación', 'sequía', 'atmósfera',
-                // Nuevas ambientales:
-                'medio ambiente', 'cambio climático', 'calentamiento global', 'ecología',
-                'contaminación', 'emisiones', 'incendios forestales', 'deforestación',
-                'fenómeno del niño', 'fenómeno de la niña', 'capa de ozono'
-            ];
-            
-            // También agregamos "palabras prohibidas" para descartar falsos positivos 
-            // (ej: "clima político", "tormenta de críticas", "lluvia de inversiones")
-            const palabrasProhibidas = ['clima político', 'lluvia de críticas', 'lluvia de inversiones', 'tormenta política', 'fútbol', 'deportes', 'espectáculos'];
-            
-            const tienePalabraClave = palabrasClave.some(palabra => contenido.includes(palabra));
-            const tienePalabraProhibida = palabrasProhibidas.some(palabra => contenido.includes(palabra));
-            
-            return tienePalabraClave && !tienePalabraProhibida;
+            const palabrasMeteo = ['clima', 'meteorolog', 'temperatura', 'lluvia', 'nieve', 'tormenta', 'viento', 'granizo', 'huracan', 'ciclon', 'presion', 'humedad', 'pronostico', 'frente frio', 'onda de calor', 'fenomeno', 'precipitacion', 'alerta', 'advertencia', 'temporal', 'desastre natural', 'inundacion', 'sequia', 'atmofera', 'clima'];
+            return palabrasMeteo.some(palabra => contenido.includes(palabra));
         }
         
         async function cargarNoticias() {
-            const container = document.getElementById('noticias-container');
-            console.log('📡 Solicitando noticias a Django Backend...');
-
             try {
-                // Ahora le pedimos las noticias a TU propio servidor (Sin CORS)
-                const response = await fetch('/api/noticias/');
+                const container = document.getElementById('noticias-container');
+                const feedURL = 'https://news.google.com/rss/search?q=clima+meteorologia+temperatura&hl=es-419&gl=AR';
+                const rss2jsonAPI = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedURL)}`;
                 
-                if (!response.ok) throw new Error('Error en el servidor Django');
+                const response = await fetch(rss2jsonAPI);
                 
-                const data = await response.json();
+                if (!response.ok) throw new Error('Error al obtener noticias');
                 
-                if (!data.success) throw new Error(data.error);
+                const datos = await response.json();
+                let noticias = datos.items || [];
                 
-                let noticias = data.items;
-                
-                // Filtramos usando tu función
-                noticias = noticias.filter(nota => esNoticiaMeteorologia(nota.title, nota.description));
+                // Filtrar solo noticias meteorológicas
+                noticias = noticias.filter(nota => 
+                    esNoticiaMeteorologia(nota.title || '', nota.description || '')
+                );
                 
                 if (noticias.length === 0) {
-                    container.innerHTML = '<p style="color: #94a3b8; text-align: center; padding: 40px; grid-column: 1/-1;">No se encontraron noticias ambientales recientes.</p>';
+                    container.innerHTML = '<p style="color: #94a3b8; text-align: center; padding: 40px; grid-column: 1/-1;">No hay noticias meteorológicas disponibles en este momento.</p>';
                     return;
                 }
                 
-                // Preparar contenedor
                 container.innerHTML = '';
                 container.style.display = 'grid';
                 container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
@@ -1443,26 +1461,26 @@
                 container.style.maxWidth = '1200px';
                 container.style.margin = '0 auto';
                 
-                // Dibujar tarjetas
                 noticias.slice(0, 6).forEach((nota, index) => {
                     const tarjeta = document.createElement('div');
                     tarjeta.className = 'tarjeta-noticia-mejorada';
                     tarjeta.style.animation = `fadeInUp 0.5s ease forwards`;
                     tarjeta.style.animationDelay = `${index * 0.1}s`;
                     
+                    // Extraer imagen del contenido si existe
                     let imagenURL = '';
                     let tieneImagen = false;
-                    const imgMatch = nota.description.match(/<img[^>]+src="([^">]+)"/);
-                    if (imgMatch && imgMatch[1]) {
-                        imagenURL = imgMatch[1];
-                        tieneImagen = true;
+                    if (nota.content) {
+                        const imgMatch = nota.content.match(/<img[^>]+src="([^">]+)"/);
+                        if (imgMatch && imgMatch[1]) {
+                            imagenURL = imgMatch[1];
+                            tieneImagen = true;
+                        }
                     }
                     
-                    let textoLimpio = nota.description.replace(/<[^>]*>?/gm, '').trim();
-                    if(textoLimpio.length > 120) textoLimpio = textoLimpio.substring(0, 120) + '...';
-                    
+                    // Crear contenido visual
                     const contenidoVisual = tieneImagen ? 
-                        `<img src="${imagenURL}" alt="Noticia" class="foto-noticia-mejorada" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        `<img src="${imagenURL}" alt="${nota.title}" class="foto-noticia-mejorada" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                         <div style="display: none; width: 100%; height: 100%; background: linear-gradient(135deg, #0f172a, #1e293b); align-items: center; justify-content: center; flex-direction: column; color: #38bdf8; font-size: 1.2em;">
                             <div style="font-size: 2em; margin-bottom: 8px;">🌦️</div>
                             <div style="font-weight: 600; text-align: center;">Meteorología</div>
@@ -1481,30 +1499,40 @@
                         </div>
                         <div class="contenido-nota">
                             <div style="font-size: 0.75em; background: rgba(56, 189, 248, 0.25); color: #38bdf8; padding: 4px 10px; border-radius: 4px; display: inline-block; margin-bottom: 10px; font-weight: 600;">
-                                ${nota.source}
+                                ${nota.source || 'Google News'}
                             </div>
-                            <h3 class="noticia-titulo">${nota.title}</h3>
-                            <p class="noticia-descripcion">${textoLimpio}</p>
+                            <h3 class="noticia-titulo">
+                                ${nota.title}
+                            </h3>
+                            <p class="noticia-descripcion">
+                                ${nota.description || nota.content?.replace(/<[^>]*>/g, '').substring(0, 120) + '...'}
+                            </p>
                             <div class="noticia-footer">
-                                <span style="font-size: 0.75em; color: #94a3b8;">${formatearFecha(nota.pubDate)}</span>
-                                <span style="font-size: 0.7em; color: #38bdf8; background: rgba(56, 189, 248, 0.15); padding: 2px 6px; border-radius: 3px;">LIVE</span>
+                                <span style="font-size: 0.75em; color: #94a3b8;">
+                                    ${formatearFecha(nota.pubDate)}
+                                </span>
+                                <span style="font-size: 0.7em; color: #38bdf8; background: rgba(56, 189, 248, 0.15); padding: 2px 6px; border-radius: 3px;">
+                                    LIVE
+                                </span>
                             </div>
-                            <a href="${nota.link}" target="_blank" rel="noopener noreferrer" style="background: transparent; border: 1px solid #00d2ff; color: #00d2ff; padding: 6px 12px; border-radius: 20px; margin-top: 10px; cursor: pointer; font-size: 0.8em; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: 0.3s; width: fit-content;" onmouseover="this.style.background='rgba(0, 210, 255, 0.1)'" onmouseout="this.style.background='transparent'">
-                                Leer más <svg style="width:12px; height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            <a href="${nota.link}" target="_blank" rel="noopener noreferrer" style="background: transparent; border: 1px solid #00d2ff; color: #00d2ff; padding: 6px 12px; border-radius: 20px; margin-top: 10px; cursor: pointer; font-size: 0.8em; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: 0.3s; width: fit-content;">
+                                Leer más 
+                                <svg style="width:12px; height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                             </a>
                         </div>
                     `;
                     container.appendChild(tarjeta);
                 });
                 
-                console.log(`✅ Noticias cargadas exitosamente desde Django`);
+                console.log(`✅ ${Math.min(noticias.length, 6)} noticias meteorológicas cargadas`);
                 
             } catch (error) {
-                console.error('❌ Error interno:', error);
-                container.innerHTML = '<p style="color: #ef4444; text-align: center; padding: 40px; grid-column: 1/-1;">Error procesando noticias en el servidor propio.</p>';
+                console.error('❌ Error al cargar noticias:', error);
+                const container = document.getElementById('noticias-container');
+                container.innerHTML = '<p style="color: #94a3b8; text-align: center; padding: 40px; grid-column: 1/-1;">Error al cargar las noticias.</p>';
             }
         }
-
+        
         // Agregar animación fadeInUp
         const style = document.createElement('style');
         style.textContent = `
@@ -1710,86 +1738,6 @@
             cargarPapersArxiv();
         }
     </script>
-
-    <!-- Estilos para el loader -->
-    <style>
-        #clima-loader {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            z-index: 99999;
-            background: rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-        }
-        
-        .loader-bar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #38bdf8, #0ea5e9, #06b6d4, #38bdf8);
-            background-size: 200% 100%;
-            animation: loadingBar 2s ease-in-out infinite, shimmer 1.5s linear infinite;
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.6), 0 0 20px rgba(56, 189, 248, 0.4);
-        }
-        
-        @keyframes loadingBar {
-            0% { width: 0%; opacity: 1; }
-            50% { width: 70%; opacity: 1; }
-            100% { width: 100%; opacity: 0; }
-        }
-        
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-        
-        /* Spinner pequeño en esquina para respaldo */
-        .loader-spinner {
-            display: none;
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            z-index: 99998;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 12px 20px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-        }
-        
-        .loader-spinner-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .spinner-icon {
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(56, 189, 248, 0.3);
-            border-top-color: #38bdf8;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .spinner-text {
-            color: #38bdf8;
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-        }
-    </style>
-    
     <br><br>
     
 </div> <!-- Cierre de main-container -->

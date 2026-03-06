@@ -1,0 +1,14 @@
+
+REPORTE METEOROLÓGICO AERONÁUTICO
+===============================
+Aeropuerto: Jorge Newbery Airfield (SABE)
+Altitud: 10000 metros
+Presión atmosférica: 1013.25 hPa
+Visibilidad: 15 kilómetros
+Turbulencia: moderada
+Vientos: 15 nudos del SO
+Temperatura: -45°C
+Tráfico aéreo: alto
+Vuelos programados: 45
+Aviación comercial activa
+Meteorología para navegación aérea

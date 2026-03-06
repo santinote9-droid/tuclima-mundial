@@ -1,0 +1,26 @@
+[
+  {
+    "humedad_suelo": 65,
+    "ph_suelo": 6.8,
+    "nutrientes": "NPK 15-15-15",
+    "tipo_cultivo": "maíz",
+    "agricola": true,
+    "campo": "Lote 15A",
+    "cosecha": "2025-03-15",
+    "ganado": 120,
+    "rural": true,
+    "hectareas": 50.5
+  },
+  {
+    "humedad_suelo": 58,
+    "ph_suelo": 7.2,
+    "nutrientes": "Urea 46%",
+    "tipo_cultivo": "soja",
+    "agricola": true,
+    "campo": "Lote 22B",
+    "cosecha": "2025-04-20",
+    "ganado": 0,
+    "rural": true,
+    "hectareas": 75.3
+  }
+]

@@ -10,7 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+import dj_database_url
+from dotenv import load_dotenv
+
+# Cargar variables de entorno ANTES de cualquier configuración
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,10 +26,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-q5drmer^4i%i@l#iv4x5=&v&3^%qzp_pj+aq&=i$3y343w-v$9'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-q5drmer^4i%i@l#iv4x5=&v&3^%qzp_pj+aq&=i$3y343w-v$9')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = [
     'localhost', 
@@ -80,12 +86,23 @@ WSGI_APPLICATION = 'nucleo.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-import dj_database_url
 
+# Configuración mejorada de base de datos con persistencia garantizada
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgresql://postgres.lmumvstjdyaozewqygfx:REDACTED_DB_PASSWORD@aws-1-us-east-2.pooler.supabase.com:5432/postgres'
+        default=os.getenv('DATABASE_URL', 'postgresql://postgres.lmumvstjdyaozewqygfx:REDACTED_DB_PASSWORD@aws-1-us-east-2.pooler.supabase.com:5432/postgres'),
+        conn_max_age=int(os.getenv('DB_CONN_MAX_AGE', 600)),  # Mantener conexiones por 10 minutos
+        conn_health_checks=True,  # Verificar salud de conexiones
     )
+}
+
+# Configuración adicional para garantizar persistencia
+ATOMIC_REQUESTS = os.getenv('DB_ATOMIC_REQUESTS', 'True').lower() == 'true'
+
+# Configuración de timeout para conexiones de base de datos
+DATABASES['default']['OPTIONS'] = {
+    'connect_timeout': 30,
+    'options': '-c default_transaction_isolation=serializable'
 }
 
 

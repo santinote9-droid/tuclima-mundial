@@ -4,9 +4,11 @@ from mundo import views  # Importamos las vistas
 from mundo.views import home, comparador_modelos, api_papers
 
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.home, name='home'),          # Página Principal (Público General)
+    path('api/clima-data/', views.clima_data_api, name='clima_data_api'),  # API para datos del clima en JSON
     path('agro/', views.agro, name='agro'),     # MODO AGRO 🚜
     path('naval/', views.naval, name='naval'),  # MODO NAVAL ⚓
     path('aereo/', views.aereo, name='aereo'),  # MODO AÉREO ✈️
@@ -44,6 +46,25 @@ urlpatterns = [
     path('espacio/', views.meteorologia_espacial, name='espacio'),
 
     path('legal/', views.legal, name='legal'),
+    
+    # URLs para funcionalidad multisectorial
+    path('carga-sectorial/', views.vista_carga_archivos, name='carga_sectorial'),
+    path('procesar-archivo-sectorial/', views.procesar_archivo_sectorial, name='procesar_archivo_sectorial'),
+    
+    # URLs para webhooks n8n
+    path('probar-n8n/', views.probar_conexion_n8n, name='probar_n8n'),
+    path('enviar-n8n/', views.enviar_dato_sectorial_a_n8n, name='enviar_n8n'),
+    
+    # URLs para feedback de IA
+    path('api/guardar-feedback/', views.guardar_feedback, name='guardar_feedback'),
+    path('panel-feedback/', views.panel_feedback, name='panel_feedback'),
+    path('api/marcar-feedback-revisado/<int:feedback_id>/', views.marcar_feedback_revisado, name='marcar_feedback_revisado'),
+    
+    # Panel de administración
+    path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
+
+    #Panel de noticias
+    path('api/noticias/', views.obtener_noticias_clima, name='api_noticias'),
 ]
 
 

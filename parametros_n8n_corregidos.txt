@@ -1,0 +1,79 @@
+🔧 PARÁMETROS N8N CORREGIDOS - USE ESTOS EN LOS WORKFLOWS:
+===========================================================
+
+⚠️ PROBLEMA ENCONTRADO: Estás usando $json.xxx que no funciona
+✅ SOLUCIÓN: Usar $('Function').item.json.xxx (referencia al nodo anterior)
+
+📍 NAVAL_BI - Parámetros CORREGIDOS:
+@timestamp = {{ $('Function').item.json.timestamp }}
+@session_id = {{ $('Function').item.json.session_id }}
+@puerto = {{ $('Function').item.json.puerto }}
+@condiciones_mar = {{ $('Function').item.json.condiciones_mar }}
+@viento_velocidad = {{ $('Function').item.json.viento_velocidad }}
+@viento_direccion = {{ $('Function').item.json.viento_direccion }}
+@temperatura_agua = {{ $('Function').item.json.temperatura_agua }}
+@altura_olas = {{ $('Function').item.json.altura_olas }}
+@visibilidad = {{ $('Function').item.json.visibilidad }}
+@ai_analysis = {{ $('Function').item.json.ai_analysis }}
+@metadata = {{ JSON.stringify($('Function').item.json.metadata) }}
+
+⚡ ENERGIA_BI - Parámetros CORREGIDOS:
+@timestamp = {{ $('Function').item.json.timestamp }}
+@session_id = {{ $('Function').item.json.session_id }}
+@tipo_energia = {{ $('Function').item.json.tipo_energia }}
+@ubicacion = {{ $('Function').item.json.ubicacion }}
+@radiacion_solar = {{ $('Function').item.json.radiacion_solar }}
+@velocidad_viento = {{ $('Function').item.json.velocidad_viento }}
+@temperatura_ambiente = {{ $('Function').item.json.temperatura_ambiente }}
+@eficiencia_estimada = {{ $('Function').item.json.eficiencia_estimada }}
+@produccion_kwh = {{ $('Function').item.json.produccion_kwh }}
+@ai_efficiency_analysis = {{ $('Function').item.json.ai_efficiency_analysis }}
+@metadata = {{ JSON.stringify($('Function').item.json.metadata) }}
+
+🌾 AGRO_BI - Parámetros CORREGIDOS:
+@timestamp = {{ $('Function').item.json.timestamp }}
+@session_id = {{ $('Function').item.json.session_id }}
+@cultivo = {{ $('Function').item.json.cultivo }}
+@region = {{ $('Function').item.json.region }}
+@temperatura_suelo = {{ $('Function').item.json.temperatura_suelo }}
+@humedad_relativa = {{ $('Function').item.json.humedad_relativa }}
+@precipitacion = {{ $('Function').item.json.precipitacion }}
+@horas_sol = {{ $('Function').item.json.horas_sol }}
+@fase_lunar = {{ $('Function').item.json.fase_lunar }}
+@ai_recommendations = {{ $('Function').item.json.ai_recommendations }}
+@metadata = {{ JSON.stringify($('Function').item.json.metadata) }}
+
+✈️ AEREO_BI - Parámetros CORREGIDOS:
+@timestamp = {{ $('Function').item.json.timestamp }}
+@session_id = {{ $('Function').item.json.session_id }}
+@aeropuerto_origen = {{ $('Function').item.json.aeropuerto_origen }}
+@aeropuerto_destino = {{ $('Function').item.json.aeropuerto_destino }}
+@altitud_vuelo = {{ $('Function').item.json.altitud_vuelo }}
+@temperatura_altitud = {{ $('Function').item.json.temperatura_altitud }}
+@corrientes_viento = {{ JSON.stringify($('Function').item.json.corrientes_viento) }}
+@visibilidad_km = {{ $('Function').item.json.visibilidad_km }}
+@condiciones_atmosfericas = {{ $('Function').item.json.condiciones_atmosfericas }}
+@ai_flight_analysis = {{ $('Function').item.json.ai_flight_analysis }}
+@metadata = {{ JSON.stringify($('Function').item.json.metadata) }}
+
+===========================================  
+🚨 URGENTE - CAMBIA ESTOS PARÁMETROS EN N8N:
+===========================================
+
+1. Abre cada workflow en n8n
+2. Ve al nodo "Execute a SQL query in Google BigQuery"
+3. Abre pestaña "Parameters"
+4. REEMPLAZA todos los parámetros por los de arriba
+5. ⚠️ IMPORTANTE: Asegúrate que tu nodo Function se llame "Function"
+   (si no, cambia $('Function') por $('Tu_Nombre_Nodo'))
+
+===========================================  
+🔍 VERIFICACIÓN DESPUÉS DEL CAMBIO:
+===========================================
+
+Una vez cambiados los parámetros:
+- Los webhooks dejarán de devolver respuestas vacías
+- BigQuery recibirá datos válidos con las validaciones profesionales
+- Gemini procesará correctamente las consultas
+
+🚀 ¡DESPUÉS DE ESTO TODO DEBERÍA FUNCIONAR PERFECTO!

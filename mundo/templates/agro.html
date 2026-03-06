@@ -2,182 +2,468 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title class="notranslate">Agro Intelligence | TuClima Pro</title>
     
 <style>
-        /* Animación de espera para la IA */
+        /* Animación de espera para la IA - Estilo minimalista */
         .chat-typing {
             color: #94a3b8;
             font-style: italic;
-            font-family: 'Poppins', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin-bottom: 10px;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
             gap: 6px;
             min-height: 24px;
+            padding: 4px 0;
+            background: none;
+            border-radius: 0;
+            backdrop-filter: none;
+            border: none;
         }
+        
         .dot-typing {
             display: inline-block;
             width: 30px;
             text-align: left;
         }
+        
         .dot-typing span {
             display: inline-block;
             width: 6px;
             height: 6px;
-            margin-right: 2px;
-            background: #94a3b8;
+            margin-right: 3px;
+            background: linear-gradient(135deg, #94a3b8, #cbd5e1);
             border-radius: 50%;
             opacity: 0.5;
-            animation: blink 1.4s infinite both;
+            animation: gemini-blink 1.6s infinite both;
         }
+        
         .dot-typing span:nth-child(2) { animation-delay: 0.2s; }
         .dot-typing span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes blink {
-            0%, 80%, 100% { opacity: 0.5; }
-            40% { opacity: 1; }
+        
+        @keyframes gemini-blink {
+            0%, 80%, 100% { 
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+            40% { 
+                opacity: 1;
+                transform: scale(1.1);
+            }
         }
-    /* CHAT TuClima IA - Paleta azul oscuro, blanco y gris claro */
+    /* Mensaje de bienvenida más compacto */
+    .welcome-msg {
+        padding: 2px 0 !important;
+        font-size: 14px !important;
+        line-height: 1.4 !important;
+    }
+    
+    .welcome-msg svg {
+        width: 16px !important;
+        height: 16px !important;
+        margin-right: 4px !important;
+    }
+        @media (max-width: 768px) {
+            .chat-container {
+                margin: 10px 0;
+                border-radius: 12px;
+                min-height: 500px;
+            }
+            
+            .chat-header {
+                padding: 16px 20px;
+            }
+            
+            .chat-header h3 {
+                font-size: 1rem;
+            }
+            
+            .chat-messages {
+                padding: 16px;
+                gap: 16px;
+            }
+            
+            .message {
+                max-width: 95%;
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+            
+            .chat-input-container {
+                padding: 16px 20px !important;
+                gap: 8px !important;
+            }
+            
+            .chat-input-area input[type="text"] {
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+            
+            .chat-input-area button {
+                padding: 12px 20px;
+                font-size: 13px;
+            }
+        }
+        
+        /* Efectos adicionales estilo Gemini */
+        .message:hover {
+            transform: translateX(2px);
+            transition: transform 0.2s ease;
+        }
+        
+        .bot-msg:hover {
+            background: linear-gradient(135deg, rgba(51, 65, 85, 0.95) 0%, rgba(71, 85, 105, 0.95) 100%);
+        }
+        
+        /* Scroll suave */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Selección de texto mejorada */
+        ::selection {
+            background: rgba(99, 102, 241, 0.3);
+            color: #f1f5f9;
+        }
     .chat-container {
         width: 100%;
-        min-height: 600px;
+        min-height: 650px;
         margin: 20px 0;
-        background: #1e293b;
-        border: 1px solid #334155;
-        border-radius: 8px;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        border: 1px solid rgba(51, 65, 85, 0.3);
+        border-radius: 16px;
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        font-family: 'Poppins', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        backdrop-filter: blur(10px);
     }
 
     .chat-header {
-        background: #0f172a;
-        padding: 18px 24px;
-        border-bottom: 1px solid #334155;
+        background: rgba(15, 23, 42, 0.8);
+        padding: 20px 28px;
+        border-bottom: 1px solid rgba(51, 65, 85, 0.2);
         display: flex;
         align-items: center;
-        gap: 10px;
-        color: #e2e8f0;
+        gap: 12px;
+        color: #f1f5f9;
+        backdrop-filter: blur(20px);
     }
 
     .chat-header h3 {
         margin: 0;
-        color: #e2e8f0;
-        font-size: 1.1rem;
-        font-family: 'Poppins', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        color: #f1f5f9;
+        font-size: 1.15rem;
+        font-weight: 600;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        letter-spacing: -0.02em;
     }
 
     .status-dot {
-        height: 10px; width: 10px;
-        background-color: #4ade80;
+        height: 8px; width: 8px;
+        background: linear-gradient(45deg, #10b981, #34d399);
         border-radius: 50%;
         display: inline-block;
-        box-shadow: 0 0 5px #4ade80;
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+        animation: pulse-dot 2s infinite;
+    }
+
+    @keyframes pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.1); }
     }
 
     .chat-messages {
         flex: 1;
-        padding: 20px;
+        padding: 24px;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
-        gap: 15px;
-        background-color: #1e293b;
+        gap: 20px;
+        background: transparent;
         color: #e2e8f0;
-        font-family: 'Poppins', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(51, 65, 85, 0.5) transparent;
+    }
+
+    .chat-messages::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+        background: rgba(51, 65, 85, 0.5);
+        border-radius: 3px;
     }
 
     .message {
-        max-width: 80%;
-        padding: 14px 20px;
-        border-radius: 10px;
-        font-size: 16px;
-        line-height: 1.5;
-        font-family: 'Poppins', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        width: fit-content;
+        max-width: 85%;
+        min-width: 80px;
+        padding: 4px 0;
+        border-radius: 0;
+        font-size: 15px;
+        line-height: 1.6;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        box-shadow: none;
+        position: relative;
+        word-wrap: break-word;
+        animation: fadeInMessage 0.3s ease-out;
+        background: none;
+        border: none;
+    }
+
+    @keyframes fadeInMessage {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     .bot-msg {
-        background-color: #334155;
-        color: #e2e8f0;
+        background: none;
+        color: #f1f5f9;
         align-self: flex-start;
-        border-bottom-left-radius: 2px;
+        border: none;
     }
+    
     .user-msg {
-        background-color: #3b82f6;
-        color: #fff;
+        background: rgba(59, 130, 246, 0.1);
+        color: #93c5fd;
         align-self: flex-end;
-        border-bottom-right-radius: 2px;
+        border: none;
+        border-left: 3px solid #3b82f6;
+        padding-left: 12px;
+        border-radius: 0 8px 8px 0;
     }
 
     .chat-input-area {
-        padding: 18px;
-        background: #0f172a;
-        border-top: 1px solid #334155;
+        padding: 20px 24px;
+        background: rgba(15, 23, 42, 0.8);
+        border-top: 1px solid rgba(51, 65, 85, 0.2);
         display: flex;
-        gap: 10px;
+        gap: 12px;
+        backdrop-filter: blur(20px);
     }
 
     .chat-input-area input[type="text"] {
         flex: 1;
-        padding: 12px;
-        border-radius: 6px;
-        border: 1px solid #334155;
-        background: #1e293b;
-        color: #e2e8f0;
-        font-size: 16px;
+        padding: 14px 16px;
+        border-radius: 12px;
+        border: 1px solid rgba(51, 65, 85, 0.3);
+        background: rgba(30, 41, 59, 0.8);
+        color: #f1f5f9;
+        font-size: 15px;
         outline: none;
-        font-family: 'Poppins', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        transition: border 0.2s;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        line-height: 1.5;
     }
+    
     .chat-input-area input[type="text"]:focus {
-        border: 1.5px solid #3b82f6;
+        border: 1px solid #6366f1;
+        background: rgba(30, 41, 59, 0.95);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        transform: translateY(-1px);
     }
 
     .chat-input-area button {
-        padding: 12px 25px;
-        background: #3b82f6;
-        color: #fff;
+        padding: 14px 26px;
+        background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+        color: #ffffff;
         border: none;
-        border-radius: 6px;
+        border-radius: 12px;
         cursor: pointer;
-        font-weight: bold;
-        font-size: 16px;
-        font-family: 'Poppins', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        transition: background 0.2s, color 0.2s;
+        font-weight: 600;
+        font-size: 14px;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        transition: all 0.3s ease;
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        letter-spacing: -0.02em;
     }
+    
     .chat-input-area button:hover {
-        background: #2563eb;
-        color: #fff;
+        background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+    }
+    
+    .chat-input-area button:active {
+        transform: translateY(0);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
     }
 
-    /* Botón de descarga de archivos en el chat */
+    /* Botón de descarga de archivos en el chat - Estilo Gemini */
     .chat-messages a.download-link {
-        display: inline-block;
-        background: #3b82f6;
-        color: #fff !important;
-        padding: 10px 22px;
-        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        color: #ffffff !important;
+        padding: 12px 20px;
+        border-radius: 12px;
         font-weight: 600;
+        font-size: 14px;
         text-decoration: none !important;
-        box-shadow: 0 2px 8px rgba(59,130,246,0.08);
-        margin-top: 8px;
-        margin-bottom: 2px;
-        transition: background 0.2s, box-shadow 0.2s;
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+        margin-top: 12px;
+        margin-bottom: 4px;
+        transition: all 0.3s ease;
         border: none;
-        font-family: 'Poppins', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        letter-spacing: -0.02em;
     }
+    
     .chat-messages a.download-link:hover {
-        background: #1e293b;
-        color: #3b82f6 !important;
-        box-shadow: 0 4px 16px rgba(59,130,246,0.18);
-        border: 1.5px solid #3b82f6;
+        background: linear-gradient(135deg, #047857 0%, #059669 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(5, 150, 105, 0.3);
+        color: #ffffff !important;
+    }
+
+    /* Soporte para Markdown en mensajes de IA */
+    .bot-msg h1, .bot-msg h2, .bot-msg h3 {
+        margin: 16px 0 12px 0;
+        color: #f1f5f9;
+        font-weight: 600;
+        line-height: 1.3;
+    }
+    
+    .bot-msg h1 { font-size: 1.4em; }
+    .bot-msg h2 { font-size: 1.25em; }
+    .bot-msg h3 { font-size: 1.1em; }
+    
+    .bot-msg strong, .bot-msg b {
+        color: #fbbf24;
+        font-weight: 600;
+    }
+    
+    .bot-msg code {
+        background: rgba(15, 23, 42, 0.6);
+        color: #fbbf24;
+        padding: 2px 6px;
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        font-size: 0.9em;
+        border: 1px solid rgba(251, 191, 36, 0.2);
+    }
+    
+    .bot-msg pre {
+        background: rgba(15, 23, 42, 0.8);
+        color: #e2e8f0;
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 12px 0;
+        border: 1px solid rgba(51, 65, 85, 0.3);
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+    
+    .bot-msg ul, .bot-msg ol {
+        margin: 12px 0;
+        padding-left: 20px;
+    }
+    
+    .bot-msg li {
+        margin: 6px 0;
+        line-height: 1.6;
+    }
+    
+    .bot-msg p {
+        margin: 12px 0;
+        line-height: 1.6;
+    }
+    
+    .bot-msg td, .bot-msg th {
+        padding: 8px 12px;
+        border: 1px solid rgba(51, 65, 85, 0.3);
+        text-align: left;
+    }
+    
+    .bot-msg table {
+        border-collapse: collapse;
+        margin: 16px 0;
+        width: 100%;
+        background: rgba(15, 23, 42, 0.4);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .bot-msg th {
+        background: rgba(30, 41, 59, 0.8);
+        font-weight: 600;
+        color: #fbbf24;
+    }
+    
+    /* Barra de acciones de mensajes */
+    .message-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(51, 65, 85, 0.3);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    
+    .bot-msg:hover .message-actions {
+        opacity: 1;
+    }
+    
+    .action-btn {
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 6px 8px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        transition: all 0.2s ease;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    
+    .action-btn:hover {
+        background: rgba(51, 65, 85, 0.4);
+        color: #e2e8f0;
+        transform: translateY(-1px);
+    }
+    
+    .action-btn.active {
+        color: #fbbf24;
+    }
+    
+    .action-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .action-btn.copied {
+        color: #10b981;
+    }
+    
+    .action-btn.liked {
+        color: #10b981;
+    }
+    
+    .action-btn.disliked {
+        color: #ef4444;
     }
 </style>
 
@@ -450,7 +736,7 @@
                     <span style="font-family:'JetBrains Mono'; font-size:0.8em;">PDF</span>
                 </button>
                 
-                <a href="/" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 8px; border-radius: 6px; display: flex; align-items: center;" title="Salir">
+                <a href="/?lat={{ lat }}&lon={{ lon }}" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 8px; border-radius: 6px; display: flex; align-items: center;" title="Salir">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                 </a>
             </div>
@@ -1108,35 +1394,49 @@ Generado por TuClima Pro - www.tuclima.com
 <div class="chat-container">
     <div class="chat-header">
         <h3>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline; margin-right:8px;">
-                <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline; margin-right:8px; color: #6366f1;">
+                <circle cx="12" cy="12" r="5"/>
+                <path d="M12 1v6m5.66-4L16 6m4.66 5.66L17 12m-.34 5.66L12 16m-5.66-.34L8 12M3.34 7.66L6 8M1 12h6m4 5.66L12 23"/>
             </svg>
             TuClima IA
+            <span style="font-size: 0.8rem; font-weight: 400; margin-left: 8px; color: #94a3b8;">Agro Intelligence</span>
         </h3>
         <span class="status-dot"></span>
     </div>
     
     <div class="chat-messages" id="chat-box">
-        <div class="message bot-msg">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline; margin-right:6px; vertical-align:middle;">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        <div class="message bot-msg welcome-msg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline; margin-right:6px; vertical-align:top; margin-top:2px; color: #6366f1;">
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <path d="M12 17h.01"/>
+                <circle cx="12" cy="12" r="10"/>
             </svg>
-            ¡Hola! Soy tu asistente meteorológico. ¿Qué información necesitas consultar hoy?
+            ¡Hola! Soy tu asistente meteorológico, ¿en qué puedo ayudarte?
         </div>
     </div>
 
-    <div class="chat-input-container" style="display: flex; align-items: center; gap: 10px; padding: 15px; background: #1e293b; border-top: 1px solid #334155;">
+    <div class="chat-input-container" style="display: flex; align-items: center; gap: 12px; padding: 20px 24px; background: rgba(15, 23, 42, 0.8); border-top: 1px solid rgba(51, 65, 85, 0.2); backdrop-filter: blur(20px);">
     
     <input type="file" id="file-input" style="display: none;" accept="image/*,.pdf,.csv,.xlsx">
-    <button type="button" onclick="document.getElementById('file-input').click()" style="background: none; border: none; cursor: pointer; padding: 8px; color: #94a3b8; transition: 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94a3b8'">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+    <button type="button" onclick="document.getElementById('file-input').click()" style="background: rgba(51, 65, 85, 0.6); border: 1px solid rgba(71, 85, 105, 0.3); cursor: pointer; padding: 10px; color: #cbd5e1; transition: all 0.3s ease; border-radius: 10px; backdrop-filter: blur(10px);" onmouseover="this.style.color='#f1f5f9'; this.style.background='rgba(71, 85, 105, 0.8)'" onmouseout="this.style.color='#cbd5e1'; this.style.background='rgba(51, 65, 85, 0.6)'" title="Subir archivo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 6 12 1 7 6"/>
+            <line x1="12" y1="1" x2="12" y2="13"/>
         </svg>
     </button>
 
-    <div id="file-preview" style="min-width:120px; color:#e2e8f0; font-size:0.95em; font-family:'Poppins',sans-serif;"></div>
+    <!-- Botón Gráficos -->
+    <button type="button" onclick="toggleChart()" style="background: rgba(51, 65, 85, 0.6); border: 1px solid rgba(71, 85, 105, 0.3); cursor: pointer; padding: 10px; color: #cbd5e1; transition: all 0.3s ease; border-radius: 10px; backdrop-filter: blur(10px);" onmouseover="this.style.color='#fbbf24'; this.style.background='rgba(71, 85, 105, 0.8)'" onmouseout="this.style.color='#cbd5e1'; this.style.background='rgba(51, 65, 85, 0.6)'" title="Mostrar/Ocultar Gráfico">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 3v18h18"/>
+            <path d="M7 12l4-4 4 4 6-6"/>
+        </svg>
+    </button>
 
-    <input type="text" id="user-input" placeholder="Escribir..." style="flex: 1; padding: 12px; border: 1px solid #334155; border-radius: 6px; background: #0f172a; color: #e2e8f0; outline: none; font-family: 'Poppins', sans-serif;">
+    <div id="file-preview" style="min-width:120px; color:#cbd5e1; font-size:0.9em; font-family:'Segoe UI', system-ui, -apple-system, sans-serif; font-weight: 500;"></div>
+
+    <input type="text" id="user-input" placeholder="Escribir mensaje..." style="flex: 1; padding: 14px 16px; border: 1px solid rgba(51, 65, 85, 0.3); border-radius: 12px; background: rgba(30, 41, 59, 0.8); color: #f1f5f9; outline: none; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; backdrop-filter: blur(10px); transition: all 0.3s ease;">
 
     <button onclick="enviarMensaje()" style="background: #4ade80; color: #000; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#22c55e'" onmouseout="this.style.background='#4ade80'">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1146,12 +1446,388 @@ Generado por TuClima Pro - www.tuclima.com
     </button>
 </div>
 
+<!-- Contenedor Gráfico oculto -->
+<div id="chart-container" style="display: none; width: 100%; margin: 20px 0; background: #1e293b; border: 1px solid #334155; border-radius: 8px; overflow: hidden;">
+    <div style="background: #0f172a; padding: 15px; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between;">
+        <h3 style="margin: 0; color: #e2e8f0; font-size: 1.1rem; font-family: 'Poppins', sans-serif; display: flex; align-items: center; gap: 10px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+            TuClima IA - Gráfico Interactivo
+        </h3>
+        <button onclick="toggleChart()" style="background: none; border: none; color: #94a3b8; cursor: pointer; padding: 5px; border-radius: 4px; transition: 0.2s;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='none'" title="Cerrar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+    </div>
+    <div id="chart-tabs" style="display: flex; gap: 10px; padding: 15px 20px 0 20px; overflow-x: auto;"></div>
+    <div style="padding: 20px;">
+        <canvas id="climatChart" width="400" height="200"></canvas>
+    </div>
+</div>
+
 <script>
     // --- CONFIGURACIÓN AGRO INTELLIGENCE PRO ---
 
-const urlN8N = "https://n8n-production-2651.up.railway.app/webhook/chat"; // URL de Desarrollo local
+const urlN8N = "https://n8n-production-2651.up.railway.app/webhook/chat"; // Webhook principal ChatBot TuClima
 let sessionId = localStorage.getItem("chatSessionId") || generateUUID();
 localStorage.setItem("chatSessionId", sessionId);
+
+// ==========================================
+// FUNCIONES DE PROCESAMIENTO MARKDOWN
+// ==========================================
+
+function processMarkdown(text) {
+    if (!text) return text;
+    
+    // Procesar elementos markdown en orden (importante el orden)
+    
+    // 1. Código inline (backticks)
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // 2. Negritas (**texto** o __texto__)
+    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+    
+    // 3. Cursivas (*texto* o _texto_)
+    text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    text = text.replace(/_([^_]+)_/g, '<em>$1</em>');
+    
+    // 4. Títulos
+    text = text.replace(/^### (.+$)/gim, '<h3>$1</h3>');
+    text = text.replace(/^## (.+$)/gim, '<h2>$1</h2>');
+    text = text.replace(/^# (.+$)/gim, '<h1>$1</h1>');
+    
+    // 5. Links [texto](url) - pero preservamos los links ya procesados
+    text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)(?![^<]*<\/a>)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    
+    // 6. Listas con viñetas (bullet points)
+    text = text.replace(/^[•*] (.+$)/gim, '<li>$1</li>');
+    
+    // Envolver listas consecutivas en <ul> (no codicioso para evitar fagocitar párrafos intermedios)
+    text = text.replace(/(<li>.*?<\/li>\s*)+/gs, (match) => {
+        return '<ul>' + match + '</ul>';
+    });
+    
+    // 7. Saltos de línea simples a <br>
+    text = text.replace(/\n/g, '<br>');
+    
+    // 8. Limpiar <br> fantasma pegados a elementos de bloque
+    text = text.replace(/<\/(h[1-3]|ul|ol|li)><br>/g, '</$1>');
+    text = text.replace(/<br><(h[1-3]|ul|ol|li)>/g, '<$1>');
+    
+    return text;
+}
+
+function addBotMessage(mensaje) {
+    const chatBox = document.getElementById("chat-box");
+    const mensajeProcesado = processMarkdown(mensaje);
+    
+    // Crear el div del mensaje
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message bot-msg';
+    
+    // Añadir el icono y el mensaje procesado
+    messageDiv.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
+             style="display:inline; margin-right:6px; vertical-align:top; margin-top:2px; color: #6366f1; flex-shrink: 0;">
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <path d="M12 17h.01"/>
+            <circle cx="12" cy="12" r="10"/>
+        </svg>
+        <div style="flex: 1;">
+            ${mensajeProcesado}
+            <div class="message-actions">
+                <button class="action-btn" onclick="copyMessage(this)" title="Copiar mensaje">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                </button>
+                <button class="action-btn" onclick="regenerateMessage(this)" title="Regenerar respuesta">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                    </svg>
+                </button>
+                <button class="action-btn" onclick="likeMessage(this)" title="Me gusta">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+                    </svg>
+                </button>
+                <button class="action-btn" onclick="dislikeMessage(this)" title="No me gusta">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/>
+                    </svg>
+                </button>
+                <button class="action-btn" onclick="toggleComments(this)" title="Comentarios">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Ajustar el estilo del mensaje para flex
+    messageDiv.style.display = 'flex';
+    messageDiv.style.alignItems = 'flex-start';
+    messageDiv.style.gap = '6px';
+    
+    chatBox.appendChild(messageDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    
+    return messageDiv;
+}
+
+function addUserMessage(texto, archivo) {
+    const chatBox = document.getElementById("chat-box");
+    
+    // Iconos para archivos
+    let icon = '';
+    if (archivo) {
+        if (archivo.type.startsWith('image/')) {
+            icon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+        } else if (archivo.type === 'application/pdf') {
+            icon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+        } else if (archivo.type.includes('excel') || archivo.name.match(/\.(xlsx|xls|csv)$/i)) {
+            icon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>';
+        } else {
+            icon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>';
+        }
+    }
+    
+    // Crear el mensaje del usuario
+    const userDiv = document.createElement('div');
+    userDiv.className = 'message user-msg';
+    userDiv.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
+             style="display:inline; margin-right:6px; vertical-align:top; margin-top:2px; opacity: 0.8; flex-shrink: 0;">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <div style="flex: 1;">${texto} ${archivo ? `<br><span style="font-size: 0.9em; opacity: 0.8;">${icon} <em>Archivo: ${archivo.name}</em></span>` : ''}</div>
+    `;
+    
+    userDiv.style.display = 'flex';
+    userDiv.style.alignItems = 'flex-start';
+    userDiv.style.gap = '6px';
+    
+    chatBox.appendChild(userDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// ==========================================
+// FUNCIONES DE ACCIONES DE MENSAJE
+// ==========================================
+
+let lastUserMessage = ''; // Guardar último mensaje para regenerar
+
+// Copiar mensaje al portapapeles
+function copyMessage(btn) {
+    const messageDiv = btn.closest('.bot-msg');
+    let messageContent = messageDiv.querySelector('div[style*="flex: 1"]');
+    
+    // Extraer solo el texto, sin HTML
+    let textContent = '';
+    const clonedContent = messageContent.cloneNode(true);
+    // Remover la barra de acciones del clone
+    const actions = clonedContent.querySelector('.message-actions');
+    if (actions) actions.remove();
+    textContent = clonedContent.innerText || clonedContent.textContent;
+    
+    navigator.clipboard.writeText(textContent.trim()).then(() => {
+        const originalHTML = btn.innerHTML;
+        btn.classList.add('copied');
+        btn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+        `;
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('copied');
+        }, 2000);
+    }).catch(err => {
+        console.error('Error al copiar:', err);
+    });
+}
+
+// Regenerar última respuesta
+function regenerateMessage(btn) {
+    if (lastUserMessage) {
+        // Remover el último mensaje del bot
+        const messageDiv = btn.closest('.bot-msg');
+        if (messageDiv) {
+            messageDiv.remove();
+        }
+        
+        // Simular clic en enviar con el último mensaje
+        const input = document.getElementById("user-input");
+        const previousValue = input.value;
+        input.value = lastUserMessage;
+        enviarMensaje();
+        
+        // Restaurar el valor previo si había algo
+        if (previousValue && previousValue.trim() !== lastUserMessage) {
+            setTimeout(() => {
+                input.value = previousValue;
+            }, 100);
+        }
+    }
+}
+
+// Dar like al mensaje
+// Dar like al mensaje
+function likeMessage(btn) {
+    const messageDiv = btn.closest('.bot-msg');
+    const allBtns = messageDiv.querySelectorAll('.action-btn');
+    const dislikeBtn = allBtns[3];
+    
+    if (btn.classList.contains('liked')) {
+        btn.classList.remove('liked');
+    } else {
+        btn.classList.add('liked');
+        dislikeBtn.classList.remove('disliked');
+        enviarFeedback('LIKE', messageDiv);
+    }
+}
+
+// Dar dislike al mensaje
+function dislikeMessage(btn) {
+    const messageDiv = btn.closest('.bot-msg');
+    const allBtns = messageDiv.querySelectorAll('.action-btn');
+    const likeBtn = allBtns[2];
+    
+    if (btn.classList.contains('disliked')) {
+        btn.classList.remove('disliked');
+    } else {
+        btn.classList.add('disliked');
+        likeBtn.classList.remove('liked');
+        enviarFeedback('DISLIKE', messageDiv);
+    }
+}
+
+// Toggle de comentarios
+function toggleComments(btn) {
+    const messageDiv = btn.closest('.bot-msg');
+    let commentSection = messageDiv.querySelector('.comment-section');
+    
+    if (commentSection) {
+        commentSection.remove();
+    } else {
+        commentSection = document.createElement('div');
+        commentSection.className = 'comment-section';
+        commentSection.style.cssText = `
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(71, 85, 105, 0.3);
+            border-radius: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        `;
+        commentSection.innerHTML = `
+            <textarea placeholder="Añade un comentario..." style="
+                width: 100%;
+                min-height: 60px;
+                padding: 8px;
+                background: rgba(30, 41, 59, 0.5);
+                border: 1px solid rgba(148, 163, 184, 0.2);
+                border-radius: 6px;
+                color: #e2e8f0;
+                font-family: 'Segoe UI', sans-serif;
+                font-size: 13px;
+                resize: vertical;
+            "></textarea>
+            <button onclick="saveComment(this)" style="
+                margin-top: 8px;
+                padding: 6px 16px;
+                background: linear-gradient(135deg, #6366f1, #8b5cf6);
+                border: none;
+                border-radius: 6px;
+                color: white;
+                font-size: 13px;
+                cursor: pointer;
+                transition: all 0.2s;
+            " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(99, 102, 241, 0.4)'"
+               onmouseout="this.style.transform=''; this.style.boxShadow=''">
+                Guardar comentario
+            </button>
+            <div class="comments-list" style="margin-top: 12px;"></div>
+        `;
+        
+        messageDiv.querySelector('div[style*="flex: 1"]').appendChild(commentSection);
+    }
+}
+
+// Guardar comentario
+function saveComment(btn) {
+    const commentSection = btn.closest('.comment-section');
+    const textarea = commentSection.querySelector('textarea');
+    const commentsList = commentSection.querySelector('.comments-list');
+    const messageDiv = btn.closest('.bot-msg');
+    
+    if (textarea.value.trim()) {
+        const comentarioTexto = textarea.value.trim();
+        const commentDiv = document.createElement('div');
+        commentDiv.style.cssText = `
+            padding: 8px;
+            margin-top: 8px;
+            background: rgba(30, 41, 59, 0.5);
+            border-left: 3px solid #6366f1;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #cbd5e1;
+        `;
+        commentDiv.textContent = comentarioTexto;
+        commentsList.appendChild(commentDiv);
+        textarea.value = '';
+        enviarFeedback('COMENTARIO', messageDiv, comentarioTexto);
+    }
+}
+
+// Función para enviar feedback al backend
+function enviarFeedback(tipoFeedback, messageDiv, comentario = '') {
+    // Extraer el texto del mensaje de la IA
+    let messageContent = messageDiv.querySelector('div[style*="flex: 1"]');
+    const clonedContent = messageContent.cloneNode(true);
+    const actions = clonedContent.querySelector('.message-actions');
+    if (actions) actions.remove();
+    const commentSections = clonedContent.querySelectorAll('.comment-section');
+    commentSections.forEach(section => section.remove());
+    const mensajeIA = (clonedContent.innerText || clonedContent.textContent).trim();
+    
+    // Preparar datos
+    const data = {
+        tipo_feedback: tipoFeedback,
+        sector: 'AGRO',
+        mensaje_ia: mensajeIA,
+        comentario: comentario,
+        session_id: sessionId
+    };
+    
+    // Enviar al backend
+    fetch('/api/guardar-feedback/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            console.log('Feedback guardado exitosamente:', result.feedback_id);
+        } else {
+            console.error('Error guardando feedback:', result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error enviando feedback:', error);
+    });
+}
 
 // Historial para flechas del teclado
 let historialMensajes = [];
@@ -1227,6 +1903,7 @@ async function enviarMensaje() {
     if (texto) {
         historialMensajes.push(texto);
         indiceHistorial = -1;
+        lastUserMessage = texto; // Guardar para regenerar
     }
 
     // Mostrar en UI
@@ -1242,15 +1919,32 @@ async function enviarMensaje() {
             icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
         }
     }
-    chatBox.innerHTML += `<div class=\"message user-msg\"><b>Tú:</b> ${texto} ${archivo ? `<br>${icon} <i>Archivo: ${archivo.name}</i>` : ''}</div>`;
+    
+    // Añadir mensaje del usuario con estilo mejorado
+    addUserMessage(texto, archivo);
+    
     input.value = "";
     filePreview.innerHTML = '';
-    chatBox.scrollTop = chatBox.scrollHeight;
 
-    // Animación de espera de IA
+    // Animación de espera de IA mejorada
     const typingId = 'ia-typing';
     if (!document.getElementById(typingId)) {
-        chatBox.innerHTML += `<div class=\"chat-typing\" id=\"${typingId}\"><b>IA:</b> <span class=\"dot-typing\"><span></span><span></span><span></span></span></div>`;
+        const chatBox = document.getElementById("chat-box");
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'chat-typing';
+        typingDiv.id = typingId;
+        typingDiv.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
+                 style="display:inline; margin-right:6px; vertical-align:top; margin-top:2px; color: #6366f1;">
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <path d="M12 17h.01"/>
+                <circle cx="12" cy="12" r="10"/>
+            </svg>
+            TuClima IA está escribiendo...
+            <span class="dot-typing"><span></span><span></span><span></span></span>
+        `;
+        
+        chatBox.appendChild(typingDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
@@ -1269,11 +1963,17 @@ async function enviarMensaje() {
 
         const datos = await respuesta.json();
         
-        // --- AQUÍ ESTÁ EL CAMBIO CLAVE ---
+        // --- PROCESAMIENTO DE RESPUESTA IA ---
+        // --- PROCESAMIENTO DE RESPUESTA IA (DENTRO DE TU FUNCION enviarMensaje) ---
         let respuestaIA = datos.output || "Procesado correctamente.";
         
-        // Buscamos si hay un formato [Texto](Enlace) y lo convertimos a un link con clase de botón profesional
-        const respuestaIAConLinks = respuestaIA.replace(
+        // Detectamos si mandó un gráfico ANTES de limpiar el texto
+        let tieneGrafico = respuestaIA.includes('[MOSTRAR_GRAFICO]');
+
+        // MAGIA VISUAL: Ocultamos todo el bloque técnico para que el usuario solo lea el reporte limpio
+        let textoVisible = respuestaIA.replace(/\[MOSTRAR_GRAFICO\][\s\S]*/i, "").trim();
+        
+        const respuestaIAConLinks = textoVisible.replace(
             /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
             '<a href="$2" target="_blank" class="download-link">$1</a>'
         );
@@ -1282,18 +1982,307 @@ async function enviarMensaje() {
         const typingDiv = document.getElementById(typingId);
         if (typingDiv) typingDiv.remove();
 
-        chatBox.innerHTML += `<div class=\"message bot-msg\"><b>IA:</b> ${respuestaIAConLinks}</div>`;
-        // --------------------------------
+        // Procesar markdown y añadir el mensaje de IA (sin procesar links dobles)
+        addBotMessage(respuestaIAConLinks);
+        
+        // Disparar el gráfico si existe
+        if (tieneGrafico) {
+            const chartData = extractChartData(datos);
+            setTimeout(() => {
+                toggleChart(true); 
+                createSampleChart(chartData); 
+            }, 500); 
+        }
         
         fileInput.value = ""; 
     } catch (error) {
         // Eliminar animación de espera
         const typingDiv = document.getElementById(typingId);
         if (typingDiv) typingDiv.remove();
-        chatBox.innerHTML += `<div class=\"message bot-msg\" style=\"color:red;\">⚠️ Error de conexión.</div>`;
+        
+        // Error de conexión con estilo mejorado
+        const chatBox = document.getElementById("chat-box");
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'message bot-msg';
+        errorDiv.style.color = '#ef4444';
+        errorDiv.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+        errorDiv.style.display = 'flex';
+        errorDiv.style.alignItems = 'flex-start';
+        errorDiv.style.gap = '6px';
+        errorDiv.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
+                 style="display:inline; margin-right:6px; vertical-align:top; margin-top:2px; color: #ef4444; flex-shrink: 0;">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M15 9l-6 6"/>
+                <path d="M9 9l6 6"/>
+            </svg>
+            <div style="flex: 1;">⚠️ Error de conexión o procesamiento. Por favor, inténtalo de nuevo.</div>
+        `;
+        chatBox.appendChild(errorDiv);
+        console.error(error); // Para que veas el error real en F12
     }
     chatBox.scrollTop = chatBox.scrollHeight;
 }
+
+// ---------------------------------------------------------
+// FUNCIONES DE GRÁFICOS (Pegar debajo de enviarMensaje)
+// ---------------------------------------------------------
+
+// 1. FUNCIÓN PARA MOSTRAR/OCULTAR CONTENEDOR
+function toggleChart(forceShow = false) {
+    const container = document.getElementById('chart-container');
+    const chatContainer = document.querySelector('.chat-container');
+    if (forceShow || container.style.display === 'none') {
+        container.style.display = 'block';
+        setTimeout(() => container.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    } else {
+        container.style.display = 'none';
+        if (chatContainer) chatContainer.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+}
+
+// 2. FUNCIÓN UNIVERSAL DE EXTRACCIÓN
+function extractChartData(aiResponse) {
+    const texto_bruto = aiResponse.output || aiResponse.texto_limpio || "";
+
+    function pescarTexto(campo) {
+        const stopWords = "cultivo|region|temperatura_suelo|temperatura_maxima|temperatura_minima|temperatura|humedad_relativa|precipitacion|evapotranspiracion|horas_sol|fase_lunar|" +
+                          "puerto|condiciones_mar|viento_velocidad|viento_direccion|direccion_viento|temperatura_agua|altura_olas|visibilidad|" +
+                          "aeropuerto_origen|aeropuerto_destino|altitud_vuelo|temperatura_altitud|corrientes_viento|visibilidad_km|condiciones_atmosfericas|" +
+                          "tipo_energia|ubicacion|radiacion_solar|velocidad_viento|temperatura_ambiente|eficiencia_estimada|produccion_kwh|" +
+                          "etiquetas|labels|chart_type|Para tus registros|¿deseas";
+        const regex = new RegExp(`${campo}[:\\s]+([\\s\\S]*?)(?=(?:${stopWords}|$))`, 'i');
+        const match = texto_bruto.match(regex);
+        return match ? match[1].trim().replace(/[\n\r]+/g, '') : null;
+    }
+
+    function parseValue(value, isNumeric = true) {
+        if (!value) return undefined;
+        
+        // MAGIA ANTI-ERRORES: Borramos los corchetes '[' y ']' por si la IA los escribe
+        let cleanValue = typeof value === 'string' ? value.replace(/[\[\]]/g, '') : value;
+        
+        if (typeof cleanValue === 'string' && cleanValue.includes(',')) {
+            const arrayValues = cleanValue.split(',').map(item => item.trim());
+            return isNumeric ? arrayValues.map(n => isNaN(Number(n)) ? null : Number(n)) : arrayValues;
+        }
+        return isNumeric && !isNaN(cleanValue) ? [Number(cleanValue)] : [cleanValue];
+    }
+    
+    const resultado = {
+        // Agro
+        cultivo: pescarTexto("cultivo"), region: pescarTexto("region"), temperatura: parseValue(pescarTexto("temperatura"), true), temperatura_suelo: parseValue(pescarTexto("temperatura_suelo"), true), temperatura_maxima: parseValue(pescarTexto("temperatura_maxima"), true), temperatura_minima: parseValue(pescarTexto("temperatura_minima"), true), humedad_relativa: parseValue(pescarTexto("humedad_relativa"), true), precipitacion: parseValue(pescarTexto("precipitacion"), true), evapotranspiracion: parseValue(pescarTexto("evapotranspiracion"), true), horas_sol: parseValue(pescarTexto("horas_sol"), true), fase_lunar: pescarTexto("fase_lunar"),
+        // Naval
+        puerto: pescarTexto("puerto"), condiciones_mar: pescarTexto("condiciones_mar"), viento_velocidad: parseValue(pescarTexto("viento_velocidad"), true), viento_direccion: parseValue(pescarTexto("viento_direccion") || pescarTexto("direccion_viento"), true), direccion_viento: parseValue(pescarTexto("direccion_viento") || pescarTexto("viento_direccion"), true), temperatura_agua: parseValue(pescarTexto("temperatura_agua"), true), altura_olas: parseValue(pescarTexto("altura_olas"), true), visibilidad: parseValue(pescarTexto("visibilidad"), true),
+        // Aéreo
+        aeropuerto_origen: pescarTexto("aeropuerto_origen"), aeropuerto_destino: pescarTexto("aeropuerto_destino"), altitud_vuelo: parseValue(pescarTexto("altitud_vuelo"), true), temperatura_altitud: parseValue(pescarTexto("temperatura_altitud"), true), corrientes_viento: parseValue(pescarTexto("corrientes_viento"), true), visibilidad_km: parseValue(pescarTexto("visibilidad_km"), true), condiciones_atmosfericas: pescarTexto("condiciones_atmosfericas"),
+        // Energía
+        tipo_energia: pescarTexto("tipo_energia"), ubicacion: pescarTexto("ubicacion"), radiacion_solar: parseValue(pescarTexto("radiacion_solar"), true), velocidad_viento: parseValue(pescarTexto("velocidad_viento"), true), temperatura_ambiente: parseValue(pescarTexto("temperatura_ambiente"), true), eficiencia_estimada: parseValue(pescarTexto("eficiencia_estimada"), true), produccion_kwh: parseValue(pescarTexto("produccion_kwh"), true),
+        // Universales
+        etiquetas: parseValue(pescarTexto("etiquetas") || pescarTexto("labels"), false) || ['Actual'], type: pescarTexto("chart_type") || 'line'
+    };
+    
+    return resultado;
+}
+
+// 3. FUNCIÓN DEL DASHBOARD INTERACTIVO (Chart.js)
+function createSampleChart(chartData = null) {
+    if (!chartData) return;
+
+    const ctx = document.getElementById('climatChart').getContext('2d');
+    const tabsContainer = document.getElementById('chart-tabs');
+    if (!tabsContainer) return; 
+    
+    tabsContainer.innerHTML = ''; 
+
+    const allVariables = [
+        // Agro
+        { key: 'temperatura', label: 'Temperatura (°C)', color: '#f59e0b' },
+        { key: 'temperatura_suelo', label: 'Temp. Suelo (°C)', color: '#4ade80' },
+        { key: 'temperatura_maxima', label: 'Temp. Máxima (°C)', color: '#ef4444' },
+        { key: 'temperatura_minima', label: 'Temp. Mínima (°C)', color: '#3b82f6' },
+        { key: 'humedad_relativa', label: 'Humedad (%)', color: '#fbbf24' },
+        { key: 'precipitacion', label: 'Precipitación (mm)', color: '#3b82f6' },
+        { key: 'evapotranspiracion', label: 'Evapotranspiración (mm)', color: '#06b6d4' },
+        { key: 'horas_sol', label: 'Horas Sol (h)', color: '#f59e0b' },
+        // Naval
+        { key: 'viento_velocidad', label: 'Viento Naval (kt)', color: '#94a3b8' },
+        { key: 'temperatura_agua', label: 'Temp. Agua (°C)', color: '#06b6d4' },
+        { key: 'altura_olas', label: 'Olas (m)', color: '#2563eb' },
+        { key: 'visibilidad', label: 'Visibilidad (NM)', color: '#e2e8f0' },
+        // Aéreo
+        { key: 'altitud_vuelo', label: 'Altitud (ft)', color: '#8b5cf6' },
+        { key: 'temperatura_altitud', label: 'Temp. Altitud (°C)', color: '#ec4899' },
+        { key: 'corrientes_viento', label: 'Viento Altura (kt)', color: '#f43f5e' },
+        { key: 'visibilidad_km', label: 'Visibilidad (km)', color: '#cbd5e1' },
+        // Energía
+        { key: 'radiacion_solar', label: 'Radiación (W/m²)', color: '#f59e0b' },
+        { key: 'velocidad_viento', label: 'Viento (kt)', color: '#64748b' },
+        { key: 'temperatura_ambiente', label: 'Temp. Ambiente (°C)', color: '#10b981' },
+        { key: 'eficiencia_estimada', label: 'Eficiencia (%)', color: '#14b8a6' },
+        { key: 'produccion_kwh', label: 'Producción (kWh)', color: '#84cc16' },
+        // Universal (Dirección Viento)
+        { key: 'viento_direccion', label: 'Dir. Viento (°)', color: '#a855f7' },
+        { key: 'direccion_viento', label: 'Dir. Viento (°)', color: '#a855f7' }
+    ];
+
+    const variablesDisponibles = allVariables.filter(v => 
+        chartData[v.key] !== undefined && 
+        chartData[v.key].length > 0 && 
+        chartData[v.key][0] !== null
+    );
+
+    // Eliminar duplicado de dirección de viento (viento_direccion y direccion_viento)
+    const tieneVientoDireccion = variablesDisponibles.find(v => v.key === 'viento_direccion');
+    const tieneDireccionViento = variablesDisponibles.find(v => v.key === 'direccion_viento');
+    let variablesFiltradas = variablesDisponibles;
+    if (tieneVientoDireccion && tieneDireccionViento) {
+        variablesFiltradas = variablesDisponibles.filter(v => v.key !== 'viento_direccion');
+    }
+    
+    if (variablesFiltradas.length === 0) return;
+
+    const labels = chartData.etiquetas || ['Actual'];
+    let tituloUbicacion = chartData.region || chartData.puerto || chartData.aeropuerto_origen || chartData.ubicacion || 'Reporte';
+    
+    // 🧡 LIMPIEZA ANTI-BASURA: Sacamos comillas y cortamos si la IA metió un párrafo entero
+    tituloUbicacion = tituloUbicacion.replace(/["']/g, '').trim(); 
+    if (tituloUbicacion.length > 35) {
+        // Cortamos en la primera coma, punto, o simplemente a los 30 caracteres
+        tituloUbicacion = tituloUbicacion.split(/(?:\n|,|\.)/)[0].substring(0, 35) + '...'; 
+    }
+
+    function drawChart(variableConfig) {
+        if (window.myChart) window.myChart.destroy(); 
+
+        const esDireccionViento = variableConfig.key === 'viento_direccion' || variableConfig.key === 'direccion_viento';
+
+        window.myChart = new Chart(ctx, {
+            type: chartData.type || 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: variableConfig.label,
+                    data: chartData[variableConfig.key],
+                    borderColor: variableConfig.color,
+                    backgroundColor: variableConfig.color + '33', 
+                    fill: !esDireccionViento,
+                    tension: esDireccionViento ? 0 : 0.4,
+                    stepped: esDireccionViento,
+                    borderWidth: 2,
+                    pointRadius: esDireccionViento ? 4 : 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }, 
+                    title: {
+                        display: true,
+                        text: `${variableConfig.label} - ${tituloUbicacion}`,
+                        color: '#e2e8f0',
+                        font: { size: 14 }
+                    }
+                },
+                scales: {
+                    y: { 
+                        type: 'linear',
+                        min: esDireccionViento ? 0 : undefined,
+                        max: esDireccionViento ? 360 : undefined,
+                        ticks: { 
+                            color: '#94a3b8',
+                            stepSize: esDireccionViento ? 45 : undefined,
+                            callback: function(value) {
+                                if (esDireccionViento) {
+                                    const brujula = {
+                                        0: '0° (N)', 45: '45° (NE)', 90: '90° (E)', 135: '135° (SE)',
+                                        180: '180° (S)', 225: '225° (SW)', 270: '270° (W)', 315: '315° (NW)', 360: '360° (N)'
+                                    };
+                                    return brujula[value] || value + '°';
+                                }
+                                return value;
+                            }
+                        }, 
+                        grid: { color: '#334155' } 
+                    },
+                    x: { 
+                        ticks: { color: '#94a3b8' }, 
+                        grid: { color: '#334155' } 
+                    }
+                }
+            }
+        });
+
+        Array.from(tabsContainer.children).forEach(btn => {
+            if (btn.innerText === variableConfig.label) {
+                btn.style.background = '#3b82f6';
+                btn.style.color = '#ffffff';
+                btn.style.borderColor = '#3b82f6';
+            } else {
+                btn.style.background = '#1e293b';
+                btn.style.color = '#94a3b8';
+                btn.style.borderColor = '#334155';
+            }
+        });
+    }
+
+    variablesFiltradas.forEach(variable => {
+        const btn = document.createElement('button');
+        btn.innerText = variable.label;
+        btn.style.cssText = `
+            padding: 6px 14px; 
+            border-radius: 20px; 
+            border: 1px solid #334155; 
+            background: #1e293b; 
+            color: #94a3b8; 
+            cursor: pointer; 
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+        `;
+        btn.onclick = () => drawChart(variable);
+        tabsContainer.appendChild(btn);
+    });
+
+    drawChart(variablesFiltradas[0]);
+}
+
+// ==========================================
+// INICIALIZACIÓN DEL CHAT CON MARKDOWN
+// ==========================================
+
+// Procesar mensaje inicial cuando carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Buscar el mensaje inicial del bot y procesarlo con markdown
+    const initialMessage = document.querySelector('.chat-messages .welcome-msg');
+    if (initialMessage) {
+        // Extraer el contenido del mensaje (sin el SVG)
+        const svg = initialMessage.querySelector('svg');
+        const textContent = initialMessage.textContent || initialMessage.innerText;
+        
+        // Procesar el texto con markdown
+        const processedText = processMarkdown(textContent);
+        
+        // Restructurar el mensaje con el nuevo formato
+        initialMessage.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
+                 style="display:inline; margin-right:4px; vertical-align:top; margin-top:1px; color: #6366f1; flex-shrink: 0;">
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <path d="M12 17h.01"/>
+                <circle cx="12" cy="12" r="10"/>
+            </svg>
+            <div style="flex: 1;">${processedText}</div>
+        `;
+        
+        // Aplicar estilo flex al mensaje
+        initialMessage.style.display = 'flex';
+        initialMessage.style.alignItems = 'flex-start';
+        initialMessage.style.gap = '4px';
+    }
+});
 </script>
+
 </body>
 </html>
