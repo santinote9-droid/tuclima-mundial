@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Feedback IA - TuClima PRO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #020617;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+        
+        .header {
+            max-width: 1400px;
+            margin: 0 auto 30px auto;
+            padding: 25px;
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 12px;
+            border: 1px solid #1e293b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        h1 {
+            color: #facc15;
+            font-size: 1.8em;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: #e2e8f0;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn:hover {
+            background: #334155;
+            border-color: #475569;
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-color: #6366f1;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        }
+        
+        .stats-grid {
+            max-width: 1400px;
+            margin: 0 auto 30px auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            color: #94a3b8;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .value {
+            font-size: 2.5em;
+            font-weight: 800;
+            color: #f8fafc;
+        }
+        
+        .stat-card.likes .value { color: #22c55e; }
+        .stat-card.dislikes .value { color: #ef4444; }
+        .stat-card.comments .value { color: #06b6d4; }
+        .stat-card.pending .value { color: #facc15; }
+        
+        .filters {
+            max-width: 1400px;
+            margin: 0 auto 30px auto;
+            padding: 20px 25px;
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 12px;
+            border: 1px solid #1e293b;
+        }
+        
+        .filters h3 {
+            color: #94a3b8;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+        
+        .filter-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        select {
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        select:hover {
+            border-color: #475569;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .feedback-list {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .feedback-card {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feedback-card.revisado {
+            opacity: 0.6;
+        }
+        
+        .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .feedback-info {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge.like { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e; }
+        .badge.dislike { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+        .badge.comment { background: rgba(6, 182, 212, 0.2); color: #06b6d4; border: 1px solid #06b6d4; }
+        
+        .badge.sector { background: rgba(250, 204, 21, 0.2); color: #facc15; border: 1px solid #facc15; }
+        
+        .feedback-meta {
+            color: #64748b;
+            font-size: 0.85em;
+            margin-bottom: 15px;
+        }
+        
+        .feedback-content {
+            margin: 15px 0;
+        }
+        
+        .feedback-content h4 {
+            color: #94a3b8;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        
+        .mensaje-ia {
+            background: rgba(30, 41, 59, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #6366f1;
+            color: #cbd5e1;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .comentario-usuario {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #3b82f6;
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+        
+        .feedback-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .check-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 2em;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h1>📊 Panel de Feedback IA</h1>
+        <p style="color: #64748b; margin-top: 5px;">Análisis de comentarios y opiniones de usuarios</p>
+    </div>
+    <a href="/" class="btn">← Volver al inicio</a>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Total Feedbacks</h3>
+        <div class="value">{{ stats.total }}</div>
+    </div>
+    <div class="stat-card likes">
+        <h3>Me gusta 👍</h3>
+        <div class="value">{{ stats.likes }}</div>
+    </div>
+    <div class="stat-card dislikes">
+        <h3>No me gusta 👎</h3>
+        <div class="value">{{ stats.dislikes }}</div>
+    </div>
+    <div class="stat-card comments">
+        <h3>Comentarios 💬</h3>
+        <div class="value">{{ stats.comentarios }}</div>
+    </div>
+    <div class="stat-card pending">
+        <h3>Sin revisar ⏳</h3>
+        <div class="value">{{ stats.no_revisados }}</div>
+    </div>
+</div>
+
+<div class="filters">
+    <h3>Filtros</h3>
+    <form method="GET" class="filter-group">
+        <select name="sector" onchange="this.form.submit()">
+            <option value="">Todos los sectores</option>
+            <option value="AGRO" {% if sector_filter == 'AGRO' %}selected{% endif %}>Agropecuario</option>
+            <option value="NAVAL" {% if sector_filter == 'NAVAL' %}selected{% endif %}>Naval</option>
+            <option value="AEREO" {% if sector_filter == 'AEREO' %}selected{% endif %}>Aéreo</option>
+            <option value="ENERGIA" {% if sector_filter == 'ENERGIA' %}selected{% endif %}>Energía</option>
+        </select>
+        
+        <select name="tipo" onchange="this.form.submit()">
+            <option value="">Todos los tipos</option>
+            <option value="LIKE" {% if tipo_filter == 'LIKE' %}selected{% endif %}>Me gusta</option>
+            <option value="DISLIKE" {% if tipo_filter == 'DISLIKE' %}selected{% endif %}>No me gusta</option>
+            <option value="COMENTARIO" {% if tipo_filter == 'COMENTARIO' %}selected{% endif %}>Comentarios</option>
+        </select>
+        
+        <select name="revisado" onchange="this.form.submit()">
+            <option value="">Todos</option>
+            <option value="si" {% if revisado_filter == 'si' %}selected{% endif %}>Revisados</option>
+            <option value="no" {% if revisado_filter == 'no' %}selected{% endif %}>Sin revisar</option>
+        </select>
+        
+        {% if sector_filter or tipo_filter or revisado_filter %}
+        <a href="{% url 'panel_feedback' %}" class="btn">Limpiar filtros</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="container">
+    {% if feedbacks %}
+    <div class="feedback-list">
+        {% for feedback in feedbacks %}
+        <div class="feedback-card {% if feedback.revisado %}revisado{% endif %}" id="feedback-{{ feedback.id }}">
+            {% if feedback.revisado %}
+            <span class="check-icon">✓</span>
+            {% endif %}
+            
+            <div class="feedback-header">
+                <div class="feedback-info">
+                    <span class="badge {{ feedback.tipo_feedback|lower }}">
+                        {% if feedback.tipo_feedback == 'LIKE' %}
+                            👍 Me gusta
+                        {% elif feedback.tipo_feedback == 'DISLIKE' %}
+                            👎 No me gusta
+                        {% else %}
+                            💬 Comentario
+                        {% endif %}
+                    </span>
+                    <span class="badge sector">{{ feedback.get_sector_display }}</span>
+                </div>
+                <button class="btn btn-primary" onclick="toggleRevisado({{ feedback.id }})">
+                    {% if feedback.revisado %}
+                        Marcar como no revisado
+                    {% else %}
+                        Marcar como revisado
+                    {% endif %}
+                </button>
+            </div>
+            
+            <div class="feedback-meta">
+                📅 {{ feedback.fecha_creacion|date:"d/m/Y H:i" }} | 
+                👤 {{ feedback.usuario.username|default:"Anónimo" }} | 
+                🌐 {{ feedback.ip_usuario|default:"IP no disponible" }} |
+                🔑 Session: {{ feedback.session_id|default:"N/A"|truncatechars:15 }}
+            </div>
+            
+            <div class="feedback-content">
+                <h4>Mensaje de la IA:</h4>
+                <div class="mensaje-ia">{{ feedback.mensaje_preview }}</div>
+                
+                {% if feedback.comentario %}
+                <h4>Comentario del usuario:</h4>
+                <div class="comentario-usuario">{{ feedback.comentario }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <h2 style="color: #94a3b8; margin-bottom: 10px;">No hay feedbacks</h2>
+        <p>No se encontraron feedbacks con los filtros seleccionados</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleRevisado(feedbackId) {
+    fetch(`/api/marcar-feedback-revisado/${feedbackId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Recargar la página para reflejar el cambio
+            location.reload();
+        } else {
+            alert('Error al marcar feedback: ' + (data.error || 'Error desconocido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error de conexión al marcar feedback');
+    });
+}
+</script>
+
+</body>
+</html>

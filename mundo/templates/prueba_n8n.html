@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Webhooks n8n - Sistema Multisectorial</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-cloud"></i> Sistema Clima
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Inicio</a>
+                <a class="nav-link" href="/carga-sectorial/">Carga Sectorial</a>
+                <a class="nav-link" href="/probar-n8n/">Prueba n8n</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4><i class="fas fa-network-wired"></i> Prueba de Conexión con Webhooks n8n</h4>
+                    <p class="mb-0">Verificar conectividad con todos los sectores</p>
+                </div>
+                
+                <div class="card-body">
+                    <!-- URLs de webhooks configuradas -->
+                    <div class="mb-4">
+                        <h6><i class="fas fa-cog"></i> Webhooks Configurados</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Sector</th>
+                                        <th>URL de Webhook</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for sector, url in webhooks.items %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge 
+                                                  {% if sector == 'NAVAL' %}bg-info
+                                                  {% elif sector == 'ENERGIA' %}bg-warning
+                                                  {% elif sector == 'AEREO' %}bg-primary  
+                                                  {% else %}bg-success{% endif %}">
+                                                {{ sector }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if url %}
+                                                <code>{{ url }}</code>
+                                            {% else %}
+                                                <span class="text-danger">No configurado</span>
+                                            {% endif %}
+                                        </td>
+                                        <td id="status-{{ sector }}">
+                                            <span class="text-muted">Sin probar</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Botón de prueba -->
+                    <div class="mb-4">
+                        <button id="btnProbarWebhooks" class="btn btn-primary btn-lg">
+                            <i class="fas fa-play"></i> Ejecutar Pruebas de Conexión
+                        </button>
+                        <small class="form-text text-muted">
+                            Esto enviará datos de prueba a todos los webhooks configurados
+                        </small>
+                    </div>
+                    
+                    <!-- Área de resultados -->
+                    <div id="resultados" class="mt-4" style="display: none;">
+                        <h6><i class="fas fa-chart-bar"></i> Resultados de Pruebas</h6>
+                        <div id="contenidoResultados"></div>
+                    </div>
+                    
+                    <!-- Loading spinner -->
+                    <div id="loading" class="text-center mt-4" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Probando conexiones...</span>
+                        </div>
+                        <p class="mt-2">Probando webhooks n8n...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Información adicional -->
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="fas fa-info-circle"></i> Información de Pruebas</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>📊 Qué se envía en las pruebas:</h6>
+                            <ul class="small">
+                                <li><strong>NAVAL:</strong> Altura de olas, velocidad del viento</li>
+                                <li><strong>AGRO:</strong> Humedad del suelo, pH</li>
+                                <li><strong>AÉREO:</strong> Altitud, presión atmosférica</li>
+                                <li><strong>ENERGÍA:</strong> Voltaje, potencia</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>🔧 Configuración:</h6>
+                            <ul class="small">
+                                <li>URLs leídas desde variables de entorno</li>
+                                <li>Timeout de 30 segundos por webhook</li>
+                                <li>Headers con Content-Type JSON</li>
+                                <li>Datos marcados como <code>modo_prueba: true</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <small>
+                            <strong>Nota:</strong> Si algún webhook falla, verifica:
+                            <br>• Que n8n esté ejecutándose
+                            <br>• URLs correctas en archivo .env  
+                            <br>• Workflows activados en n8n
+                            <br>• Sin errores en logs de n8n
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('btnProbarWebhooks').addEventListener('click', function() {
+    // Mostrar loading
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('resultados').style.display = 'none';
+    this.disabled = true;
+    
+    // Resetear estados
+    const sectores = ['NAVAL', 'AGRO', 'AEREO', 'ENERGIA'];
+    sectores.forEach(sector => {
+        document.getElementById(`status-${sector}`).innerHTML = 
+            '<span class="text-warning"><i class="fas fa-spinner fa-spin"></i> Probando...</span>';
+    });
+    
+    fetch('/probar-n8n/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('btnProbarWebhooks').disabled = false;
+        
+        if (data.success) {
+            // Actualizar estados individuales
+            Object.keys(data.resultados).forEach(sector => {
+                const resultado = data.resultados[sector];
+                const statusElement = document.getElementById(`status-${sector}`);
+                
+                if (resultado.exito) {
+                    statusElement.innerHTML = '<span class="text-success"><i class="fas fa-check"></i> Conectado</span>';
+                } else {
+                    statusElement.innerHTML = '<span class="text-danger"><i class="fas fa-times"></i> Error</span>';
+                }
+            });
+            
+            // Mostrar resultados detallados
+            let html = '<div class="alert alert-success"><h6>Pruebas Completadas</h6></div>';
+            html += '<div class="accordion" id="accordionResultados">';
+            
+            Object.keys(data.resultados).forEach((sector, index) => {
+                const resultado = data.resultados[sector];
+                const badgeClass = resultado.exito ? 'bg-success' : 'bg-danger';
+                const icon = resultado.exito ? 'check' : 'times';
+                
+                html += `
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading${sector}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#collapse${sector}" aria-expanded="false">
+                                <span class="badge ${badgeClass} me-2">
+                                    <i class="fas fa-${icon}"></i> ${sector}
+                                </span>
+                                ${resultado.mensaje}
+                            </button>
+                        </h2>
+                        <div id="collapse${sector}" class="accordion-collapse collapse" 
+                             data-bs-parent="#accordionResultados">
+                            <div class="accordion-body">
+                                <p><strong>URL:</strong> <code>${resultado.url || 'No configurada'}</code></p>
+                                <p><strong>Estado:</strong> ${resultado.exito ? 'Exitoso' : 'Error'}</p>
+                                <p><strong>Mensaje:</strong> ${resultado.mensaje}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            document.getElementById('contenidoResultados').innerHTML = html;
+            document.getElementById('resultados').style.display = 'block';
+        } else {
+            document.getElementById('contenidoResultados').innerHTML = `
+                <div class="alert alert-danger">
+                    <h6>Error en Pruebas</h6>
+                    <p>${data.error}</p>
+                </div>
+            `;
+            document.getElementById('resultados').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('btnProbarWebhooks').disabled = false;
+        
+        document.getElementById('contenidoResultados').innerHTML = `
+            <div class="alert alert-danger">
+                <h6>Error de Conexión</h6>
+                <p>Error: ${error.message}</p>
+            </div>
+        `;
+        document.getElementById('resultados').style.display = 'block';
+        
+        // Resetear estados a error
+        const sectores = ['NAVAL', 'AGRO', 'AEREO', 'ENERGIA'];
+        sectores.forEach(sector => {
+            document.getElementById(`status-${sector}`).innerHTML = 
+                '<span class="text-danger"><i class="fas fa-times"></i> Error</span>';
+        });
+    });
+});
+</script>
+
+<!-- CSRF Token para JavaScript -->
+{% csrf_token %}
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

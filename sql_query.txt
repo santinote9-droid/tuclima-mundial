@@ -1,0 +1,535 @@
+NAVAL - 🏢 VERSIÓN PROFESIONAL:
+INSERT INTO `proyecto-bi-488218.datos_clima.naval`
+(
+  timestamp,
+  session_id, 
+  puerto,
+  condiciones_mar,
+  viento_velocidad,
+  viento_direccion, 
+  temperatura_agua,
+  altura_olas,
+  visibilidad,
+  ai_analysis,
+  metadata
+)
+VALUES
+(
+  -- ✅ Timestamp con validación y fallback
+  COALESCE(
+    SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', @timestamp), 
+    CURRENT_TIMESTAMP()
+  ),
+  
+  -- ✅ Session ID con fallback único
+  COALESCE(
+    NULLIF(@session_id, ''), 
+    CONCAT('naval-auto-', FORMAT_TIMESTAMP('%Y%m%d%H%M%S', CURRENT_TIMESTAMP()))
+  ),
+  
+  -- ✅ Puerto con validación de longitud
+  CASE 
+    WHEN @puerto IS NOT NULL AND LENGTH(TRIM(@puerto)) > 0 
+    THEN UPPER(TRIM(@puerto))
+    ELSE 'PUERTO_NO_ESPECIFICADO' 
+  END,
+  
+  -- ✅ Condiciones del mar con valores estándar
+  CASE 
+    WHEN UPPER(@condiciones_mar) IN ('CALMA', 'MODERADO', 'AGITADO', 'FUERTE', 'TEMPORAL')
+    THEN UPPER(@condiciones_mar)
+    ELSE 'MODERADO'
+  END,
+  
+  -- ✅ Validación de velocidad del viento (0-300 km/h)
+  CASE 
+    WHEN SAFE_CAST(@viento_velocidad AS FLOAT64) BETWEEN 0 AND 300 
+    THEN SAFE_CAST(@viento_velocidad AS FLOAT64)
+    ELSE NULL 
+  END,
+  
+  -- ✅ Dirección del viento normalizada
+  CASE 
+    WHEN UPPER(@viento_direccion) IN ('NORTE', 'SUR', 'ESTE', 'OESTE', 'NORESTE', 'NOROESTE', 'SURESTE', 'SUROESTE')
+    THEN UPPER(@viento_direccion)
+    ELSE 'VARIABLE'
+  END,
+  
+  -- ✅ Temperatura del agua validada (-5°C a 50°C)
+  CASE 
+    WHEN SAFE_CAST(@temperatura_agua AS FLOAT64) BETWEEN -5 AND 50 
+    THEN SAFE_CAST(@temperatura_agua AS FLOAT64)
+    ELSE NULL 
+  END,
+  
+  -- ✅ Altura de olas validada (0-30m)
+  CASE 
+    WHEN SAFE_CAST(@altura_olas AS FLOAT64) BETWEEN 0 AND 30 
+    THEN SAFE_CAST(@altura_olas AS FLOAT64)
+    ELSE NULL 
+  END,
+  
+  -- ✅ Visibilidad con valores estándar
+  CASE 
+    WHEN UPPER(@visibilidad) IN ('EXCELENTE', 'BUENA', 'REGULAR', 'REDUCIDA', 'MUY_REDUCIDA')
+    THEN UPPER(@visibilidad)
+    ELSE 'BUENA'
+  END,
+  
+  -- ✅ Análisis IA sanitizado y limitado
+  LEFT(REGEXP_REPLACE(COALESCE(@ai_analysis, ''), r'[^\w\sáéíóúñÁÉÍÓÚÑ\.,;:()\-]', ''), 5000),
+  
+  -- ✅ Metadata estructurada con validación
+  PARSE_JSON(
+    COALESCE(
+      @metadata, 
+      JSON_OBJECT(
+        'source', 'n8n_naval',
+        'validated', true,
+        'timestamp_inserted', CURRENT_TIMESTAMP(),
+        'version', '1.0'
+      )
+    )
+  )
+)
+NAVAL - OPCIÓN B (RECOMENDADO - NO SQL):
+===========================================
+En lugar de SQL, usar nodo "Google BigQuery Insert" directamente.
+
+Configuración del nodo:
+- Resource: Row
+- Operation: Insert  
+- Project ID: proyecto-bi-488218
+- Dataset: datos_clima
+- Table: naval
+- Auto Create Table: TRUE
+
+El Function Node ya devuelve el JSON correcto:
+{
+  "timestamp": "2024-02-25T15:45:00Z",
+  "session_id": "naval-12345",
+  "puerto": "Barcelona", 
+  "condiciones_mar": "Moderado",
+  "viento_velocidad": 15.5,
+  "viento_direccion": "norte",
+  "temperatura_agua": 18.2,
+  "altura_olas": 1.8,
+  "visibilidad": "Buena",
+  "ai_analysis": "Condiciones favorables para navegación...",
+  "metadata": {
+    "workflow": "Naval_BI",
+    "source": "n8n", 
+    "model": "gemini-2.5-flash"
+  }
+}
+
+¡BigQuery Insert mapea automáticamente los campos JSON a las columnas!
+
+
+NAVAL - CONFIGURACIÓN PARÁMETROS (Solo si usas Opción A):
+========================================================
+En el nodo BigQuery "Execute Query", configurar parámetros:
+
+@timestamp = {{ $('Function - Formatear Datos Naval').item.json.timestamp }}
+@session_id = {{ $('Function - Formatear Datos Naval').item.json.session_id }}
+@puerto = {{ $('Function - Formatear Datos Naval').item.json.puerto }}
+@condiciones_mar = {{ $('Function - Formatear Datos Naval').item.json.condiciones_mar }}
+@viento_velocidad = {{ $('Function - Formatear Datos Naval').item.json.viento_velocidad }}
+@viento_direccion = {{ $('Function - Formatear Datos Naval').item.json.viento_direccion }}
+@temperatura_agua = {{ $('Function - Formatear Datos Naval').item.json.temperatura_agua }}
+@altura_olas = {{ $('Function - Formatear Datos Naval').item.json.altura_olas }}
+@visibilidad = {{ $('Function - Formatear Datos Naval').item.json.visibilidad }}
+@ai_analysis = {{ $('Function - Formatear Datos Naval').item.json.ai_analysis }}
+@metadata = {{ JSON.stringify($('Function - Formatear Datos Naval').item.json.metadata) }}
+
+
+ENERGIA - 🏢 VERSIÓN PROFESIONAL:
+INSERT INTO `proyecto-bi-488218.datos_clima.energia`
+(
+  timestamp,
+  session_id,
+  tipo_energia,
+  ubicacion,
+  radiacion_solar,
+  velocidad_viento,
+  temperatura_ambiente,
+  eficiencia_estimada,
+  produccion_kwh,
+  ai_efficiency_analysis,
+  metadata
+)
+VALUES
+(
+  -- ✅ Timestamp con validación
+  COALESCE(
+    SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', @timestamp), 
+    CURRENT_TIMESTAMP()
+  ),
+  
+  -- ✅ Session ID con fallback
+  COALESCE(
+    NULLIF(@session_id, ''), 
+    CONCAT('energia-auto-', FORMAT_TIMESTAMP('%Y%m%d%H%M%S', CURRENT_TIMESTAMP()))
+  ),
+  
+  -- ✅ Tipo de energía con valores válidos
+  CASE 
+    WHEN UPPER(@tipo_energia) IN ('SOLAR', 'EOLICA', 'HIDROELECTRICA', 'GEOTERMICA', 'BIOMASA')
+    THEN UPPER(@tipo_energia)
+    ELSE 'SOLAR'
+  END,
+  
+  -- ✅ Ubicación normalizada
+  CASE 
+    WHEN @ubicacion IS NOT NULL AND LENGTH(TRIM(@ubicacion)) > 0 
+    THEN UPPER(TRIM(@ubicacion))
+    ELSE 'UBICACION_NO_ESPECIFICADA' 
+  END,
+  
+  -- ✅ Radiación solar validada (0-1500 W/m²)
+  CASE 
+    WHEN SAFE_CAST(@radiacion_solar AS FLOAT64) BETWEEN 0 AND 1500 
+    THEN SAFE_CAST(@radiacion_solar AS FLOAT64)
+    ELSE NULL 
+  END,
+  
+  -- ✅ Velocidad del viento validada (0-200 km/h)
+  CASE 
+    WHEN SAFE_CAST(@velocidad_viento AS FLOAT64) BETWEEN 0 AND 200 
+    THEN SAFE_CAST(@velocidad_viento AS FLOAT64)
+    ELSE NULL 
+  END,
+  
+  -- ✅ Temperatura ambiente validada (-50°C a 60°C)
+  CASE 
+    WHEN SAFE_CAST(@temperatura_ambiente AS FLOAT64) BETWEEN -50 AND 60 
+    THEN SAFE_CAST(@temperatura_ambiente AS FLOAT64)
+    ELSE NULL 
+  END,
+  
+  -- ✅ Eficiencia estimada validada (0-100%)
+  CASE 
+    WHEN SAFE_CAST(@eficiencia_estimada AS FLOAT64) BETWEEN 0 AND 100 
+    THEN SAFE_CAST(@eficiencia_estimada AS FLOAT64)
+    ELSE NULL 
+  END,
+  
+  -- ✅ Producción kWh validada (valores positivos)
+  CASE 
+    WHEN SAFE_CAST(@produccion_kwh AS FLOAT64) >= 0 
+    THEN SAFE_CAST(@produccion_kwh AS FLOAT64)
+    ELSE NULL 
+  END,
+  
+  -- ✅ Análisis IA sanitizado
+  LEFT(REGEXP_REPLACE(COALESCE(@ai_efficiency_analysis, ''), r'[^\w\sáéíóúñÁÉÍÓÚÑ\.,;:()\-%]', ''), 5000),
+  
+  -- ✅ Metadata con validación
+  PARSE_JSON(
+    COALESCE(
+      @metadata, 
+      JSON_OBJECT(
+        'source', 'n8n_energia',
+        'validated', true,
+        'timestamp_inserted', CURRENT_TIMESTAMP(),
+        'version', '1.0'
+      )
+    )
+  )
+);
+
+AGRO - 🏢 VERSIÓN PROFESIONAL:
+INSERT INTO `proyecto-bi-488218.datos_clima.agro`
+(
+  timestamp,
+  session_id,
+  cultivo,
+  region,
+  temperatura_suelo,
+  humedad_relativa,
+  precipitacion,
+  horas_sol,
+  fase_lunar,
+  ai_recommendations,
+  metadata
+)
+VALUES
+(
+  -- ✅ Timestamp con validación
+  COALESCE(
+    SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', @timestamp), 
+    CURRENT_TIMESTAMP()
+  ),
+  
+  -- ✅ Session ID con fallback
+  COALESCE(
+    NULLIF(@session_id, ''), 
+    CONCAT('agro-auto-', FORMAT_TIMESTAMP('%Y%m%d%H%M%S', CURRENT_TIMESTAMP()))
+  ),
+  
+  -- ✅ Cultivo con valores estándar normalizados
+  CASE 
+    WHEN UPPER(@cultivo) IN (
+      'MAIZ', 'TRIGO', 'SOJA', 'ARROZ', 'TOMATE', 'LECHUGA', 
+      'PAPA', 'CEBOLLA', 'ZANAHORIA', 'FRIJOL', 'AVENA', 'CEBADA',
+      'GIRASOL', 'ALGODON', 'CAÑA_DE_AZUCAR'
+    )
+    THEN UPPER(@cultivo)
+    ELSE 'CULTIVO_NO_ESPECIFICADO'
+  END,
+  
+  -- ✅ Región normalizada
+  CASE 
+    WHEN @region IS NOT NULL AND LENGTH(TRIM(@region)) > 0 
+    THEN UPPER(TRIM(@region))
+    ELSE 'REGION_NO_ESPECIFICADA' 
+  END,
+  
+  -- ✅ Temperatura del suelo validada (-10°C a 50°C)
+  CASE 
+    WHEN SAFE_CAST(@temperatura_suelo AS FLOAT64) BETWEEN -10 AND 50 
+    THEN SAFE_CAST(@temperatura_suelo AS FLOAT64)
+    ELSE NULL 
+  END,
+  
+  -- ✅ Humedad relativa validada (0-100%)
+  CASE 
+    WHEN SAFE_CAST(@humedad_relativa AS FLOAT64) BETWEEN 0 AND 100 
+    THEN SAFE_CAST(@humedad_relativa AS FLOAT64)
+    ELSE NULL 
+  END,
+  
+  -- ✅ Precipitación validada (0-500mm)
+  CASE 
+    WHEN SAFE_CAST(@precipitacion AS FLOAT64) BETWEEN 0 AND 500 
+    THEN SAFE_CAST(@precipitacion AS FLOAT64)
+    ELSE NULL 
+  END,
+  
+  -- ✅ Horas de sol validadas (0-24h)
+  CASE 
+    WHEN SAFE_CAST(@horas_sol AS FLOAT64) BETWEEN 0 AND 24 
+    THEN SAFE_CAST(@horas_sol AS FLOAT64)
+    ELSE NULL 
+  END,
+  
+  -- ✅ Fase lunar con valores estándar
+  CASE 
+    WHEN UPPER(@fase_lunar) IN ('NUEVA', 'CRECIENTE', 'LLENA', 'MENGUANTE')
+    THEN UPPER(@fase_lunar)
+    ELSE 'NO_ESPECIFICADA'
+  END,
+  
+  -- ✅ Recomendaciones IA sanitizadas
+  LEFT(REGEXP_REPLACE(COALESCE(@ai_recommendations, ''), r'[^\w\sáéíóúñÁÉÍÓÚÑ\.,;:()\-]', ''), 5000),
+  
+  -- ✅ Metadata con validación
+  PARSE_JSON(
+    COALESCE(
+      @metadata, 
+      JSON_OBJECT(
+        'source', 'n8n_agro',
+        'validated', true,
+        'timestamp_inserted', CURRENT_TIMESTAMP(),
+        'version', '1.0'
+      )
+    )
+  )
+);
+
+AEREO - 🏢 VERSIÓN PROFESIONAL:
+INSERT INTO `proyecto-bi-488218.datos_clima.aereo`
+(
+  timestamp,
+  session_id,
+  aeropuerto_origen,
+  aeropuerto_destino,
+  altitud_vuelo,
+  temperatura_altitud,
+  corrientes_viento,
+  visibilidad_km,
+  condiciones_atmosfericas,
+  ai_flight_analysis,
+  metadata
+)
+VALUES
+(
+  -- ✅ Timestamp con validación
+  COALESCE(
+    SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', @timestamp), 
+    CURRENT_TIMESTAMP()
+  ),
+  
+  -- ✅ Session ID con fallback
+  COALESCE(
+    NULLIF(@session_id, ''), 
+    CONCAT('aereo-auto-', FORMAT_TIMESTAMP('%Y%m%d%H%M%S', CURRENT_TIMESTAMP()))
+  ),
+  
+  -- ✅ Aeropuerto origen normalizado
+  CASE 
+    WHEN @aeropuerto_origen IS NOT NULL AND LENGTH(TRIM(@aeropuerto_origen)) > 0 
+    THEN UPPER(TRIM(@aeropuerto_origen))
+    ELSE 'ORIGEN_NO_ESPECIFICADO' 
+  END,
+  
+  -- ✅ Aeropuerto destino normalizado
+  CASE 
+    WHEN @aeropuerto_destino IS NOT NULL AND LENGTH(TRIM(@aeropuerto_destino)) > 0 
+    THEN UPPER(TRIM(@aeropuerto_destino))
+    ELSE 'DESTINO_NO_ESPECIFICADO' 
+  END,
+  
+  -- ✅ Altitud de vuelo validada (0-15000m)
+  CASE 
+    WHEN SAFE_CAST(@altitud_vuelo AS FLOAT64) BETWEEN 0 AND 15000 
+    THEN SAFE_CAST(@altitud_vuelo AS FLOAT64)
+    ELSE NULL 
+  END,
+  
+  -- ✅ Temperatura a altitud validada (-80°C a 50°C)
+  CASE 
+    WHEN SAFE_CAST(@temperatura_altitud AS FLOAT64) BETWEEN -80 AND 50 
+    THEN SAFE_CAST(@temperatura_altitud AS FLOAT64)
+    ELSE NULL 
+  END,
+  
+  -- ✅ Corrientes de viento con validación JSON
+  CASE 
+    WHEN @corrientes_viento IS NOT NULL AND JSON_VALID(@corrientes_viento)
+    THEN PARSE_JSON(@corrientes_viento)
+    ELSE JSON_OBJECT(
+      'descripcion', 'Datos no disponibles',
+      'velocidad', NULL,
+      'direccion', 'VARIABLE'
+    )
+  END,
+  
+  -- ✅ Visibilidad validada (0-50km)
+  CASE 
+    WHEN SAFE_CAST(@visibilidad_km AS FLOAT64) BETWEEN 0 AND 50 
+    THEN SAFE_CAST(@visibilidad_km AS FLOAT64)
+    ELSE NULL 
+  END,
+  
+  -- ✅ Condiciones atmosféricas estándar
+  CASE 
+    WHEN UPPER(@condiciones_atmosfericas) IN (
+      'DESPEJADO', 'NUBLADO', 'PARCIALMENTE_NUBLADO', 
+      'LLUVIA', 'TORMENTA', 'NIEVE', 'NIEBLA', 'TURBULENCIA'
+    )
+    THEN UPPER(@condiciones_atmosfericas)
+    ELSE 'DESPEJADO'
+  END,
+  
+  -- ✅ Análisis de vuelo IA sanitizado
+  LEFT(REGEXP_REPLACE(COALESCE(@ai_flight_analysis, ''), r'[^\w\sáéíóúñÁÉÍÓÚÑ\.,;:()\-]', ''), 5000),
+  
+  -- ✅ Metadata con validación
+  PARSE_JSON(
+    COALESCE(
+      @metadata, 
+      JSON_OBJECT(
+        'source', 'n8n_aereo',
+        'validated', true,
+        'timestamp_inserted', CURRENT_TIMESTAMP(),
+        'version', '1.0'
+      )
+    )
+  )
+);
+
+===========================================
+🏢 VERSIÓN PROFESIONAL - IMPLEMENTACIÓN:
+===========================================
+
+✅ CARACTERÍSTICAS PROFESIONALES IMPLEMENTADAS:
+- ✅ Validaciones de rango para todos los valores numéricos  
+- ✅ Normalización automática de strings (UPPER, TRIM)
+- ✅ Fallbacks inteligentes para campos críticos
+- ✅ Sanitización de texto para prevenir inyecciones
+- ✅ Validación JSON para metadata estructurada  
+- ✅ Session IDs únicos automáticos con timestamp
+- ✅ Limitación de longitud para textos largos (5000 chars)
+- ✅ Valores estándar para campos categóricos
+- ✅ Manejo seguro de NULLs con SAFE_CAST
+- ✅ Timestamps con validación y formato estándar
+
+🔧 CONFIGURACIÓN DE PARÁMETROS PARA CADA WORKFLOW:
+========================================================
+
+📍 NAVAL_BI - Parámetros requeridos:
+@timestamp = {{ $('Function - Formatear Datos Naval').item.json.timestamp }}
+@session_id = {{ $('Function - Formatear Datos Naval').item.json.session_id }}
+@puerto = {{ $('Function - Formatear Datos Naval').item.json.puerto }}
+@condiciones_mar = {{ $('Function - Formatear Datos Naval').item.json.condiciones_mar }}
+@viento_velocidad = {{ $('Function - Formatear Datos Naval').item.json.viento_velocidad }}
+@viento_direccion = {{ $('Function - Formatear Datos Naval').item.json.viento_direccion }}
+@temperatura_agua = {{ $('Function - Formatear Datos Naval').item.json.temperatura_agua }}
+@altura_olas = {{ $('Function - Formatear Datos Naval').item.json.altura_olas }}
+@visibilidad = {{ $('Function - Formatear Datos Naval').item.json.visibilidad }}
+@ai_analysis = {{ $('Function - Formatear Datos Naval').item.json.ai_analysis }}
+@metadata = {{ JSON.stringify($('Function - Formatear Datos Naval').item.json.metadata) }}
+
+⚡ ENERGIA_BI - Parámetros requeridos:
+@timestamp = {{ $('Function - Formatear Datos Energia').item.json.timestamp }}
+@session_id = {{ $('Function - Formatear Datos Energia').item.json.session_id }}
+@tipo_energia = {{ $('Function - Formatear Datos Energia').item.json.tipo_energia }}
+@ubicacion = {{ $('Function - Formatear Datos Energia').item.json.ubicacion }}
+@radiacion_solar = {{ $('Function - Formatear Datos Energia').item.json.radiacion_solar }}
+@velocidad_viento = {{ $('Function - Formatear Datos Energia').item.json.velocidad_viento }}
+@temperatura_ambiente = {{ $('Function - Formatear Datos Energia').item.json.temperatura_ambiente }}
+@eficiencia_estimada = {{ $('Function - Formatear Datos Energia').item.json.eficiencia_estimada }}
+@produccion_kwh = {{ $('Function - Formatear Datos Energia').item.json.produccion_kwh }}
+@ai_efficiency_analysis = {{ $('Function - Formatear Datos Energia').item.json.ai_efficiency_analysis }}
+@metadata = {{ JSON.stringify($('Function - Formatear Datos Energia').item.json.metadata) }}
+
+🌾 AGRO_BI - Parámetros requeridos:
+@timestamp = {{ $('Function - Formatear Datos Agro').item.json.timestamp }}
+@session_id = {{ $('Function - Formatear Datos Agro').item.json.session_id }}
+@cultivo = {{ $('Function - Formatear Datos Agro').item.json.cultivo }}
+@region = {{ $('Function - Formatear Datos Agro').item.json.region }}
+@temperatura_suelo = {{ $('Function - Formatear Datos Agro').item.json.temperatura_suelo }}
+@humedad_relativa = {{ $('Function - Formatear Datos Agro').item.json.humedad_relativa }}
+@precipitacion = {{ $('Function - Formatear Datos Agro').item.json.precipitacion }}
+@horas_sol = {{ $('Function - Formatear Datos Agro').item.json.horas_sol }}
+@fase_lunar = {{ $('Function - Formatear Datos Agro').item.json.fase_lunar }}
+@ai_recommendations = {{ $('Function - Formatear Datos Agro').item.json.ai_recommendations }}
+@metadata = {{ JSON.stringify($('Function - Formatear Datos Agro').item.json.metadata) }}
+
+✈️ AEREO_BI - Parámetros requeridos:
+@timestamp = {{ $('Function - Formatear Datos Aereo').item.json.timestamp }}
+@session_id = {{ $('Function - Formatear Datos Aereo').item.json.session_id }}
+@aeropuerto_origen = {{ $('Function - Formatear Datos Aereo').item.json.aeropuerto_origen }}
+@aeropuerto_destino = {{ $('Function - Formatear Datos Aereo').item.json.aeropuerto_destino }}
+@altitud_vuelo = {{ $('Function - Formatear Datos Aereo').item.json.altitud_vuelo }}
+@temperatura_altitud = {{ $('Function - Formatear Datos Aereo').item.json.temperatura_altitud }}
+@corrientes_viento = {{ JSON.stringify($('Function - Formatear Datos Aereo').item.json.corrientes_viento) }}
+@visibilidad_km = {{ $('Function - Formatear Datos Aereo').item.json.visibilidad_km }}
+@condiciones_atmosfericas = {{ $('Function - Formatear Datos Aereo').item.json.condiciones_atmosfericas }}
+@ai_flight_analysis = {{ $('Function - Formatear Datos Aereo').item.json.ai_flight_analysis }}
+@metadata = {{ JSON.stringify($('Function - Formatear Datos Aereo').item.json.metadata) }}
+
+===========================================  
+🔧 INSTRUCCIONES PARA IMPLEMENTAR:
+===========================================
+
+1. En cada workflow n8n, usar nodo "Google BigQuery"
+2. Configuración del nodo:
+   - Resource: Database
+   - Operation: Execute Query  
+   - Project ID: proyecto-bi-488218
+   - Query: Copiar el SQL correspondiente de arriba
+
+3. En la pestaña "Parameters" del nodo BigQuery:
+   - Copiar TODOS los parámetros del sector correspondiente
+   - ⚠️ IMPORTANTE: Respetar el nombre exacto del Function Node
+
+4. Valores que se validan automáticamente:
+   🌊 NAVAL: Velocidad viento (0-300), Altura olas (0-30m), Temp agua (-5-50°C)
+   ⚡ ENERGIA: Radiación (0-1500), Eficiencia (0-100%), Producción (≥0)
+   🌾 AGRO: Humedad (0-100%), Precipitación (0-500mm), Horas sol (0-24h)  
+   ✈️ AEREO: Altitud (0-15000m), Visibilidad (0-50km), Temp (-80-50°C)
+
+-- 🚀 SISTEMA ROBUSTO Y PROFESIONAL LISTO PARA PRODUCCIÓN! --
+)

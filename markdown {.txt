@@ -1,0 +1,104 @@
+function processMarkdown(text) {
+    if (!text) return text;
+    
+    // Procesar elementos markdown en orden (importante el orden)
+    
+    // 1. Código inline (backticks)
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // 2. Negritas (**texto** o __texto__)
+    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+    
+    // 3. Cursivas (*texto* o _texto_)
+    text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    text = text.replace(/_([^_]+)_/g, '<em>$1</em>');
+    
+    // 4. Títulos
+    text = text.replace(/^### (.+$)/gim, '<h3>$1</h3>');
+    text = text.replace(/^## (.+$)/gim, '<h2>$1</h2>');
+    text = text.replace(/^# (.+$)/gim, '<h1>$1</h1>');
+    
+    // 5. Links [texto](url) - pero preservamos los links ya procesados
+    text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)(?![^<]*<\/a>)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    
+    // 6. Listas con viñetas (bullet points)
+    text = text.replace(/^[•*] (.+$)/gim, '<li>$1</li>');
+    
+    // Envolver listas consecutivas en <ul>
+    text = text.replace(/(<li>.*<\/li>\s*)+/gs, (match) => {
+        return '<ul>' + match + '</ul>';
+    });
+    
+    // 7. Saltos de línea simples a <br>
+    text = text.replace(/\n/g, '<br>');
+    
+    return text;
+}
+
+function addBotMessage(mensaje) {
+    const chatBox = document.getElementById("chat-box");
+    const mensajeProcesado = processMarkdown(mensaje);
+    
+    // Crear el div del mensaje
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message bot-msg';
+    
+    // Añadir el icono y el mensaje procesado
+    messageDiv.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
+             style="display:inline; margin-right:8px; vertical-align:top; margin-top:2px; color: #6366f1; flex-shrink: 0;">
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <path d="M12 17h.01"/>
+            <circle cx="12" cy="12" r="10"/>
+        </svg>
+        <div style="flex: 1;">${mensajeProcesado}</div>
+    `;
+    
+    // Ajustar el estilo del mensaje para flex
+    messageDiv.style.display = 'flex';
+    messageDiv.style.alignItems = 'flex-start';
+    messageDiv.style.gap = '8px';
+    
+    chatBox.appendChild(messageDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    
+    return messageDiv;
+}
+
+function addUserMessage(texto, archivo) {
+    const chatBox = document.getElementById("chat-box");
+    
+    // Iconos para archivos
+    let icon = '';
+    if (archivo) {
+        if (archivo.type.startsWith('image/')) {
+            icon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+        } else if (archivo.type === 'application/pdf') {
+            icon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+        } else if (archivo.type.includes('excel') || archivo.name.match(/\.(xlsx|xls|csv)$/i)) {
+            icon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>';
+        } else {
+            icon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>';
+        }
+    }
+    
+    // Crear el mensaje del usuario
+    const userDiv = document.createElement('div');
+    userDiv.className = 'message user-msg';
+    userDiv.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
+             style="display:inline; margin-right:8px; vertical-align:top; margin-top:2px; opacity: 0.8; flex-shrink: 0;">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <div style="flex: 1;">${texto} ${archivo ? `<br><span style="font-size: 0.9em; opacity: 0.8;">${icon} <em>Archivo: ${archivo.name}</em></span>` : ''}</div>
+    `;
+    
+    userDiv.style.display = 'flex';
+    userDiv.style.alignItems = 'flex-start';
+    userDiv.style.gap = '8px';
+    
+    chatBox.appendChild(userDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}

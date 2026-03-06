@@ -1,0 +1,376 @@
+🏗️ SQL UNIFICADO PARA TABLA datos_sectoriales - VERSIÓN PROFESIONAL
+================================================================================
+
+🚢 NAVAL - INSERT UNIFICADO:
+================================================================================
+INSERT INTO `proyecto-bi-488218.datos_clima.datos_sectoriales`
+(
+  timestamp,
+  session_id,
+  sector,
+  puerto,
+  condiciones_mar,
+  viento_velocidad,
+  viento_direccion, 
+  temperatura_agua,
+  altura_olas,
+  visibilidad,
+  ai_analysis,
+  metadata
+)
+VALUES
+(
+  -- ✅ Timestamp con validación y fallback
+  COALESCE(
+    SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', @timestamp), 
+    CURRENT_TIMESTAMP()
+  ),
+  
+  -- ✅ Session ID con fallback único
+  COALESCE(
+    NULLIF(@session_id, ''), 
+    CONCAT('naval-auto-', FORMAT_TIMESTAMP('%Y%m%d%H%M%S', CURRENT_TIMESTAMP()))
+  ),
+  
+  -- ✅ Sector fijo
+  'NAVAL',
+  
+  -- ✅ Puerto con validación de longitud
+  CASE 
+    WHEN LENGTH(@puerto) > 100 THEN SUBSTR(@puerto, 1, 100)
+    WHEN @puerto IS NULL OR @puerto = '' THEN 'Puerto no especificado'
+    ELSE @puerto
+  END,
+  
+  -- ✅ Condiciones del mar normalizadas
+  CASE 
+    WHEN UPPER(@condiciones_mar) IN ('CALMO', 'TRANQUILO', 'CALM') THEN 'Calmo'
+    WHEN UPPER(@condiciones_mar) IN ('MODERADO', 'MODERATE') THEN 'Moderado'
+    WHEN UPPER(@condiciones_mar) IN ('AGITADO', 'ROUGH') THEN 'Agitado'
+    WHEN UPPER(@condiciones_mar) IN ('PELIGROSO', 'DANGEROUS') THEN 'Peligroso'
+    WHEN @condiciones_mar IS NULL THEN 'Sin datos'
+    ELSE REGEXP_REPLACE(@condiciones_mar, r'[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]', '')
+  END,
+  
+  -- ✅ Velocidad viento con validación de rango
+  CASE 
+    WHEN SAFE_CAST(@viento_velocidad AS FLOAT64) BETWEEN 0 AND 200 THEN SAFE_CAST(@viento_velocidad AS FLOAT64)
+    WHEN @viento_velocidad IS NULL THEN NULL
+    ELSE 0.0
+  END,
+  
+  -- ✅ Dirección viento normalizada
+  CASE 
+    WHEN UPPER(@viento_direccion) IN ('N', 'NORTE', 'NORTH') THEN 'Norte'
+    WHEN UPPER(@viento_direccion) IN ('S', 'SUR', 'SOUTH') THEN 'Sur'
+    WHEN UPPER(@viento_direccion) IN ('E', 'ESTE', 'EAST') THEN 'Este'
+    WHEN UPPER(@viento_direccion) IN ('O', 'W', 'OESTE', 'WEST') THEN 'Oeste'
+    WHEN UPPER(@viento_direccion) IN ('NE', 'NORESTE', 'NORTHEAST') THEN 'Noreste'
+    WHEN UPPER(@viento_direccion) IN ('NO', 'NW', 'NOROESTE', 'NORTHWEST') THEN 'Noroeste'
+    WHEN UPPER(@viento_direccion) IN ('SE', 'SURESTE', 'SOUTHEAST') THEN 'Sureste'
+    WHEN UPPER(@viento_direccion) IN ('SO', 'SW', 'SUROESTE', 'SOUTHWEST') THEN 'Suroeste'
+    ELSE 'Variable'
+  END,
+  
+  -- ✅ Temperatura agua con validación (-5°C a 50°C)
+  CASE 
+    WHEN SAFE_CAST(@temperatura_agua AS FLOAT64) BETWEEN -5 AND 50 THEN SAFE_CAST(@temperatura_agua AS FLOAT64)
+    WHEN @temperatura_agua IS NULL THEN NULL
+    ELSE 20.0
+  END,
+  
+  -- ✅ Altura olas con validación (0 a 30 metros)
+  CASE 
+    WHEN SAFE_CAST(@altura_olas AS FLOAT64) BETWEEN 0 AND 30 THEN SAFE_CAST(@altura_olas AS FLOAT64)
+    WHEN @altura_olas IS NULL THEN NULL
+    ELSE 0.0
+  END,
+  
+  -- ✅ Visibilidad con validación (0 a 50 km)
+  CASE 
+    WHEN SAFE_CAST(@visibilidad AS FLOAT64) BETWEEN 0 AND 50 THEN SAFE_CAST(@visibilidad AS FLOAT64)
+    WHEN @visibilidad IS NULL THEN NULL
+    ELSE 10.0
+  END,
+  
+  -- ✅ AI Analysis con sanitización
+  CASE 
+    WHEN LENGTH(@ai_analysis) > 5000 THEN SUBSTR(@ai_analysis, 1, 5000)
+    WHEN @ai_analysis IS NULL OR @ai_analysis = '' THEN 'Análisis no disponible'
+    ELSE REGEXP_REPLACE(@ai_analysis, r'[^\w\sáéíóúÁÉÍÓÚñÑ.,;:()\-]', '')
+  END,
+  
+  -- ✅ Metadata como JSON string
+  COALESCE(@metadata, '{}')
+);
+
+⚡ ENERGIA - INSERT UNIFICADO:
+================================================================================
+INSERT INTO `proyecto-bi-488218.datos_clima.datos_sectoriales`
+(
+  timestamp,
+  session_id,
+  sector,
+  tipo_energia,
+  ubicacion,
+  radiacion_solar,
+  velocidad_viento,
+  temperatura_ambiente,
+  eficiencia_estimada,
+  produccion_kwh,
+  ai_efficiency_analysis,
+  metadata
+)
+VALUES
+(
+  COALESCE(
+    SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', @timestamp), 
+    CURRENT_TIMESTAMP()
+  ),
+  
+  COALESCE(
+    NULLIF(@session_id, ''), 
+    CONCAT('energia-auto-', FORMAT_TIMESTAMP('%Y%m%d%H%M%S', CURRENT_TIMESTAMP()))
+  ),
+  
+  'ENERGIA',
+  
+  CASE 
+    WHEN UPPER(@tipo_energia) IN ('SOLAR', 'FOTOVOLTAICA') THEN 'Solar'
+    WHEN UPPER(@tipo_energia) IN ('EOLICA', 'EÓLICA', 'WIND') THEN 'Eólica'
+    WHEN UPPER(@tipo_energia) IN ('HIDRO', 'HIDROELECTRICA') THEN 'Hidroeléctrica'
+    ELSE 'Solar'
+  END,
+  
+  CASE 
+    WHEN LENGTH(@ubicacion) > 100 THEN SUBSTR(@ubicacion, 1, 100)
+    WHEN @ubicacion IS NULL OR @ubicacion = '' THEN 'Ubicación no especificada'
+    ELSE @ubicacion
+  END,
+  
+  CASE 
+    WHEN SAFE_CAST(@radiacion_solar AS FLOAT64) BETWEEN 0 AND 2000 THEN SAFE_CAST(@radiacion_solar AS FLOAT64)
+    WHEN @radiacion_solar IS NULL THEN NULL
+    ELSE 0.0
+  END,
+  
+  CASE 
+    WHEN SAFE_CAST(@velocidad_viento AS FLOAT64) BETWEEN 0 AND 200 THEN SAFE_CAST(@velocidad_viento AS FLOAT64)
+    WHEN @velocidad_viento IS NULL THEN NULL
+    ELSE 0.0
+  END,
+  
+  CASE 
+    WHEN SAFE_CAST(@temperatura_ambiente AS FLOAT64) BETWEEN -50 AND 60 THEN SAFE_CAST(@temperatura_ambiente AS FLOAT64)
+    WHEN @temperatura_ambiente IS NULL THEN NULL
+    ELSE 20.0
+  END,
+  
+  CASE 
+    WHEN SAFE_CAST(@eficiencia_estimada AS FLOAT64) BETWEEN 0 AND 100 THEN SAFE_CAST(@eficiencia_estimada AS FLOAT64)
+    WHEN @eficiencia_estimada IS NULL THEN NULL
+    ELSE 0.0
+  END,
+  
+  CASE 
+    WHEN SAFE_CAST(@produccion_kwh AS FLOAT64) BETWEEN 0 AND 100000 THEN SAFE_CAST(@produccion_kwh AS FLOAT64)
+    WHEN @produccion_kwh IS NULL THEN NULL
+    ELSE 0.0
+  END,
+  
+  CASE 
+    WHEN LENGTH(@ai_efficiency_analysis) > 5000 THEN SUBSTR(@ai_efficiency_analysis, 1, 5000)
+    WHEN @ai_efficiency_analysis IS NULL OR @ai_efficiency_analysis = '' THEN 'Análisis no disponible'
+    ELSE REGEXP_REPLACE(@ai_efficiency_analysis, r'[^\w\sáéíóúÁÉÍÓÚñÑ.,;:()\-]', '')
+  END,
+  
+  COALESCE(@metadata, '{}')
+);
+
+🌾 AGRO - INSERT UNIFICADO:
+================================================================================
+INSERT INTO `proyecto-bi-488218.datos_clima.datos_sectoriales`
+(
+  timestamp,
+  session_id,
+  sector,
+  cultivo,
+  region,
+  temperatura_suelo,
+  humedad_relativa,
+  precipitacion,
+  horas_sol,
+  fase_lunar,
+  ai_recommendations,
+  metadata
+)
+VALUES
+(
+  COALESCE(
+    SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', @timestamp), 
+    CURRENT_TIMESTAMP()
+  ),
+  
+  COALESCE(
+    NULLIF(@session_id, ''), 
+    CONCAT('agro-auto-', FORMAT_TIMESTAMP('%Y%m%d%H%M%S', CURRENT_TIMESTAMP()))
+  ),
+  
+  'AGRO',
+  
+  CASE 
+    WHEN UPPER(@cultivo) IN ('TRIGO', 'WHEAT') THEN 'Trigo'
+    WHEN UPPER(@cultivo) IN ('MAIZ', 'MAÍZ', 'CORN') THEN 'Maíz'
+    WHEN UPPER(@cultivo) IN ('SOJA', 'SOYBEAN') THEN 'Soja'
+    WHEN UPPER(@cultivo) IN ('ARROZ', 'RICE') THEN 'Arroz'
+    WHEN @cultivo IS NULL OR @cultivo = '' THEN 'Cultivo general'
+    ELSE @cultivo
+  END,
+  
+  CASE 
+    WHEN LENGTH(@region) > 100 THEN SUBSTR(@region, 1, 100)
+    WHEN @region IS NULL OR @region = '' THEN 'Región no especificada'
+    ELSE @region
+  END,
+  
+  CASE 
+    WHEN SAFE_CAST(@temperatura_suelo AS FLOAT64) BETWEEN -20 AND 60 THEN SAFE_CAST(@temperatura_suelo AS FLOAT64)
+    WHEN @temperatura_suelo IS NULL THEN NULL
+    ELSE 15.0
+  END,
+  
+  CASE 
+    WHEN SAFE_CAST(@humedad_relativa AS FLOAT64) BETWEEN 0 AND 100 THEN SAFE_CAST(@humedad_relativa AS FLOAT64)
+    WHEN @humedad_relativa IS NULL THEN NULL
+    ELSE 50.0
+  END,
+  
+  CASE 
+    WHEN SAFE_CAST(@precipitacion AS FLOAT64) BETWEEN 0 AND 500 THEN SAFE_CAST(@precipitacion AS FLOAT64)
+    WHEN @precipitacion IS NULL THEN NULL
+    ELSE 0.0
+  END,
+  
+  CASE 
+    WHEN SAFE_CAST(@horas_sol AS FLOAT64) BETWEEN 0 AND 24 THEN SAFE_CAST(@horas_sol AS FLOAT64)
+    WHEN @horas_sol IS NULL THEN NULL
+    ELSE 8.0
+  END,
+  
+  CASE 
+    WHEN UPPER(@fase_lunar) IN ('NUEVA', 'NEW') THEN 'Nueva'
+    WHEN UPPER(@fase_lunar) IN ('CRECIENTE', 'WAXING') THEN 'Creciente'
+    WHEN UPPER(@fase_lunar) IN ('LLENA', 'FULL') THEN 'Llena'
+    WHEN UPPER(@fase_lunar) IN ('MENGUANTE', 'WANING') THEN 'Menguante'
+    ELSE 'Desconocida'
+  END,
+  
+  CASE 
+    WHEN LENGTH(@ai_recommendations) > 5000 THEN SUBSTR(@ai_recommendations, 1, 5000)
+    WHEN @ai_recommendations IS NULL OR @ai_recommendations = '' THEN 'Recomendaciones no disponibles'
+    ELSE REGEXP_REPLACE(@ai_recommendations, r'[^\w\sáéíóúÁÉÍÓÚñÑ.,;:()\-]', '')
+  END,
+  
+  COALESCE(@metadata, '{}')
+);
+
+✈️ AEREO - INSERT UNIFICADO:
+================================================================================
+INSERT INTO `proyecto-bi-488218.datos_clima.datos_sectoriales`
+(
+  timestamp,
+  session_id,
+  sector,
+  aeropuerto_origen,
+  aeropuerto_destino,
+  altitud_vuelo,
+  temperatura_altitud,
+  corrientes_viento,
+  visibilidad_km,
+  condiciones_atmosfericas,
+  ai_flight_analysis,
+  metadata
+)
+VALUES
+(
+  COALESCE(
+    SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', @timestamp), 
+    CURRENT_TIMESTAMP()
+  ),
+  
+  COALESCE(
+    NULLIF(@session_id, ''), 
+    CONCAT('aereo-auto-', FORMAT_TIMESTAMP('%Y%m%d%H%M%S', CURRENT_TIMESTAMP()))
+  ),
+  
+  'AEREO',
+  
+  CASE 
+    WHEN LENGTH(@aeropuerto_origen) > 50 THEN SUBSTR(@aeropuerto_origen, 1, 50)
+    WHEN @aeropuerto_origen IS NULL OR @aeropuerto_origen = '' THEN 'Origen no especificado'
+    ELSE @aeropuerto_origen
+  END,
+  
+  CASE 
+    WHEN LENGTH(@aeropuerto_destino) > 50 THEN SUBSTR(@aeropuerto_destino, 1, 50)
+    WHEN @aeropuerto_destino IS NULL OR @aeropuerto_destino = '' THEN 'Destino no especificado'
+    ELSE @aeropuerto_destino
+  END,
+  
+  CASE 
+    WHEN SAFE_CAST(@altitud_vuelo AS FLOAT64) BETWEEN 0 AND 15000 THEN SAFE_CAST(@altitud_vuelo AS FLOAT64)
+    WHEN @altitud_vuelo IS NULL THEN NULL
+    ELSE 10000.0
+  END,
+  
+  CASE 
+    WHEN SAFE_CAST(@temperatura_altitud AS FLOAT64) BETWEEN -80 AND 50 THEN SAFE_CAST(@temperatura_altitud AS FLOAT64)
+    WHEN @temperatura_altitud IS NULL THEN NULL
+    ELSE -20.0
+  END,
+  
+  COALESCE(@corrientes_viento, '{}'),
+  
+  CASE 
+    WHEN SAFE_CAST(@visibilidad_km AS FLOAT64) BETWEEN 0 AND 100 THEN SAFE_CAST(@visibilidad_km AS FLOAT64)
+    WHEN @visibilidad_km IS NULL THEN NULL
+    ELSE 10.0
+  END,
+  
+  CASE 
+    WHEN UPPER(@condiciones_atmosfericas) IN ('CLARO', 'CLEAR') THEN 'Claro'
+    WHEN UPPER(@condiciones_atmosfericas) IN ('NUBLADO', 'CLOUDY') THEN 'Nublado'
+    WHEN UPPER(@condiciones_atmosfericas) IN ('TORMENTA', 'STORM') THEN 'Tormenta'
+    WHEN UPPER(@condiciones_atmosfericas) IN ('NIEBLA', 'FOG') THEN 'Niebla'
+    ELSE 'Variable'
+  END,
+  
+  CASE 
+    WHEN LENGTH(@ai_flight_analysis) > 5000 THEN SUBSTR(@ai_flight_analysis, 1, 5000)
+    WHEN @ai_flight_analysis IS NULL OR @ai_flight_analysis = '' THEN 'Análisis no disponible'
+    ELSE REGEXP_REPLACE(@ai_flight_analysis, r'[^\w\sáéíóúÁÉÍÓÚñÑ.,;:()\-]', '')
+  END,
+  
+  COALESCE(@metadata, '{}')
+);
+
+================================================================================
+INSTRUCCIONES DE USO:
+================================================================================
+
+1. 🔄 REEMPLAZAR SQL EN N8N:
+   - Abrir cada workflow en n8n
+   - Ir al nodo "Execute a SQL query in Google BigQuery"
+   - Copiar el SQL correspondiente al sector
+   - Pegar en el campo "Query"
+
+2. ✅ VERIFICAR PARÁMETROS:
+   - Usar los parámetros de parametros_n8n_corregidos.txt
+   - Formato: $('Function').item.json.campo
+
+3. 🎯 TABLA UNIFICADA:
+   - Todos los sectores usan: datos_sectoriales
+   - Campo 'sector' identifica el tipo: NAVAL, ENERGIA, AGRO, AEREO
+   - Campos específicos se rellenan según el sector
+
+🚀 ¡DESPUÉS DE ACTUALIZAR EL SQL, LOS WORKFLOWS INSERTARÁN EN BIGQUERY!

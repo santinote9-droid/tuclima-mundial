@@ -41,3 +41,7 @@ collected-static/
 # Variables de entorno específicas
 supabase_keys.txt
 
+# Credenciales y archivos sensibles
+credenciales/bigquery-credentials.json
+url_ngrok.txt
+n8n_password.txt

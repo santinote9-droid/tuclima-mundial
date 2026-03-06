@@ -1,0 +1,81 @@
+🔧 SQL DE DEBUGGING SIMPLIFICADO - PARA IDENTIFICAR ERRORES
+================================================================================
+
+⚠️ USA ESTOS SQLs TEMPORALMENTE PARA DEBUG:
+Si los SQLs complejos fallan, usa estos simples para identificar el problema.
+
+🚢 NAVAL - DEBUG SQL:
+================================================================================
+INSERT INTO `proyecto-bi-488218.datos_clima.datos_sectoriales`
+(timestamp, session_id, sector, ai_analysis, metadata)
+VALUES
+(
+  CURRENT_TIMESTAMP(),
+  COALESCE(@session_id, 'naval-debug'),
+  'NAVAL',
+  COALESCE(@ai_analysis, 'Debug test'),
+  COALESCE(@metadata, '{}')
+);
+
+⚡ ENERGIA - DEBUG SQL:
+================================================================================
+INSERT INTO `proyecto-bi-488218.datos_clima.datos_sectoriales`
+(timestamp, session_id, sector, ai_efficiency_analysis, metadata)
+VALUES
+(
+  CURRENT_TIMESTAMP(),
+  COALESCE(@session_id, 'energia-debug'),
+  'ENERGIA',
+  COALESCE(@ai_efficiency_analysis, 'Debug test'),
+  COALESCE(@metadata, '{}')
+);
+
+🌾 AGRO - DEBUG SQL:
+================================================================================
+INSERT INTO `proyecto-bi-488218.datos_clima.datos_sectoriales`
+(timestamp, session_id, sector, ai_recommendations, metadata)
+VALUES
+(
+  CURRENT_TIMESTAMP(),
+  COALESCE(@session_id, 'agro-debug'),
+  'AGRO',
+  COALESCE(@ai_recommendations, 'Debug test'),
+  COALESCE(@metadata, '{}')
+);
+
+✈️ AEREO - DEBUG SQL:
+================================================================================
+INSERT INTO `proyecto-bi-488218.datos_clima.datos_sectoriales`
+(timestamp, session_id, sector, ai_flight_analysis, metadata)
+VALUES
+(
+  CURRENT_TIMESTAMP(),
+  COALESCE(@session_id, 'aereo-debug'),
+  'AEREO',
+  COALESCE(@ai_flight_analysis, 'Debug test'),
+  COALESCE(@metadata, '{}')
+);
+
+================================================================================
+INSTRUCCIONES DEBUG:
+================================================================================
+
+1. 🔄 REEMPLAZA temporalmente el SQL en UN workflow (ej: Naval_BI)
+2. 🧪 Haz una prueba
+3. 🔍 Si funciona = el problema es sintaxis en SQL complejo
+4. ✅ Si no funciona = el problema son los parámetros
+
+ERRORES COMUNES QUE ESTE DEBUG DETECTARÁ:
+- ❌ Parámetros mal referenciados: $json.xxx vs $('Function').item.json.xxx
+- ❌ Nodo Function mal configurado
+- ❌ Credenciales BigQuery incorrectas
+- ❌ Sintaxis SQL incorrecta
+
+🔧 SI EL DEBUG SQL FUNCIONA:
+Gradualmente agrega campos al SQL hasta encontrar el que causa error.
+
+🔧 SI EL DEBUG SQL FALLA:
+El problema está en:
+- Parámetros de n8n
+- Credenciales de BigQuery  
+- Configuración del nodo BigQuery

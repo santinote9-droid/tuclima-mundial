@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-02-28T17:30:35.618762+00:00",
+  "total_usuarios": 1,
+  "usuarios": [
+    {
+      "id": 1,
+      "username": "Sangioff",
+      "email": "santinote9@gmail.com",
+      "first_name": "",
+      "last_name": "",
+      "is_active": true,
+      "is_staff": true,
+      "is_superuser": true,
+      "date_joined": "2026-02-28T17:07:28.822105+00:00",
+      "last_login": null,
+      "perfil": null
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "datos": [
+    1.5,
+    2.3,
+    4.1
+  ],
+  "ubicacion": "Zona Industrial",
+  "fecha": "2026-02-23T18:41:55.509070",
+  "mediciones": "automáticas",
+  "equipo": "sensor_generico_001"
+}
