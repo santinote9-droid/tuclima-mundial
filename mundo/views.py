@@ -1925,7 +1925,7 @@ def ls_checkout(request):
     from urllib.parse import quote
     redirect_url = quote(f"{site}/ls-retorno/?paquete_id={paquete_id}", safe='')
     checkout_url = (
-        f"https://{store_slug}.lemonsqueezy.com/checkout/buy/{variant_id}"
+        f"https://{store_slug}.lemonsqueezy.com/buy/{variant_id}"
         f"?checkout[custom][user_id]={request.user.id}"
         f"&checkout[custom][paquete_id]={paquete_id}"
         f"&checkout[redirect_url]={redirect_url}"

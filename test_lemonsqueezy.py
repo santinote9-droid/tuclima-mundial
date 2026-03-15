@@ -262,6 +262,7 @@ class TestLsCheckoutRedirect(TestCase):
         self.assertEqual(resp.status_code, 302)
         location = resp['Location']
         self.assertIn('lemonsqueezy.com', location)
+        self.assertIn('/buy/', location)
         self.assertIn('1404219', location)          # variant ID de starter_1m
         self.assertIn('user_id', location)
         self.assertIn('paquete_id', location)
