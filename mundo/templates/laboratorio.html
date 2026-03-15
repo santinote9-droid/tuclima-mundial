@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorio 3D | TuClima</title>
+
+    <!-- Three.js r134: última versión con build UMD global (window.THREE) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.min.js"></script>
+    <!-- Globe.gl 2.26: compatible con Three.js r134 -->
+    <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.26.2/dist/globe.gl.min.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #000010;
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #e2e8f0;
+        }
+
+        /* ── Contenedor del globo ─────────────────────────── */
+        #globeViz {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+
+        /* ── HUD superior izquierdo ───────────────────────── */
+        #hud {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        #hud h1 {
+            font-size: 1.35em;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #a78bfa 0%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+        }
+
+        #hud p {
+            font-size: 0.78em;
+            color: #64748b;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Panel de estado ──────────────────────────────── */
+        #status-panel {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            z-index: 10;
+            background: rgba(10, 15, 30, 0.75);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            border-radius: 12px;
+            padding: 14px 20px;
+            font-size: 0.78em;
+            line-height: 1.8;
+            backdrop-filter: blur(10px);
+            min-width: 220px;
+        }
+
+        #status-panel .label {
+            color: #64748b;
+            font-size: 0.72em;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .stat-row span:first-child { color: #94a3b8; }
+        .stat-row span:last-child  { color: #c4b5fd; font-weight: 600; }
+
+        /* ── Indicador de carga ───────────────────────────── */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #000010;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            gap: 18px;
+            transition: opacity 0.8s ease;
+        }
+
+        #loader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader-ring {
+            width: 64px;
+            height: 64px;
+            border: 3px solid rgba(139,92,246,0.15);
+            border-top-color: #8b5cf6;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #loader p {
+            color: #64748b;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Botón volver ─────────────────────────────────── */
+        #btn-back {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 10;
+            text-decoration: none;
+            color: #94a3b8;
+            background: rgba(10, 15, 30, 0.75);
+            border: 1px solid rgba(148,163,184,0.2);
+            border-radius: 10px;
+            padding: 10px 18px;
+            font-size: 0.82em;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        #btn-back:hover {
+            background: rgba(139,92,246,0.15);
+            border-color: rgba(139,92,246,0.4);
+            color: #c4b5fd;
+        }
+
+        /* ── Panel de leyenda ─────────────────────────────── */
+        #legend {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 10;
+            background: rgba(10, 15, 30, 0.75);
+            border: 1px solid rgba(56,189,248,0.15);
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 0.76em;
+            line-height: 2;
+            backdrop-filter: blur(10px);
+        }
+
+        #legend .label {
+            color: #64748b;
+            font-size: 0.72em;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #94a3b8;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ── Panel de controles ──────────────────────────────────── */
+        #controls-bar {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(10, 15, 30, 0.85);
+            border: 1px solid rgba(56,189,248,0.2);
+            border-radius: 14px;
+            padding: 14px 20px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 460px;
+            max-width: 600px;
+        }
+
+        .ctrl-label {
+            color: #64748b;
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 1.3px;
+            font-weight: 700;
+        }
+
+        .ctrl-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .ctrl-group {
+            display: flex;
+            gap: 3px;
+            background: rgba(0,0,0,0.35);
+            border-radius: 8px;
+            padding: 3px;
+        }
+
+        .ctrl-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: #64748b;
+            border-radius: 6px;
+            padding: 7px 13px;
+            font-size: 0.79em;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.18s;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+
+        .ctrl-btn:hover {
+            background: rgba(56,189,248,0.1);
+            color: #e2e8f0;
+            border-color: rgba(56,189,248,0.2);
+        }
+
+        .ctrl-btn.ctrl-active {
+            background: rgba(56,189,248,0.15);
+            color: #38bdf8;
+            border-color: rgba(56,189,248,0.4);
+        }
+
+        /* Barra de tiempo */
+        .time-bar { display: flex; flex-direction: column; gap: 7px; }
+
+        .time-bar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #time-label {
+            font-size: 0.8em;
+            color: #38bdf8;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #time-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: rgba(56,189,248,0.18);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+            accent-color: #38bdf8;
+        }
+
+        #time-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #38bdf8;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(56,189,248,0.55);
+            transition: transform 0.15s;
+        }
+
+        #time-slider::-webkit-slider-thumb:hover { transform: scale(1.25); }
+
+        #time-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #38bdf8;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 8px rgba(56,189,248,0.55);
+        }
+
+        .time-ticks {
+            display: flex;
+            justify-content: space-between;
+            color: #475569;
+            font-size: 0.68em;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Indicador de modo histórico en el HUD */
+        #hist-badge {
+            display: none;
+            font-size: 0.72em;
+            color: #fbbf24;
+            background: rgba(251,191,36,0.1);
+            border: 1px solid rgba(251,191,36,0.25);
+            border-radius: 6px;
+            padding: 2px 8px;
+            margin-top: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        /* Barra de velocidad (acento púrpura) */
+        #speed-label {
+            font-size: 0.8em;
+            color: #a78bfa;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #speed-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: rgba(167,139,250,0.18);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+            accent-color: #a78bfa;
+        }
+
+        #speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #a78bfa;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(167,139,250,0.55);
+            transition: transform 0.15s;
+        }
+
+        #speed-slider::-webkit-slider-thumb:hover { transform: scale(1.25); }
+
+        #speed-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #a78bfa;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 8px rgba(167,139,250,0.55);
+        }
+
+        /* ── Paneles colapsables ───────────────────────────── */
+        .panel-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .panel-toggle-btn {
+            background: none;
+            border: none;
+            color: #475569;
+            cursor: pointer;
+            padding: 2px 4px;
+            display: flex;
+            align-items: center;
+            border-radius: 4px;
+            transition: color 0.18s, transform 0.28s ease;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .panel-toggle-btn:hover { color: #94a3b8; background: rgba(255,255,255,0.04); }
+        .panel-toggle-btn.collapsed { transform: rotate(180deg); }
+        .panel-body {
+            overflow: hidden;
+            transition: max-height 0.32s ease, opacity 0.26s ease;
+            max-height: 800px;
+            opacity: 1;
+        }
+        .panel-body.collapsed {
+            max-height: 0 !important;
+            opacity: 0;
+        }
+
+        /* ── Panel capas atmosféricas ──────────────────────── */
+        #atm-panel {
+            position: fixed;
+            top: 78px;
+            right: 24px;
+            z-index: 10;
+            background: rgba(10, 15, 30, 0.82);
+            border: 1px solid rgba(139,92,246,0.22);
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 0.76em;
+            backdrop-filter: blur(10px);
+            min-width: 212px;
+        }
+        .atm-layer-row {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 5px 6px;
+            margin: 1px -6px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .atm-layer-row:hover { background: rgba(255,255,255,0.04); }
+        .atm-layer-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: box-shadow 0.22s, opacity 0.22s;
+            opacity: 0.40;
+        }
+        .atm-layer-row.layer-on .atm-layer-dot {
+            opacity: 1;
+            box-shadow: 0 0 7px 1px var(--dot-color, #888);
+        }
+        .atm-layer-name {
+            color: #64748b;
+            flex: 1;
+            font-weight: 500;
+            transition: color 0.18s;
+        }
+        .atm-layer-row.layer-on .atm-layer-name { color: #e2e8f0; }
+        .atm-layer-alt { color: #475569; font-size: 0.86em; white-space: nowrap; }
+        .atm-ozone-badge {
+            font-size: 0.76em;
+            background: rgba(167,139,250,0.13);
+            color: #a78bfa;
+            border: 1px solid rgba(167,139,250,0.28);
+            border-radius: 4px;
+            padding: 1px 5px;
+            margin-left: 5px;
+        }
+        .atm-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 7px 0; }
+        .atm-note { color: #475569; font-size: 0.75em; line-height: 1.5; }
+
+        /* ── Panel de eventos severos ─────────────────────── */
+        #events-panel {
+            position: fixed;
+            top: 84px;
+            left: 24px;
+            z-index: 10;
+            background: rgba(10, 15, 30, 0.85);
+            border: 1px solid rgba(239,68,68,0.28);
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 0.76em;
+            backdrop-filter: blur(10px);
+            min-width: 238px;
+            max-width: 282px;
+        }
+        #events-list {
+            max-height: 210px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(239,68,68,0.3) transparent;
+        }
+        .event-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 6px 4px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .event-item:last-child { border-bottom: none; }
+        .event-icon { font-size: 1.1em; flex-shrink: 0; line-height: 1.45; }
+        .event-info { flex: 1; min-width: 0; }
+        .event-name {
+            color: #e2e8f0;
+            font-weight: 600;
+            font-size: 0.92em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .event-loc  { color: #64748b; font-size: 0.82em; margin-top: 1px; }
+        .event-sev  {
+            font-size: 0.68em;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            align-self: flex-start;
+            margin-top: 2px;
+        }
+        .sev-5 { background:rgba(239,68,68,0.20); color:#ef4444; border:1px solid rgba(239,68,68,0.35); }
+        .sev-4 { background:rgba(249,115,22,0.18); color:#fb923c; border:1px solid rgba(249,115,22,0.30); }
+        .sev-3 { background:rgba(167,139,250,0.18); color:#a78bfa; border:1px solid rgba(167,139,250,0.30); }
+        .sev-2 { background:rgba(96,165,250,0.18);  color:#60a5fa; border:1px solid rgba(96,165,250,0.28); }
+        .sev-1 { background:rgba(148,163,184,0.12); color:#94a3b8; border:1px solid rgba(148,163,184,0.20); }
+        .events-empty { color:#475569; font-size:0.85em; padding:6px 0; text-align:center; }
+        #events-count-badge {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: #ef4444;
+            color: #fff;
+            border-radius: 20px;
+            padding: 1px 6px;
+            font-size: 0.68em;
+            font-weight: 700;
+            margin-left: 5px;
+            animation: pulse-alert 1.6s ease-in-out infinite;
+        }
+        @keyframes pulse-alert {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.5; }
+        }
+
+        /* ── Sidebar deslizable ───────────────────────────── */
+        #sidebar-toggle {
+            position: fixed;
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            z-index: 20;
+            background: rgba(10,15,30,0.88);
+            border: 1px solid rgba(139,92,246,0.28);
+            border-right: none;
+            border-radius: 10px 0 0 10px;
+            padding: 16px 9px;
+            cursor: pointer;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            transition: background 0.2s, color 0.2s, right 0.32s cubic-bezier(0.4,0,0.2,1);
+        }
+        #sidebar-toggle:hover { background: rgba(139,92,246,0.16); color: #c4b5fd; }
+        #sidebar-toggle.open  { right: 300px; color: #a78bfa; background: rgba(139,92,246,0.12); border-color: rgba(139,92,246,0.45); }
+
+        #sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100vh;
+            z-index: 15;
+            background: rgba(8,12,24,0.97);
+            border-left: 1px solid rgba(139,92,246,0.18);
+            backdrop-filter: blur(16px);
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+            overflow: hidden;
+        }
+        #sidebar.open { transform: translateX(0); }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+        .sidebar-title {
+            font-size: 0.74em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+        .sidebar-close-btn {
+            background: none;
+            border: none;
+            color: #475569;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            transition: color 0.15s, background 0.15s;
+        }
+        .sidebar-close-btn:hover { color: #94a3b8; background: rgba(255,255,255,0.05); }
+        .sidebar-back-link {
+            color: #475569;
+            font-size: 0.82em;
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 6px;
+            padding: 3px 10px;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .sidebar-back-link:hover { color: #94a3b8; border-color: rgba(255,255,255,0.18); }
+        .sidebar-inner {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(139,92,246,0.22) transparent;
+        }
+        .sb-section { border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .sb-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 11px 16px;
+            cursor: pointer;
+            transition: background 0.15s;
+            user-select: none;
+            gap: 8px;
+        }
+        .sb-section-header:hover { background: rgba(255,255,255,0.025); }
+        .sb-section-header.open  { background: rgba(139,92,246,0.07); }
+        .sb-section-label {
+            font-size: 0.70em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.1px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            flex: 1;
+            line-height: 1.4;
+        }
+        .sb-section-header.open .sb-section-label { color: #94a3b8; }
+        .sb-chevron { color: #475569; flex-shrink: 0; transition: transform 0.26s ease, color 0.15s; }
+        .sb-section-header.open .sb-chevron { transform: rotate(180deg); color: #a78bfa; }
+        .sb-section-body {
+            overflow: hidden;
+            max-height: 800px;
+            opacity: 1;
+            transition: max-height 0.34s ease, opacity 0.26s ease, padding 0.24s ease;
+            padding: 4px 16px 14px;
+            font-size: 0.80em;
+            line-height: 1.75;
+        }
+        .sb-section-body.collapsed { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; }
+    </style>
+</head>
+<body>
+
+    <!-- Pantalla de carga -->
+    <div id="loader">
+        <div class="loader-ring"></div>
+        <p>Cargando texturas del planeta…</p>
+    </div>
+
+    <!-- Lienzo del globo -->
+    <div id="globeViz"></div>
+
+    <!-- HUD de título -->
+    <div id="hud">
+        <h1>
+            <svg style="width:22px;height:22px;vertical-align:middle;margin-right:8px;stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="url(#hud-grad)" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="hud-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#38bdf8"/></linearGradient></defs>
+                <circle cx="12" cy="12" r="10"/>
+                <ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(0 12 12)"/>
+                <ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(60 12 12)"/>
+                <ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(120 12 12)"/>
+            </svg>Laboratorio 3D</h1>
+        <p>Sol en tiempo real &middot; Nubes satelitales &middot; Corrientes de viento &middot; Capas atmosféricas</p>
+    </div>
+
+    <!-- Botón toggle del sidebar -->
+    <button id="sidebar-toggle" onclick="toggleSidebar()" title="Abrir panel de control">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+    </button>
+
+    <!-- Sidebar deslizable -->
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-title">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="10" ry="3.5"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+                Panel de Control
+            </span>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <a href="/" class="sidebar-back-link">← Inicio</a>
+                <button class="sidebar-close-btn" onclick="toggleSidebar()" title="Cerrar">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="sidebar-inner">
+
+            <!-- ★ Eventos Severos — expandido por defecto -->
+            <div class="sb-section">
+                <div class="sb-section-header open" id="sbh-events" onclick="toggleSbSection('events')">
+                    <span class="sb-section-label">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        Eventos Severos
+                        <span id="events-count-badge">0</span>
+                    </span>
+                    <svg class="sb-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div class="sb-section-body" id="sb-events-body">
+                    <div id="events-list"><div class="events-empty">Buscando eventos…</div></div>
+                    <div class="atm-divider"></div>
+                    <div class="atm-note">Open-Meteo · Grid 9×11 puntos · Actualiz. horaria</div>
+                </div>
+            </div>
+
+            <!-- ★ Controles — expandido por defecto -->
+            <div class="sb-section">
+                <div class="sb-section-header open" id="sbh-controls" onclick="toggleSbSection('controls')">
+                    <span class="sb-section-label">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+                        Controles
+                    </span>
+                    <svg class="sb-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div class="sb-section-body" id="sb-controls-body">
+                    <div class="ctrl-row" style="gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+                        <button id="btn-light" class="ctrl-btn" onclick="toggleFullLight()" title="Iluminar toda la Tierra">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></svg>
+                            <span class="btn-lbl">Ilum.: OFF</span>
+                        </button>
+                        <button id="btn-wind" class="ctrl-btn ctrl-active" onclick="toggleWind()" title="Corrientes de viento">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                            <span class="btn-wind-lbl">Viento: ON</span>
+                        </button>
+                        <button id="btn-events" class="ctrl-btn ctrl-active" onclick="toggleEventsLayer()" title="Alertas de eventos" style="border-color:rgba(239,68,68,0.3);color:#ef4444;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <span class="btn-events-lbl">Alertas: ON</span>
+                        </button>
+                    </div>
+                    <div class="time-bar">
+                        <div class="time-bar-header">
+                            <span class="ctrl-label">VELOCIDAD DE ROTACIÓN</span>
+                            <span id="speed-label">1× Real</span>
+                        </div>
+                        <input type="range" id="speed-slider" min="0" max="100" step="0.5" value="0" oninput="onSpeedSlider(this.value)">
+                        <div class="time-ticks"><span>1× Real</span><span>10×</span><span>100×</span><span>500×</span><span>2000×</span></div>
+                    </div>
+                    <div class="time-bar" style="margin-top:10px;">
+                        <div class="time-bar-header" style="gap:8px;">
+                            <span class="ctrl-label">VIAJE EN EL TIEMPO — úItimas 24 h</span>
+                            <button id="btn-go-now" onclick="goToNow()" title="Volver al tiempo actual" style="background:rgba(56,189,248,0.10);border:1px solid rgba(56,189,248,0.28);color:#38bdf8;border-radius:5px;padding:2px 8px;font-size:0.72em;font-weight:600;cursor:pointer;font-family:inherit;display:none;white-space:nowrap;transition:background 0.18s;">↺ Ahora</button>
+                            <span id="time-label">Ahora</span>
+                        </div>
+                        <input type="range" id="time-slider" min="-24" max="0" step="0.25" value="0" oninput="onTimeSlider(this.value)">
+                        <div class="time-ticks"><span>-24 h</span><span>-18 h</span><span>-12 h</span><span>-6 h</span><span>Ahora</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ★ Capas Atmosféricas — colapsado -->
+            <div class="sb-section">
+                <div class="sb-section-header" id="sbh-atm" onclick="toggleSbSection('atm')">
+                    <span class="sb-section-label">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20M2 12h20"/></svg>
+                        Capas Atmosféricas
+                    </span>
+                    <svg class="sb-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div class="sb-section-body collapsed" id="sb-atm-body">
+                    <div class="atm-layer-row" id="atm-row-troposphere" onclick="toggleAtmLayer('troposphere')">
+                        <div class="atm-layer-dot" style="background:#87ceeb;--dot-color:#87ceeb;"></div>
+                        <span class="atm-layer-name">Troposfera</span>
+                        <span class="atm-layer-alt">0–12 km</span>
+                    </div>
+                    <div class="atm-layer-row" id="atm-row-stratosphere" onclick="toggleAtmLayer('stratosphere')">
+                        <div class="atm-layer-dot" style="background:#7b68ee;--dot-color:#7b68ee;"></div>
+                        <span class="atm-layer-name">Estratosfera</span>
+                        <span class="atm-layer-alt">12–50 km</span>
+                    </div>
+                    <div class="atm-layer-row" id="atm-row-ozone" onclick="toggleAtmLayer('ozone')">
+                        <div class="atm-layer-dot" style="background:#a78bfa;--dot-color:#a78bfa;"></div>
+                        <span class="atm-layer-name">Capa de Ozono<span class="atm-ozone-badge">agujero</span></span>
+                        <span class="atm-layer-alt">~25 km</span>
+                    </div>
+                    <div class="atm-layer-row" id="atm-row-mesosphere" onclick="toggleAtmLayer('mesosphere')">
+                        <div class="atm-layer-dot" style="background:#60a5fa;--dot-color:#60a5fa;"></div>
+                        <span class="atm-layer-name">Mesosfera</span>
+                        <span class="atm-layer-alt">50–85 km</span>
+                    </div>
+                    <div class="atm-layer-row" id="atm-row-thermosphere" onclick="toggleAtmLayer('thermosphere')">
+                        <div class="atm-layer-dot" style="background:#fb923c;--dot-color:#fb923c;"></div>
+                        <span class="atm-layer-name">Termosfera</span>
+                        <span class="atm-layer-alt">85–700 km</span>
+                    </div>
+                    <div class="atm-divider"></div>
+                    <div class="atm-note">Clic para activar/desactivar.<br>Ozono: textura con agujero real sobre Antártida (sep–nov).</div>
+                </div>
+            </div>
+
+            <!-- ★ Estado de la Simulación — colapsado -->
+            <div class="sb-section">
+                <div class="sb-section-header" id="sbh-status" onclick="toggleSbSection('status')">
+                    <span class="sb-section-label">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        Estado de la Simulación
+                    </span>
+                    <svg class="sb-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div class="sb-section-body collapsed" id="sb-status-body">
+                    <div class="stat-row"><span>Capa terrestre</span><span id="st-tierra">Cargando…</span></div>
+                    <div class="stat-row"><span>Nubes satelitales</span><span id="st-nubes">Cargando…</span></div>
+                    <div class="stat-row"><span>Próx. actualización</span><span id="st-clouds-next">—</span></div>
+                    <div class="stat-row"><span>Atmósfera</span><span id="st-atm">Activa</span></div>
+                    <div class="stat-row"><span>Sol (dec./lon.)</span><span id="st-sol">Calculando…</span></div>
+                    <div class="stat-row"><span>Hora UTC</span><span id="st-utc">—</span></div>
+                    <div class="stat-row"><span>Velocidad</span><span id="st-rot">1× Real</span></div>
+                    <div class="stat-row"><span>Viento</span><span id="st-viento">Cargando…</span></div>
+                    <div class="stat-row"><span>Eventos severos</span><span id="st-eventos">Buscando…</span></div>
+                </div>
+            </div>
+
+            <!-- ★ Leyenda — colapsada -->
+            <div class="sb-section" style="border-bottom:none;">
+                <div class="sb-section-header" id="sbh-legend" onclick="toggleSbSection('legend')">
+                    <span class="sb-section-label">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                        Leyenda de Capas
+                    </span>
+                    <svg class="sb-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div class="sb-section-body collapsed" id="sb-legend-body">
+                    <div class="legend-item"><div class="legend-dot" style="background:#4ade80;"></div><span>Superficie terrestre (NASA Blue Marble)</span></div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#e2e8f0;opacity:0.7;"></div><span>Nubes globales (actualización periódica)</span></div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#818cf8;"></div><span>Atmósfera (dispersión Rayleigh)</span></div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#fbbf24;"></div><span>Topografía / relieve (bump map)</span></div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#fde68a;box-shadow:0 0 6px #fbbf24;"></div><span>Sol real (dec. solar + ángulo horario UTC)</span></div>
+                    <div class="legend-item" style="margin-top:5px;padding-top:5px;border-top:1px solid rgba(56,189,248,0.1);">
+                        <div style="display:flex;gap:4px;margin-right:6px;">
+                            <div class="legend-dot" style="background:#4ade80;"></div>
+                            <div class="legend-dot" style="background:#fbbf24;"></div>
+                            <div class="legend-dot" style="background:#f97316;"></div>
+                            <div class="legend-dot" style="background:#ef4444;"></div>
+                        </div>
+                        <span>Viento (Open-Meteo · &lt;15/15-40/40-75/75+ km/h)</span>
+                    </div>
+                    <div class="legend-item" style="margin-top:5px;padding-top:5px;border-top:1px solid rgba(239,68,68,0.1);">
+                        <div style="display:flex;gap:4px;margin-right:6px;">
+                            <div class="legend-dot" style="background:#ef4444;box-shadow:0 0 6px #ef4444;"></div>
+                            <div class="legend-dot" style="background:#a78bfa;box-shadow:0 0 5px #a78bfa;"></div>
+                            <div class="legend-dot" style="background:#60a5fa;box-shadow:0 0 5px #60a5fa;"></div>
+                        </div>
+                        <span>Alertas · Huracán / Tormenta / Nevada</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+    // ══════════════════════════════════════════════════════════════
+    //  CONFIGURACIÓN DE TEXTURAS
+    // ══════════════════════════════════════════════════════════════
+    const EARTH_IMG  = '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
+    const BUMP_IMG   = '//unpkg.com/three-globe/example/img/earth-topology.png';
+    const STARFIELD  = '//unpkg.com/three-globe/example/img/night-sky.png';
+
+    function getCloudsUrl() {
+        const THREE_H_MS = 3 * 60 * 60 * 1000;
+        return `https://clouds.matteason.co.uk/images/2048x1024/clouds-alpha.png?t=${Math.floor(Date.now() / THREE_H_MS) * THREE_H_MS}`;
+    }
+
+    // 1× real: órbita completa en 24 h real
+    const BASE_ORBIT_SPEED = 0.000694;    // propiedad globe.gl para 1× real
+    const BASE_CLOUDS_RAD  = 0.00000136;  // rad/frame a 60 fps para 1× real
+    const MAX_MULT         = 2000;        // tope del slider de velocidad
+
+    // rad/ms que giran las nubes en tiempo real (para el slider de tiempo)
+    const CLOUDS_REAL_RAD_PER_MS = (2 * Math.PI * 1.12) / (24 * 3_600_000);
+
+    // ══════════════════════════════════════════════════════════════
+    //  ESTADO GLOBAL
+    // ══════════════════════════════════════════════════════════════
+    let cloudsMesh       = null;
+    let sunLight         = null;
+    let ambientLight     = null;
+    let globeR           = 100;       // se asigna en onGlobeReady
+    let cloudsAngle      = 0;         // ángulo acumulado en animación continua
+    let currentSpeedMult = 1;         // multiplicador de velocidad (1=real por defecto)
+    let fullLightOn      = false;
+    let sliderActive     = false;     // true cuando el slider de tiempo está fuera de "Ahora"
+    let simOffsetMs      = 0;
+
+    // Reloj de simulación (avanza a currentSpeedMult × la velocidad real)
+    let simTimestamp   = Date.now();  // ms virtuales actuales
+    let _lastRafTs     = performance.now();
+    let _sunTick       = 0;           // acumulador en ms reales para throttle de HUD
+
+    // ══════════════════════════════════════════════════════════════
+    //  MECÁNICA CELESTE
+    // ══════════════════════════════════════════════════════════════
+    function toRad(d) { return d * Math.PI / 180; }
+
+    function calcSolar(dateObj) {
+        const d     = dateObj || new Date();
+        const N     = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86_400_000);
+        const delta = -23.45 * Math.cos(toRad((360 / 365) * (N + 10)));
+        const utcH  = d.getUTCHours() + d.getUTCMinutes() / 60;
+        return { delta, subLon: (12 - utcH) * 15, utcH };
+    }
+
+    function solarVector(delta, subLon, r) {
+        return {
+            x:  r * Math.cos(toRad(delta)) * Math.cos(toRad(subLon)),
+            y:  r * Math.sin(toRad(delta)),
+            z: -r * Math.cos(toRad(delta)) * Math.sin(toRad(subLon)),
+        };
+    }
+
+    function updateSun(dateObj) {
+        if (!sunLight) return;
+        const { delta, subLon, utcH } = calcSolar(dateObj || new Date());
+        const v = solarVector(delta, subLon, globeR * 200);
+        sunLight.position.set(v.x, v.y, v.z);
+        const hemi = delta >= 0 ? 'N' : 'S';
+        document.getElementById('st-sol').textContent =
+            `${Math.abs(delta).toFixed(1)}°${hemi}  /  ${subLon.toFixed(1)}°E`;
+        const hh = Math.floor(utcH).toString().padStart(2, '0');
+        const mm = Math.round((utcH % 1) * 60).toString().padStart(2, '0');
+        document.getElementById('st-utc').textContent = `${hh}:${mm} UTC`;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  INICIALIZACIÓN DEL GLOBO
+    // ══════════════════════════════════════════════════════════════
+    const world = Globe()
+        .globeImageUrl(EARTH_IMG)
+        .bumpImageUrl(BUMP_IMG)
+        .backgroundImageUrl(STARFIELD)
+        .showAtmosphere(true)
+        .atmosphereColor('#4f6bde')
+        .atmosphereAltitude(0.18)
+        .enablePointerInteraction(true)
+        (document.getElementById('globeViz'));
+
+    world.pointOfView({ lat: 20, lng: 0, altitude: 2.2 });
+    document.getElementById('st-tierra').textContent = 'Activa';
+
+    const controls = world.controls();
+    controls.autoRotate      = true;
+    controls.autoRotateSpeed = BASE_ORBIT_SPEED * currentSpeedMult;
+    controls.enableDamping   = true;
+    controls.dampingFactor   = 0.08;
+
+    // ══════════════════════════════════════════════════════════════
+    //  onGlobeReady
+    // ══════════════════════════════════════════════════════════════
+    world.onGlobeReady(() => {
+        globeR = world.getGlobeRadius();
+        const CLOUDS_ALT = 0.005;
+        const texLoader  = new THREE.TextureLoader();
+
+        // ── Luces ─────────────────────────────────────────────────────────
+        world.scene().children.filter(c => c.isLight).forEach(l => world.scene().remove(l));
+        ambientLight = new THREE.AmbientLight(0x080c1a, 0.45);
+        world.scene().add(ambientLight);
+        sunLight = new THREE.DirectionalLight(0xfff6e0, 2.2);
+        world.scene().add(sunLight);
+        _lastRafTs = performance.now();
+        updateSun(new Date(simTimestamp));
+
+        // ── Nubes ─────────────────────────────────────────────────────────
+        function buildCloudMesh(tex) {
+            return new THREE.Mesh(
+                new THREE.SphereGeometry(globeR * (1 + CLOUDS_ALT), 128, 128),
+                new THREE.MeshPhongMaterial({
+                    map: tex, transparent: true, opacity: 0.9,
+                    depthWrite: false, side: THREE.FrontSide,
+                })
+            );
+        }
+
+        function applyCloudTexture(tex, label) {
+            if (cloudsMesh) {
+                world.scene().remove(cloudsMesh);
+                // 🧹 Liberar memoria de GPU (evita fuga cada 3 h)
+                cloudsMesh.geometry.dispose();
+                if (cloudsMesh.material.map) cloudsMesh.material.map.dispose();
+                cloudsMesh.material.dispose();
+            }
+            cloudsMesh = buildCloudMesh(tex);
+            world.scene().add(cloudsMesh);
+            document.getElementById('st-nubes').textContent = label;
+        }
+
+        function loadClouds(url, label) {
+            texLoader.load(url,
+                tex  => applyCloudTexture(tex, label),
+                undefined,
+                ()   => { document.getElementById('st-nubes').textContent = 'Error de carga'; }
+            );
+        }
+
+        loadClouds(getCloudsUrl(), 'Satelital (EUMETSAT/NASA)');
+        startCloudCountdown();
+        setInterval(() => { loadClouds(getCloudsUrl(), 'Actualizando…'); startCloudCountdown(); },
+                    3 * 60 * 60 * 1000);
+
+        // Corrientes de viento en tiempo real (Open-Meteo)
+        refreshWind();
+        setInterval(refreshWind, 60 * 60 * 1000); // actualización horaria
+
+        // Capas atmosféricas (esferas 3D)
+        initAtmLayers();
+
+        // Eventos climáticos severos
+        refreshSevereEvents();
+        setInterval(refreshSevereEvents, 60 * 60 * 1000);
+
+        // ── Bucle principal (nubes + reloj de simulación + HUD) ───────────────
+        (function animateClouds() {
+            requestAnimationFrame(animateClouds);
+
+            const rafNow = performance.now();
+            const delta  = Math.min(rafNow - _lastRafTs, 100); // cap 100 ms para evitar saltos
+            _lastRafTs   = rafNow;
+
+            if (!sliderActive) {
+                // Avanzar el reloj virtual a la velocidad seleccionada
+                simTimestamp += delta * currentSpeedMult;
+
+                // Actualizar HUD a ~5 fps reales (200 ms) sea cual sea la velocidad
+                _sunTick += delta;
+                if (_sunTick >= 200) {
+                    _sunTick = 0;
+                    const simDate = new Date(simTimestamp);
+                    updateSun(simDate);
+                    const hh = simDate.getUTCHours().toString().padStart(2, '0');
+                    const mm = simDate.getUTCMinutes().toString().padStart(2, '0');
+                    const tlEl = document.getElementById('time-label');
+                    if (tlEl) {
+                        tlEl.textContent = currentSpeedMult < 1.5
+                            ? `Ahora · ${hh}:${mm} UTC`
+                            : `Sim: ${hh}:${mm} UTC`;
+                    }
+                }
+
+                // Rotar nubes
+                if (cloudsMesh) {
+                    cloudsAngle += BASE_CLOUDS_RAD * currentSpeedMult;
+                    cloudsMesh.rotation.y = cloudsAngle;
+                }
+            }
+        })();
+
+        // Ocultar pantalla de carga
+        const loaderEl = document.getElementById('loader');
+        loaderEl.classList.add('hidden');
+        setTimeout(() => loaderEl.remove(), 900);
+    });
+
+    // ══════════════════════════════════════════════════════════════
+    //  CONTROL 1: BARRA DE VELOCIDAD (slider logarítmico)
+    // ══════════════════════════════════════════════════════════════
+    function speedLabelFromMult(m) {
+        if (m < 2)    return '1× Real';
+        if (m < 1000) return `${Math.round(m)}×`;
+        return `${(m / 1000).toFixed(1)}k×`;
+    }
+
+    function onSpeedSlider(val) {
+        const prev       = currentSpeedMult;
+        currentSpeedMult = parseFloat(val) < 0.001
+            ? 1
+            : Math.pow(MAX_MULT, parseFloat(val) / 100);
+        const lbl = speedLabelFromMult(currentSpeedMult);
+        document.getElementById('speed-label').textContent = lbl;
+        document.getElementById('st-rot').textContent = lbl;
+
+        // Reescalar simTimestamp para que el "momento virtual" no salte
+        // al cambiar velocidad (solo ajustamos la tasa futura, no el instante)
+        if (!sliderActive) {
+            const c = world.controls();
+            c.autoRotate      = true;
+            c.autoRotateSpeed = BASE_ORBIT_SPEED * currentSpeedMult;
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  CONTROL 2: ILUMINACIÓN GLOBAL
+    // ══════════════════════════════════════════════════════════════
+    function toggleFullLight() {
+        if (!ambientLight || !sunLight) return;
+        fullLightOn = !fullLightOn;
+        // En modo global: luz ambiental alta + sol apagado (sin terminador)
+        ambientLight.intensity = fullLightOn ? 1.85 : 0.45;
+        sunLight.intensity     = fullLightOn ? 0    : 2.2;
+        const btn = document.getElementById('btn-light');
+        btn.classList.toggle('ctrl-active', fullLightOn);
+        btn.querySelector('.btn-lbl').textContent = `Ilum. global: ${fullLightOn ? 'ON' : 'OFF'}`;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  CONTROL 3: BARRA DE TIEMPO
+    //  Al mover el slider, congelamos la animación y proyectamos la posición
+    //  del sol y de las nubes según el tiempo seleccionado.
+    // ══════════════════════════════════════════════════════════════
+    function onTimeSlider(val) {
+        const offsetH  = parseFloat(val);
+        simOffsetMs    = offsetH * 3_600_000;
+        sliderActive   = offsetH < -0.01;
+        const simDate  = new Date(Date.now() + simOffsetMs);
+
+        // Mostrar / ocultar botón "Ahora"
+        const btnNow = document.getElementById('btn-go-now');
+        if (btnNow) btnNow.style.display = sliderActive ? 'inline-block' : 'none';
+
+        // ─ Etiqueta de tiempo ─
+        const hh = simDate.getUTCHours().toString().padStart(2, '0');
+        const mm = simDate.getUTCMinutes().toString().padStart(2, '0');
+        document.getElementById('time-label').textContent = sliderActive
+            ? `hace ${Math.abs(offsetH).toFixed(1)} h  ·  ${hh}:${mm} UTC`
+            : `Ahora · ${hh}:${mm} UTC`;
+
+        // ─ Sol para ese instante ─
+        updateSun(simDate);
+
+        // ─ Nubes: posición según rotación real para ese offset temporal ─
+        if (cloudsMesh) {
+            cloudsMesh.rotation.y = cloudsAngle + simOffsetMs * CLOUDS_REAL_RAD_PER_MS;
+        }
+
+        if (sliderActive) {
+            // Congelamos la órbita automática mientras se navega el tiempo
+            world.controls().autoRotate = false;
+        } else {
+            // Volvemos al presente: resincronizar reloj virtual y ángulo de nubes
+            simTimestamp = Date.now();
+            if (cloudsMesh) cloudsAngle = cloudsMesh.rotation.y;
+            world.controls().autoRotate      = true;
+            world.controls().autoRotateSpeed = BASE_ORBIT_SPEED * currentSpeedMult;
+        }
+    }
+
+    function goToNow() {
+        const slider = document.getElementById('time-slider');
+        if (slider) slider.value = 0;
+        simTimestamp = Date.now();
+        onTimeSlider(0);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  CORRIENTES DE VIENTO REALES — Open-Meteo (GFS/ERA5, sin API key)
+    //  Grid global: 7 latitudes × 12 longitudes = 84 puntos en una sola llamada
+    // ══════════════════════════════════════════════════════════════
+    let windVisible  = true;
+    const WIND_LATS  = [-75, -50, -25, 0, 25, 50, 75];
+    const WIND_LONS  = [-165,-135,-105,-75,-45,-15,15,45,75,105,135,165];
+
+    function windColor(speed) {
+        if (speed < 15) return 'rgba(74,222,128,0.80)';
+        if (speed < 40) return 'rgba(251,191,36,0.85)';
+        if (speed < 75) return 'rgba(249,115,22,0.85)';
+        return 'rgba(239,68,68,0.90)';
+    }
+
+    async function fetchWindData() {
+        // Llama al proxy Django — Open-Meteo se consulta sólo 1 vez/hora en el servidor
+        const res  = await fetch('/api/laboratorio/viento/');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();   // [{lat, lon, speed, dir}, …]
+    }
+
+    function windToArcs(pts) {
+        // dir meteorológico: desde dónde viene.
+        // vector “hacia dónde va”: dLat = -cos(dir), dLon = -sin(dir)
+        return pts.filter(p => p.speed >= 2).map(p => {
+            const factor = Math.min(p.speed * 0.09, 10); // largo del arco en grados
+            const rad    = p.dir * Math.PI / 180;
+            return {
+                startLat: p.lat,
+                startLng: p.lon,
+                endLat:   p.lat - factor * Math.cos(rad),
+                endLng:   p.lon - factor * Math.sin(rad),
+                color:    windColor(p.speed),
+            };
+        });
+    }
+
+    async function refreshWind() {
+        document.getElementById('st-viento').textContent = 'Actualizando…';
+        try {
+            const pts  = await fetchWindData();
+            const arcs = windToArcs(pts);
+            window._windArcs = arcs;
+            world
+                .arcsData(windVisible ? arcs : [])
+                .arcColor('color')
+                .arcAltitude(0.006)
+                .arcStroke(0.85)
+                .arcDashLength(0.42)
+                .arcDashGap(0.22)
+                .arcDashAnimateTime(2600);
+            document.getElementById('st-viento').textContent =
+                `${arcs.length} vectores · Open-Meteo`;
+        } catch (e) {
+            document.getElementById('st-viento').textContent = 'Sin conexión';
+        }
+    }
+
+    function toggleWind() {
+        windVisible = !windVisible;
+        world.arcsData(windVisible ? (window._windArcs || []) : []);
+        const btn = document.getElementById('btn-wind');
+        btn.classList.toggle('ctrl-active', windVisible);
+        btn.querySelector('.btn-wind-lbl').textContent =
+            `Viento: ${windVisible ? 'ON' : 'OFF'}`;
+        document.getElementById('st-viento').textContent =
+            windVisible
+                ? `${(window._windArcs || []).length} vectores`
+                : 'Oculto';
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Cuenta regresiva
+    // ══════════════════════════════════════════════════════════════
+    function startCloudCountdown() {
+        const THREE_H = 3 * 60 * 60 * 1000;
+        const next    = (Math.floor(Date.now() / THREE_H) + 1) * THREE_H;
+        function tick() {
+            const rem = next - Date.now();
+            if (rem <= 0) { document.getElementById('st-clouds-next').textContent = 'Actualizando…'; return; }
+            const h = Math.floor(rem / 3_600_000);
+            const m = Math.floor((rem % 3_600_000) / 60_000).toString().padStart(2, '0');
+            const s = Math.floor((rem % 60_000) / 1_000).toString().padStart(2, '0');
+            document.getElementById('st-clouds-next').textContent = `${h}h ${m}m ${s}s`;
+        }
+        tick();
+        const timer = setInterval(() => { tick(); if (Date.now() >= next) clearInterval(timer); }, 1000);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  SIDEBAR
+    // ══════════════════════════════════════════════════════════════
+    function toggleSidebar() {
+        const sb   = document.getElementById('sidebar');
+        const btn  = document.getElementById('sidebar-toggle');
+        const open = sb.classList.toggle('open');
+        btn.classList.toggle('open', open);
+        btn.innerHTML = open
+            ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>'
+            : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+    }
+
+    function toggleSbSection(id) {
+        const body   = document.getElementById('sb-' + id + '-body');
+        const header = document.getElementById('sbh-' + id);
+        if (!body || !header) return;
+        body.classList.toggle('collapsed');
+        header.classList.toggle('open');
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  CAPAS ATMOSFÉRICAS
+    // ══════════════════════════════════════════════════════════════
+    const ATM_LAYER_DEFS = [
+        { id: 'troposphere',  altitude: 0.024, color: 0x87ceeb, opacity: 0.08, useTexture: false },
+        { id: 'stratosphere', altitude: 0.073, color: 0x7b68ee, opacity: 0.10, useTexture: false },
+        { id: 'ozone',        altitude: 0.060, color: null,     opacity: 0.12, useTexture: true  },
+        { id: 'mesosphere',   altitude: 0.155, color: 0x60a5fa, opacity: 0.07, useTexture: false },
+        { id: 'thermosphere', altitude: 0.320, color: 0xfb923c, opacity: 0.05, useTexture: false },
+    ];
+    const atmMeshes = {};
+    const atmOn     = {};
+    ATM_LAYER_DEFS.forEach(l => { atmOn[l.id] = false; });
+
+    function createOzoneTexture() {
+        const W = 1024, H = 512;
+        const cv  = document.createElement('canvas');
+        cv.width  = W;
+        cv.height = H;
+        const ctx = cv.getContext('2d');
+
+        // Capa base: gradiente turquesa representando ozono estratosférico normal
+        const baseG = ctx.createLinearGradient(0, 0, 0, H);
+        baseG.addColorStop(0,    'rgba(60,  130, 220, 0.04)');
+        baseG.addColorStop(0.15, 'rgba(50,  210, 180, 0.16)');
+        baseG.addColorStop(0.50, 'rgba(40,  220, 190, 0.22)');
+        baseG.addColorStop(0.85, 'rgba(50,  210, 180, 0.14)');
+        baseG.addColorStop(1,    'rgba(60,  0,   180, 0.04)');
+        ctx.fillStyle = baseG;
+        ctx.fillRect(0, 0, W, H);
+
+        // Agujero de ozono: franja violeta-rosa sobre Antártida (polo sur = fila inferior)
+        // lat -60° → y ≈ 0.833*H  |  lat -90° → y = H
+        const holeTop = Math.round(0.80 * H);
+        const holeG   = ctx.createLinearGradient(0, holeTop, 0, H);
+        holeG.addColorStop(0,    'rgba(0,0,0,0)');
+        holeG.addColorStop(0.35, 'rgba(130, 0, 200, 0.30)');
+        holeG.addColorStop(0.72, 'rgba(200, 0, 165, 0.55)');
+        holeG.addColorStop(1,    'rgba(225, 0, 115, 0.68)');
+        ctx.fillStyle = holeG;
+        ctx.fillRect(0, holeTop, W, H - holeTop);
+
+        // Núcleo del agujero: elipse más intensa (~70–90°S)
+        const cx = W * 0.50, cy = H;
+        const ellW = W * 0.35, ellH = H * 0.13;
+        const deepG = ctx.createRadialGradient(cx, cy - ellH * 0.5, 0, cx, cy - ellH * 0.5, Math.max(ellW, ellH));
+        deepG.addColorStop(0,   'rgba(255, 0, 110, 0.50)');
+        deepG.addColorStop(0.5, 'rgba(180, 0, 200, 0.22)');
+        deepG.addColorStop(1,   'rgba(0,   0, 0,   0)');
+        ctx.fillStyle = deepG;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, ellW, ellH, 0, Math.PI, 2 * Math.PI);
+        ctx.fill();
+
+        return new THREE.CanvasTexture(cv);
+    }
+
+    function initAtmLayers() {
+        ATM_LAYER_DEFS.forEach(def => {
+            const r   = globeR * (1 + def.altitude);
+            const geo = new THREE.SphereGeometry(r, 64, 64);
+            let mat;
+            if (def.useTexture) {
+                mat = new THREE.MeshBasicMaterial({
+                    map:         createOzoneTexture(),
+                    transparent: true,
+                    opacity:     def.opacity,
+                    side:        THREE.FrontSide,
+                    depthWrite:  false,
+                    blending:    THREE.AdditiveBlending,
+                });
+            } else {
+                mat = new THREE.MeshBasicMaterial({
+                    color:       def.color,
+                    transparent: true,
+                    opacity:     def.opacity,
+                    side:        THREE.FrontSide,
+                    depthWrite:  false,
+                });
+            }
+            const mesh  = new THREE.Mesh(geo, mat);
+            mesh.visible = false;
+            world.scene().add(mesh);
+            atmMeshes[def.id] = mesh;
+        });
+    }
+
+    function toggleAtmLayer(id) {
+        if (!atmMeshes[id]) return;
+        atmOn[id] = !atmOn[id];
+        atmMeshes[id].visible = atmOn[id];
+        const row = document.getElementById('atm-row-' + id);
+        if (row) row.classList.toggle('layer-on', atmOn[id]);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  EVENTOS CLIMÁTICOS SEVEROS — Open-Meteo
+    //  Grid 9×11 = 99 puntos. Clasifica: huracán, ciclón, tormenta,
+    //  ventisca, vientos huracanados. Visualiza con anillos pulsantes.
+    // ══════════════════════════════════════════════════════════════
+    let eventsLayerOn = true;
+    let _severeEvents = [];
+
+    const SEV_LATS = [-55, -35, -20, -10, 0, 10, 20, 35, 55];
+    const SEV_LONS = [-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150];
+
+    function classifyEvent(wmo, gust, speed, temp, lat) {
+        const tropical = Math.abs(lat) <= 30;
+        if (tropical  && gust > 118) return { name: 'Huracán / Ciclón',           color: '#ef4444', severity: 5, icon: '🌀' };
+        if (tropical  && gust >  88) return { name: 'Tormenta tropical severa',    color: '#f97316', severity: 4, icon: '🌀' };
+        if (tropical  && gust >  62) return { name: 'Depresión tropical',          color: '#fb923c', severity: 3, icon: '🌀' };
+        if (!tropical && gust >  90) return { name: 'Ciclón extratropical',        color: '#ef4444', severity: 4, icon: '🌀' };
+        if (wmo === 99)              return { name: 'Tormenta eléctrica extrema',   color: '#ef4444', severity: 4, icon: '⛈️' };
+        if (wmo === 96)              return { name: 'Tormenta con granizo severo', color: '#f97316', severity: 3, icon: '⛈️' };
+        if (wmo === 95)              return { name: 'Tormenta eléctrica',           color: '#a78bfa', severity: 3, icon: '⛈️' };
+        if (gust > 75)               return { name: 'Vientos huracanados',          color: '#f97316', severity: 4, icon: '💨' };
+        if ((wmo === 75 || wmo === 77) && temp < -5)
+                                     return { name: 'Ventisca / Blizzard',          color: '#60a5fa', severity: 3, icon: '❄️' };
+        if (wmo >= 71 && wmo <= 77)  return { name: 'Tormenta de nieve',            color: '#93c5fd', severity: 2, icon: '🌨️' };
+        if (wmo === 82 || (wmo === 81 && gust > 50))
+                                     return { name: 'Chubascos intensos',           color: '#818cf8', severity: 2, icon: '🌧️' };
+        if (wmo >= 80 && gust > 55)  return { name: 'Frente tormentoso',            color: '#a78bfa', severity: 2, icon: '⛅' };
+        return null;
+    }
+
+    function approxRegion(lat, lon) {
+        if (lon >= -100 && lon <= -20 && lat >=  8 && lat <= 35)  return 'Atlántico tropical';
+        if (lon >= -175 && lon <= -90 && lat >=  5 && lat <= 30)  return 'Pacífico E. tropical';
+        if (lon >=   60 && lon <= 120 && lat >=  5 && lat <= 25)  return 'Océano Índico N.';
+        if (lon >=  100 && lon <= 180 && lat >= -25 && lat <= 20) return 'Pacífico Occidental';
+        if (lon >=  -30 && lon <=  90 && lat >= -30 && lat <=  -5) return 'Índico Sur';
+        if (lat >  55) return 'Polar Norte';
+        if (lat < -55) return 'Polar Sur / Antártida';
+        const la = `${Math.abs(lat).toFixed(0)}°${lat >= 0 ? 'N' : 'S'}`;
+        const lo = `${Math.abs(lon).toFixed(0)}°${lon >= 0 ? 'E' : 'O'}`;
+        return `${la}, ${lo}`;
+    }
+
+    async function fetchSevereEvents() {
+        // Llama al proxy Django — Open-Meteo se consulta sólo 1 vez/hora en el servidor
+        const res = await fetch('/api/laboratorio/eventos/');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();   // [{lat, lon, gust, region, name, color, severity, icon}, …]
+    }
+
+    function renderEventsPanel(events) {
+        const list  = document.getElementById('events-list');
+        const badge = document.getElementById('events-count-badge');
+        const stEl  = document.getElementById('st-eventos');
+
+        if (!events.length) {
+            list.innerHTML = '<div class="events-empty">✓ Sin eventos severos detectados</div>';
+            if (badge) badge.style.display = 'none';
+            if (stEl)  stEl.textContent = 'Sin alertas';
+            stEl.style.color = '';
+        } else {
+            if (badge) { badge.style.display = 'inline-flex'; badge.textContent = events.length; }
+            if (stEl)  { stEl.textContent = `${events.length} activo${events.length > 1 ? 's' : ''}`;
+                         stEl.style.color = '#ef4444'; }
+            list.innerHTML = events.map(ev => `
+                <div class="event-item">
+                    <span class="event-icon">${ev.icon}</span>
+                    <div class="event-info">
+                        <div class="event-name">${ev.name}</div>
+                        <div class="event-loc">${ev.region}${ev.gust ? ' · ráfagas ' + Math.round(ev.gust) + ' km/h' : ''}</div>
+                    </div>
+                    <span class="event-sev sev-${ev.severity}">SEV ${ev.severity}</span>
+                </div>`).join('');
+        }
+    }
+
+    function applyEventsToGlobe(events) {
+        if (!eventsLayerOn || !events.length) {
+            world.ringsData([]);
+            world.pointsData([]);
+            return;
+        }
+        const rings = events.map(ev => ({
+            lat:              ev.lat,
+            lng:              ev.lon,
+            color:            ev.color + 'bb',
+            maxRadius:        ev.severity * 1.4,
+            propagationSpeed: ev.severity * 0.8 + 0.8,
+            repeatPeriod:     2600 - ev.severity * 280,
+        }));
+        const pts = events.map(ev => ({
+            lat:   ev.lat,
+            lng:   ev.lon,
+            color: ev.color,
+            size:  ev.severity * 0.15 + 0.1,
+        }));
+        world
+            .ringsData(rings)
+            .ringColor('color')
+            .ringMaxRadius('maxRadius')
+            .ringPropagationSpeed('propagationSpeed')
+            .ringRepeatPeriod('repeatPeriod');
+        world
+            .pointsData(pts)
+            .pointColor('color')
+            .pointAltitude(0.012)
+            .pointRadius('size');
+    }
+
+    async function refreshSevereEvents() {
+        try {
+            _severeEvents = await fetchSevereEvents();
+            renderEventsPanel(_severeEvents);
+            applyEventsToGlobe(_severeEvents);
+        } catch (e) {
+            const stEl = document.getElementById('st-eventos');
+            if (stEl) stEl.textContent = 'Sin conexión';
+            const list = document.getElementById('events-list');
+            if (list) list.innerHTML = '<div class="events-empty">Error al obtener datos</div>';
+        }
+    }
+
+    function toggleEventsLayer() {
+        eventsLayerOn = !eventsLayerOn;
+        applyEventsToGlobe(eventsLayerOn ? _severeEvents : []);
+        const btn = document.getElementById('btn-events');
+        if (btn) {
+            btn.classList.toggle('ctrl-active', eventsLayerOn);
+            btn.style.color = eventsLayerOn ? '#ef4444' : '';
+            btn.querySelector('.btn-events-lbl').textContent =
+                `Alertas: ${eventsLayerOn ? 'ON' : 'OFF'}`;
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Resize
+    // ══════════════════════════════════════════════════════════════
+    window.addEventListener('resize', () => {
+        world.width(window.innerWidth);
+        world.height(window.innerHeight);
+    });
+    </script>
+</body>
+</html>

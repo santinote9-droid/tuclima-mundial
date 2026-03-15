@@ -20,6 +20,18 @@ urlpatterns = [
     path('pagar-paypal/', views.crear_pago_paypal, name='crear_pago_paypal'),
     path('paypal-retorno/', views.paypal_retorno, name='paypal_retorno'),
 
+    # Lemon Squeezy
+    path('ls-checkout/', views.ls_checkout, name='ls_checkout'),
+    path('ls-retorno/', views.ls_retorno, name='ls_retorno'),
+    path('ls-webhook/', views.ls_webhook, name='ls_webhook'),
+
+    # MercadoPago Checkout Pro (automatizado)
+    path('pagar-mercadopago/', views.mp_crear_preferencia, name='mp_crear_preferencia'),
+    path('mp-webhook/', views.mp_webhook, name='mp_webhook'),
+    path('mp-retorno/', views.mp_retorno, name='mp_retorno'),
+
+    path('pago-exitoso/', views.pago_exitoso_view, name='pago_exitoso_view'),
+
     path('metodos-pago/', views.metodos_pago, name='metodos_pago'), 
     path('transferencia/', views.transferencia, name='transferencia'), 
     path('confirmar-manual/', views.confirmar_manual, name='confirmar_manual'),
@@ -65,6 +77,27 @@ urlpatterns = [
 
     #Panel de noticias
     path('api/noticias/', views.obtener_noticias_clima, name='api_noticias'),
+
+    # Laboratorio 3D
+    path('laboratorio/', views.laboratorio, name='laboratorio'),
+    path('api/laboratorio/viento/', views.api_viento_proxy, name='api_viento_proxy'),
+    path('api/laboratorio/eventos/', views.api_eventos_proxy, name='api_eventos_proxy'),
+
+    # Mi Cuenta — perfil y preferencias
+    path('mi-cuenta/', views.mi_cuenta, name='mi_cuenta'),
+
+    # Admin — acciones sobre suscripciones
+    path('admin-activar-usuario/', views.admin_activar_usuario, name='admin_activar_usuario'),
+    path('admin-toggle-renovacion/', views.admin_toggle_renovacion, name='admin_toggle_renovacion'),
+
+    # Sistema de Tokens IA
+    path('api/tokens/saldo/', views.api_saldo_tokens, name='api_saldo_tokens'),
+    path('api/tokens/recargar/', views.admin_recargar_tokens, name='admin_recargar_tokens'),
+    path('recargar-tokens/', views.recargar_tokens_view, name='recargar_tokens'),
+    path('activar-plan/', views.seleccionar_pago_tokens, name='seleccionar_pago_tokens'),
+    path('confirmar-manual-tokens/', views.confirmar_manual_tokens, name='confirmar_manual_tokens'),
+    path('pagar-tokens/', views.mp_crear_preferencia_tokens, name='mp_crear_preferencia_tokens'),
+    path('tokens-retorno/', views.tokens_retorno_view, name='tokens_retorno'),
 ]
 
 

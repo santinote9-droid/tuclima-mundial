@@ -1,0 +1,132 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "86507b8e-5339-4a2c-a4af-9dd4859ea48b",
+              "name": "link_descarga",
+              "value": "=https://drive.google.com/file/d/{{ $json.id }}/view",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        496,
+        -16
+      ],
+      "id": "9a8ce404-a7b0-4667-a5f7-9f30bcf4b336",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "contenido_reporte"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -48,
+        -16
+      ],
+      "id": "40401fca-2641-4644-90b7-7412c511e5e1",
+      "name": "Execute Workflow Trigger",
+      "executeOnce": false,
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const htmlContent = $('Execute Workflow Trigger').first().json.contenido_reporte;\n\nreturn {\n  json: {},\n  binary: {\n    data: {\n      data: Buffer.from(htmlContent).toString('base64'),\n      mimeType: 'application/msword', // Le decimos a Google que es un Word\n      fileName: 'Reporte_TuClima.doc' // Le ponemos extensión de documento\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        -16
+      ],
+      "id": "1c28dec6-653e-4e7f-a751-213a7164b328",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "name": "=Reporte_TuClima_{{$now.format(\"yyyyMMdd_HHmm\")}}.html",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        304,
+        -16
+      ],
+      "id": "2e740596-e23c-404d-9f34-564aeedfe4a2",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "we4YRUOwdSylabXV",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "19ee95c84ac845adb5e56f055bd53b79a0e674016338a7de7b71fc1ecea83ccf"
+  }
+}

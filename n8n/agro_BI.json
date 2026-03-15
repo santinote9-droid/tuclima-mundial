@@ -1,0 +1,253 @@
+{
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        864,
+        0
+      ],
+      "id": "c1cf4392-5937-484b-84ce-4f16c9d03570",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-pro-preview-customtools",
+        "options": {"maxOutputTokens": 2000}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1136,
+        448
+      ],
+      "id": "bc9787c0-ca61-4cae-a09d-82e1a6fc3f28",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "UcE6zBeBch9QD2vO",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1f72fe46-407a-4573-a895-ccdd680b3b6e",
+              "name": "output",
+              "value": "={{ $('Function').item.json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2000,
+        240
+      ],
+      "id": "303a8853-ea83-41f3-8e19-249be9bfc2d1",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": {
+          "__rl": true,
+          "value": "proyecto-bi-488218",
+          "mode": "list",
+          "cachedResultName": "proyecto-BI",
+          "cachedResultUrl": "https://console.cloud.google.com/bigquery?project=proyecto-bi-488218"
+        },
+        "sqlQuery": "INSERT INTO `proyecto-bi-488218.datos_clima.datos_sectoriales`\n(\n  timestamp,\n  session_id,\n  sector,\n  cultivo,\n  region,\n  temperatura_suelo,\n  humedad_relativa,\n  precipitacion,\n  horas_sol,\n  fase_lunar,\n  ai_recommendations,\n  metadata\n)\nVALUES\n(\n  -- ✅ Timestamp con parsing seguro y fallback\n  COALESCE(\n    SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', @timestamp),\n    CURRENT_TIMESTAMP()\n  ),\n  \n  -- ✅ Session ID con sanitización\n  COALESCE(\n    NULLIF(TRIM(@session_id), ''), \n    CONCAT('agro-auto-', FORMAT_TIMESTAMP('%Y%m%d-%H%M%S', CURRENT_TIMESTAMP()))\n  ),\n  \n  -- ✅ Sector fijo para AGRO\n  'AGRO',\n  \n  -- ✅ Cultivo normalizado\n  CASE \n    WHEN UPPER(TRIM(@cultivo)) IN ('TRIGO', 'WHEAT') THEN 'Trigo'\n    WHEN UPPER(TRIM(@cultivo)) IN ('MAIZ', 'MAÍZ', 'CORN') THEN 'Maíz'\n    WHEN UPPER(TRIM(@cultivo)) IN ('ARROZ', 'RICE') THEN 'Arroz'\n    WHEN UPPER(TRIM(@cultivo)) IN ('SOJA', 'SOYBEAN') THEN 'Soja'\n    WHEN UPPER(TRIM(@cultivo)) IN ('TOMATE', 'TOMATO') THEN 'Tomate'\n    WHEN UPPER(TRIM(@cultivo)) IN ('OLIVO', 'OLIVE') THEN 'Olivo'\n    WHEN UPPER(TRIM(@cultivo)) IN ('VID', 'UVA', 'GRAPE', 'WINE') THEN 'Vid'\n    WHEN TRIM(@cultivo) IS NULL OR TRIM(@cultivo) = '' THEN 'Cultivo no especificado'\n    ELSE REGEXP_REPLACE(TRIM(@cultivo), r'[^a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]', '')\n  END,\n  \n  -- ✅ Región con validación de longitud\n  CASE \n    WHEN LENGTH(TRIM(@region)) > 100 THEN SUBSTR(TRIM(@region), 1, 100)\n    WHEN TRIM(@region) IS NULL OR TRIM(@region) = '' THEN 'Región no especificada'\n    ELSE TRIM(@region)\n  END,\n  \n  -- ✅ Temperatura suelo - CONVERSIÓN SEGURA STRING → FLOAT64 (°C)\n  CASE \n    WHEN SAFE_CAST(@temperatura_suelo AS FLOAT64) IS NOT NULL \n         AND SAFE_CAST(@temperatura_suelo AS FLOAT64) BETWEEN -20 AND 50 \n    THEN SAFE_CAST(@temperatura_suelo AS FLOAT64)\n    ELSE 15.0\n  END,\n  \n  -- ✅ Humedad relativa - CONVERSIÓN SEGURA STRING → FLOAT64 (%)\n  CASE \n    WHEN SAFE_CAST(@humedad_relativa AS FLOAT64) IS NOT NULL \n         AND SAFE_CAST(@humedad_relativa AS FLOAT64) BETWEEN 0 AND 100 \n    THEN SAFE_CAST(@humedad_relativa AS FLOAT64)\n    ELSE 50.0\n  END,\n  \n  -- ✅ Precipitación - CONVERSIÓN SEGURA STRING → FLOAT64 (mm)\n  CASE \n    WHEN SAFE_CAST(@precipitacion AS FLOAT64) IS NOT NULL \n         AND SAFE_CAST(@precipitacion AS FLOAT64) BETWEEN 0 AND 500 \n    THEN SAFE_CAST(@precipitacion AS FLOAT64)\n    ELSE 0.0\n  END,\n  \n  -- ✅ Horas sol - CONVERSIÓN SEGURA STRING → FLOAT64\n  CASE \n    WHEN SAFE_CAST(@horas_sol AS FLOAT64) IS NOT NULL \n         AND SAFE_CAST(@horas_sol AS FLOAT64) BETWEEN 0 AND 24 \n    THEN SAFE_CAST(@horas_sol AS FLOAT64)\n    ELSE 8.0\n  END,\n  \n  -- ✅ Fase lunar normalizada\n  CASE \n    WHEN UPPER(TRIM(@fase_lunar)) IN ('NUEVA', 'NEW_MOON') THEN 'Luna Nueva'\n    WHEN UPPER(TRIM(@fase_lunar)) IN ('CRECIENTE', 'WAXING_CRESCENT') THEN 'Luna Creciente'\n    WHEN UPPER(TRIM(@fase_lunar)) IN ('CUARTO_CRECIENTE', 'FIRST_QUARTER') THEN 'Cuarto Creciente'\n    WHEN UPPER(TRIM(@fase_lunar)) IN ('LLENA', 'FULL_MOON') THEN 'Luna Llena'\n    WHEN UPPER(TRIM(@fase_lunar)) IN ('MENGUANTE', 'WANING_GIBBOUS') THEN 'Luna Menguante'\n    WHEN UPPER(TRIM(@fase_lunar)) IN ('CUARTO_MENGUANTE', 'LAST_QUARTER') THEN 'Cuarto Menguante'\n    ELSE 'Sin datos'\n  END,\n  \n  -- ✅ Recomendaciones AI con sanitización y límite\n  CASE \n    WHEN LENGTH(TRIM(@ai_recommendations)) > 5000 THEN SUBSTR(TRIM(@ai_recommendations), 1, 5000)\n    WHEN TRIM(@ai_recommendations) IS NULL OR TRIM(@ai_recommendations) = '' THEN 'Recomendaciones no disponibles'\n    ELSE REGEXP_REPLACE(TRIM(@ai_recommendations), r'[^\\w\\sáéíóúÁÉÍÓÚñÑ.,;:()\\-\\n\\r]', '')\n  END,\n  \n  -- ✅ Metadata JSON con validación\n  CASE \n    WHEN @metadata IS NOT NULL AND @metadata != '' THEN @metadata\n    ELSE '{\"source\":\"default\",\"processed\":true}'\n  END\n);\n\n-- ✅ SELECT para generar OUTPUT y continuar flujo\nSELECT \n  'SUCCESS' as status,\n  'Datos agrícolas insertados correctamente' as message,\n  CURRENT_TIMESTAMP() as processed_at,\n  'AGRO' as sector;\n\n",
+        "options": {
+          "queryParameters": {
+            "namedParameters": [
+              {
+                "name": "timestamp",
+                "value": "={{ $('Function').item.json.timestamp }}"
+              },
+              {
+                "name": "session_id",
+                "value": "={{ $('Function').item.json.session_id}}"
+              },
+              {
+                "name": "cultivo",
+                "value": "={{ $('Function').item.json.cultivo }}"
+              },
+              {
+                "name": "region",
+                "value": "={{ $('Function').item.json.region }}"
+              },
+              {
+                "name": "temperatura_suelo",
+                "value": "={{ $('Function').item.json.temperatura_suelo }}"
+              },
+              {
+                "name": "humedad_relativa",
+                "value": "={{ $('Function').item.json.humedad_relativa }}"
+              },
+              {
+                "name": "precipitacion",
+                "value": "={{ $('Function').item.json.precipitacion }}"
+              },
+              {
+                "name": "horas_sol",
+                "value": "={{ $('Function').item.json.horas_sol }}"
+              },
+              {
+                "name": "fase_lunar",
+                "value": "={{ $('Function').item.json.fase_lunar }}"
+              },
+              {
+                "name": "ai_recommendations",
+                "value": "={{ $('Function').item.json.ai_recommendations }}"
+              },
+              {
+                "name": "metadata",
+                "value": "={{ $('Function').item.json.metadata }}"
+              },
+              {
+                "name": "sector",
+                "value": "={{ $('Function').item.json.sector }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [
+        1776,
+        240
+      ],
+      "id": "8b24d427-8964-4beb-b205-991d14315bbb",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "googleApi": {
+          "id": "Ewe5h1U44UTbd2Qs",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.first().json; \nconst texto_bruto = inputData.output || inputData.text || \"\";\n\n// Extrae el texto completo de la variable\nconst extraerTexto = (campo, fallback) => {\n    const regex = new RegExp(`${campo}[:\\\\s]+([^\\\\n]+)`, 'i');\n    const match = texto_bruto.match(regex);\n    return match ? match[1].trim() : fallback;\n};\n\n// NUEVO: Agarra solo el PRIMER número de la lista separada por comas para BigQuery\nconst extraerPrimerNumero = (campo, fallback) => {\n    const texto = extraerTexto(campo, \"\");\n    if (!texto) return fallback;\n    const primerNumero = texto.split(',')[0].trim(); \n    return parseFloat(primerNumero.replace(',', '.')) || fallback;\n};\n\nconst reporte_limpio = texto_bruto.replace(/\\[MOSTRAR_GRAFICO\\][\\s\\S]*/i, \"\").trim();\n\nreturn [{\n    json: {\n        // --- DATOS PARA BIGQUERY ---\n        timestamp: new Date().toISOString(),\n        session_id: inputData.session_id || `agro-${Date.now()}`,\n        sector: \"AGRO\", \n        \n        cultivo: extraerTexto(\"cultivo\", \"S/D\"),\n        region: extraerTexto(\"region\", \"S/D\"),\n        temperatura_suelo: extraerPrimerNumero(\"temperatura_suelo\", 18),\n        humedad_relativa: extraerPrimerNumero(\"humedad_relativa\", 50),\n        precipitacion: extraerPrimerNumero(\"precipitacion\", 0),\n        horas_sol: extraerPrimerNumero(\"horas_sol\", 8),\n        fase_lunar: extraerTexto(\"fase_lunar\", \"S/D\"),\n        \n        ai_recommendations: reporte_limpio,\n        metadata: JSON.stringify({ status: \"success\" }),\n\n        // --- DATOS PARA EL FRONTEND (Lleva las listas completas) ---\n        output: texto_bruto \n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        240
+      ],
+      "id": "adb2af20-6ae0-4fa0-b96e-4001335c0ba3",
+      "name": "Function"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "query"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        992,
+        240
+      ],
+      "id": "e405ce0a-315f-49f9-8e71-f4b8c43ad3a9",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Eres el Especialista en Visualización Agroclimática de TuClima. La IA principal ya decidió enviarte aquí porque el usuario solicitó gráficos/visualizaciones agrícolas.\n\n**🎯 TU ÚNICA FUNCIÓN:**\n1. **RECIBIR:** Datos agroclimáticos de la IA principal  \n2. **PROCESAR:** Aplicar motores de cálculo agrícolas\n3. **VISUALIZAR:** Generar estructura para Power BI\n4. **ENVIAR:** Al siguiente nodo con link Power BI\n\n**🚫 NO BUSQUES PALABRAS CLAVE:** La IA principal ya filtró. Tu asumes que SIEMPRE debes hacer visualizaciones.\n\n### 🎯 MISIÓN ESPECÍFICA:\nYa estás activado para crear visualizaciones agroclimáticas. Procesa los datos recibidos y genera:\n- Gráficos de tendencias GDD\n- Ventanas de pulverización \n- Heat maps de suelo\n- Dashboards agrícolas completos\n\n### 🧮 MOTORES DE CÁLCULO OBLIGATORIOS:\n\n**1. 🌱 MOTOR DE CRECIMIENTO (GDD - Grados Días de Desarrollo):**\n- Fórmula Base: ((T_Max + T_Min) / 2) - 10\n- Si el resultado < 0, usar 0\n- Para Maíz, base térmica = 10°C\n- Interpretación:\n  * 0-5: Crecimiento Nulo\n  * 5-10: Crecimiento Lento  \n  * 10-15: Crecimiento Moderado\n  * >15: Crecimiento Vigoroso\n- Acumulación diaria crítica para fotosíntesis y desarrollo fenológico\n\n**2. 🚜 MOTOR DE PULVERIZACIÓN (Delta T - Calidad de Gota):**\n- Fórmula: Temp - (Temp * Humedad / 100) - 1.5\n- Si el resultado < 0, usar 0.5\n- Rangos críticos:\n  * < 2: 🔴 RIESGO INVERSIÓN (gota suspendida, deriva masiva)\n  * 2-8: 🟢 ÓPTIMA (máxima absorción sistémica)\n  * 8-10: 🟡 MARGINAL (usar gota gruesa o coadyuvantes)\n  * >10: 🔴 CRÍTICA (evaporación instantánea, pérdida económica)\n- Factor adicional: Si Viento > 15 km/h = CRÍTICO independiente de Delta T\n\n**3. 🌡️ MOTOR DE SUELO (Estratigrafía Térmica):**\n- Profundidades críticas y sus significados:\n  * 0 cm (Superficie): Riesgo \"golpe de calor\" en plántulas, volatilidad herbicidas\n  * 6 cm (Cama de Siembra): CRÍTICO para germinación, maíz requiere >10°C estables\n  * 18 cm (Raíz Activa): Absorción nutrientes, si T<15°C bloqueo de Fósforo\n  * 54 cm (Profundo): Inercia térmica y reserva hídrica\n\n**4. 💧 BALANCE HÍDRICO & ESTRÉS (VPD):**\n- Balance: Lluvia - ETo (Evapotranspiración)\n- VPD (Déficit de Presión de Vapor):\n  * >1.6 kPa: 🔴 ESTRÉS HÍDRICO (cierre de estomas)\n  * 0.4-1.6 kPa: 🟢 RANGO ÓPTIMO\n  * <0.4 kPa: 🟡 RIESGO FÚNGICO (hoja mojada)\n\n### 📊 FORMATO DE RESPUESTA OBLIGATORIO:\n\n```\n[Frase introductoria profesional sobre la situación agroclimática]\n\n🚜 REPORTE AGRO INTELLIGENCE: [Ubicación especificada]\n\n🌡️ CRECIMIENTO VEGETAL:\nGDD Diario: [Cálculo] grados-día ([Estado: Nulo/Lento/Moderado/Vigoroso])\nAcumulación Semanal: [Estimado] grados-día\n\n💦 VENTANA DE PULVERIZACIÓN:\nDelta T: [Cálculo] °C → [🟢 ÓPTIMA / 🟡 MARGINAL / 🔴 CRÍTICA]\nCondición de Deriva: Viento [X] km/h → [SEGURO / RIESGO / PROHIBIDO]\nHorario Recomendado: [Ventana temporal específica]\n\n🌱 PERFIL TÉRMICO DEL SUELO:\n• Superficie (0cm): [X]°C - [Estado de riesgo]\n• Cama Siembra (6cm): [X]°C - [Evaluación germinación] \n• Raíz Activa (18cm): [X]°C - [Estado absorción nutrientes]\n• Reserva (54cm): [X]°C - [Inercia térmica]\n\n💧 BALANCE HÍDRICO:\nLluvia: [X]mm | ETo: [X]mm | Balance: [X]mm ([DÉFICIT/SUPERÁVIT])\nEstrés Hídrico (VPD): [X] kPa → [🟢 ÓPTIMO / 🟡 VIGILANCIA / 🔴 ESTRÉS]\n\n⚠️ RECOMENDACIONES OPERATIVAS:\n• PRIORIDAD ALTA: [Acción específica inmediata]\n• MONITOREO: [Aspectos a vigilar]\n• VENTANA ÓPTIMA: [Timing para operaciones]\n\nSi el usuario pide un análisis general, calcula los 4 motores obligatorios.\n\nNUEVA REGLA: Si el usuario pide un gráfico de un DATO PUNTUAL (ej: solo humedad o solo GDD), enfócate únicamente en ese dato. Omite los motores que no tengan relación para hacer el reporte más rápido y directo.\n```\n\n### 🚫 RESTRICCIONES CRÍTICAS:\n- NUNCA analices condiciones navales, aéreas o energéticas\n- SIEMPRE enfoca todo hacia impacto agrícola\n- NO uses terminología de otros sectores\n- SIEMPRE calcula los 4 motores obligatorios\n- Si faltan datos meteorológicos, solicítalos específicamente\n\n**⏰ REGLA DE TIEMPO (FUTURO AGRÍCOLA):**\nSi el análisis es para MAÑANA o fecha futura:\n- Cambia \"Condiciones Actuales\" por \"PROYECCIÓN AGRÍCOLA PARA [FECHA]\"\n- Usa verbos futuros: \"Se proyecta\", \"Condiciones esperadas\", \"Ventana prevista\"\n- Enfoca en planificación de operaciones agrícolas\n\n**📄 PROTOCOLO DE OFERTA DE DOCUMENTOS TÉCNICOS:**\nCuando proporciones un análisis agroclimático completo, SIEMPRE ofrecer:\n\"Para tus registros de campo y planificación agrícola, ¿deseas que genere un Informe Técnico Agronómico en PDF con este análisis?\"\n\n**📊 ACTIVACIÓN POWER BI AGRÍCOLA:**\nSelecciona segun te pida el usuario el tipo de grafico que quiere que hagas. Si no te especifica selecciona a tu criterio segun los datos que te pida:\n\n**LÓGICA DE SELECCIÓN:**\n1.  → Líneas: `b2e3ea8eca90022b5c02`\n2. → Barras: `74eefb24516597981019`\n3. → Líneas+Barras: `f9f1fe12a7682da2d98e`\n4. → Mapas: `b3ef452f50d98e112de7`\n5. → Áreas: `e2a68c8e0910ae36e338`\n6. → Análisis: `0c1e509440ac517a88a5`\n\n**📊 FORMATO FINAL OBLIGATORIO PARA EL GRÁFICO:**\nPara que el sistema dibuje el gráfico interactivo, DEBES terminar tu respuesta EXACTAMENTE con este bloque. \n\nREGLA DE TIEMPO CRÍTICA: \n- Si piden varios datos temporales (horas o días), TIENES ESTRICTAMENTE PROHIBIDO rellenar la lista con ceros o inventar los datos (ej: 15.8, 0, 0, 0, 0). \n- DEBES leer el pronóstico completo y extraer o calcular el valor REAL para CADA UNO de los puntos en el tiempo. \n- La cantidad de etiquetas debe ser IGUAL a la cantidad de números, y TODOS los números deben ser reales.\n- Si piden un dato estático/actual: Pon un solo valor por línea.\n\n🚨 REGLA DE FORMATO CRÍTICA Y OBLIGATORIA (INQUEBRANTABLE):\nTu respuesta final DEBE terminar SIEMPRE con el siguiente bloque de datos. \nREGLAS ESTRICTAS:\n1. Debes escribir literalmente la etiqueta \"[MOSTRAR_GRAFICO]\".\n2. Cada variable DEBE ir en una NUEVA LÍNEA (Prohibido escribir todo en un solo párrafo).\n3. Escribe solo los números separados por comas. ¡NO USES CORCHETES `[]` ALREDEDOR DE LOS NÚMEROS!\n\nEJEMPLO EXACTO DE CÓMO DEBES RESPONDER AL FINAL:\n\n\"[MOSTRAR_GRAFICO]\"\netiquetas: [Ej: Lunes, Martes, Miércoles... o 08:00, 12:00, 16:00...]\ncultivo: [Nombre del cultivo]\nregion: [Nombre de la región/ubicación]\ntemperatura_suelo: [Ej: 18, 19, 20, 22]\nhumedad_relativa: [Ej: 45, 50, 60, 55]\nprecipitacion: [Ej: 0, 2, 0, 0]\nhoras_sol: [Ej: 8, 9, 7, 8]\nfase_lunar: [Fase lunar]\nviento_direccion: [Ej: 360, 45, 90, 180, 270] (¡USAR SOLO GRADOS DE 0 a 360!)\n4. ANTI-BOTONES VACÍOS (OMISIÓN RADICAL): Si no tienes los datos reales para una variable específica (por ejemplo, si te piden visibilidad_nm pero solo tienes en km, o si faltan datos de olas), TIENES ESTRICTAMENTE PROHIBIDO incluir el nombre de esa variable en tu lista final. BORRA la línea por completo. Si incluyes una variable vacía o con ceros, el frontend creará un botón roto. Solo imprime las variables que tengan datos reales.\n\n**📍 REGLA CRÍTICA DE UBICACIÓN:**\nSi por algún error técnico la IA principal no te pasó la ubicación, devuelve este mensaje exacto para que la IA principal se lo retransmita al usuario: ''⚠️ Error: Necesito que especifiques la ciudad, región o zona agrícola para generar el dashboard'.\n\n\n### 🎯 PALABRAS CLAVE DE ACTIVACIÓN:\n**YA NO APLICA:** La IA principal se encarga del routing. Si llegaste aquí, es porque ya debes generar visualizaciones agrícolas.\n\n⚠️ **IMPORTANTE:** NO busques palabras clave. Asume que TODA consulta que recibes requiere visualización Power BI.\n\n\n\n---\nDatos a analisar:\n{{ $json.query || $json.text || $json.chatInput || \"Genera el reporte para el gráfico solicitado con estos datos: \" + JSON.stringify($json) }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1184,
+        240
+      ],
+      "id": "5f49edef-4215-4429-913c-01742fa6fb1c",
+      "name": "Basic LLM Chain"
+    }
+  ],
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        []
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Function",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "19ee95c84ac845adb5e56f055bd53b79a0e674016338a7de7b71fc1ecea83ccf"
+  }
+}

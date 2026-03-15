@@ -1,0 +1,254 @@
+{
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        304,
+        80
+      ],
+      "id": "79f8564a-bc6c-4873-905f-e4de17c216d6",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-pro-preview-customtools",
+        "options": {"maxOutputTokens": 2000}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        416,
+        464
+      ],
+      "id": "f33adfda-76b4-4d4d-bccb-fcae817fc1ec",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "UcE6zBeBch9QD2vO",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5ddeb4db-0381-4037-9498-9aeb348cd64e",
+              "name": "output",
+              "value": "={{ $('Function').item.json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1200,
+        272
+      ],
+      "id": "8741f8cf-0f56-40ba-b480-6b2fa38fb881",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.first().json; \nconst texto_bruto = inputData.output || inputData.text || \"\";\n\nconst extraerTexto = (campo, fallback) => {\n    const regex = new RegExp(`${campo}[:\\\\s]+([^\\\\n]+)`, 'i');\n    const match = texto_bruto.match(regex);\n    return match ? match[1].trim() : fallback;\n};\n\n// Extrae solo el PRIMER número de la lista para BigQuery\nconst extraerPrimerNumero = (campo, fallback) => {\n    const texto = extraerTexto(campo, \"\");\n    if (!texto) return fallback;\n    const primerNumero = texto.split(',')[0].trim(); \n    return parseFloat(primerNumero.replace(',', '.')) || fallback;\n};\n\n// Extrae solo el PRIMER texto de una lista (Ej: \"N, NE\" -> \"N\")\nconst extraerPrimerTexto = (campo, fallback) => {\n    const texto = extraerTexto(campo, \"\");\n    if (!texto) return fallback;\n    return texto.split(',')[0].trim() || fallback;\n};\n\nconst reporte_limpio = texto_bruto.replace(/\\[MOSTRAR_GRAFICO\\][\\s\\S]*/i, \"\").trim();\n\nreturn [{\n    json: {\n        // --- DATOS PARA BIGQUERY (datos_sectoriales) ---\n        timestamp: new Date().toISOString(),\n        session_id: inputData.session_id || `naval-${Date.now()}`,\n        sector: \"NAVAL\", \n        \n        puerto: extraerTexto(\"puerto\", \"S/D\"),\n        condiciones_mar: extraerTexto(\"condiciones_mar\", \"S/D\"),\n        viento_velocidad: extraerPrimerNumero(\"viento_velocidad\", 0),\n        viento_direccion: extraerPrimerTexto(\"viento_direccion\", \"VAR\"), \n        temperatura_agua: extraerPrimerNumero(\"temperatura_agua\", 20),\n        altura_olas: extraerPrimerNumero(\"altura_olas\", 0),\n        visibilidad: extraerPrimerNumero(\"visibilidad\", 10),\n        \n        ai_analysis: reporte_limpio,\n        \n        metadata: JSON.stringify({ \n            status: \"success\", \n            trigger_input: inputData.query || \"Entrada Naval\" \n        }),\n\n        // --- DATOS PARA DJANGO Y CHART.JS (Con las listas completas) ---\n        output: texto_bruto \n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        272
+      ],
+      "id": "41ebb8db-c4c7-4321-aece-0cc70fa7cb4b",
+      "name": "Function"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": {
+          "__rl": true,
+          "value": "proyecto-bi-488218",
+          "mode": "list",
+          "cachedResultName": "proyecto-BI",
+          "cachedResultUrl": "https://console.cloud.google.com/bigquery?project=proyecto-bi-488218"
+        },
+        "sqlQuery": "INSERT INTO `proyecto-bi-488218.datos_clima.datos_sectoriales`\n(\n  timestamp,\n  session_id,\n  sector,\n  puerto,\n  condiciones_mar,\n  viento_velocidad,\n  viento_direccion, \n  temperatura_agua,\n  altura_olas,\n  visibilidad,\n  ai_analysis,\n  metadata\n)\nVALUES\n(\n  -- ✅ Timestamp con parsing seguro y fallback\n  COALESCE(\n    SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', @timestamp),\n    CURRENT_TIMESTAMP()\n  ),\n  \n  -- ✅ Session ID con sanitización\n  COALESCE(\n    NULLIF(TRIM(@session_id), ''), \n    CONCAT('naval-auto-', FORMAT_TIMESTAMP('%Y%m%d-%H%M%S', CURRENT_TIMESTAMP()))\n  ),\n  \n  -- ✅ Sector fijo para NAVAL\n  'NAVAL',\n  \n  -- ✅ Puerto con validación de longitud\n  CASE \n    WHEN LENGTH(TRIM(@puerto)) > 100 THEN SUBSTR(TRIM(@puerto), 1, 100)\n    WHEN TRIM(@puerto) IS NULL OR TRIM(@puerto) = '' THEN 'Puerto no especificado'\n    ELSE TRIM(@puerto)\n  END,\n  \n  -- ✅ Condiciones mar normalizado\n  CASE \n    WHEN UPPER(TRIM(@condiciones_mar)) IN ('CALMO', 'CALMA', 'CALM') THEN 'Calmo'\n    WHEN UPPER(TRIM(@condiciones_mar)) IN ('MODERADO', 'MODERATE') THEN 'Moderado'\n    WHEN UPPER(TRIM(@condiciones_mar)) IN ('AGITADO', 'ROUGH') THEN 'Agitado'\n    WHEN UPPER(TRIM(@condiciones_mar)) IN ('PELIGROSO', 'DANGEROUS') THEN 'Peligroso'\n    WHEN TRIM(@condiciones_mar) IS NULL OR TRIM(@condiciones_mar) = '' THEN 'Sin datos'\n    ELSE REGEXP_REPLACE(TRIM(@condiciones_mar), r'[^a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]', '')\n  END,\n  \n  -- ✅ Velocidad viento - CONVERSIÓN SEGURA STRING → FLOAT64\n  CASE \n    WHEN SAFE_CAST(@viento_velocidad AS FLOAT64) IS NOT NULL \n         AND SAFE_CAST(@viento_velocidad AS FLOAT64) BETWEEN 0 AND 200 \n    THEN SAFE_CAST(@viento_velocidad AS FLOAT64)\n    ELSE 0.0\n  END,\n  \n  -- ✅ Dirección viento normalizado\n  CASE \n    WHEN UPPER(TRIM(@viento_direccion)) IN ('N', 'NORTE', 'NORTH') THEN 'Norte'\n    WHEN UPPER(TRIM(@viento_direccion)) IN ('S', 'SUR', 'SOUTH') THEN 'Sur'\n    WHEN UPPER(TRIM(@viento_direccion)) IN ('E', 'ESTE', 'EAST') THEN 'Este'\n    WHEN UPPER(TRIM(@viento_direccion)) IN ('O', 'W', 'OESTE', 'WEST') THEN 'Oeste'\n    WHEN UPPER(TRIM(@viento_direccion)) IN ('NE', 'NORESTE', 'NORTHEAST') THEN 'Noreste'\n    WHEN UPPER(TRIM(@viento_direccion)) IN ('NO', 'NW', 'NOROESTE', 'NORTHWEST') THEN 'Noroeste'\n    WHEN UPPER(TRIM(@viento_direccion)) IN ('SE', 'SURESTE', 'SOUTHEAST') THEN 'Sureste'\n    WHEN UPPER(TRIM(@viento_direccion)) IN ('SO', 'SW', 'SUROESTE', 'SOUTHWEST') THEN 'Suroeste'\n    ELSE 'Variable'\n  END,\n  \n  -- ✅ Temperatura agua - CONVERSIÓN SEGURA STRING → FLOAT64\n  CASE \n    WHEN SAFE_CAST(@temperatura_agua AS FLOAT64) IS NOT NULL \n         AND SAFE_CAST(@temperatura_agua AS FLOAT64) BETWEEN -5 AND 50 \n    THEN SAFE_CAST(@temperatura_agua AS FLOAT64)\n    ELSE 20.0\n  END,\n  \n  -- ✅ Altura olas - CONVERSIÓN SEGURA STRING → FLOAT64\n  CASE \n    WHEN SAFE_CAST(@altura_olas AS FLOAT64) IS NOT NULL \n         AND SAFE_CAST(@altura_olas AS FLOAT64) BETWEEN 0 AND 30 \n    THEN SAFE_CAST(@altura_olas AS FLOAT64)\n    ELSE 0.0\n  END,\n  \n  -- ✅ Visibilidad - CONVERSIÓN SEGURA STRING → FLOAT64\n  CASE \n    WHEN SAFE_CAST(@visibilidad AS FLOAT64) IS NOT NULL \n         AND SAFE_CAST(@visibilidad AS FLOAT64) BETWEEN 0 AND 50 \n    THEN SAFE_CAST(@visibilidad AS FLOAT64)\n    ELSE 10.0\n  END,\n  \n  -- ✅ Análisis AI con sanitización y límite\n  CASE \n    WHEN LENGTH(TRIM(@ai_analysis)) > 5000 THEN SUBSTR(TRIM(@ai_analysis), 1, 5000)\n    WHEN TRIM(@ai_analysis) IS NULL OR TRIM(@ai_analysis) = '' THEN 'Análisis no disponible'\n    ELSE REGEXP_REPLACE(TRIM(@ai_analysis), r'[^\\w\\sáéíóúÁÉÍÓÚñÑ.,;:()\\-\\n\\r]', '')\n  END,\n  \n  -- ✅ Metadata JSON con validación\n  CASE \n    WHEN @metadata IS NOT NULL AND @metadata != '' THEN @metadata\n    ELSE '{\"source\":\"default\",\"processed\":true}'\n  END\n);\n\n-- ✅ SELECT para generar OUTPUT y continuar flujo\nSELECT \n  'SUCCESS' as status,\n  'Datos navales insertados correctamente' as message,\n  CURRENT_TIMESTAMP() as processed_at,\n  'NAVAL' as sector;\n\n",
+        "options": {
+          "queryParameters": {
+            "namedParameters": [
+              {
+                "name": "timestamp",
+                "value": "={{ $('Function').item.json.timestamp }}"
+              },
+              {
+                "name": "session_id",
+                "value": "={{ $('Function').item.json.session_id}}"
+              },
+              {
+                "name": "puerto",
+                "value": "={{ $('Function').item.json.puerto }}"
+              },
+              {
+                "name": "condiciones_mar",
+                "value": "={{ $('Function').item.json.condiciones_mar }}"
+              },
+              {
+                "name": "viento_velocidad",
+                "value": "= {{ $('Function').item.json.viento_velocidad }}"
+              },
+              {
+                "name": "viento_direccion",
+                "value": "={{ $('Function').item.json.viento_direccion }}"
+              },
+              {
+                "name": "temperatura_agua",
+                "value": "={{ $('Function').item.json.temperatura_agua }}"
+              },
+              {
+                "name": "altura_olas",
+                "value": "= {{ $('Function').item.json.altura_olas }}"
+              },
+              {
+                "name": "visibilidad",
+                "value": "={{ $('Function').item.json.visibilidad }}"
+              },
+              {
+                "name": "ai_analysis",
+                "value": "={{ $('Function').item.json.ai_analysis }}"
+              },
+              {
+                "name": "metadata",
+                "value": "={{ ($('Function').item.json.metadata) }}"
+              },
+              {
+                "name": "sector",
+                "value": "={{ ($('Function').item.json.sector) }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [
+        976,
+        272
+      ],
+      "id": "973f8b57-b4ee-4c5b-98d4-ef4cd973869a",
+      "name": "Execute a SQL query",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleApi": {
+          "id": "Ewe5h1U44UTbd2Qs",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "query"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        336,
+        272
+      ],
+      "id": "27d54279-9a75-4a79-8e71-39ae619d6763",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Eres el Especialista en Visualización Naval de TuClima. La IA principal ya decidió enviarte aquí porque el usuario solicitó gráficos/visualizaciones navales.\n\n**🎯 TU ÚNICA FUNCIÓN:**\n1. **RECIBIR:** Datos marítimos de la IA principal  \n2. **PROCESAR:** Aplicar motores de cálculo navales\n3. **VISUALIZAR:** Generar la estructura de datos para el dashboard interactivo.\n4. **ENVIAR:** Al siguiente nodo con los parámetros listos.\n\n**🚫 NO BUSQUES PALABRAS CLAVE:** La IA principal ya filtró. Tu asumes que SIEMPRE debes generar los parámetros del gráfico.\n\n### 🎯 MISIÓN ESPECÍFICA:\nYa estás activado para crear visualizaciones navales. Procesa los datos recibidos y genera:\n- Tendencias de oleaje y viento\n- Estados de puertos y seguridad \n- Rutas navales\n- Dashboards marítimos completos\n\n### 🧮 MOTORES DE CÁLCULO OBLIGATORIOS:\n- NUNCA mezcles unidades. Si es una línea de tiempo (varios datos), calcula todos. Si es un dato puntual, enfócate solo en ese.\n\n**1. 🌬️ VIENTO NAVAL (Escala Beaufort):**\n- Conversión OBLIGATORIA: km/h × 0.5399 = NUDOS (kt)\n- 34+ kt: TEMPORAL (⛔ Peligro - Puerto cerrado)\n\n**2. 🌊 ESTADO DEL MAR (Escala Douglas):**\n- >2.5m: GRUESA (⛔ Peligro)\n\n**3. 🚦 SEMÁFORO DE PUERTO (Protocolo de Seguridad):**\n- 🟢 ABIERTO: Condiciones normales\n- 🟡 PRECAUCIÓN: Olas 1.5-2.5m O Viento 15-25 kt\n- 🔴 CERRADO: Olas >2.5m O Viento >25 kt\n\n**4. 🧪 FÍSICA MARINA Y SUPERVIVENCIA:**\n- Visibilidad: Metros ÷ 1852 = Millas Náuticas (NM)\n- Temperatura agua (Estimada): (Temp_Aire × 0.85) + 2\n\n### 📊 FORMATO DE RESPUESTA OBLIGATORIO:\n\n[Frase introductoria profesional sobre la situación marítima]\n\n⚓ REPORTE NAVAL COMMAND: [Ubicación especificada]\n\n📍 POSICIÓN Y REFERENCIAS:\nCoordenadas: [Lat], [Lon]\nPuerto Base: [Puerto más cercano]\n\n🚦 CONDICIÓN OPERATIVA:\nEstado de Puerto: [🟢 ABIERTO / 🟡 PRECAUCIÓN / 🔴 CERRADO]\nRazón: [Justificación técnica]\n\n🌊 CONDICIONES DE MAR (Douglas):\nAltura Ola: [X]m\n🌬️ VIENTO (Beaufort):\nViento Sostenido: [X] kt\nDirección: [X]°\n\n⚠️ RECOMENDACIONES NAVALES:\n• SEGURIDAD: [Medida de seguridad principal]\n\n\n### 🚫 RESTRICCIONES CRÍTICAS:\n- NUNCA analices condiciones agrícolas, aéreas o energéticas\n- SIEMPRE usa NUDOS para viento en los gráficos.\n\n**📊 FORMATO FINAL OBLIGATORIO PARA EL GRÁFICO:**\nPara que el sistema dibuje el gráfico interactivo, DEBES terminar tu respuesta EXACTAMENTE con este bloque. \n\nREGLA DE TIEMPO CRÍTICA: \n- Si piden varios datos temporales (horas o días), TIENES ESTRICTAMENTE PROHIBIDO rellenar la lista con ceros o inventar los datos (ej: 15.8, 0, 0, 0, 0). \n- DEBES leer el pronóstico completo y extraer o calcular el valor REAL para CADA UNO de los puntos en el tiempo. \n- La cantidad de etiquetas debe ser IGUAL a la cantidad de números, y TODOS los números deben ser reales.\n- Si piden un dato estático/actual: Pon un solo valor por línea.\n\n🚨 REGLA DE FORMATO CRÍTICA Y OBLIGATORIA (INQUEBRANTABLE):\nTu respuesta final DEBE terminar SIEMPRE con el siguiente bloque de datos. \nREGLAS ESTRICTAS:\n1. Debes escribir literalmente la etiqueta \"[MOSTRAR_GRAFICO]\".\n2. Cada variable DEBE ir en una NUEVA LÍNEA (Prohibido escribir todo en un solo párrafo).\n3. Escribe solo los números separados por comas. ¡NO USES CORCHETES `[]` ALREDEDOR DE LOS NÚMEROS!\n\nEJEMPLO EXACTO DE CÓMO DEBES RESPONDER AL FINAL:\n\"[MOSTRAR_GRAFICO]\"\nchart_type: [line / bar]\netiquetas: [Ej: Lunes, Martes... o 08:00, 12:00...]\npuerto: [Nombre del puerto o zona]\ncondiciones_mar: [Estado general]\nviento_velocidad: [Ej: 15, 20, 25, 15]\nviento_direccion: [Ej: 360, 45, 90, 180, 270] (¡USAR SOLO GRADOS DE 0 a 360, NO USAR LETRAS!)\ntemperatura_agua: [Ej: 18, 18.5, 19, 18]\naltura_olas: [Ej: 1.2, 1.5, 2.0, 1.5]\nvisibilidad: [Ej: 10, 8, 5, 10]\n\n4. ANTI-BOTONES VACÍOS (OMISIÓN RADICAL): Si no tienes los datos reales para una variable específica (por ejemplo, si te piden visibilidad_nm pero solo tienes en km, o si faltan datos de olas), TIENES ESTRICTAMENTE PROHIBIDO incluir el nombre de esa variable en tu lista final. BORRA la línea por completo. Si incluyes una variable vacía o con ceros, el frontend creará un botón roto. Solo imprime las variables que tengan datos reales.\n\n---\nDatos a analizar:\n{{ $json.query || $json.text || $json.chatInput || \"Genera el reporte para el gráfico solicitado con estos datos: \" + JSON.stringify($json) }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        480,
+        272
+      ],
+      "id": "ec678f00-f5d1-4f0d-8c9d-6aba3c611494",
+      "name": "Basic LLM Chain"
+    }
+  ],
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        []
+      ]
+    },
+    "Function": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Function",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "19ee95c84ac845adb5e56f055bd53b79a0e674016338a7de7b71fc1ecea83ccf"
+  }
+}

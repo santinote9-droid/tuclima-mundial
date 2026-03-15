@@ -1,0 +1,253 @@
+{
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        912,
+        64
+      ],
+      "id": "2525950d-d230-48ae-8cbd-7339db3d0f1f",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-pro-preview-customtools",
+        "options": {"maxOutputTokens": 2000}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1216,
+        384
+      ],
+      "id": "046a180a-a536-446b-bb61-57a4e26f091a",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "UcE6zBeBch9QD2vO",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5ddeb4db-0381-4037-9498-9aeb348cd64e",
+              "name": "output",
+              "value": "={{ $('Function').item.json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1904,
+        240
+      ],
+      "id": "48224358-4993-4c2f-b37d-7d3e095842e1",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": {
+          "__rl": true,
+          "value": "proyecto-bi-488218",
+          "mode": "list",
+          "cachedResultName": "proyecto-BI",
+          "cachedResultUrl": "https://console.cloud.google.com/bigquery?project=proyecto-bi-488218"
+        },
+        "sqlQuery": "INSERT INTO `proyecto-bi-488218.datos_clima.datos_sectoriales`\n(\n  timestamp,\n  session_id,\n  sector,\n  tipo_energia,\n  ubicacion,\n  radiacion_solar,\n  velocidad_viento,\n  temperatura_ambiente,\n  eficiencia_estimada,\n  produccion_kwh,\n  ai_efficiency_analysis,\n  metadata\n)\nVALUES\n(\n  -- ✅ Timestamp con parsing seguro y fallback\n  COALESCE(\n    SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', @timestamp),\n    CURRENT_TIMESTAMP()\n  ),\n  \n  -- ✅ Session ID con sanitización\n  COALESCE(\n    NULLIF(TRIM(@session_id), ''), \n    CONCAT('energia-auto-', FORMAT_TIMESTAMP('%Y%m%d-%H%M%S', CURRENT_TIMESTAMP()))\n  ),\n  \n  -- ✅ Sector fijo para ENERGIA\n  'ENERGIA',\n  \n  -- ✅ Tipo energía normalizado\n  CASE \n    WHEN UPPER(TRIM(@tipo_energia)) IN ('SOLAR', 'FOTOVOLTAICA', 'PHOTOVOLTAIC') THEN 'Solar'\n    WHEN UPPER(TRIM(@tipo_energia)) IN ('EOLICA', 'EÓLICA', 'WIND', 'VIENTO') THEN 'Eólica'\n    WHEN UPPER(TRIM(@tipo_energia)) IN ('HIDRAULICA', 'HIDRÁULICA', 'HYDRO') THEN 'Hidráulica'\n    WHEN UPPER(TRIM(@tipo_energia)) IN ('GEOTERMICA', 'GEOTÉRMICA', 'GEOTHERMAL') THEN 'Geotérmica'\n    WHEN UPPER(TRIM(@tipo_energia)) IN ('BIOMASA', 'BIOMASS') THEN 'Biomasa'\n    WHEN TRIM(@tipo_energia) IS NULL OR TRIM(@tipo_energia) = '' THEN 'No especificado'\n    ELSE REGEXP_REPLACE(TRIM(@tipo_energia), r'[^a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]', '')\n  END,\n  \n  -- ✅ Ubicación con validación de longitud\n  CASE \n    WHEN LENGTH(TRIM(@ubicacion)) > 100 THEN SUBSTR(TRIM(@ubicacion), 1, 100)\n    WHEN TRIM(@ubicacion) IS NULL OR TRIM(@ubicacion) = '' THEN 'Ubicación no especificada'\n    ELSE TRIM(@ubicacion)\n  END,\n  \n  -- ✅ Radiación solar - CONVERSIÓN SEGURA STRING → FLOAT64 (kWh/m²)\n  CASE \n    WHEN SAFE_CAST(@radiacion_solar AS FLOAT64) IS NOT NULL \n         AND SAFE_CAST(@radiacion_solar AS FLOAT64) BETWEEN 0 AND 12 \n    THEN SAFE_CAST(@radiacion_solar AS FLOAT64)\n    ELSE 0.0\n  END,\n  \n  -- ✅ Velocidad viento - CONVERSIÓN SEGURA STRING → FLOAT64 (km/h)\n  CASE \n    WHEN SAFE_CAST(@velocidad_viento AS FLOAT64) IS NOT NULL \n         AND SAFE_CAST(@velocidad_viento AS FLOAT64) BETWEEN 0 AND 200 \n    THEN SAFE_CAST(@velocidad_viento AS FLOAT64)\n    ELSE 0.0\n  END,\n  \n  -- ✅ Temperatura ambiente - CONVERSIÓN SEGURA STRING → FLOAT64 (°C)\n  CASE \n    WHEN SAFE_CAST(@temperatura_ambiente AS FLOAT64) IS NOT NULL \n         AND SAFE_CAST(@temperatura_ambiente AS FLOAT64) BETWEEN -50 AND 60 \n    THEN SAFE_CAST(@temperatura_ambiente AS FLOAT64)\n    ELSE 20.0\n  END,\n  \n  -- ✅ Eficiencia estimada - CONVERSIÓN SEGURA STRING → FLOAT64 (%)\n  CASE \n    WHEN SAFE_CAST(@eficiencia_estimada AS FLOAT64) IS NOT NULL \n         AND SAFE_CAST(@eficiencia_estimada AS FLOAT64) BETWEEN 0 AND 100 \n    THEN SAFE_CAST(@eficiencia_estimada AS FLOAT64)\n    ELSE 0.0\n  END,\n  \n  -- ✅ Producción kWh - CONVERSIÓN SEGURA STRING → FLOAT64\n  CASE \n    WHEN SAFE_CAST(@produccion_kwh AS FLOAT64) IS NOT NULL \n         AND SAFE_CAST(@produccion_kwh AS FLOAT64) BETWEEN 0 AND 100000 \n    THEN SAFE_CAST(@produccion_kwh AS FLOAT64)\n    ELSE 0.0\n  END,\n  \n  -- ✅ Análisis AI con sanitización y límite\n  CASE \n    WHEN LENGTH(TRIM(@ai_efficiency_analysis)) > 5000 THEN SUBSTR(TRIM(@ai_efficiency_analysis), 1, 5000)\n    WHEN TRIM(@ai_efficiency_analysis) IS NULL OR TRIM(@ai_efficiency_analysis) = '' THEN 'Análisis no disponible'\n    ELSE REGEXP_REPLACE(TRIM(@ai_efficiency_analysis), r'[^\\w\\sáéíóúÁÉÍÓÚñÑ.,;:()\\-\\n\\r]', '')\n  END,\n  \n  -- ✅ Metadata JSON con validación\n  CASE \n    WHEN @metadata IS NOT NULL AND @metadata != '' THEN @metadata\n    ELSE '{\"source\":\"default\",\"processed\":true}'\n  END\n);\n\n-- ✅ SELECT para generar OUTPUT y continuar flujo\nSELECT \n  'SUCCESS' as status,\n  'Datos energéticos insertados correctamente' as message,\n  CURRENT_TIMESTAMP() as processed_at,\n  'ENERGIA' as sector;\n\n",
+        "options": {
+          "queryParameters": {
+            "namedParameters": [
+              {
+                "name": "timestamp",
+                "value": "={{ $('Function').item.json.timestamp }}"
+              },
+              {
+                "name": "session_id",
+                "value": "={{ $('Function').item.json.session_id}}"
+              },
+              {
+                "name": "tipo_energia",
+                "value": "={{ $('Function').item.json.tipo_energia }}"
+              },
+              {
+                "name": "ubicacion",
+                "value": "={{ $('Function').item.json.ubicacion }}"
+              },
+              {
+                "name": "radiacion_solar",
+                "value": "={{ $('Function').item.json.radiacion_solar }}"
+              },
+              {
+                "name": "velocidad_viento",
+                "value": "={{ $('Function').item.json.velocidad_viento }}"
+              },
+              {
+                "name": "temperatura_ambiente",
+                "value": "={{ $('Function').item.json.temperatura_ambiente }}"
+              },
+              {
+                "name": "eficiencia_estimada",
+                "value": "={{ $('Function').item.json.eficiencia_estimada }}"
+              },
+              {
+                "name": "produccion_kwh",
+                "value": "={{ $('Function').item.json.produccion_kwh }}"
+              },
+              {
+                "name": "ai_efficiency_analysis",
+                "value": "={{ $('Function').item.json.ai_efficiency_analysis }}"
+              },
+              {
+                "name": "metadata",
+                "value": "={{ $('Function').item.json.metadata }}"
+              },
+              {
+                "name": "sector",
+                "value": "={{ $('Function').item.json.sector }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [
+        1712,
+        240
+      ],
+      "id": "d99e723d-4a84-476e-9930-2af9e976b1a3",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "googleApi": {
+          "id": "Ewe5h1U44UTbd2Qs",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.first().json; \nconst texto_bruto = inputData.output || inputData.text || \"\";\n\nconst extraerTexto = (campo, fallback) => {\n    const regex = new RegExp(`${campo}[:\\\\s]+([^\\\\n]+)`, 'i');\n    const match = texto_bruto.match(regex);\n    return match ? match[1].trim() : fallback;\n};\n\n// Extrae solo el PRIMER número de la lista para BigQuery\nconst extraerPrimerNumero = (campo, fallback) => {\n    const texto = extraerTexto(campo, \"\");\n    if (!texto) return fallback;\n    const primerNumero = texto.split(',')[0].trim(); \n    return parseFloat(primerNumero.replace(',', '.')) || fallback;\n};\n\nconst reporte_limpio = texto_bruto.replace(/\\[MOSTRAR_GRAFICO\\][\\s\\S]*/i, \"\").trim();\n\nreturn [{\n    json: {\n        // --- DATOS PARA BIGQUERY (datos_sectoriales) ---\n        timestamp: new Date().toISOString(),\n        session_id: inputData.session_id || `energia-${Date.now()}`,\n        sector: \"ENERGIA\", \n        \n        tipo_energia: extraerTexto(\"tipo_energia\", \"Híbrida\"),\n        ubicacion: extraerTexto(\"ubicacion\", \"S/D\"),\n        radiacion_solar: extraerPrimerNumero(\"radiacion_solar\", 0),\n        velocidad_viento: extraerPrimerNumero(\"velocidad_viento\", 0),\n        temperatura_ambiente: extraerPrimerNumero(\"temperatura_ambiente\", 25),\n        eficiencia_estimada: extraerPrimerNumero(\"eficiencia_estimada\", 80),\n        produccion_kwh: extraerPrimerNumero(\"produccion_kwh\", 0),\n        \n        ai_efficiency_analysis: reporte_limpio,\n        \n        metadata: JSON.stringify({ \n            status: \"success\", \n            trigger_input: inputData.query || \"Entrada Energía\" \n        }),\n\n        // --- DATOS PARA DJANGO Y CHART.JS (Con las listas completas) ---\n        output: texto_bruto \n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        240
+      ],
+      "id": "260be936-0d9f-4a1f-9895-a0aba60d32b8",
+      "name": "Function"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "query"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        1040,
+        240
+      ],
+      "id": "120d4ac9-808c-425e-a854-22e8a9759512",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Eres el Especialista en Visualización Energética de TuClima. La IA principal ya decidió enviarte aquí porque el usuario solicitó gráficos/visualizaciones energéticas.\n\n**🎯 TU ÚNICA FUNCIÓN:**\n1. **RECIBIR:** Datos energéticos de la IA principal  \n2. **PROCESAR:** Aplicar motores de cálculo energéticos\n3. **VISUALIZAR:** Generar la estructura de datos para el dashboard interactivo.\n4. **ENVIAR:** Al siguiente nodo con los parámetros listos.\n\n**🚫 NO BUSQUES PALABRAS CLAVE:** La IA principal ya filtró. Tu asumes que SIEMPRE debes generar los parámetros del gráfico.\n\n### 🎯 MISIÓN ESPECÍFICA:\nYa estás activado para crear visualizaciones energéticas. Procesa los datos recibidos y genera:\n- Tendencias producción solar/eólica\n- Comparativas eficiencia\n- Mapas irradiancia/eólicos\n- Dashboards renovables completos\n\n### 🧮 MOTORES DE CÁLCULO OBLIGATORIOS:\n- NUNCA mezcles unidades. Si es una línea de tiempo (varios datos), calcula todos. Si es un dato puntual, enfócate solo en ese.\n\n**1. ☀️ SOLAR FOTOVOLTAICA (Modelo 20m²):**\n- Pérdida Térmica por calor: Si Temp >25°C: Factor = 1.0 - ((Temp - 25) × 0.004)\n- Potencia Real (W): Irradiancia × 20 × 0.18 × Factor\n\n**2. 💨 EÓLICA (Aerogenerador Estándar):**\n- Conversión viento: km/h ÷ 3.6 = m/s\n- Curva de Potencia Cúbica: Si viento >3 m/s: Potencia = 10 × (viento_m/s)³ (Máximo: 3000W)\n\n**3. 🧪 FÍSICA ATMOSFÉRICA (Densidad del Aire):**\n- Densidad = Presión_Pa ÷ (287.05 × Temp_Kelvin)\n\n**4. 🔋 ALMACENAMIENTO E HIDRÓGENO VERDE:**\n- H2 Verde: Producción (kg/24h) = Potencia_Total_kW ÷ 55\n- CO2 Evitado: kWh_Total × 0.44 kg\n\n### 📊 FORMATO DE RESPUESTA OBLIGATORIO:\n\n[Frase introductoria profesional sobre condiciones energéticas]\n\n⚡ ENERGY OPS REPORT: [Ubicación especificada]\n\n☀️ GENERACIÓN SOLAR:\nIrradiancia: [X] W/m² | Temp: [X]°C\nPotencia Fotovoltaica: [Cálculo] W\n\n💨 GENERACIÓN EÓLICA:\nViento: [X] m/s | Densidad Aire: [Cálculo] kg/m³\nPotencia Eólica: [Cálculo] W\n\n🔋 BALANCE ENERGÉTICO:\nGeneración Total: [Suma] kW | H2 Verde: [Cálculo] kg/24h\nCO2 Evitado: [Cálculo] kg/día\n\n⚠️ RECOMENDACIONES TÉCNICAS:\n• OPTIMIZACIÓN: [Sugerencia de mejora]\n\n\n### 🚫 RESTRICCIONES CRÍTICAS:\n- NUNCA analices condiciones agrícolas, navales o aeronáuticas\n- NO olvides conversiones de unidades (m/s, kg, W)\n\n**📊 FORMATO FINAL OBLIGATORIO PARA EL GRÁFICO:**\nPara que el sistema dibuje el gráfico interactivo, DEBES terminar tu respuesta EXACTAMENTE con este bloque. \n\nREGLA DE TIEMPO CRÍTICA: \n- Si piden varios datos temporales (horas o días), TIENES ESTRICTAMENTE PROHIBIDO rellenar la lista con ceros o inventar los datos (ej: 15.8, 0, 0, 0, 0). \n- DEBES leer el pronóstico completo y extraer o calcular el valor REAL para CADA UNO de los puntos en el tiempo. \n- La cantidad de etiquetas debe ser IGUAL a la cantidad de números, y TODOS los números deben ser reales.\n- Si piden un dato estático/actual: Pon un solo valor por línea.\n\n🚨 REGLA DE FORMATO CRÍTICA Y OBLIGATORIA (INQUEBRANTABLE):\nTu respuesta final DEBE terminar SIEMPRE con el siguiente bloque de datos. \nREGLAS ESTRICTAS:\n1. Debes escribir literalmente la etiqueta \"[MOSTRAR_GRAFICO]\".\n2. Cada variable DEBE ir en una NUEVA LÍNEA (Prohibido escribir todo en un solo párrafo).\n3. Escribe solo los números separados por comas. ¡NO USES CORCHETES `[]` ALREDEDOR DE LOS NÚMEROS!\n\nEJEMPLO EXACTO DE CÓMO DEBES RESPONDER AL FINAL:\n\n\"[MOSTRAR_GRAFICO]\"\nchart_type: [line / bar]\netiquetas: [Ej: Lunes, Martes... o 08:00, 12:00...]\ntipo_energia: [Solar / Eólica / Híbrida]\nubicacion: [Nombre de la región]\nradiacion_solar: [Ej: 800, 950, 1000, 400]\nvelocidad_viento: [Ej: 15, 22, 18, 10]\ntemperatura_ambiente: [Ej: 25, 28, 30, 22]\neficiencia_estimada: [Ej: 85, 80, 75, 90]\nproduccion_kwh: [Ej: 150, 200, 210, 80]\nviento_direccion: [Ej: 360, 45, 90, 180, 270] (¡USAR SOLO GRADOS DE 0 a 360!)\n\n4. ANTI-BOTONES VACÍOS (OMISIÓN RADICAL): Si no tienes los datos reales para una variable específica (por ejemplo, si te piden visibilidad_nm pero solo tienes en km, o si faltan datos de olas), TIENES ESTRICTAMENTE PROHIBIDO incluir el nombre de esa variable en tu lista final. BORRA la línea por completo. Si incluyes una variable vacía o con ceros, el frontend creará un botón roto. Solo imprime las variables que tengan datos reales.\n\n---\nDatos a analizar:\n{{ $json.query || $json.text || $json.chatInput || \"Genera el reporte para el gráfico solicitado con estos datos: \" + JSON.stringify($json) }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1216,
+        240
+      ],
+      "id": "a3e902f4-76fe-40f5-bbd4-c9b42d69a67d",
+      "name": "Basic LLM Chain"
+    }
+  ],
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        []
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Function",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "19ee95c84ac845adb5e56f055bd53b79a0e674016338a7de7b71fc1ecea83ccf"
+  }
+}

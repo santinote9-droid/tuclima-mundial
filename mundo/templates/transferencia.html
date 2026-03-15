@@ -114,6 +114,18 @@
     <div class="container">
         <h2>Destino de Fondos</h2>
 
+        <!-- Badge plan -->
+        {% if plan == 'anual' %}
+        <div style="text-align:center; background:#1e3a5f; border:1px solid #3b82f6; border-radius:12px; padding:8px 20px; margin-bottom:20px; color:#60a5fa; font-size:0.95rem;">
+            Plan <strong>Anual</strong> — <strong style="color:#fff;">$200 USD</strong>
+            <span style="display:inline-block; background:#16a34a; color:#fff; font-size:0.72em; font-weight:bold; padding:2px 9px; border-radius:20px; margin-left:8px; vertical-align:middle;">Ahorrás $40</span>
+        </div>
+        {% else %}
+        <div style="text-align:center; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:8px 20px; margin-bottom:20px; color:#94a3b8; font-size:0.95rem;">
+            Plan <strong style="color:#fff;">Mensual</strong> — <strong style="color:#fff;">$20 USD</strong>
+        </div>
+        {% endif %}
+
         <div class="bank-tabs">
             <button class="tab-btn active-brubank" onclick="showBank('brubank')">
                 <i class="fas fa-wallet"></i> Brubank
@@ -156,7 +168,7 @@
 
             <div class="row">
                 <span class="label">Monto Total</span>
-                <div class="value" style="color:#a663cc; font-weight:bold;">$20000 ARS</div>
+                <div class="value" style="color:#a663cc; font-weight:bold;">${{ monto_ars_brubank }} ARS<br><small style="color:#64748b; font-size:0.78em;">equiv. ${{ precio_usd }} USD</small></div>
             </div>
         </div>
 
@@ -191,7 +203,7 @@
             </div>
             <div class="row">
                 <span class="label">Monto Total</span>
-                <div class="value" style="color:#0ea5e9; font-weight:bold;">$20000 ARS</div>
+                <div class="value" style="color:#0ea5e9; font-weight:bold;">${{ monto_ars_mp }} ARS<br><small style="color:#64748b; font-size:0.78em;">equiv. ${{ precio_usd }} USD</small></div>
             </div>
         </div>
 
@@ -200,7 +212,7 @@
             <a href="mailto:climapro00@gmail.com" class="email-link">climapro00@gmail.com</a>
         </div>
 
-        <a href="/confirmar-manual/" class="btn-confirm">
+        <a href="/confirmar-manual/?plan={{ plan }}" class="btn-confirm">
             <i class="fas fa-check-circle"></i> YA TRANSFERÍ EL DINERO
         </a>
         

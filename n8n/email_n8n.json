@@ -1,0 +1,530 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "cae29356-d570-4ebb-ad8f-61265a6f370c",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Genera un reporte del clima actual para {{ $json.ubicacion }}. El usuario se llama {{ $json.nombre }} y trabaja en {{ $json.trabajo }}. El reporte debe ser útil para su trabajo, breve, motivador y con recomendaciones. ",
+        "options": {"maxIterations": 3}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        608,
+        0
+      ],
+      "id": "b1e4124c-9411-4426-a0d5-924c3532cf33",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-pro-preview-customtools",
+        "options": {"maxOutputTokens": 800}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        64,
+        208
+      ],
+      "id": "66f13146-48e7-4877-83ad-1d412ff343ea",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "UcE6zBeBch9QD2vO",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Obtiene el clima actual y el pronóstico (3 días) con ETo y lluvia. REQUIERE INPUTS DE LATITUD Y LONGITUD (El modelo debe estimar las coordenadas numéricas de la ciudad).",
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "current",
+              "value": "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility,is_day,dew_point_2m"
+            },
+            {
+              "name": "daily",
+              "value": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,et0_fao_evapotranspiration,precipitation_probability_max"
+            },
+            {
+              "name": "forecast_days",
+              "value": "3"
+            },
+            {
+              "name": "latitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters2_Value', ``, 'string') }}"
+            },
+            {
+              "name": "longitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters3_Value', ``, 'string') }}"
+            },
+            {
+              "name": "timezone",
+              "value": "auto"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        784,
+        352
+      ],
+      "id": "1e42b19c-1e49-4248-b02d-22dccd0d9086",
+      "name": "obtener_clima"
+    },
+    {
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "longitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "latitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', ``, 'string') }}"
+            },
+            {
+              "name": "timezone",
+              "value": "auto"
+            },
+            {
+              "name": "forecast_days",
+              "value": "7"
+            },
+            {
+              "name": "forecast_hours",
+              "value": "48"
+            },
+            {
+              "name": "current",
+              "value": "temperature_2m,relative_humidity_2m,is_day,precipitation,rain,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,soil_temperature_0cm,soil_moisture_0_to_1cm,soil_moisture_3_to_9cm,vapor_pressure_deficit"
+            },
+            {
+              "name": "hourly",
+              "value": "temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,precipitation_probability,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,vapor_pressure_deficit,et0_fao_evapotranspiration"
+            },
+            {
+              "name": "daily",
+              "value": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,et0_fao_evapotranspiration"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "TuClimaApp"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        176,
+        352
+      ],
+      "id": "a8219635-db74-430b-b478-e178ad24dec6",
+      "name": "consultar_agro"
+    },
+    {
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "latitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "longitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', ``, 'string') }}"
+            },
+            {
+              "name": "models",
+              "value": "gfs_seamless"
+            },
+            {
+              "name": "timezone",
+              "value": "auto"
+            },
+            {
+              "name": "forecast_hours",
+              "value": "48"
+            },
+            {
+              "name": "daily",
+              "value": "sunrise,sunset"
+            },
+            {
+              "name": "current",
+              "value": "temperature_2m,relative_humidity_2m,is_day,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility"
+            },
+            {
+              "name": "hourly",
+              "value": "temperature_2m,dew_point_2m,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,wind_speed_10m,wind_speed_950hPa,wind_direction_950hPa,temperature_950hPa,wind_speed_850hPa,wind_direction_850hPa,temperature_850hPa,wind_speed_700hPa,wind_direction_700hPa,temperature_700hPa,wind_speed_300hPa,wind_direction_300hPa,temperature_300hPa,cape,lifted_index"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "TuClimaApp"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        304,
+        272
+      ],
+      "id": "887c03dc-bf54-44ec-b5e6-b5a5a7fffaaa",
+      "name": "consultar_aereo"
+    },
+    {
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "latitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "longitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', ``, 'string') }}"
+            },
+            {
+              "name": "timezone",
+              "value": "auto"
+            },
+            {
+              "name": "forecast_hours",
+              "value": "48"
+            },
+            {
+              "name": "current",
+              "value": "shortwave_radiation,direct_radiation,diffuse_radiation,wind_speed_10m,temperature_2m,weather_code,pressure_msl,relative_humidity_2m"
+            },
+            {
+              "name": "hourly",
+              "value": "shortwave_radiation,wind_speed_10m,temperature_2m,pressure_msl"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "TuClimaApp"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        480,
+        272
+      ],
+      "id": "93b3f31b-2593-46eb-8355-6e934a63d6f1",
+      "name": "consultar_energia"
+    },
+    {
+      "parameters": {
+        "url": "https://power.larc.nasa.gov/api/temporal/climatology/point",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "latitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "longitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', ``, 'string') }}"
+            },
+            {
+              "name": "parameters",
+              "value": "ALLSKY_SFC_SW_DWN,T2M,WS10M"
+            },
+            {
+              "name": "community",
+              "value": "RE"
+            },
+            {
+              "name": "format",
+              "value": "JSON"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "TuClimaApp"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        656,
+        272
+      ],
+      "id": "ad426214-4457-4f58-8e27-1218214ee858",
+      "name": "consultar_nasa"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "usuarios",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "suscripcion_diaria",
+              "condition": "eq",
+              "keyValue": "={{ true }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "b5645941-847f-4cf6-b11a-8966f78a0912",
+      "name": "Get many rows",
+      "credentials": {
+        "supabaseApi": {
+          "id": "G0IqnT4RKyeb0Gby",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "20058325-178b-447b-abc1-86edb70393a9",
+              "leftValue": "={{ $json.hora_preferida }}",
+              "rightValue": "={{ $now.setZone($json.zona_horaria).hour }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "15814d90-8026-4093-8425-f05735945dd1",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Úsala SOLO cuando el usuario pida explícitamente enviar un correo, reporte o notificación. Debes generar el contenido del correo basado en la conversación o los datos del clima.",
+        "sendTo": "={{ $('Get many rows').item.json.email }}",
+        "subject": "Tu Reporte Diario",
+        "message": "={{ $fromAI(\"mensaje\") }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        912,
+        256
+      ],
+      "id": "2d1d8cdb-8e90-4957-b490-246e73e00841",
+      "name": "enviar_correo",
+      "webhookId": "f8456d83-4c66-4d37-9c23-0aaecf00e8f2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "1wkewQEcmk2sw9Gz",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "obtener_clima": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_agro": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_aereo": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_energia": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_nasa": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "enviar_correo": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "19ee95c84ac845adb5e56f055bd53b79a0e674016338a7de7b71fc1ecea83ccf"
+  }
+}

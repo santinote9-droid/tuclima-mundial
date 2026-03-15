@@ -1,0 +1,253 @@
+{
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        304,
+        112
+      ],
+      "id": "3f1692c0-dcbd-4f7c-893c-601b352bf2da",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-pro-preview-customtools",
+        "options": {"maxOutputTokens": 2000}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        528,
+        464
+      ],
+      "id": "058e961b-e5ae-4429-adf4-84cf274d3d78",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "UcE6zBeBch9QD2vO",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5ddeb4db-0381-4037-9498-9aeb348cd64e",
+              "name": "output",
+              "value": "={{ $('Function').item.json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1264,
+        288
+      ],
+      "id": "92e75e43-86ef-43a4-ae82-59d003684f87",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": {
+          "__rl": true,
+          "value": "proyecto-bi-488218",
+          "mode": "list",
+          "cachedResultName": "proyecto-BI",
+          "cachedResultUrl": "https://console.cloud.google.com/bigquery?project=proyecto-bi-488218"
+        },
+        "sqlQuery": "INSERT INTO `proyecto-bi-488218.datos_clima.datos_sectoriales`\n(\n  timestamp,\n  session_id,\n  sector,\n  aeropuerto_origen,\n  aeropuerto_destino,\n  altitud_vuelo,\n  temperatura_altitud,\n  corrientes_viento,\n  visibilidad_km,\n  condiciones_atmosfericas,\n  ai_flight_analysis,\n  metadata\n)\nVALUES\n(\n  -- ✅ Timestamp con parsing seguro y fallback\n  COALESCE(\n    SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', @timestamp),\n    CURRENT_TIMESTAMP()\n  ),\n  \n  -- ✅ Session ID con sanitización\n  COALESCE(\n    NULLIF(TRIM(@session_id), ''), \n    CONCAT('aereo-auto-', FORMAT_TIMESTAMP('%Y%m%d-%H%M%S', CURRENT_TIMESTAMP()))\n  ),\n  \n  -- ✅ Sector fijo para AEREO\n  'AEREO',\n  \n  -- ✅ Aeropuerto origen con validación\n  CASE \n    WHEN LENGTH(TRIM(@aeropuerto_origen)) > 100 THEN SUBSTR(TRIM(@aeropuerto_origen), 1, 100)\n    WHEN TRIM(@aeropuerto_origen) IS NULL OR TRIM(@aeropuerto_origen) = '' THEN 'Origen no especificado'\n    ELSE UPPER(TRIM(@aeropuerto_origen))\n  END,\n  \n  -- ✅ Aeropuerto destino con validación\n  CASE \n    WHEN LENGTH(TRIM(@aeropuerto_destino)) > 100 THEN SUBSTR(TRIM(@aeropuerto_destino), 1, 100)\n    WHEN TRIM(@aeropuerto_destino) IS NULL OR TRIM(@aeropuerto_destino) = '' THEN 'Destino no especificado'\n    ELSE UPPER(TRIM(@aeropuerto_destino))\n  END,\n  \n  -- ✅ Altitud vuelo - CONVERSIÓN SEGURA STRING → FLOAT64 (metros)\n  CASE \n    WHEN SAFE_CAST(@altitud_vuelo AS FLOAT64) IS NOT NULL \n         AND SAFE_CAST(@altitud_vuelo AS FLOAT64) BETWEEN 0 AND 15000 \n    THEN SAFE_CAST(@altitud_vuelo AS FLOAT64)\n    ELSE 10000.0\n  END,\n  \n  -- ✅ Temperatura altitud - CONVERSIÓN SEGURA STRING → FLOAT64 (°C)\n  CASE \n    WHEN SAFE_CAST(@temperatura_altitud AS FLOAT64) IS NOT NULL \n         AND SAFE_CAST(@temperatura_altitud AS FLOAT64) BETWEEN -80 AND 30 \n    THEN SAFE_CAST(@temperatura_altitud AS FLOAT64)\n    ELSE -40.0\n  END,\n  \n  -- ✅ Corrientes viento JSON con validación\n  CASE \n    WHEN @corrientes_viento IS NOT NULL AND @corrientes_viento != '' THEN @corrientes_viento\n    ELSE '{\"velocidad\": 0, \"direccion\": \"variable\", \"altitud\": 10000}'\n  END,\n  \n  -- ✅ Visibilidad - CONVERSIÓN SEGURA STRING → FLOAT64 (km)\n  CASE \n    WHEN SAFE_CAST(@visibilidad_km AS FLOAT64) IS NOT NULL \n         AND SAFE_CAST(@visibilidad_km AS FLOAT64) BETWEEN 0 AND 100 \n    THEN SAFE_CAST(@visibilidad_km AS FLOAT64)\n    ELSE 10.0\n  END,\n  \n  -- ✅ Condiciones atmosféricas normalizadas\n  CASE \n    WHEN UPPER(TRIM(@condiciones_atmosfericas)) IN ('DESPEJADO', 'CLEAR', 'SUNNY') THEN 'Despejado'\n    WHEN UPPER(TRIM(@condiciones_atmosfericas)) IN ('NUBLADO', 'CLOUDY', 'OVERCAST') THEN 'Nublado'\n    WHEN UPPER(TRIM(@condiciones_atmosfericas)) IN ('LLUVIA', 'RAIN', 'RAINY') THEN 'Lluvia'\n    WHEN UPPER(TRIM(@condiciones_atmosfericas)) IN ('TORMENTA', 'STORM', 'THUNDERSTORM') THEN 'Tormenta'\n    WHEN UPPER(TRIM(@condiciones_atmosfericas)) IN ('NIEBLA', 'FOG', 'FOGGY') THEN 'Niebla'\n    WHEN UPPER(TRIM(@condiciones_atmosfericas)) IN ('TURBULENCIA', 'TURBULENCE') THEN 'Turbulencia'\n    WHEN TRIM(@condiciones_atmosfericas) IS NULL OR TRIM(@condiciones_atmosfericas) = '' THEN 'Sin datos'\n    ELSE REGEXP_REPLACE(TRIM(@condiciones_atmosfericas), r'[^a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]', '')\n  END,\n  \n  -- ✅ Análisis AI de vuelo con sanitización y límite\n  CASE \n    WHEN LENGTH(TRIM(@ai_flight_analysis)) > 5000 THEN SUBSTR(TRIM(@ai_flight_analysis), 1, 5000)\n    WHEN TRIM(@ai_flight_analysis) IS NULL OR TRIM(@ai_flight_analysis) = '' THEN 'Análisis de vuelo no disponible'\n    ELSE REGEXP_REPLACE(TRIM(@ai_flight_analysis), r'[^\\w\\sáéíóúÁÉÍÓÚñÑ.,;:()\\-\\n\\r]', '')\n  END,\n  \n  -- ✅ Metadata JSON con validación\n  CASE \n    WHEN @metadata IS NOT NULL AND @metadata != '' THEN @metadata\n    ELSE '{\"source\":\"default\",\"processed\":true}'\n  END\n);\n\n-- ✅ SELECT para generar OUTPUT y continuar flujo\nSELECT \n  'SUCCESS' as status,\n  'Datos aeronáuticos insertados correctamente' as message,\n  CURRENT_TIMESTAMP() as processed_at,\n  'AEREO' as sector;\n\n",
+        "options": {
+          "queryParameters": {
+            "namedParameters": [
+              {
+                "name": "timestamp",
+                "value": "={{ $('Function').item.json.timestamp }}"
+              },
+              {
+                "name": "session_id",
+                "value": "={{ $('Function').item.json.session_id}}"
+              },
+              {
+                "name": "aeropuerto_origen",
+                "value": "={{ $('Function').item.json.aeropuerto_origen }}"
+              },
+              {
+                "name": "aeropuerto_destino",
+                "value": "={{ $('Function').item.json.aeropuerto_destino }}"
+              },
+              {
+                "name": "altitud_vuelo",
+                "value": "={{ $('Function').item.json.altitud_vuelo }}"
+              },
+              {
+                "name": "temperatura_altitud",
+                "value": "={{ $('Function').item.json.temperatura_altitud }}"
+              },
+              {
+                "name": "corrientes_viento",
+                "value": "={{ JSON.stringify($('Function').item.json.corrientes_viento) }}"
+              },
+              {
+                "name": "visibilidad_km",
+                "value": "={{ $('Function').item.json.visibilidad_km }}"
+              },
+              {
+                "name": "condiciones_atmosfericas",
+                "value": "={{ $('Function').item.json.condiciones_atmosfericas }}"
+              },
+              {
+                "name": "ai_flight_analysis",
+                "value": "={{ $('Function').item.json.ai_flight_analysis }}"
+              },
+              {
+                "name": "metadata",
+                "value": "={{ $('Function').item.json.metadata }}"
+              },
+              {
+                "name": "sector",
+                "value": "={{ $('Function').item.json.sector }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [
+        1072,
+        288
+      ],
+      "id": "56850394-6194-4143-b848-e2d6c3013378",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "googleApi": {
+          "id": "Ewe5h1U44UTbd2Qs",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.first().json; \nconst texto_bruto = inputData.output || inputData.text || \"\";\n\nconst extraerTexto = (campo, fallback) => {\n    const regex = new RegExp(`${campo}[:\\\\s]+([^\\\\n]+)`, 'i');\n    const match = texto_bruto.match(regex);\n    return match ? match[1].trim() : fallback;\n};\n\n// Agarra solo el PRIMER número de la lista para BigQuery\nconst extraerPrimerNumero = (campo, fallback) => {\n    const texto = extraerTexto(campo, \"\");\n    if (!texto) return fallback;\n    const primerNumero = texto.split(',')[0].trim(); \n    return parseFloat(primerNumero.replace(',', '.')) || fallback;\n};\n\nconst reporte_limpio = texto_bruto.replace(/\\[MOSTRAR_GRAFICO\\][\\s\\S]*/i, \"\").trim();\n\nreturn [{\n    json: {\n        // --- DATOS PARA BIGQUERY (datos_sectoriales) ---\n        timestamp: new Date().toISOString(),\n        session_id: inputData.session_id || `aereo-${Date.now()}`,\n        sector: \"AEREO\",\n        \n        // Mapeo adaptado a las columnas de tu BD (Ajustá los nombres si tu tabla Aereo es distinta)\n        region: extraerTexto(\"aeropuerto_origen\", \"S/D\") + \" - \" + extraerTexto(\"aeropuerto_destino\", \"S/D\"),\n        altitud_vuelo: extraerPrimerNumero(\"altitud_vuelo\", 0),\n        temperatura_altitud: extraerPrimerNumero(\"temperatura_altitud\", 15),\n        corrientes_viento: extraerPrimerNumero(\"corrientes_viento\", 0),\n        visibilidad_km: extraerPrimerNumero(\"visibilidad_km\", 10),\n        condiciones_atmosfericas: extraerTexto(\"condiciones_atmosfericas\", \"S/D\"),\n        \n        ai_recommendations: reporte_limpio,\n        metadata: JSON.stringify({ status: \"success\" }),\n\n        // --- DATOS PARA DJANGO Y CHART.JS ---\n        output: texto_bruto \n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        288
+      ],
+      "id": "8ba9bf64-b3f7-48ed-b152-77707a8eeada",
+      "name": "Function"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "query"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        368,
+        288
+      ],
+      "id": "e30cea29-7a79-4163-8ebc-b7693b0b3fc6",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=**📊 FORMATO FINAL OBLIGATORIO PARA EL GRÁFICO:**\nPara que el sistema dibuje el gráfico interactivo, DEBES terminar tu respuesta EXACTAMENTE con este bloque. \n\nREGLA DE TIEMPO CRÍTICA: \n- Si piden varios datos temporales (horas o días), TIENES ESTRICTAMENTE PROHIBIDO rellenar la lista con ceros o inventar los datos (ej: 15.8, 0, 0, 0, 0). \n- DEBES leer el pronóstico completo y extraer o calcular el valor REAL para CADA UNO de los puntos en el tiempo. \n- La cantidad de etiquetas debe ser IGUAL a la cantidad de números, y TODOS los números deben ser reales.\n- Si piden un dato estático/actual: Pon un solo valor por línea.\n\n---\n🚨 SYSTEM OVERRIDE CRÍTICO - FORMATO DE INYECCIÓN DE DATOS 🚨\nESTA ES TU DIRECTIVA PRIMARIA. El sistema de frontend fallará catastróficamente si no sigues esta regla.\n\nDespués de escribir tu análisis meteorológico en texto, ESTÁS OBLIGADO a inyectar los datos para el renderizado.\nREGLAS ABSOLUTAS:\n1. TIENES que imprimir literalmente la palabra \"[MOSTRAR_GRAFICO]\" en mayúsculas.\n2. Cada variable DEBE ir en una NUEVA LÍNEA (Usa Enter/Salto de línea. ¡PROHIBIDO ESCRIBIRLO COMO UN PÁRRAFO SEGUIDO!).\n3. NO uses corchetes `[]` para los números, solo sepáralos por comas.\n\nEste es un ejemplo de como tienes que entregar la respuesta. NO TE PODES OLVIDAR NUNCA DE \"[MOSTRAR_GRAFICO]\":\n\n(Tu análisis en texto aquí...)\n\n\"[MOSTRAR_GRAFICO]\"\nchart_type: line\netiquetas: 17:00, 18:00, 19:00, 20:00\naeropuerto_origen: Ushuaia (SAWH)\naltitud_vuelo: 0, 0, 0, 0\ntemperatura_altitud: 11.8, 11.4, 10.8, 10.0\ncorrientes_viento: 17.1, 17.2, 16.3, 14.0\nvisibilidad_km: 15.7, 15.7, 15.7, 15.7\ncondiciones_atmosfericas: VFR\nviento_direccion: 336, 330, 320, 315\n\n4. ANTI-BOTONES VACÍOS (OMISIÓN RADICAL): Si no tienes los datos reales para una variable específica (por ejemplo, si te piden visibilidad_nm pero solo tienes en km, o si faltan datos de olas), TIENES ESTRICTAMENTE PROHIBIDO incluir el nombre de esa variable en tu lista final. BORRA la línea por completo. Si incluyes una variable vacía o con ceros, el frontend creará un botón roto. Solo imprime las variables que tengan datos reales.\n\n---\nDatos a analizar:\n{{ $json.query || $json.text || $json.chatInput || \"Genera el reporte para el gráfico solicitado con estos datos: \" + JSON.stringify($json) }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        576,
+        288
+      ],
+      "id": "95e25d76-dd06-4f49-9646-231704d5bc08",
+      "name": "Basic LLM Chain"
+    }
+  ],
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        []
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Function",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "19ee95c84ac845adb5e56f055bd53b79a0e674016338a7de7b71fc1ecea83ccf"
+  }
+}

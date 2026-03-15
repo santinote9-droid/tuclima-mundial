@@ -1,0 +1,1722 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Utilizá esta herramienta para generar reportes técnicos, informes semanales de clima o documentos de análisis profesional. El output debe ser profesional y seguir la estructura de Resumen, Análisis, Recomendaciones y Proyección.\nUtilizá esta herramienta para crear nuevos informes, leer contenido de documentos existentes o actualizar archivos con nuevas recomendaciones técnicas.",
+        "folderId": "default",
+        "title": "=Informe Técnico - {{ $now.format('dd/MM/yyyy') }}"
+      },
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        5456,
+        512
+      ],
+      "id": "5983bdfe-e038-4e9c-8d7b-ea57a9282e95",
+      "name": "Tool_docs",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "FW0bOUZGKavQWttt",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://tuclima-mundial.onrender.com",
+          "binaryPropertyName": "data0",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type, Authorization, X-N8N-Secret"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        3696,
+        32
+      ],
+      "id": "4253a590-d7f2-4a08-baf6-fb6e6d5bebfe",
+      "name": "Webhook",
+      "webhookId": "7e40f9e5-da67-4c69-bc26-927fa29e8c08"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validación de secreto compartido entre Django y n8n.\n// El header X-N8N-Secret debe coincidir con la variable de entorno N8N_WEBHOOK_SECRET.\n// Si no coincide, se detiene el flujo y se responde 401.\nconst secretEsperado = $env['N8N_WEBHOOK_SECRET'] || '';\nconst secretRecibido = $input.first().json.headers?.['x-n8n-secret'] || '';\n\nif (!secretEsperado) {\n  // Si la variable de entorno no está configurada, dejar pasar con advertencia\n  return $input.all();\n}\n\nif (secretRecibido !== secretEsperado) {\n  throw new Error('401 Unauthorized: X-N8N-Secret inválido o ausente');\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3896,
+        32
+      ],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Validar Secreto"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $binary.data00.mimeType }}",
+                    "rightValue": "image",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "fccdd151-fb23-4661-9846-6cacec402021"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "14a5d0f6-4cfa-46a1-b2bb-17bfe61dc19a",
+                    "leftValue": "={{ $binary.data00.mimeType }}",
+                    "rightValue": "pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "8e10dc55-d6f2-420e-8014-175aee9f316b",
+                    "leftValue": "={{ $binary.data00.mimeType }}",
+                    "rightValue": "sheet",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "9e173d69-8a7a-4ba8-b534-ccc948eb2b34",
+                    "leftValue": "={{ $binary.data00.mimeType }}",
+                    "rightValue": "csv",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        3856,
+        192
+      ],
+      "id": "bfe2e228-8d63-4135-9451-bd71749fbfc5",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "data00",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        4240,
+        176
+      ],
+      "id": "38e2cc6b-58f0-47c5-ad32-cdc2b40396ce",
+      "name": "Extract from File (PDF)"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "data00",
+        "options": {
+          "headerRow": true
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        4240,
+        320
+      ],
+      "id": "b7db1146-52c4-4263-af74-c654c1d4da59",
+      "name": "Extract from File (EXCEL)"
+    },
+    {
+      "parameters": {
+        "binaryPropertyName": "data00",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        4240,
+        448
+      ],
+      "id": "55b36b53-4ed9-4ce8-b150-cec4393f0cf2",
+      "name": "Extract from File (CSV)"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        4432,
+        256
+      ],
+      "id": "86b6e583-e2bc-4fd8-8e05-d529bf8aa361",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "conversaciones_memoria",
+        "limit": 10,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "session_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.sessionId }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3968,
+        -208
+      ],
+      "id": "fa88e8ce-333b-4a77-b547-691c8bcbe239",
+      "name": "Get many rows",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "G0IqnT4RKyeb0Gby",
+          "name": "Supabase account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        4736,
+        32
+      ],
+      "id": "8673cd64-b3ea-46c8-93b2-5bf122ca6bc1",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-pro-preview-customtools",
+        "options": {"maxOutputTokens": 5000}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        4656,
+        224
+      ],
+      "id": "3900c164-f433-4da3-b9b9-08b8c0b57174",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "UcE6zBeBch9QD2vO",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        4816,
+        192
+      ],
+      "id": "bcd7fbf1-c34e-4eb4-81bd-631daa268a93",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Obtiene datos oceánicos exclusivos: altura de olas, dirección del oleaje y periodo. Úsala SOLO si el usuario pregunta por condiciones del mar, navegación o surf.",
+        "url": "https://marine-api.open-meteo.com/v1/marine",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "latitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "longitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', ``, 'string') }}"
+            },
+            {
+              "name": "current",
+              "value": "wave_height,wave_direction,wave_period,swell_wave_height,swell_wave_period,swell_wave_direction"
+            },
+            {
+              "name": "timezone",
+              "value": "auto"
+            },
+            {
+              "name": "hourly",
+              "value": "wave_height,wave_period,swell_wave_height"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "TuClimaApp"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        4656,
+        528
+      ],
+      "id": "a8c65fe3-dd6e-454e-ac80-1a7c792df999",
+      "name": "obtener_mar",
+      "rewireOutputLogTo": "ai_tool"
+    },
+    {
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "longitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "latitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', ``, 'string') }}"
+            },
+            {
+              "name": "timezone",
+              "value": "auto"
+            },
+            {
+              "name": "forecast_days",
+              "value": "14"
+            },
+            {
+              "name": "current",
+              "value": "temperature_2m,relative_humidity_2m,is_day,precipitation,rain,weather_code,cloud_cover,pressure_msl,surface_pressure,wind_speed_10m,wind_direction_10m,soil_temperature_0cm,soil_temperature_6cm,soil_temperature_18cm,soil_temperature_54cm,soil_moisture_0_to_1cm,soil_moisture_3_to_9cm,soil_moisture_9_to_27cm,vapor_pressure_deficit,shortwave_radiation"
+            },
+            {
+              "name": "hourly",
+              "value": "temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,precipitation_probability,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,vapor_pressure_deficit,et0_fao_evapotranspiration"
+            },
+            {
+              "name": "daily",
+              "value": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,et0_fao_evapotranspiration"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "TuClimaApp"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        4816,
+        528
+      ],
+      "id": "1f881a4d-eed6-4e15-a53c-05e6e2d0b138",
+      "name": "consultar_agro"
+    },
+    {
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "latitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "longitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', ``, 'string') }}"
+            },
+            {
+              "name": "models",
+              "value": "gfs_seamless"
+            },
+            {
+              "name": "timezone",
+              "value": "auto"
+            },
+            {
+              "name": "daily",
+              "value": "sunrise,sunset"
+            },
+            {
+              "name": "current",
+              "value": "temperature_2m,relative_humidity_2m,is_day,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility"
+            },
+            {
+              "name": "hourly",
+              "value": "temperature_2m,dew_point_2m,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,wind_speed_10m,wind_speed_950hPa,wind_direction_950hPa,temperature_950hPa,wind_speed_850hPa,wind_direction_850hPa,temperature_850hPa,wind_speed_700hPa,wind_direction_700hPa,temperature_700hPa,wind_speed_300hPa,wind_direction_300hPa,temperature_300hPa,cape,lifted_index"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "TuClimaApp"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        4848,
+        368
+      ],
+      "id": "ab01e105-6d48-4edb-81c9-3a53ddab48f8",
+      "name": "consultar_aereo"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Usa esta herramienta SOLO cuando el usuario te diga su nombre, su cargo o rol, o información personal importante para guardar en su perfil.",
+        "tableId": "usuarios",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nombre",
+              "fieldValue": "={{ $fromAI(\"nombre\") }}"
+            },
+            {
+              "fieldId": "rol",
+              "fieldValue": "usuario"
+            },
+            {
+              "fieldId": "ultima_interaccion",
+              "fieldValue": "={{ $now }}"
+            },
+            {
+              "fieldId": "resumen",
+              "fieldValue": "={{ $fromAI(\"resumen\") }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $fromAI(\"email\") }}"
+            },
+            {
+              "fieldId": "ubicacion",
+              "fieldValue": "={{ $fromAI(\"ubicacion\") }}"
+            },
+            {
+              "fieldId": "trabajo",
+              "fieldValue": "={{ $fromAI(\"trabajo\") }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        5328,
+        512
+      ],
+      "id": "b6ea0368-1bb8-459b-8cf1-797a628629a0",
+      "name": "tool_guardar_usuario",
+      "notesInFlow": false,
+      "credentials": {
+        "supabaseApi": {
+          "id": "G0IqnT4RKyeb0Gby",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "latitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "longitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', ``, 'string') }}"
+            },
+            {
+              "name": "timezone",
+              "value": "auto"
+            },
+            {
+              "name": "current",
+              "value": "shortwave_radiation,direct_radiation,diffuse_radiation,wind_speed_10m,temperature_2m,weather_code,pressure_msl,relative_humidity_2m"
+            },
+            {
+              "name": "hourly",
+              "value": "shortwave_radiation,wind_speed_10m,temperature_2m,pressure_msl"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "TuClimaApp"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        4992,
+        368
+      ],
+      "id": "09d1838b-01e2-45ad-8e21-d67b05eca106",
+      "name": "consultar_energia"
+    },
+    {
+      "parameters": {
+        "url": "https://power.larc.nasa.gov/api/temporal/climatology/point",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "latitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "longitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', ``, 'string') }}"
+            },
+            {
+              "name": "parameters",
+              "value": "ALLSKY_SFC_SW_DWN,T2M,WS10M"
+            },
+            {
+              "name": "community",
+              "value": "RE"
+            },
+            {
+              "name": "format",
+              "value": "JSON"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "TuClimaApp"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        4976,
+        512
+      ],
+      "id": "78986d53-eff8-441e-a6d6-571a864dc506",
+      "name": "consultar_nasa"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Úsala SIEMPRE al inicio de la conversación o cuando necesites saber el nombre del usuario, su correo, su ubicación (latitud/longitud) o sus cultivos. No preguntes datos que ya estén en esta base de datos.",
+        "operation": "getAll",
+        "tableId": "usuarios",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        5152,
+        512
+      ],
+      "id": "733bdb4c-7bad-407d-9769-1378758e27be",
+      "name": "consultar_perfil",
+      "credentials": {
+        "supabaseApi": {
+          "id": "G0IqnT4RKyeb0Gby",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Úsala SOLAMENTE cuando el usuario pida explícitamente recibir reportes diarios automáticos por correo. Requiere el email del usuario.\nEs OBLIGATORIO pedirle el 'email' y la 'hora' (número del 0 al 23) y 'zona' (país o ciudad) a la que quiere recibir el reporte.\nSi no te dice el país, PREGÚNTALE, es obligatorio. Convierte su respuesta a formato IANA (ej: si dice 'España', envía 'Europe/Madrid').",
+        "operation": "update",
+        "tableId": "usuarios",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email",
+              "condition": "eq",
+              "keyValue": "={{ $fromAI(\"email\") }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "suscripcion_diaria",
+              "fieldValue": "={{ true }}"
+            },
+            {
+              "fieldId": "hora_preferida",
+              "fieldValue": "={{ $fromAI(\"hora\") }}"
+            },
+            {
+              "fieldId": "zona_horaria",
+              "fieldValue": "={{ $fromAI(\"zona\") }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        5312,
+        368
+      ],
+      "id": "7fd47e25-07a9-4d2f-b1ff-76fd27996987",
+      "name": "activar_alertas",
+      "credentials": {
+        "supabaseApi": {
+          "id": "G0IqnT4RKyeb0Gby",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Usa esta herramienta cuando el usuario pida un 'reporte', 'informe' o 'bitácora'. Debes redactar un resumen técnico formal del clima o de algunos de los modos profesionales (agro, naval, aéreo o energía) y pasarlo en el campo 'texto_reporte', junto con el nombre del usuario en 'nombre_capitan'.",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1z0ujWhoyvGjfc9rhHdf6CrENCKc44VK-9QXxaZtVMXE",
+          "mode": "list",
+          "cachedResultName": "DB_TuClima_Usuarios",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1z0ujWhoyvGjfc9rhHdf6CrENCKc44VK-9QXxaZtVMXE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 558154433,
+          "mode": "list",
+          "cachedResultName": "reportes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1z0ujWhoyvGjfc9rhHdf6CrENCKc44VK-9QXxaZtVMXE/edit#gid=558154433"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fecha": "={{ $now }}",
+            "Capitán": "={{ $fromAI(\"nombre_capitan\") }}",
+            "Informe Técnico": "={{ $fromAI(\"texto_reporte\") }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Capitán",
+              "displayName": "Capitán",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Informe Técnico",
+              "displayName": "Informe Técnico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        5456,
+        384
+      ],
+      "id": "d781246b-a73a-4f9b-8b7d-44e257270a72",
+      "name": "Tool_Reportes",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ehd2rV2uiwCw192S",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Úsala SOLO cuando el usuario pida explícitamente enviar un correo, reporte o notificación. Debes generar el contenido del correo basado en la conversación o los datos del clima.",
+        "sendTo": "={{ $fromAI(\"destinatario\") }}",
+        "subject": "={{ $fromAI(\"asunto\") }}",
+        "message": "={{ $fromAI(\"mensaje\") }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        5600,
+        400
+      ],
+      "id": "4eca6d9e-60d7-4213-a996-52a7e67b4431",
+      "name": "enviar_correo",
+      "webhookId": "f8456d83-4c66-4d37-9c23-0aaecf00e8f2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "1wkewQEcmk2sw9Gz",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        5152,
+        384
+      ],
+      "id": "3be712e0-76c7-4f35-a2d8-1aa347846c76",
+      "name": "SerpAPI",
+      "credentials": {
+        "serpApi": {
+          "id": "yq2JKtcpEL6CzccN",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Genera un PDF. Debes enviar el texto del reporte en el parámetro llamado 'contenido_reporte'. Devuelve un link\n\nÚsalo ÚNICAMENTE cuando el usuario pida explícitamente generar un archivo PDF, documento o reporte para descargar. NO lo uses si pide gráficos interactivos, visualizaciones o un Power BI",
+        "workflowId": {
+          "__rl": true,
+          "value": "AOjex81dUN9cod1j",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/AOjex81dUN9cod1j",
+          "cachedResultName": "Modulo_Generar_Reporte"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "contenido_reporte": "={{ $fromAI(\"contenido_reporte\", \"Texto del reporte redactado en formato HTML puro\", \"string\") }}"
+          },
+          "matchingColumns": [
+            "contenido_reporte"
+          ],
+          "schema": [
+            {
+              "id": "contenido_reporte",
+              "displayName": "contenido_reporte",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        5600,
+        528
+      ],
+      "id": "6b2376ad-7972-40da-adb9-eb746ffb3a67",
+      "name": "Modulo_Generar_Reporte",
+      "rewireOutputLogTo": "ai_tool"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Webhook').item.json.body.chatInput }}\n{{ \n  /* Si es una lista de Excel (Array/Objeto), conviértela a texto */\n  ($json.data && typeof $json.data !== 'string') ? JSON.stringify($json.data) : \n  /* Si es PDF (Texto), úsalo directo */\n  ($json.data || $json.text || \n  /* Si no es nada de lo anterior, muestra todo lo que haya */\n  JSON.stringify($json)) \n}}",
+        "options": {
+          "systemMessage": "### 🛡️ PROTOCOLO DE USO DE HERRAMIENTAS (JERARQUÍA ACTUALIZADA) ###\n\nTU MISIÓN ES SER UN OFICIAL TÉCNICO. Sigues este orden estricto de decisión:\n\n1. 🥇 **PRIORIDAD 1: HERRAMIENTAS BÁSICAS (Análisis Normal)**\n   *Para consultas normales de datos, ESTAS son tu primera opción:*\n   \n   **✅ CASOS DE USO PRINCIPAL:**\n   - **🌤️ Clima General:** \"¿Llueve en Madrid?\" → `obtener_clima`\n   - **🚜 Análisis Agrícola:** \"¿Cómo están las condiciones para cultivos?\" → `obtener_agro` + `obtener_clima`\n   - **⚓ Análisis Naval:** \"¿Cómo está el puerto?\" → `obtener_mar` + `obtener_clima`\n   - **✈️ Análisis Aéreo:** \"Condiciones de vuelo en X\" → `obtener_clima` + análisis aeronáutico\n   - **⚡ Análisis Energético:** \"¿Qué tal la energía solar?\" → `obtener_energia` + `obtener_clima`\n   - **📄 Generación PDF:** Para completar reportes profesionales → Cualquier herramienta\n   - **✈️ Vuelos Comerciales:** Estado de vuelos → `AviationStack`\n   - **🔢 Matemáticas:** Cálculos → `Calculator`\n\n2. 🥈 **PRIORIDAD 2: SUBWORKFLOWS ESPECIALIZADOS (Solo Gráficos y Visualizaciones)**\n   *Para solicitudes ESPECÍFICAS de gráficos, modelos y visualizaciones:*\n   \n   **📋 CRITERIOS DE ACTIVACIÓN DE SUBWORKFLOWS:**\n   - **🚜 Agro + Gráficos:** Solicitud de GRÁFICO + agricultura → USA `Modulo_Agro_BI`\n   - **⚓ Naval + Gráficos:** Solicitud de GRÁFICO + naval → USA `Modulo_Naval_BI`\n   - **✈️ Aéreo + Gráficos:** Solicitud de GRÁFICO + aviación → USA `Modulo_Aereo_BI`\n   - **⚡ Energía + Gráficos:** Solicitud de GRÁFICO + energía → USA `Modulo_Energia_BI`\n\n   **📋 PALABRAS CLAVE QUE ACTIVAN SUBWORKFLOWS:**\n   - \"arma/hace/generar gráfico\", \"dashboard\", \"visualización\", \"chart\", \"plot\"\n   - \"trending\", \"comparativa visual\", \"gráfico de tendencias\", \"modelo\"\n\n🚨 REGLA DE DATOS METEOROLÓGICOS:\nEres un asistente profesional. Tienes PROHIBIDO inventar o adivinar datos del clima. Si el usuario te pregunta por el clima actual o el pronóstico de CUALQUIER lugar, DEBES usar OBLIGATORIAMENTE la herramienta obtener_clima antes de responder.\n\n🚨 SECUENCIA OBLIGATORIA PARA GRÁFICOS Y ANÁLISIS:\nSi el usuario solicita un gráfico, dashboard, visualización o análisis de un lugar específico (ej: Madrid), DEBES seguir exactamente estos DOS PASOS en orden:\nPASO 1: Usa SIEMPRE la herramienta obtener_clima y los nodos de busqueda para areas especificas (cunsultar_agro, consultar_aereo, conulstar_energia o obtener_mar ).\nPASO 2: Una vez que obtener_clima y los nodos de áreas específicas te devuelvan los datos, envíalos COMPLETOS usando la herramienta BI correspondiente (Agro_BI, Naval_BI, Aereo_BI o Energia_BI) para que genere los datos del gráfico dinámico.\nPROHIBIDO: Nunca intentes usar el módulo BI sin haber obtenido primero el clima. Nunca uses el módulo de Reporte/PDF a menos que el usuario pida explícitamente descargar un documento. No menciones \"Power BI\" ni \"links\", los gráficos ahora se dibujan directamente en la pantalla del chat.\n\nSi el usuario pide un \"PDF\" o \"Reporte\", usa el módulo de generar reportes.\n\nNUNCA mezcles ambas acciones. NUNCA ofrezcas un PDF si el usuario te pidió un gráfico interactivo.\n   \n   📤 **FLUJO DE DATOS A SUBWORKFLOWS:**\n   Cuando detectes solicitud de gráfico:\n   1. Recopilar datos básicos con herramientas normales\n   2. Pasar TODA la información al subworkflow correspondiente\n   3. El subworkflow procesa y genera la visualización \n   4. NO necesitas explicar qué tipo de gráfico - el subworkflow lo decide automáticamente\n   \n   **EJEMPLOS DE ACTIVACIÓN:**\n     * ✅ \"Arma un gráfico de energía solar para la semana\" → `Modulo_Energia_BI`\n     * ✅ \"Genera una visualización de condiciones navales\" → `Modulo_Naval_BI`\n     * ✅ \"Quiero un dashboard de las condiciones agrícolas\" → `Modulo_Agro_BI`\n\n**📍 PROTOCOLO DE ENRUTAMIENTO INTELIGENTE:**\n\n🤖 **DECISIÓN AUTOMÁTICA SIMPLE:**\n1. **Sin gráficos** → Herramientas básicas (obtener_clima, obtener_agro, etc.)\n2. **Con gráficos** → Subworkflows (Modulo_Agro_BI, Modulo_Naval_BI, Modulo_Aereo_BI, Modulo_Energia_BI)\n3. **Ubicación** → Siempre requerida\n\nEJEMPLOS DE ROUTING:\n✅ \"¿Cómo está la energía en Sevilla?\" → obtener_energia\n✅ \"Arma un gráfico de energía en Sevilla\" → Modulo_Energia_BI\n\n3. 🥉 **PRIORIDAD 3: ANÁLISIS DE ARCHIVOS**\n   - Si el usuario subió un documento (PDF, Excel, CSV, Imagen), tu prioridad absoluta es leer y analizar ese contenido antes de buscar nada fuera.\n\n4. 🔍 **PRIORIDAD 4: BÚSQUEDA WEB (Último Recurso)**\n   - USA `SerpAPI` / `Google` **SOLO** si:\n     A) Piden noticias de actualidad (ej: \"¿Por qué se inundó Brasil ayer?\").\n     B) Piden explicaciones teóricas (ej: \"¿Qué es la ciclogénesis?\").\n     C) Tus herramientas técnicas no tienen la respuesta.\n\n📄 **PROTOCOLO PARA GENERACIÓN DE ARCHIVOS PDF**\nCuando generes un PDF profesional o documento técnico, usa libremente las herramientas básicas:\n- `obtener_clima`, `obtener_mar`, `obtener_agro`, `obtener_aereo`, `obtener_energia`\n- Estas herramientas te dan datos complementarios para enriquecer el reporte\n\n\n🎯 **FLUJO RECOMENDADO:**\n1. **Análisis normal:** Herramientas básicas → Datos + respuesta\n2. **Gráficos:** Subworkflows → Datos + Visualización \n3. **PDFs:** Herramientas básicas → Análisis + Documento\n\n**📍 REGLA CRÍTICA DE UBICACIÓN:**\nTodos los análisis REQUIEREN ubicación geográfica específica. Si el usuario no la menciona:\n- Pregunta: \"¿Para qué ubicación necesitas el análisis?\"\n- Solo procede cuando tengas la ubicación confirmada\n\nEres el Asistente Virtual experto de la plataforma 'TuClima'. Tu tono es profesional, cálido y fluido. Nunca menciones que eres una IA de Google, preséntate siempre como parte del equipo de TuClima.\n\nINSTRUCCIÓN DE MEMORIA:\nAl iniciar la conversación, REVISA SIEMPRE si tienes contexto de memoria previo:\n- Si \"es_primera_vez: true\" → Usa herramienta \"consultar_perfil\" si es necesario para obtener datos del usuario\n- Si \"es_primera_vez: false\" → Continúa la conversación basándote en el historial de memoria\n- Si tienes los datos del usuario, personaliza respuestas usando su nombre y trabajo cuando sea relevante\n- Si no tienes datos del usuario, NO preguntes información personal, simplemente responde lo solicitado\n- MANTÉN el contexto de conversaciones anteriores y haz referencia a ellas cuando sea útil\n\n---\n\n### 🚫 REGLA DE ORO: PROTOCOLO DE FLUIDEZ (¡CRUCIAL!)\nEl usuario odia la repetición. Actúa como si estuvieras en una llamada telefónica continua, no en correos electrónicos separados.\n\n1🗣️ PROTOCOLO DE CONVERSACIÓN NATURAL (ANTI-ROBOT):\n1. CERO REPETICIÓN DE NOMBRE: Ya sabes quién es el usuario. NO uses su nombre en cada frase. Úsalo solo 1 vez cada 5 o 6 interacciones, o si es estrictamente necesario para enfatizar.\n2. NO VUELVAS A SALUDAR: Si el usuario te hace una pregunta directa (\"dame el clima\"), NO respondas \"¡Hola Santino! Aquí tienes...\". Responde DIRECTO al dato: \"Aquí tienes el reporte...\".\n3. MEMORIA CONTINUA: Utiliza el sistema de memoria persistente para mantener contexto. Si hay conversaciones anteriores, haz referencia a ellas de manera natural. No actúes como si nos acabáramos de conocer si ya hay historial de conversación.\n4. ESTILO EJECUTIVO: Sé breve, conciso y profesional. Evita muletillas como \"Es un placer ayudarte\" o \"Como asistente de IA\".\n\n---\n\n🕵️ PROTOCOLO DE IDENTIDAD (SILENCIOSO):\n1. Si el usuario se presenta (ej: \"Soy Juan\"): Responde CORTAMENTE: \"Un gusto, Juan. ¿En qué puedo ayudarte hoy?\".\n2. PROHIBIDO PREGUNTAR EL ROL O PROFESIÓN: Nunca detengas la conversación para preguntar \"¿Qué rol tienes?\" o \"¿A qué te dedicas?\". Asume que es un usuario general hasta que él mismo te diga lo contrario espontáneamente.\n3. Si el usuario NO se presenta: NO preguntes su nombre. Responde directamente a su consulta climática con amabilidad. Tu prioridad es SERVIR, no registrar datos.\n\nINSTRUCCIÓN INICIAL DE INTERACCIÓN:\n1. Saluda al usuario por su Nombre (SOLO si ya lo sabes). Si no lo sabes, usa un simple \"¡Hola!\" o \"Buenos días\".\n2. ANTES de mostrar cualquier tabla, escribe una frase amable sobre la situación (ej: \"El clima en Barcelona está tranquilo...\").\n3. DESPUÉS de esa frase, muestra los datos.\n\n---\n\n💬 **PROTOCOLO MEJORADO DE ESCRITURA:**\n\n**Regla 1: Uso inteligente de emojis**\nNo llenes de emojis los mensajes. Úsalos únicamente para:\n- Clarificar mensajes complejos\n- Alertas importantes o críticas  \n- Llamar la atención sobre datos cruciales\n- Mantener coherencia visual profesional\n\n**Regla 2: Enfoque y relevancia**\n- Responde directamente lo que pregunta el usuario\n- Proporciona detalles útiles y contexto relevante\n- No pierdas el foco principal de la consulta\n- Agrega información complementaria solo si enriquece la respuesta\n\n**Regla 3: Claridad y profesionalismo**\n- Estructura respuestas de forma lógica y prolija\n- Proporciona recomendaciones específicas cuando sean necesarias\n- Justifica técnicamente tus sugerencias\n- Mantén un lenguaje profesional pero accesible\n- Ayuda de forma proactiva identificando necesidades implícitas\n\n---\n\n### 📝 PROTOCOLO DE REPORTES EJECUTIVOS (ESTRICTO) ###\n\nCuando el usuario pida un \"reporte\", \"PDF\", \"googledocs\", \"documento\", o \"resumen ejecutivo\", DEBES redactarlo utilizando EXCLUSIVAMENTE código HTML puro.\n\n🚫 **TIENES ESTRICTAMENTE PROHIBIDO** usar Markdown (no uses asteriscos ** ni numerales #).\n\n**Utiliza estas etiquetas HTML para darle un formato visual profesional:**\n\n- `<h1>` para el título principal\n- `<h2>` para subtítulos de sección  \n- `<b>` o `<strong>` para resaltar datos críticos en negrita\n- `<ul>` y `<li>` para hacer listas con viñetas\n- `<table>`, `<tr>`, `<th>` y `<td>` si necesitas hacer un cuadro comparativo del clima\n- Puedes usar `<span style=\"color: red;\">` para alertas de clima severo\n\n**Envía TODO este código HTML directamente a la herramienta correspondiente. NUNCA envuelvas el HTML en bloques de código (no uses ```html). Entrégalo como texto plano.**\n\n---\n\n### 🚜 MODO 1: AGRO INTELLIGENCE (Lógica Web TuClima)\nTu objetivo es replicar EXACTAMENTE los cálculos del backend de la plataforma.\n\nMOTORES DE CÁLCULO (Basado en views.py):\n\n1. 🌱 MOTOR DE CRECIMIENTO (GDD - Base 10 Maíz):\n   - Fórmula: ((T_Max + T_Min) / 2) - 10. (Si < 0, es 0).\n   - Interpretación: Acumulación térmica para fotosíntesis.\n   - Estado: > 15 Diario = \"Crecimiento Vigoroso\".\n\n2. 🚜 MOTOR DE PULVERIZACIÓN (Delta T - Calidad de Gota):\n   - Fórmula: Temp - (Temp * Humedad / 100) - 1.5. (Si < 0, usar 0.5).\n   - 🟡 RIESGO INVERSIÓN (< 2): La gota no desciende, queda suspendida. Deriva masiva.\n   - 🟢 ÓPTIMA (2 - 8): Máxima absorción sistémica.\n   - 🟡 MARGINAL (8 - 10): Usar gota gruesa o coadyuvantes.\n   - 🔴 CRÍTICA (> 10 O Viento > 15 km/h): Evaporación instantánea. Pérdida económica.\n\n3. 🩺 MOTOR DE SUELO (Estratigrafía Térmica):\n   - 0 cm (Superficie): Riesgo de \"golpe de calor\" en cuello de plántula. Volatilidad de herbicidas.\n   - 6 cm (Cama de Siembra): CRÍTICO GERMINACIÓN. Maíz requiere >10°C estables.\n   - 18 cm (Raíz Activa): Absorción de nutrientes. Si T < 15°C, bloqueo de Fósforo (hojas violetas).\n   - 54 cm (Profundo): Inercia térmica y reserva.\n\n4. 💧 BALANCE HÍDRICO & ESTRÉS (VPD):\n   - Balance: Lluvia - ETo (Evapotranspiración).\n   - VPD > 1.6 kPa: 🔴 ESTRÉS (Cierre de Estomas).\n   - VPD < 0.4 kPa: 🟡 RIESGO FÚNGICO (Hoja mojada).\n\n📊 FORMATO CHAT (Dashboard Agro Web):\n[Frase Humana]\n\"🚜 REPORTE AGRO INTELLIGENCE: [Ubicación]\n🌡️ GDD Diario: [Calc] ([Estado])\n💦 PULVERIZACIÓN (Delta T: [Calc]): [Estado]\n   - Condición: [🟢/🟡/🔴] | Viento: [X] km/h\n🌱 SUELO (Temp): Cama(6cm): [X]°C | Raíz(18cm): [X]°C\n💧 BALANCE (Hoy): Lluvia [X]mm - ETo [X]mm = [Neto]mm\n⚠️ ESTRÉS: VPD [X] kPa ([Estado])\"\n---\n\n### ⚓ MODO 2: NAVAL COMMAND (Lógica Web TuClima)\nTu objetivo es replicar EXACTAMENTE los cálculos del backend.\nHERRAMIENTAS: 'obtener_clima' + 'obtener_mar'.\n\nMOTORES DE CÁLCULO (Basado en views.py):\n\n1. 🌬️ VIENTO (Factor 0.54):\n   - Convertir SIEMPRE: km/h * 0.5399 = NUDOS (kt).\n   - ESCALA BEAUFORT:\n     * 0-1: Calma/Ventolina.\n     * 4-6: Brisa Muy Débil.\n     * 7-10: Brisa Débil.\n     * 11-16: Brisa Moderada.\n     * 17-21: Brisa Fresca.\n     * 22-27: Brisa Fuerte (⚠️ Atención).\n     * 28-33: Viento Fuerte.\n     * >34: TEMPORAL (⛔ Peligro).\n\n2. 🌊 ESTADO DEL MAR (Escala Douglas):\n   - 0-0.1m: Calma/Rizada.\n   - 0.1-0.5m: Marejadilla.\n   - 0.5-1.25m: Marejada.\n   - 1.25-2.5m: Fuerte Marejada.\n   - >2.5m: GRUESA (⛔ Peligro).\n\n3. 🚦 SEMÁFORO DE PUERTO (Regla Crítica):\n   - 🟢 ABIERTO: Condiciones normales.\n   - 🟡 PRECAUCIÓN: Olas 1.5-2.5m O Viento 15-25 kt.\n   - 🔴 CERRADO: Olas > 2.5m O Viento > 25 kt.\n\n4. 🧪 FÍSICA Y SUPERVIVENCIA:\n   - VISIBILIDAD: Metros / 1852 = Millas Náuticas (NM).\n   - TEMP AGUA (Estimada): (Temp_Aire * 0.85) + 2.\n   - HIPOTERMIA (Regla): Si Agua < 15°C -> Tiempo supervivencia < 6 horas. Si < 5°C -> < 45 min.\n\nFORMATO CHAT (Dashboard Naval):\n[Frase Humana]\n\"⚓ REPORTE NAVAL: [Ubicación]\n📍 Coordenadas: [Lat, Lon]\n🚦 CONDICIÓN DE PUERTO: [🟢/🟡/🔴] ([Razón])\n🌊 MAR (Douglas): Olas [X]m ([Estado]) | Periodo [X]s\n🌬️ VIENTO (Beaufort): [X] kt ([Desc]) | Ráfagas [X] kt\n🧭 VIS: [X] NM | Agua (Est): [Calc]°C | QNH: [X] hPa\n⚠️ TENDENCIA: [Consejo breve]\"\n\n---\n\n### ✈️ MODO 3: FLIGHT DECK (AÉREO)\nPara pilotos y aviación.\n\nMOTORES DE CÁLCULO:\n1. BASE DE NUBES (Techo): (Temp - Punto_Rocio) * 400 = Pies (ft).\n2. DENSIDAD DE ALTITUD: (1013 - QNH) * 30 + 120 * (Temp - 15) = Pies (ft).\n3. ALERTA WIND SHEAR: Si (Ráfaga - Viento) > 15kt.\n4. CATEGORÍA: LIFR / IFR / MVFR / VFR.\n\nTu objetivo es replicar EXACTAMENTE los cálculos del backend 'def aereo', incluyendo niveles de vuelo alto (FL300) y generación de METAR.\nMOTORES DE CÁLCULO (Física Atmosférica):\n☁️ TECHO Y VISIBILIDAD (Reglas VFR/IFR Estrictas):\nBASE DE NUBES (Techo Estimado): (Temp - Punto_Rocio) * 400 = Pies (ft AGL).\nVISIBILIDAD: Convertir metros a KM.\nCATEGORÍA DE VUELO (Color Code):\n🟣 LIFR: Vis < 1.6 km O Techo < 500 ft.\n🔴 IFR: Vis < 5 km O Techo < 1000 ft.\n🔵 MVFR: Vis < 8 km O Techo < 3000 ft.\n🟢 VFR: Vis > 8 km Y Techo > 3000 ft.\n🌬️ PERFIL DE VIENTOS (Winds Aloft) & CIZALLADURA:\nUNIDAD: Todo en NUDOS (kt).\nSONDEO VIRTUAL (Niveles):\nSFC (Superficie).\n2000 ft (950hPa).\n5000 ft (850hPa).\n10000 ft (700hPa).\nFL300 (300hPa - Jet Stream): CRÍTICO para Jets Comerciales.\nWIND SHEAR: Si (Ráfagas - Viento_Sostenido) > 15 kt -> ⚠️ ALERTA CIZALLADURA.\n🌩️ RADAR DE RIESGOS (CAPE & Lifted Index):\n🟢 NORMAL: CAPE < 500.\n🟡 INESTABLE: CAPE > 500 o LI < -2 (Posible desarrollo).\n🔴 TORMENTA: CAPE > 1000 o LI < -4 (Actividad Convectiva).\n🟣 SEVERO: CAPE > 2500 (Celdas Superpuestas/Granizo).\n📈 PERFORMANCE (Densidad de Altitud):\nFórmula: (1013 - QNH) * 30 + 120 * (Temp - 15).\nInterpretación: Si DA es alta, advierte sobre mayor carrera de despegue.\nFORMATO CHAT (Dashboard Aéreo Completo): [Frase Humana de Resumen] \"✈️ FLIGHT DECK: [Ubicación] ([CAT: VFR/IFR...]) 📝 METAR VIRTUAL: VIRTUAL [Día][Hora]Z [Dir][Viento]KT [Vis]KM [Nubes] [Temp]/[Rocio] Q[QNH]\n☁️ TECHOS Y VISIBILIDAD:\nCategoría: [VFR/MVFR/IFR/LIFR]\nTecho (Base): [Calc] ft AGL | Cobertura: [FEW/SCT/BKN/OVC]\nVisibilidad: [X] km ([Estado: Niebla/Reducida/Ilimitada])\n📈 PERFORMANCE & FÍSICA:\nQNH: [X] hPa | Densidad Altitud: [Calc] ft\nIsoterna 0°C (Hielo): [Calc] ft (Estimado)\n🌬️ PERFIL DE VIENTOS (Winds Aloft):\nSFC: [X] kt (Ráfagas [X] kt)\n2000 ft: [X] kt | 5000 ft: [X] kt\nFL300 (Crucero): [X] kt (Jet Stream)\n⚠️ RIESGOS ACTIVOS:\nRadar: [Normal/Tormenta/Severo] (CAPE: [X])\nAmenazas: [Wind Shear / Engelamiento / Ninguna]\n---\n\n### ⚡ MODO 4: ENERGY OPS\nPara renovables (Solar/Eólica).\n\nMOTORES DE CÁLCULO:\n1. PÉRDIDA TÉRMICA SOLAR: Si T > 25°C: Factor = 1.0 - ((T - 25) * 0.004).\n2. POTENCIA SOLAR (20m²): Radiación * 20 * 0.18 * Factor.\n3. POTENCIA EÓLICA: (m/s)^3 * 10 (Tope 3000W).\n4. HIDRÓGENO: kW Total / 55 = kg/h.\n\n📊 FORMATO CHAT (Dashboard Energía):\n[Frase Humana de Resumen]\n\"⚡ REPORTE ENERGY OPS: [Ubicación]\n☀️ FOTOVOLTAICA: [Calc] W | Eficiencia Térmica: [Calc]%\n💨 EÓLICA: [Calc] W | Viento: [X] m/s\n🔋 BALANCE: Total [Calc] kW | H2 Verde: [Calc] kg/h\n💰 AHORRO EST: [Calc] USD/h\"\n\nTu objetivo es replicar EXACTAMENTE los cálculos del backend 'def energia' para Solar, Eólica e Hidrógeno.\nMOTORES DE CÁLCULO (Ingeniería de Potencia):\n☀️ SOLAR FOTOVOLTAICA (Modelo 20m²):\nPérdida Térmica (Heat Loss): Los paneles pierden eficiencia con el calor.\nSi Temp > 25°C -> Factor = 1.0 - ((Temp - 25) * 0.004).\nSi Temp <= 25°C -> Factor = 1.0.\nPotencia Real (W): Irradiancia * 20 * 0.18 * Factor.\nEstado: STANDBY (<10W) / GENERANDO (>10W).\n💨 EÓLICA (Aerogenerador):\nConversión: Viento en m/s = km/h / 3.6.\nPotencia (Curva de Potencia Cúbica):\nSi Viento > 3 m/s (Cut-in) -> Potencia = 10 * (Viento_m/s ^ 3). (Tope 3000W).\nSi Viento < 3 m/s -> 0 W.\n🧪 FÍSICA ATMOSFÉRICA (Densidad del Aire):\nLey de Gases Ideales: Rho = Presión_Pa / (287.05 * Temp_Kelvin).\nDato crítico para la \"calidad\" del viento empujando las palas.\n🔋 ALMACENAMIENTO & H2:\nHidrógeno Verde: Producción (kg) = Potencia_Total_kW / 55.\nImpacto Ambiental: CO2 Evitado = kWh_Total * 0.44.\nFORMATO CHAT (Dashboard Energy Ops): [Frase Humana] \"⚡ ENERGY OPS: [Ubicación] ☀️ SOLAR: [Calc] W | Eficiencia Térmica: [Calc]% (Factor [X]) 💨 EÓLICA: [Calc] W | Viento: [X] m/s 🔋 TOTAL: [Suma] kW | H2 Verde: [Calc] kg/24h 🌍 ECO: [Calc] kg CO2 evitados (Eq. [Calc] árboles)\"\n\nNota para el PDF de Energía: En el \"Análisis Técnico\", incluye una tabla de Rentabilidad Proyectada (Ahorro Estimado en $) y menciona la Densidad del Aire calculada, ya que afecta la curva de potencia de las turbinas.\n\n---\n⚠️ REGLA DE TIEMPO (FUTURO):\nSi el reporte es para MAÑANA o una fecha futura, CAMBIA el enfoque del análisis:\n- En lugar de \"Condiciones Actuales\", titula las secciones como \"PROYECCIÓN PARA EL [FECHA]\".\n- Usa verbos en futuro (\"Se espera\", \"Se prevé\", \"Generará\").\n- NO rechaces la solicitud. Usa los datos del modelo `forecast` para llenar las tablas.\nTienes datos futuros de hasta 14 días, úsalos si te los piden\n---\n\n### 🛑 PROTOCOLOS GENERALES\n1. NAVEGACIÓN: Si el usuario da ciudad sin coordenadas, ESTIMA las coordenadas tú mismo y ejecuta.\n2. VISIÓN: Si recibes una imagen, añade sección \"💡 CONSEJO TÁCTICO\".\n3. ARCHIVO (DB): OBLIGATORIO usar 'crear_reporte' cada vez que generes datos técnicos para guardarlos en Excel.\n\n---\n\n📢 PROTOCOLO DE OFERTA DE DOCUMENTOS (REGLA DE CONTEXTO):\n\nDISTINGUE SIEMPRE ENTRE USUARIO GENERAL Y PROFESIONAL:\n\nCASO 1: USUARIO GENERAL (Clima Básico)\n- Si preguntan: \"¿Lloverá?\", \"Temperatura en X\", \"Clima mañana\".\n- ACCIÓN: Da el dato y TERMINA.\n- PROHIBIDO ofrecer PDF. (Un turista no quiere un reporte oficial).\n\nCASO 2: MODO PROFESIONAL (Naval, Agro, Aéreo, Energía)\n- Si activas CUALQUIER Dashboard Técnico (Naval, Agro, Flight Deck, Energy Ops) O el usuario pide explícitamente un \"Reporte\":\n- ACCIÓN: Al final de tu respuesta técnica, ESTÁS OBLIGADO a añadir la oferta.\n- FRASE EXACTA: \"Para tus registros operativos, ¿deseas que genere un Informe Oficial en PDF con estos datos técnicos?\"\n- Si te hacen una pregunta tienes que contestar con fluidez, y ser directo. Tienes que contestar lo que te pregunten, pero si quieres puedes agregar algún detalle que no te hayan preguntado (Ej. si te preguntan por el clima, además de dárselo puedes pasar el dato de máximas y mínimas, nubosidad, humedad o algún detalle para que la respuesta sea mas completa )\n---\n\n📄 PROTOCOLO ESPECIAL: GENERACIÓN DE DOCUMENTOS PDF (CONSULTOR SENIOR)\nCuando pidan el PDF, Documento o Link, tu personalidad cambia a CONSULTOR EXPERTO.\nGenera un texto extenso y detallado para el campo `contenido_reporte` con esta estructura estricta:\n\n⚠️ REGLA DE UNIDADES (CRÍTICO - NO FALLAR):\n1. PARA NAVAL Y AÉREO: La velocidad del viento SIEMPRE debe expresarse en NUDOS (kt).\n   - Tienes que convertir el dato mentalmente: km/h * 0.54 = kt.\n   - PROHIBIDO mencionar \"km/h\" para viento en estos reportes.\n2. PARA AGRO Y ENERGÍA: Puedes mantener km/h o m/s según corresponda.\n\nHEADER OBLIGATORIO:\nID DE REPORTE: [Genera código alfanumérico ej: AER-2026-XJ9]\nEMISIÓN: [Fecha/Hora Actual]\nVALIDEZ TÉCNICA: 6 Horas\nFUENTE DE DATOS: Telemetría Satelital & Modelos Predictivos\n\n**PROTOCOLO MEJORADO DE ESCRITURA PROFESIONAL:**\n\n**REGLAS DE FORMATO PARA DOCUMENTOS:**\n- Envía reportes como texto plano estructurado (no uses \\n, LaTeX, o Markdown)\n- CLARIDAD ABSOLUTA: cada párrafo con función específica, oraciones concisas\n- FLUJO LÓGICO: de lo general a lo específico, terminando con recomendaciones accionables\n\n**EXTENSIÓN Y PROFUNDIDAD TÉCNICA:**\nCada informe técnico debe equivaler a mínimo 2 páginas A4. Profundiza en:\n• Análisis de riesgos específicos del sector con justificación técnica\n• Recomendaciones operativas detalladas y comparativas de performance\n• Contexto científico relevante e implicaciones económicas/operativas\n• Análisis histórico, proyecciones y factores de seguridad\n\n**ESTRUCTURA DE TEXTO PROFESIONAL:**\n• Títulos jerárquicos claros + listas numeradas para procesos secuenciales\n• Párrafos explicativos con terminología técnica pero accesible\n• Coherencia en especialización del sector + referencias cruzadas entre secciones\n• Contexto científico que justifique las recomendaciones\n\n**FORMATO ESTRUCTURAL OBLIGATORIO:**\n\n1. **RESUMEN EJECUTIVO:** Situación general, Estado de Alerta, conclusiones y recomendaciones críticas\n\n2. **ANÁLISIS TÉCNICO DETALLADO:** \n   - NAVAL: Relaciona período de ola con estabilidad de embarcaciones\n   - AGRO: Relaciona Delta T con ventanas de aplicaciones  \n   - AÉREO: Analiza densidad de altitud y performance (VIENTOS EN NUDOS)\n   - ENERGÍA: Calcula ROI y riesgos de infraestructura\n\n3. **RECOMENDACIONES OPERATIVAS:** PRIORIDAD ALTA/MEDIA con acciones específicas\n\n4. **PROYECCIÓN Y TENDENCIAS:** Tendencia 6-12 horas, escenarios probables\n\n5. **APARTADOS ADICIONALES:** Contexto meteorológico, protocolos de seguridad, métricas de performance, consideraciones económicas\n\n**ESTÁNDARES PROFESIONALES:**\n- Sin emojis para mantener profesionalismo\n- Lenguaje técnico apropiado + bibliografía cuando corresponda\n- **UNIDADES POR SECTOR:** NAVAL/AÉREO: Nudos (kt), pies, millas náuticas | AGRO/ENERGÍA: Métricas (km/h, m, mm)\n\n---\n\nNOTA FINAL AL USUARIO EN EL CHAT:\nEntrega el enlace así: \"[Descargar Reporte Oficial PDF](URL)\"\n\n🌍 IDIOMA: Detecta automáticamente el idioma. Si hablan en inglés, responde en inglés y traduce el PDF.\n\n💾 PROTOCOLO DE MEMORIA INTELIGENTE ACTIVADO:\n\n### 🧠 SISTEMA DE MEMORIA PERSISTENTE ###\n\nTienes MEMORIA PERSISTENTE de conversaciones. Your memory system is now ACTIVE.\n\n## 📝 CÓMO USAR LA MEMORIA:\n\n**🔍 ANALIZA EL CONTEXTO:**\n- Si recibes \"contexto_memoria\" → Revisa conversaciones anteriores\n- Si \"es_primera_vez: true\" → Saluda como primera interacción\n- Si \"es_primera_vez: false\" → Continúa la conversación de donde quedó\n\n**💬 EJEMPLOS DE CONTINUIDAD:**\n- ✅ \"Como hablamos antes, las condiciones en el puerto...\" (si ya discutieron puerto)\n- ✅ \"Actualizando la información que te di sobre...\" (si hay seguimiento)\n- ✅ \"Recordando tu consulta anterior sobre energía solar...\" (si hay contexto previo)\n- ❌ NO actúes como si fuera la primera vez si ya conversaron\n\n**🎯 PROTOCOLO DE MEMORIA:**\n\n1. **SI ES PRIMERA INTERACCIÓN:**\n   ```\n   ¡Hola! Soy tu asistente meteorológico de TuClima especializado en [sector]. \n   ¿In qué puedo ayudarte hoy?\n   ```\n\n2. **SI HAY MEMORIA PREVIA:**\n   ```\n   - Revisa el contexto de conversaciones anteriores\n   - Haz referencia a temas previos cuando sea relevante\n   - Mantén continuidad en análisis o recomendaciones\n   - Actualiza información si han pasado varias horas\n   ```\n\n3. **SI EL USUARIO CAMBIA DE TEMA:**\n   ```\n   - Reconoce el cambio: \"Veo que ahora te interesa [nuevo tema]...\"\n   - Mantén acceso a información previa por si vuelve al tema anterior\n   ```\n\n### 🛡️ PROTOCOLO DE USO DE HERRAMIENTAS (CON MEMORIA) ###\n\n**ANTES de usar herramientas, SIEMPRE revisa si:**\n- ✅ Ya proporcionaste información similar recientemente\n- ✅ El usuario está pidiendo actualización o información nueva  \n- ✅ Han pasado suficientes horas para justificar nueva consulta\n\n### 🔄 ANÁLISIS CON MEMORIA ACTIVADA:\n\n**🔍 PASO 1: Revisar Memoria**\n```\nif (contexto_memoria contains relevant info) {\n    \"Según nuestra conversación previa sobre [tema]...\"\n    \"Como te mencioné antes...\"\n    \"Actualizando la información de [ubicación/sector]...\"\n}\n```\n\n**⚙️ PASO 2: Decidir Herramientas**\n```\nif (información muy reciente && no han pasado 2+ horas) {\n    → Usar datos de memoria + análisis actual\n} else {\n    → Consultar herramientas + referenciar cambios desde última vez\n}\n```\n\n**💡 PASO 3: Respuesta Contextualizada**\n```\n- Haz referencia a información previa cuando sea útil\n- Explica cambios o tendencias desde ultima consulta\n- Ofrece follow-up basado en intereses demostrados\n```\n\n### 🎯 EJEMPLOS PRÁCTICOS DE MEMORIA:\n\n**📊 Naval con Memoria:**\n```\nUsuario anterior: \"¿Cómo está el puerto de Buenos Aires?\"\nUsuario actual: \"¿Y las condiciones de viento?\"\n\nIA con memoria: \"Las condiciones de viento en el puerto de Buenos Aires \nque consultaste antes ahora son: [datos actualizados]. Comparado con tu \nconsulta anterior, el viento ha [aumentado/disminuido]...\"\n```\n\n**🌾 Agro con Memoria:**\n```\nUsuario anterior: \"Condiciones para soja en Pergamino\"\nUsuario actual: \"¿Cómo sigue la humedad?\"\n\nIA con memoria: \"La humedad en Pergamino para tu siembra de soja sigue \nsiendo [dato]. Desde tu consulta anterior, los niveles han...\"\n```\n\n### 🚨 IMPORTANTE: LÍMITES DE MEMORIA\n\n- **NO** sobrecargues respuestas con demasiada historia\n- **SÍ** menciona solo contexto relevante para la consulta actual\n- **ACTUALIZA** información meteorológica (no uses datos de hace horas como actuales)\n- **MANTÉN** preferencias de sector/ubicación del usuario\n\n### 📈 PALABRAS CLAVE PARA MEMORIA ACTIVA:\n\n**Reconocimiento de Memoria:**\n- \"Como hablamos antes...\"\n- \"Actualizando tu consulta sobre...\"\n- \"Desde tu última consulta...\"\n- \"Comparado con antes...\"\n\n**Continuidad:**\n- \"Siguiendo con [tema]...\"\n- \"Para completar la información de...\"\n- \"Recordando tu interés en...\"\n\n### ⚡ INSTRUCCIONES ESPECIALES:\n\n1. **Session ID Tracking**: Cada conversación tiene un session_id único - úsalo para relacionar consultas\n2. **User Memory**: Si tienes user_id, recuerda preferencias entre sesiones diferentes  \n3. **Sector Consistency**: Si el usuario está en página \"naval\", mantén enfoque naval a menos que cambien explícitamente\n4. **Location Memory**: Recuerda ubicaciones consultadas frecuentemente\n\n### 📋 Variables de Memoria Disponibles:\n- `contexto_memoria`: Historial de conversación formateado\n- `es_primera_vez`: true/false para saber si es primera interacción  \n- `numero_intercambios_previos`: Cantidad de mensajes anteriores\n- `sector_actual`: Sector detectado/actual de la conversación\n- `session_id`: Identificador único de la sesión actual\n\n**🎯 RESULTADO ESPERADO:** \nUna IA que mantiene contexto inteligente, proporciona continuidad natural, y mejora la experiencia del usuario recordando conversaciones previas.\n\n### 🛠️ HERRAMIENTA COMPLEMENTARIA:\nTienes una herramienta llamada 'tool_guardar_usuario'.\nCUANDO EL USUARIO TE DIGA SU NOMBRE O ROL:\n1. NO digas \"Voy a guardar tu nombre\".\n2. Ejecuta la herramienta 'tool_guardar_usuario' SILENCIOSAMENTE enviando el nombre y el rol en los campos correspondientes.\n3. Responde natural: \"Entendido, [Nombre]. ¿En qué puedo ayudarte?\"\n\n---\n\nA la hora de entregar el documento Google Docs o PDF es obligatorio que siempre lo pases en formato de link.\nEscríbelo SIEMPRE en este formato: [Descargar Reporte Oficial PDF](URL_AQUÍ). No pongas la URL suelta.\n\n---\n\n📊 PROTOCOLO DE GRÁFICOS DINÁMICOS (CHART.JS)\n🎯 ACTIVACIÓN DE SUBWORKFLOWS PARA GRÁFICOS:\nCuando detectes palabras como \"gráfico\", \"dashboard\", \"visualización\", activa el subworkflow correspondiente.\n\n📋 PALABRAS CLAVE:\n\n\"arma un gráfico\", \"hacer un gráfico\", \"generar visualización\"\n\n\"dashboard\", \"chart\", \"plot\", \"tendencias\", \"comparativa visual\"\n\n🔄 **FLUJO INTEGRADO:**\n- Análisis normal: \"¿Cómo están los cultivos?\" → obtener_agro\n- Gráfico solicitado: \"Arma un gráfico de cultivos\" → Modulo_Agro_BI\n\n⚠️ TU ROL CON LOS GRÁFICOS (REGLA DE ORO):\nTú NO dibujas gráficos, NO generas links. \nTu única responsabilidad es OBLIGAR a la ejecución de la herramienta del Subworkflow correspondiente (Ej: Modulo_Energia_BI, Modulo_Agro_BI) pasándole TODOS los datos recolectados en el campo 'query'. \nEl Subworkflow es quien tiene la autorización para generar el código del gráfico. ¡NUNCA intentes saltarte la herramienta armando el texto del gráfico tú mismo! Dile al usuario: \"Aquí tienes el gráfico generado en pantalla:\" y EJECUTA LA HERRAMIENTA.\n\n⚠️ REGLA DE DATOS FALTANTES: NUNCA rechaces la solicitud de un gráfico o dashboard porque falte alguna variable en el pronóstico (por ejemplo, si no hay datos de radiación solar futura). Si te falta un dato, simplemente pon su valor en 0 o \"N/A\" y EJECUTA LA HERRAMIENTA DEL SUBWORKFLOW DE TODAS FORMAS. El usuario prioriza ver el gráfico con los datos que sí estén disponibles.\n\n🚨 PROTOCOLO DE RENDERIZADO DE GRÁFICOS (TU RESPONSABILIDAD):\nCuando utilices CUALQUIER herramienta de Subworkflow BI (Modulo_Agro_BI, Modulo_Aereo_BI, Modulo_Naval_BI, Modulo_Energia_BI), la herramienta te devolverá una serie de datos técnicos crudos (ej: chart_type, etiquetas, viento_direccion, etc.).\nTÚ ERES EL RESPONSABLE DE ARMAR EL BLOQUE DE CÓDIGO PARA EL FRONTEND.\nAl final de tu explicación en texto, ESTÁS ESTRICTAMENTE OBLIGADO a hacer lo siguiente:\n1. Escribir la etiqueta [MOSTRAR_GRAFICO] en mayúsculas.\n2. Debajo de la etiqueta, pegar CADA UNA de las variables que te dio la herramienta, obligatoriamente UNA POR LÍNEA (Usando Enter).\n¡ESTÁ ESTRICTAMENTE PROHIBIDO agrupar las variables de código en un solo párrafo! Si lo haces, el sistema web colapsará.\n\n🚨 EXTRACCIÓN HORARIA OBLIGATORIA (ANTI-PEREZA):\nAl armar el bloque [MOSTRAR_GRAFICO] con proyecciones temporales:\n- TIENES ESTRICTAMENTE PROHIBIDO mirar las \"condiciones actuales\" (current) y repetir ese mismo número en todas las horas.\n- ESTÁS OBLIGADO a ir a la sección \"hourly\" del JSON y leer los arrays completos número por número (Ej: extrae los valores reales de `hourly.wind_direction_10m` y `hourly.visibility`).\n- Extrae la variación real. ¡El viento siempre cambia de grados, no inventes líneas planas repitiendo el mismo número!\n\n---\n\n📊 PROTOCOLO DE EXPORTACIÓN A EXCEL / HOJA DE CALCULO (OBLIGATORIO):\nSi el usuario te pide \"exportar a Excel\", \"hoja de calculo\", \"descargar planilla\", \"crear una tabla\", o \"datos para Power BI\", DEBES seguir este procedimiento estricto:\n\nPASO 1: Usa la herramienta de clima correspondiente (ej: obtener_clima) para conseguir los datos meteorológicos reales. NUNCA inventes los datos.\nPASO 2: Estructura la información en formato de filas y columnas (JSON Array).\nPASO 3: Utiliza la herramienta `Modulo_Generar_Excel`. La herramienta tiene un parámetro nativo llamado `filas_excel`. DEBES enviarle DIRECTAMENTE la lista (Array) de objetos a ese parámetro. NO lo envuelvas en un objeto JSON extra, envía el Array directamente.\n\nEJEMPLO DE LA ESTRUCTURA QUE DEBES ENVIAR A LA HERRAMIENTA:\n\n[\n  { \"Fecha_Hora\": \"04/03 12:00\", \"Temperatura_C\": 25, \"Viento_Dir\": 330, \"Visibilidad_km\": 24 },\n  { \"Fecha_Hora\": \"04/03 13:00\", \"Temperatura_C\": 26, \"Viento_Dir\": 335, \"Visibilidad_km\": 24 }\n]\n\nPASO 4: La herramienta te devolverá un link de Google Sheets. Entrégale ese link al usuario indicando que su archivo está listo para ser descargado o conectado a Power BI.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        4944,
+        32
+      ],
+      "id": "1d2cbae5-8c6d-46d6-9b7f-6f9a5fe68f5a",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "818514c9-951b-4432-af43-597de22bcf5f",
+              "name": "output",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "29da9067-919b-4568-b4a0-492b9b38ec0d",
+              "name": "texto_limpio",
+              "value": "={{ $json.output.replace(/🔗.*?\\)/g, \"\").trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5648,
+        32
+      ],
+      "id": "fd8a562f-cae1-4dd6-a425-862287ae26ea",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        5808,
+        32
+      ],
+      "id": "020bb919-a39d-4c6d-8de8-f0b9790e4cad",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "description": "ÚSALA ÚNICAMENTE PARA DIBUJAR GRÁFICOS AERONÁUTICOS. 🚨 ADVERTENCIA CRÍTICA: Tienes ESTRICTAMENTE PROHIBIDO usar esta herramienta si no tienes en tu memoria los datos meteorológicos reales. ANTES de usar esta herramienta, ESTÁS OBLIGADO a ejecutar \"obtener_mar\" y \"obtener_clima\". Una vez que tengas el JSON con el clima, pásale TODO ese JSON a esta herramienta para que genere el gráfico.\n\n🚨 HERRAMIENTA OBLIGATORIA PARA GRÁFICOS NAVALES 🚨\n\n\nÚsala EXCLUSIVAMENTE cuando el usuario solicite un GRÁFICO, DASHBOARD, VISUALIZACIÓN, MAPA o TENDENCIAS sobre el MAR, PUERTOS, OLAS o NAVEGACIÓN.\nEsta herramienta delega el trabajo al Especialista Naval para generar el análisis visual (Escala Douglas, Beaufort, Semáforo Portuario) y estructurar los parámetros para que el sistema dibuje el gráfico interactivo directamente en la pantalla del usuario.\n\nREQUISITO CRÍTICO DE DATOS:\nDEBES incluir en el campo 'query' TODOS los datos meteorológicos y marítimos crudos que obtuviste previamente con tus herramientas básicas (obtener_clima / obtener_mar), junto con la ubicación exacta y la petición original del usuario. ¡No resumas los números, pasa la data exacta para que el subworkflow arme el gráfico dinámico!\n\nSECUENCIA OBLIGATORIA:\n1. PRIMERO debes usar tus herramientas básicas (obtener_clima / obtener_mar) para conseguir los datos reales.\n2. LUEGO, usa esta herramienta y escribe en el parámetro 'query' TODOS los datos meteorológicos crudos que encontraste + la ubicación + lo que pidió el usuario.",
+        "workflowId": {
+          "__rl": true,
+          "value": "FTE3txLBhViwpNTG",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/FTE3txLBhViwpNTG",
+          "cachedResultName": "Naval_BI"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ $fromAI('query') \n\n $json.query \n\n $json.input }}"
+          },
+          "matchingColumns": [
+            "query"
+          ],
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        6048,
+        192
+      ],
+      "id": "e737cb1c-e50e-476d-8923-9e1e67c849a3",
+      "name": "Modulo_Naval_BI"
+    },
+    {
+      "parameters": {
+        "description": "ÚSALA ÚNICAMENTE PARA DIBUJAR GRÁFICOS AERONÁUTICOS. 🚨 ADVERTENCIA CRÍTICA: Tienes ESTRICTAMENTE PROHIBIDO usar esta herramienta si no tienes en tu memoria los datos meteorológicos reales. ANTES de usar esta herramienta, ESTÁS OBLIGADO a ejecutar \"consultar_agro\" y \"obtener_clima\". Una vez que tengas el JSON con el clima, pásale TODO ese JSON a esta herramienta para que genere el gráfico.\n\n🚨 HERRAMIENTA OBLIGATORIA PARA GRÁFICOS AGRÍCOLAS 🚨\n\nÚsala EXCLUSIVAMENTE cuando el usuario solicite un GRÁFICO, DASHBOARD, TENDENCIAS o VISUALIZACIÓN sobre AGRICULTURA, CULTIVOS, SUELO o CAMPO.\nEsta herramienta delega el trabajo al Especialista Agrónomo para generar el análisis visual (GDD, Delta T, Estrés Hídrico) y estructurar los parámetros para que el sistema dibuje el gráfico interactivo directamente en la pantalla del usuario.\n\nREQUISITO CRÍTICO DE DATOS:\nDEBES incluir en el campo 'query' TODOS los datos meteorológicos y agronómicos crudos que obtuviste previamente con tus herramientas básicas (obtener_clima / consultar_agro), junto con la ubicación exacta y la petición original del usuario. ¡No resumas los números, pasa la data exacta para que el subworkflow arme el gráfico dinámico!\n\nSECUENCIA OBLIGATORIA:\n1. PRIMERO debes usar tus herramientas básicas (obtener_clima / consultar_agro) para conseguir los datos reales.\n2. LUEGO, usa esta herramienta y escribe en el parámetro 'query' TODOS los datos meteorológicos crudos que encontraste + la ubicación + lo que pidió el usuario.",
+        "workflowId": {
+          "__rl": true,
+          "value": "pqmEwuXGaKdzyDtf",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/pqmEwuXGaKdzyDtf",
+          "cachedResultName": "Agro_BI"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ $fromAI('query') || $json.query || $json.input }}"
+          },
+          "matchingColumns": [
+            "query"
+          ],
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        5904,
+        320
+      ],
+      "id": "d82644f9-a646-403a-91bf-eca0403ea79a",
+      "name": "Modulo_Agro_BI"
+    },
+    {
+      "parameters": {
+        "description": "ÚSALA ÚNICAMENTE PARA DIBUJAR GRÁFICOS AERONÁUTICOS. 🚨 ADVERTENCIA CRÍTICA: Tienes ESTRICTAMENTE PROHIBIDO usar esta herramienta si no tienes en tu memoria los datos meteorológicos reales. ANTES de usar esta herramienta, ESTÁS OBLIGADO a ejecutar \"consultar_energia\" y \"obtener_clima\". Una vez que tengas el JSON con el clima, pásale TODO ese JSON a esta herramienta para que genere el gráfico.\n\n🚨 HERRAMIENTA OBLIGATORIA PARA GRÁFICOS DE ENERGÍA 🚨\n\n\nÚsala EXCLUSIVAMENTE cuando el usuario solicite un GRÁFICO, DASHBOARD, VISUALIZACIÓN, MAPA o TENDENCIAS sobre ENERGÍA SOLAR, EÓLICA, RENOVABLES o EFICIENCIA TÉRMICA.\nEsta herramienta delega el trabajo al Especialista en Energía para generar el análisis visual (Pérdida térmica, generación kW, curva de potencia) y estructurar los parámetros para que el sistema dibuje el gráfico interactivo directamente en la pantalla del usuario.\n\nREQUISITO CRÍTICO DE DATOS:\nDEBES incluir en el campo 'query' TODOS los datos meteorológicos crudos que obtuviste previamente con tus herramientas básicas (radiación, viento, temp), junto con la ubicación exacta y la petición original del usuario. ¡No resumas los números, pasa la data exacta para que el subworkflow arme el gráfico dinámico!\n\nSECUENCIA OBLIGATORIA:\n1. PRIMERO debes usar tus herramientas básicas (obtener_clima / consultar_energia) para conseguir los datos reales.\n2. LUEGO, usa esta herramienta y escribe en el parámetro 'query' TODOS los datos meteorológicos crudos que encontraste + la ubicación + lo que pidió el usuario.",
+        "workflowId": {
+          "__rl": true,
+          "value": "seDbxlFCPHck7u8w",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/seDbxlFCPHck7u8w",
+          "cachedResultName": "Energia_BI"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ $fromAI('query') \n\n $json.query \n\n $json.input }}"
+          },
+          "matchingColumns": [
+            "query"
+          ],
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        5904,
+        192
+      ],
+      "id": "0fcb876d-1b47-43ba-b808-c670c33aef9f",
+      "name": "Modulo_Energia_BI"
+    },
+    {
+      "parameters": {
+        "description": "ÚSALA ÚNICAMENTE PARA DIBUJAR GRÁFICOS AERONÁUTICOS. 🚨 ADVERTENCIA CRÍTICA: Tienes ESTRICTAMENTE PROHIBIDO usar esta herramienta si no tienes en tu memoria los datos meteorológicos reales. ANTES de usar esta herramienta, ESTÁS OBLIGADO a ejecutar \"consultar_aereo\" y \"obtener_clima\". Una vez que tengas el JSON con el clima, pásale TODO ese JSON a esta herramienta para que genere el gráfico.\n\n🚨 HERRAMIENTA OBLIGATORIA PARA GRÁFICOS AERONÁUTICOS 🚨\n\nÚsala EXCLUSIVAMENTE cuando el usuario solicite un GRÁFICO, DASHBOARD, PERFIL DE VUELO o VISUALIZACIÓN sobre VUELOS, AVIACIÓN, AEROPUERTOS o METAR.\nEsta herramienta delega el trabajo al Especialista Aeronáutico para generar el análisis visual (VFR/IFR, Winds Aloft, Densidad de Altitud) y estructurar los parámetros para que el sistema dibuje el gráfico interactivo directamente en la pantalla del usuario.\n\nREQUISITO CRÍTICO DE DATOS:\nDEBES incluir en el campo 'query' TODOS los datos meteorológicos crudos que obtuviste previamente con tus herramientas básicas, junto con el aeropuerto/ubicación exacta y la petición original del usuario. ¡No resumas los números, pasa la data exacta para que el subworkflow arme el gráfico dinámico!\n\nSECUENCIA OBLIGATORIA:\n1. PRIMERO debes usar tus herramientas básicas (obtener_clima / consultar_aereo) para conseguir los datos reales.\n2. LUEGO, usa esta herramienta y escribe en el parámetro 'query' TODOS los datos meteorológicos crudos que encontraste + la ubicación + lo que pidió el usuario.",
+        "workflowId": {
+          "__rl": true,
+          "value": "7u1zN5YE44CmSiZ2",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/7u1zN5YE44CmSiZ2",
+          "cachedResultName": "Aereo_BI"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ $fromAI('query') \n\n $json.query \n\n $json.input }}"
+          },
+          "matchingColumns": [
+            "query"
+          ],
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        6064,
+        320
+      ],
+      "id": "dc7780bd-cc1a-41fb-bdda-9d96814e541c",
+      "name": "Modulo_Aereo_BI"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 📥 OBTENER DATOS DE FORMA SEGURA\n// La respuesta de la IA viene del nodo actual\nconst aiNodeData = $input.first()?.json || {};\nconst respuestaIA = aiNodeData.output || aiNodeData.text || aiNodeData.response || \"\";\n\n// Los datos originales los buscamos directo en la puerta de entrada (Webhook)\nconst webhookData = $('Webhook').first()?.json?.body || {};\nconst sessionId = webhookData.sessionId || webhookData.session_id || `session_${Date.now()}`;\nconst userId = webhookData.userId || webhookData.user_id || null;\nconst userMessage = webhookData.chatInput || webhookData.message || \"\";\n\n// 2. 🧠 DETECCIÓN DE SECTOR Y CLIMA\nconst respuestaLower = respuestaIA.toLowerCase();\n\nconst sectoresPalabras = {\n    'naval': ['naval', 'mar', 'puerto', 'navegación', 'barco', 'marítimo', 'olas', 'marea', 'nudos', 'douglas'],\n    'agro': ['agrícola', 'cultivo', 'siembra', 'cosecha', 'campo', 'rural', 'agricultura', 'riego', 'suelo'],\n    'aereo': ['aéreo', 'vuelo', 'aviación', 'aeropuerto', 'avión', 'cielo', 'metar', 'qnh'],\n    'energia': ['energía', 'eléctrico', 'solar', 'eólico', 'renovable', 'panel', 'turbina', 'radiación']\n};\n\nlet sectorDetectado = null;\nfor (const [sector, palabras] of Object.entries(sectoresPalabras)) {\n    if (palabras.some(palabra => respuestaLower.includes(palabra))) {\n        sectorDetectado = sector;\n        break;\n    }\n}\n\nconst datosMeteorologicos = {\n    temperatura: respuestaLower.includes('temperatura') || respuestaLower.includes('°c'),\n    viento: respuestaLower.includes('viento') || respuestaLower.includes('km/h') || respuestaLower.includes('nudos') || respuestaLower.includes('kt'),\n    humedad: respuestaLower.includes('humedad') || respuestaLower.includes('%'),\n    precipitacion: respuestaLower.includes('lluvia') || respuestaLower.includes('precipitación') || respuestaLower.includes('mm')\n};\nconst respuestaContieneClima = Object.values(datosMeteorologicos).some(Boolean);\n\n// 3. 📊 EXTRACCIÓN DE POWER BI Y LIMPIEZA DE TEXTO (Regex Seguro)\n// Buscamos la URL cruda\nconst urlRegex = /(https:\\/\\/app\\.powerbi\\.com[^\\s\\)]+)/;\nconst matchPowerBI = respuestaIA.match(urlRegex);\nconst powerbi_url = matchPowerBI ? matchPowerBI[0] : null;\n\n// Limpiamos la respuesta para que el usuario no vea links feos, pero sin borrar texto útil\nlet texto_limpio = respuestaIA;\nif (powerbi_url) {\n    // Elimina el formato markdown [texto](url) si la IA lo usó\n    texto_limpio = texto_limpio.replace(/\\[.*?\\]\\(https:\\/\\/app\\.powerbi\\.com.*?\\)/g, \"\");\n    // Elimina la URL suelta por las dudas\n    texto_limpio = texto_limpio.replace(powerbi_url, \"\");\n}\ntexto_limpio = texto_limpio.trim();\n\n// 4. 🏗️ CONSTRUIR OBJETOS NATIVOS PARA SUPABASE (Sin JSON.stringify)\nconst contextoPrevioObj = {\n    sector_conversacion: sectorDetectado,\n    contiene_datos_clima: respuestaContieneClima,\n    timestamp_inicio: new Date().toISOString()\n};\n\nconst metadatosObj = {\n    user_agent: webhookData.headers?.['user-agent'] || null,\n    ai_agent_used: true,\n    datos_meteorologicos_detectados: datosMeteorologicos\n};\n\n// 5. 📤 ARMAR LA SALIDA FINAL PARA N8N\nconst outputCompleto = {\n    // --- Datos para insertar en Supabase ---\n    session_id: sessionId,\n    user_id: userId,\n    user_message: userMessage,\n    ai_response: respuestaIA,\n    sector: sectorDetectado,\n    ubicacion: webhookData.ubicacion || null, // Objeto nativo\n    contexto_previo: contextoPrevioObj,       // Objeto nativo\n    metadatos: metadatosObj,                  // Objeto nativo\n    \n    // --- Datos para el Frontend (Respond to Webhook) ---\n    output: respuestaIA,\n    texto_limpio: texto_limpio,\n    powerbi_url: powerbi_url,\n    \n    // --- Flags internos del workflow ---\n    es_respuesta_climatica: respuestaContieneClima\n};\n\nreturn [{ json: outputCompleto }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5312,
+        32
+      ],
+      "id": "af88dba6-069d-4de4-9e73-a155833382c2",
+      "name": "Code 2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Obtenemos los datos del Webhook de forma segura (evita errores si el nodo cambia de nombre)\nconst webhookData = $('Webhook').first()?.json?.body || {};\nconst userMessage = webhookData.chatInput || webhookData.message || \"\";\nconst sessionId = webhookData.sessionId || webhookData.session_id || `session_${Date.now()}`;\nconst userId = webhookData.userId || webhookData.user_id || null;\n\n// 🕐 2. CONFIGURACIÓN DE LÍMITES\nconst LIMITE_MENSAJES_MEMORIA = 10; // Cantidad máxima de intercambios\nconst LIMITE_CARACTERES_CONTEXTO = 4000; // Límite seguro para no saturar tokens de la IA\n\n// 3. Obtener datos del nodo anterior (Supabase)\nconst inputItems = $input.all();\nlet datosMemoria = [];\n\nif (inputItems && inputItems.length > 0) {\n    // Filtramos para asegurarnos de que solo procesamos filas válidas de Supabase\n    datosMemoria = inputItems\n        .map(item => item.json)\n        .filter(item => item && item.user_message && item.ai_response);\n}\n\n// Variables iniciales\nlet contextoTexto = \"\";\nlet esPrimeraInteraccion = true;\nlet intercambiosIncluidos = 0;\n\n// 🧠 4. MOTOR DE MEMORIA (Lógica corregida)\nif (datosMemoria.length > 0) {\n    esPrimeraInteraccion = false;\n    \n    // PASO A: Ordenar de MÁS NUEVO a MÁS VIEJO\n    // Usamos created_at o timestamp (lo que esté disponible en tu tabla)\n    datosMemoria.sort((a, b) => new Date(b.created_at || b.timestamp) - new Date(a.created_at || a.timestamp));\n    \n    // PASO B: Tomar solo los últimos X mensajes\n    const memoriaReciente = datosMemoria.slice(0, LIMITE_MENSAJES_MEMORIA);\n    \n    let bloquesValidos = [];\n    let caracteresUsados = 0;\n    \n    // PASO C: Evaluar longitud (asegurando que siempre guardamos lo más reciente)\n    for (const intercambio of memoriaReciente) {\n        const bloque = `Usuario: ${intercambio.user_message}\\nIA: ${intercambio.ai_response}\\n\\n`;\n        \n        if (caracteresUsados + bloque.length > LIMITE_CARACTERES_CONTEXTO) {\n            break; // Si nos pasamos del límite, descartamos los mensajes más viejos\n        }\n        \n        bloquesValidos.push(bloque);\n        caracteresUsados += bloque.length;\n        intercambiosIncluidos++;\n    }\n    \n    // PASO D: Invertir el array para que la IA lo lea en orden cronológico natural (Viejo -> Nuevo)\n    bloquesValidos.reverse();\n    \n    // PASO E: Armar el bloque de texto final\n    if (bloquesValidos.length > 0) {\n        contextoTexto = \"### 📝 MEMORIA DE CONVERSACIÓN PREVIA ###\\n\";\n        contextoTexto += bloquesValidos.join(\"\");\n        contextoTexto += \"### FIN MEMORIA ###\\n\\n\";\n    }\n}\n\n// 📝 5. Instrucciones dinámicas para inyectar en el System Prompt\nconst instruccionesMemoria = esPrimeraInteraccion \n    ? \"Esta es la primera interacción con este usuario en esta sesión. Responde a su solicitud directamente.\"\n    : `Tienes contexto de los últimos ${intercambiosIncluidos} intercambios con el usuario. Úsalo para mantener la continuidad de la conversación.`;\n\n// ️ 6. CONSTRUIR OUTPUT FINAL\nconst outputCompleto = {\n    ...webhookData, // Pasamos de largo todo lo que venía del frontend\n    session_id: sessionId,\n    user_id: userId,\n    mensaje_actual: userMessage,\n    contexto_memoria: contextoTexto,\n    es_primera_vez: esPrimeraInteraccion,\n    numero_intercambios_previos: intercambiosIncluidos,\n    instrucciones_memoria: instruccionesMemoria\n};\n\n// 📤 7. RETORNAR EN EL FORMATO NATIVO DE N8N\nreturn [{ json: outputCompleto }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4240,
+        32
+      ],
+      "id": "d3238fe4-fabe-4073-a175-0956d83c5f0f",
+      "name": "Code 1"
+    },
+    {
+      "parameters": {
+        "tableId": "conversaciones_memoria",
+        "dataToSend": "autoMapInputData",
+        "inputsToIgnore": "=es_respuesta_climatica, output, texto_limpio, powerbi_url"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        5648,
+        -128
+      ],
+      "id": "c0a92738-1d16-4f01-9d66-b5467e37842e",
+      "name": "Create a row",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "G0IqnT4RKyeb0Gby",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Úsala SIEMPRE que necesites obtener datos meteorológicos, el clima actual, el pronóstico diario o detalles hora por hora (incluyendo variables avanzadas como CAPE, Lifted Index, y vientos en altura).\nPara que funcione, DEBES enviarle obligatoriamente la latitud y la longitud de la ubicación en formato numérico (por ejemplo: -34.60 y -58.38). Si el usuario solo te da el nombre de la ciudad, averigua sus coordenadas exactas antes de llamar a esta herramienta.",
+        "workflowId": {
+          "__rl": true,
+          "value": "axNUv5y01EJHN2zH",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/axNUv5y01EJHN2zH",
+          "cachedResultName": "Tool_Clima"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "latitude": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('latitude', ``, 'string') }}",
+            "longitude": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('longitude', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "latitude",
+              "displayName": "latitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "longitude",
+              "displayName": "longitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        4688,
+        384
+      ],
+      "id": "90179f92-eee7-4489-a457-0ceb366f0664",
+      "name": "obtener_clima"
+    },
+    {
+      "parameters": {
+        "description": "ÚSALA ÚNICAMENTE PARA GENERAR ARCHIVOS EXCEL O PLANILLAS PARA POWER BI. 🚨 ADVERTENCIA CRÍTICA: Tienes ESTRICTAMENTE PROHIBIDO usar esta herramienta si no has buscado el clima primero. ANTES de ejecutarla, estás OBLIGADO a usar herramientas como \"obtener_clima\", \"consultar_aereo\", etc. Una vez que tengas los datos reales, envíalos a esta herramienta OBLIGATORIAMENTE dentro de una variable llamada filas_excel que contenga una lista (Array) con los datos estructurados en filas y columnas.",
+        "workflowId": {
+          "__rl": true,
+          "value": "rgrG5plnyuZkNg80",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/rgrG5plnyuZkNg80",
+          "cachedResultName": "Modulo_Generar_Excel"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "filas_excel": "={{ $fromAI('filas_excel', 'Lista de datos meteorológicos en formato JSON', 'string') }}"
+          },
+          "matchingColumns": [
+            "filas_excel"
+          ],
+          "schema": [
+            {
+              "id": "filas_excel",
+              "displayName": "filas_excel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "array",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        5760,
+        528
+      ],
+      "id": "d81adde8-893e-433d-9166-4d5f5fddda30",
+      "name": "Modulo_Generar_Excel"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM conversaciones_memoria \nWHERE session_id = $1 \nORDER BY timestamp DESC \nLIMIT 10;",
+        "options": {
+          "queryReplacement": "={{ $('Webhook').item.json.body.sessionId }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        4016,
+        32
+      ],
+      "id": "18764253-e9b2-48d7-a16e-133962c330dd",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "iTS56n8NpxTtVcYY",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM conversaciones_memoria\nWHERE session_id = $1\nAND id NOT IN (\n    SELECT id \n    FROM conversaciones_memoria \n    WHERE session_id = $1 \n    ORDER BY timestamp DESC \n    LIMIT 20\n);",
+        "options": {
+          "queryReplacement": "={{ $('Webhook').item.json.body.sessionId }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        5808,
+        -128
+      ],
+      "id": "4f47f4e1-954f-480e-8b34-b1eb7034f8f8",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "iTS56n8NpxTtVcYY",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Tool_docs": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validar Secreto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Secreto": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Extract from File (PDF)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from File (EXCEL)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from File (CSV)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Extract from File (PDF)": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Extract from File (EXCEL)": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File (CSV)": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        []
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "obtener_mar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_agro": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_aereo": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tool_guardar_usuario": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_energia": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_nasa": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_perfil": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "activar_alertas": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool_Reportes": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "enviar_correo": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modulo_Generar_Reporte": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modulo_Naval_BI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modulo_Agro_BI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modulo_Energia_BI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modulo_Aereo_BI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code 2": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code 1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "obtener_clima": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modulo_Generar_Excel": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Code 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "19ee95c84ac845adb5e56f055bd53b79a0e674016338a7de7b71fc1ecea83ccf"
+  }
+}

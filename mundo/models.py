@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from datetime import timedelta
 import json
 from google.cloud import bigquery
 from google.oauth2 import service_account
@@ -14,8 +15,43 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 class PerfilUsuario(models.Model):
+    PLAN_CHOICES = [
+        ('mensual', 'Mensual ($20/mes)'),
+        ('anual', 'Anual ($200/año)'),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
     fecha_vencimiento = models.DateTimeField(null=True, blank=True)
+    plan_tipo = models.CharField(max_length=10, choices=PLAN_CHOICES, default='mensual', blank=True)
+    renovacion_automatica = models.BooleanField(
+        default=True,
+        verbose_name='Renovación automática',
+        help_text='Recibir recordatorio por email 5 días antes del vencimiento'
+    )
+
+    # --- Sistema de Tokens IA ---
+    tokens_disponibles = models.IntegerField(
+        default=0,
+        verbose_name='Tokens disponibles hoy',
+        help_text='Créditos de IA disponibles para hoy'
+    )
+    tokens_usados_total = models.IntegerField(
+        default=0,
+        verbose_name='Tokens usados (total histórico)'
+    )
+    tokens_diarios_limite = models.IntegerField(
+        default=0,
+        verbose_name='Límite diario de tokens',
+        help_text='0 = sin plan diario activo'
+    )
+    ultima_recarga_diaria = models.DateField(
+        null=True, blank=True,
+        verbose_name='Última recarga diaria'
+    )
+    fecha_vencimiento_tokens = models.DateTimeField(
+        null=True, blank=True,
+        verbose_name='Vencimiento plan tokens'
+    )
 
     # El @property debe estar alineado con 'user' y 'fecha...'
     @property
@@ -24,6 +60,81 @@ class PerfilUsuario(models.Model):
             return False
         # Comparamos si la fecha de vencimiento es mayor a "ahora"
         return self.fecha_vencimiento > timezone.now()
+
+    def _reset_diario_si_necesario(self):
+        """Si hay plan diario activo y válido, repone tokens al inicio de cada día."""
+        if not self.tokens_diarios_limite:
+            return  # Sin plan diario, el pool es de uso único (admin / recarga manual)
+        if self.fecha_vencimiento_tokens and self.fecha_vencimiento_tokens < timezone.now():
+            return  # Plan vencido
+        hoy = timezone.now().date()
+        if self.ultima_recarga_diaria != hoy:
+            self.tokens_disponibles = self.tokens_diarios_limite
+            self.ultima_recarga_diaria = hoy
+            self.save(update_fields=['tokens_disponibles', 'ultima_recarga_diaria'])
+
+    def tiene_tokens(self, costo):
+        """Verifica si el usuario tiene suficientes tokens para una operación."""
+        if self.user.is_staff or self.user.is_superuser:
+            return True  # Admin: acceso ilimitado sin restricciones
+        self._reset_diario_si_necesario()
+        return self.tokens_disponibles >= costo
+
+    def descontar_tokens(self, costo, descripcion):
+        """Descuenta tokens y registra el uso en el historial."""
+        if self.user.is_staff or self.user.is_superuser:
+            return  # Admin: no se descuentan tokens
+        self._reset_diario_si_necesario()
+        self.tokens_disponibles -= costo
+        self.tokens_usados_total += costo
+        self.save(update_fields=['tokens_disponibles', 'tokens_usados_total'])
+        HistorialTokens.objects.create(
+            usuario=self.user,
+            tipo='USO',
+            cantidad=-costo,
+            descripcion=descripcion,
+            tokens_restantes=self.tokens_disponibles,
+        )
+
+    def recargar_tokens(self, cantidad, descripcion='Recarga manual'):
+        """Suma tokens al saldo actual (uso admin, no cambia el límite diario)."""
+        self.tokens_disponibles += cantidad
+        self.save(update_fields=['tokens_disponibles'])
+        HistorialTokens.objects.create(
+            usuario=self.user,
+            tipo='RECARGA',
+            cantidad=cantidad,
+            descripcion=descripcion,
+            tokens_restantes=self.tokens_disponibles,
+        )
+
+    def activar_plan_tokens(self, tokens_dia, dias, descripcion):
+        """Activa o renueva un plan de tokens diario + extiende acceso Pro a las páginas."""
+        ahora = timezone.now()
+
+        # Extender acceso Pro (agro / naval / aéreo / energía)
+        if self.fecha_vencimiento and self.fecha_vencimiento > ahora:
+            self.fecha_vencimiento += timedelta(days=dias)
+        else:
+            self.fecha_vencimiento = ahora + timedelta(days=dias)
+
+        # Activar tokens diarios
+        self.tokens_diarios_limite = tokens_dia
+        self.fecha_vencimiento_tokens = ahora + timedelta(days=dias)
+        self.tokens_disponibles = tokens_dia          # recarga inmediata del primer día
+        self.ultima_recarga_diaria = ahora.date()
+        self.save(update_fields=[
+            'fecha_vencimiento',
+            'tokens_diarios_limite', 'fecha_vencimiento_tokens',
+            'tokens_disponibles', 'ultima_recarga_diaria',
+        ])
+        HistorialTokens.objects.create(
+            usuario=self.user,
+            tipo='BONO',
+            cantidad=tokens_dia,
+            descripcion=descripcion,
+            tokens_restantes=self.tokens_disponibles,
+        )
 
     def __str__(self):
         return self.user.username
@@ -272,3 +383,53 @@ class FeedbackIA(models.Model):
         if len(self.comentario) > 100:
             return self.comentario[:100] + "..."
         return self.comentario
+
+
+# ==========================================
+# SISTEMA DE TOKENS IA (Gemini Pro)
+# ==========================================
+
+# Costos por operación (en créditos internos)
+# Referencia real: Gemini cobra ~$1.25-$2.50 por millón de tokens
+#   · Consulta simple (clima actual):          ~3,000 tokens reales
+#   · Consulta con memoria + tools:            ~4,000 tokens reales
+#   · Consulta pesada (Excel, Docs, BI):       ~5,000 tokens reales
+#   · Análisis de archivo + IA completo:      ~10,000 tokens reales
+COSTO_TOKENS = {
+    'CHAT_N8N':         3_000,   # Consulta al chat IA (con memoria y tools)
+    'CHAT_SIMPLE':      2_000,   # Consulta rápida sin tools externas
+    'CHAT_HEAVY':       5_000,   # Generación de Excel, Docs o reporte BI
+    'ANALISIS_ARCHIVO': 10_000,  # Procesar archivo + análisis IA completo
+}
+
+# Tokens diarios incluidos en la suscripción Pro ($20/mes)
+# Equivale a ~9 chats/día al nivel Starter
+TOKENS_DIARIOS_SUSCRIPCION = 27_000
+
+
+class HistorialTokens(models.Model):
+    """
+    Registro de cada uso o recarga de tokens de IA por usuario.
+    Sirve tanto para auditoría como para mostrar el estado en la cuenta.
+    """
+    TIPOS = [
+        ('USO',     'Uso IA'),
+        ('RECARGA', 'Recarga pagada'),
+        ('BONO',    'Bono / activación suscripción'),
+    ]
+
+    usuario          = models.ForeignKey(User, on_delete=models.CASCADE, related_name='historial_tokens')
+    tipo             = models.CharField(max_length=10, choices=TIPOS)
+    cantidad         = models.IntegerField(help_text='Positivo = recarga, Negativo = consumo')
+    descripcion      = models.CharField(max_length=255)
+    tokens_restantes = models.IntegerField(help_text='Saldo tras esta operación')
+    fecha            = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name        = "Historial de Tokens"
+        verbose_name_plural = "Historial de Tokens"
+        ordering            = ['-fecha']
+
+    def __str__(self):
+        signo = '+' if self.cantidad > 0 else ''
+        return f"{self.usuario.username} | {signo}{self.cantidad} ({self.tipo}) | saldo: {self.tokens_restantes}"

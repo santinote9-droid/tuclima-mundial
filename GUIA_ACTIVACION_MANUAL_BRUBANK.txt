@@ -1,0 +1,154 @@
+==============================================================================
+  GUIA: ACTIVAR SUSCRIPCION MANUAL (TRANSFERENCIA BRUBANK)
+  Weather Pro — Sistema de Suscripciones
+==============================================================================
+
+Cuando un usuario paga por transferencia bancaria (Brubank/CVU), la suscripcion
+no se activa automaticamente. Hay 3 metodos para activarla vos mismo.
+Usa el mas comodo segun la situacion.
+
+------------------------------------------------------------------------------
+PASO 0: VERIFICAR EL PAGO (siempre primero)
+------------------------------------------------------------------------------
+
+Antes de activar, confirmar el pago en la app de Brubank:
+  - Revisar que el monto sea correcto:
+      Plan Mensual → $20.000 ARS aprox (equivalente a $20 USD al tipo de cambio vigente)
+      Plan Anual   → $200.000 ARS aprox (equivalente a $200 USD)
+  - Verificar nombre/alias del emisor
+  - Revisar el comprobante que envia el usuario a climapro00@gmail.com
+
+Una vez confirmado, elegir uno de los metodos de abajo.
+
+
+==============================================================================
+METODO 1 — DJANGO ADMIN (mas facil, no requiere codigo)
+==============================================================================
+
+URL: http://127.0.0.1:8000/admin/
+     (en produccion: https://tuclima-mundial.onrender.com/admin/)
+
+Pasos:
+  1. Ingresar con tu cuenta de superusuario
+  2. Ir a: MUNDO → Perfil usuarios
+  3. Buscar el usuario por nombre en la barra de busqueda
+  4. Hacer clic en su perfil
+  5. Editar los campos:
+       - "Fecha vencimiento": poner la fecha de vencimiento
+           Plan Mensual: fecha de hoy + 30 dias
+           Plan Anual:   fecha de hoy + 365 dias
+           Ejemplo: si hoy es 11/03/2026 y es mensual → 10/04/2026 00:00:00
+       - "Plan tipo": seleccionar "mensual" o "anual"
+  6. Hacer clic en GUARDAR
+
+NOTA: El mail de confirmacion al usuario se envia automaticamente solo por
+      PayPal y MercadoPago. Para Brubank, el sistema NOTIFICA AL ADMIN
+      automaticamente por email cuando el usuario presiona "Ya transferi".
+      El admin solo necesita activar la cuenta (ver metodos abajo).
+
+
+==============================================================================
+METODO 2 — SHELL DE DJANGO (rapido desde terminal)
+==============================================================================
+
+Abrir una terminal en el directorio del proyecto y ejecutar:
+
+  python manage.py shell
+
+Luego pegar este codigo (reemplazar USERNAME y mensual/anual segun corresponda):
+
+  ------ COPIAR DESDE AQUI ------
+
+  from django.contrib.auth.models import User
+  from mundo.views import activar_suscripcion_dias
+
+  usuario = User.objects.get(username='USERNAME_DEL_USUARIO')
+  activar_suscripcion_dias(usuario, dias=30, plan='mensual')
+  # Para plan anual usar: activar_suscripcion_dias(usuario, dias=365, plan='anual')
+
+  print(f"Suscripcion activada hasta: {usuario.perfil.fecha_vencimiento}")
+
+  ------ HASTA AQUI ------
+
+Esta funcion ademas envia el mail automaticamente si el usuario tiene email cargado.
+
+
+==============================================================================
+METODO 3 — COMANDO RAPIDO (una sola linea, sin abrir shell interactivo)
+==============================================================================
+
+Para plan MENSUAL:
+  python manage.py shell -c "
+  from django.contrib.auth.models import User
+  from mundo.views import activar_suscripcion_dias
+  u = User.objects.get(username='USERNAME')
+  activar_suscripcion_dias(u, 30, 'mensual')
+  print('OK:', u.perfil.fecha_vencimiento)
+  "
+
+Para plan ANUAL:
+  python manage.py shell -c "
+  from django.contrib.auth.models import User
+  from mundo.views import activar_suscripcion_dias
+  u = User.objects.get(username='USERNAME')
+  activar_suscripcion_dias(u, 365, 'anual')
+  print('OK:', u.perfil.fecha_vencimiento)
+  "
+
+Reemplazar USERNAME por el nombre de usuario real.
+
+
+==============================================================================
+PASO FINAL — ENVIAR MAIL MANUAL (si no se envio automatico)
+==============================================================================
+
+Si usaste el Metodo 1 (Admin Web), el mail NO se envia automatico.
+Enviar un mail manual desde climapro00@gmail.com al usuario con este texto:
+
+  Asunto: Tu suscripcion Weather PRO esta activa
+
+  Hola [nombre],
+
+  Tu pago por transferencia fue confirmado y tu acceso PRO ya esta disponible.
+
+  Plan: [Mensual / Anual]
+  Acceso incluye: Modo Agro, Aereo, Naval, Energias + IA Gemini Pro
+
+  Ingresar en: https://tuclima-mundial.onrender.com
+
+  Cualquier consulta responder a este mail.
+
+  Equipo Weather Pro
+
+
+==============================================================================
+COMO SABER SI UN USUARIO YA TIENE SUSCRIPCION ACTIVA
+==============================================================================
+
+En el Django Admin (MUNDO → Perfil usuarios) la columna "Suscripcion activa"
+muestra True/False segun si la fecha de vencimiento aun no paso.
+
+Desde la shell:
+  python manage.py shell -c "
+  from django.contrib.auth.models import User
+  u = User.objects.get(username='USERNAME')
+  print('Activa:', u.perfil.suscripcion_activa)
+  print('Vence:', u.perfil.fecha_vencimiento)
+  print('Plan:', u.perfil.plan_tipo)
+  "
+
+
+==============================================================================
+RESUMEN RAPIDO
+==============================================================================
+
+  1. Verificar pago en Brubank app
+  2. Activar via Admin Web  →  /admin/  →  Perfil usuarios  →  editar fechas
+     O via Shell  →  activar_suscripcion_dias(usuario, 30, 'mensual')
+  3. Enviar mail manual de confirmacion
+
+Correo de soporte: climapro00@gmail.com
+CVU Brubank:       1430001713031490640018
+Alias Brubank:     santigioffre
+
+==============================================================================

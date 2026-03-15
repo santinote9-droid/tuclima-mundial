@@ -3,244 +3,411 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suscripción | Weather Pro</title>
+    <title>Planes | TuClima</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background-color: #0f172a;
+            background: #0f172a;
             color: #fff;
             font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             min-height: 100vh;
-            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
-            padding: 20px;
+            padding: 60px 20px 80px;
+        }
+        .page-w { max-width: 1100px; width: 100%; }
+
+        /* ── Header ── */
+        .page-header { text-align: center; margin-bottom: 58px; }
+        .page-header h1 {
+            font-size: 2.8rem; font-weight: 800;
+            background: linear-gradient(90deg, #60a5fa, #c084fc);
+            -webkit-background-clip: text; color: transparent;
+            margin-bottom: 10px;
+        }
+        .page-header p { color: #94a3b8; font-size: 1.05rem; }
+
+        /* ── User bar ── */
+        .user-bar { position: fixed; top: 20px; right: 20px; z-index: 1000; font-size: .92rem; }
+
+        /* ── Token section ── */
+        .tok-title-block { text-align: center; margin-bottom: 32px; }
+        .tok-title-block h2 {
+            font-size: 2rem; font-weight: 800;
+            background: linear-gradient(90deg, #818cf8, #c084fc);
+            -webkit-background-clip: text; color: transparent;
+            margin-bottom: 6px;
+        }
+        .tok-title-block p { color: #94a3b8; font-size: .92rem; }
+
+        /* Activo banner */
+        .tok-activo { display: inline-flex; align-items: center; gap: 10px; background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.3); border-radius: 12px; padding: 10px 20px; color: #34d399; font-size: .85rem; font-weight: 600; margin-bottom: 14px; }
+
+        /* Saldo bar */
+        .tok-saldo-bar { display: inline-flex; align-items: center; gap: 18px; background: rgba(99,102,241,.08); border: 1px solid rgba(99,102,241,.25); border-radius: 12px; padding: 12px 20px; margin-bottom: 14px; flex-wrap: wrap; justify-content: center; }
+        .tok-saldo-val { font-size: 1.5rem; font-weight: 800; color: #a5b4fc; }
+        .tok-saldo-lbl { font-size: .72rem; color: #64748b; margin-bottom: 2px; }
+        .tok-chip { background: rgba(30,41,59,.9); border: 1px solid #334155; border-radius: 20px; padding: 4px 11px; font-size: .73rem; color: #64748b; }
+        .tok-chip b { color: #e2e8f0; }
+
+        /* Daily note */
+        .daily-note { display: inline-block; background: rgba(99,102,241,.05); border: 1px dashed rgba(99,102,241,.22); border-radius: 10px; padding: 8px 18px; color: #475569; font-size: .78rem; margin-bottom: 34px; }
+        .daily-note b { color: #a5b4fc; }
+
+        /* Plans grid */
+        .tok-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 24px; margin-bottom: 40px; }
+
+        /* Plan card */
+        .tok-card {
+            background: #1e293b; border: 1px solid #334155; border-radius: 22px;
+            padding: 28px 18px 22px; position: relative;
+            display: flex; flex-direction: column;
+            transition: transform .2s, border-color .2s, box-shadow .2s;
+        }
+        .tok-card:hover { transform: translateY(-4px); border-color: #6366f1; box-shadow: 0 12px 36px rgba(99,102,241,.18); }
+        .tok-card.popular { border-color: #6366f1; background: rgba(99,102,241,.07); box-shadow: 0 0 28px rgba(99,102,241,.14); }
+
+        .tok-popular-badge {
+            position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(90deg,#6366f1,#a855f7); color: #fff;
+            padding: 3px 14px; border-radius: 20px; font-size: .65rem;
+            font-weight: 700; text-transform: uppercase; letter-spacing: .07em; white-space: nowrap;
         }
 
-        .container { text-align: center; max-width: 1100px; width: 100%; }
-        
-        h1 { font-size: 3rem; margin-bottom: 10px; background: linear-gradient(90deg, #60a5fa, #c084fc); -webkit-background-clip: text; color: transparent; }
-        p.subtitle { color: #94a3b8; font-size: 1.2rem; margin-bottom: 50px; }
+        .tok-icon { width: 48px; height: 48px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin: 0 auto 10px; }
+        .tok-name { font-size: 1.08rem; font-weight: 700; text-align: center; margin-bottom: 5px; }
+        .tok-tnum { font-size: 1.9rem; font-weight: 900; color: #a5b4fc; text-align: center; line-height: 1; }
+        .tok-tlbl { font-size: .68rem; color: #64748b; text-align: center; margin-bottom: 5px; }
+        .tok-desc { color: #64748b; font-size: .77rem; text-align: center; margin-bottom: 12px; }
 
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 40px;
-            align-items: start; /* Alineación superior para que no se estiren */
+        /* Feature list */
+        .tok-feats { list-style: none; padding: 0; margin: 0 0 14px; }
+        .tok-feats li { display: flex; align-items: center; gap: 7px; color: #94a3b8; font-size: .76rem; margin-bottom: 6px; }
+        .tok-feats li .fi { color: #4ade80; font-size: .68rem; flex-shrink: 0; }
+        .tok-feats li .fi-db { color: #a5b4fc; }
+        .tok-feats li .fi-mem { color: #f59e0b; }
+
+        /* Tabs */
+        .tok-tabs { display: flex; border: 1px solid #334155; border-radius: 9px; overflow: hidden; margin-bottom: 12px; }
+        .tok-tab {
+            flex: 1; padding: 7px 2px; background: transparent; border: none;
+            cursor: pointer; color: #64748b; font-size: .7rem; font-weight: 600;
+            transition: background .15s, color .15s; line-height: 1.3;
         }
+        .tok-tab:not(:last-child) { border-right: 1px solid #334155; }
+        .tok-tab.active { background: rgba(99,102,241,.22); color: #a5b4fc; }
+        .tok-gift { display: inline-block; background: #16a34a; color: #fff; font-size: .54rem; font-weight: 700; padding: 1px 4px; border-radius: 4px; margin-left: 2px; vertical-align: middle; }
 
-        /* CARD GRATIS */
-        .card-free {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid #334155;
-            padding: 40px;
-            border-radius: 20px;
-            color: #94a3b8;
-            text-align: left;
+        /* Price */
+        .tok-price { font-size: 2.2rem; font-weight: 900; color: #fff; text-align: center; }
+        .tok-price sup { font-size: .88rem; vertical-align: super; color: #94a3b8; }
+        .tok-period { font-size: .7rem; color: #475569; text-align: center; margin-bottom: 3px; }
+        .tok-saving { font-size: .7rem; color: #4ade80; text-align: center; min-height: 1rem; margin-bottom: 14px; }
+
+        /* CTA */
+        .tok-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 13px 16px; margin-top: auto;
+            color: #fff; border: none; border-radius: 13px;
+            font-weight: 800; font-size: .9rem; letter-spacing: .03em;
+            cursor: pointer; text-decoration: none; text-align: center;
+            transition: transform .18s, box-shadow .2s;
+            position: relative; overflow: hidden;
         }
-
-        /* CARD PRO (DESTACADA) */
-        .card-pro {
-            background: rgba(15, 23, 42, 0.95);
-            border: 2px solid #3b82f6;
-            padding: 40px;
-            border-radius: 20px;
-            position: relative;
-            box-shadow: 0 0 50px rgba(59, 130, 246, 0.2);
-            transform: scale(1.02);
-            text-align: left;
+        .tok-btn::after {
+            content: '';
+            position: absolute; top: -50%; left: -60%;
+            width: 40%; height: 200%;
+            background: rgba(255,255,255,.18);
+            transform: skewX(-20deg);
+            transition: left .4s ease;
         }
+        .tok-btn:hover::after { left: 120%; }
+        .tok-btn:hover { transform: translateY(-2px); }
+        .tok-btn .btn-arrow { font-size: .8rem; opacity: .7; transition: transform .2s; }
+        .tok-btn:hover .btn-arrow { transform: translateX(4px); opacity: 1; }
 
-        .badge-pop {
-            position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
-            background: #3b82f6; color: #fff; padding: 5px 15px;
-            border-radius: 20px; font-weight: bold; font-size: 0.8em;
-            text-transform: uppercase; letter-spacing: 1px;
-        }
-
-        .card-title { text-align: center; font-size: 1.5em; font-weight: bold; margin-bottom: 10px; color: #fff; }
-        .price { text-align: center; font-size: 3.5rem; font-weight: 800; color: #fff; margin: 20px 0; }
-        .period { font-size: 1rem; color: #64748b; font-weight: normal; }
-
-        ul { list-style: none; padding: 0; margin: 30px 0; }
-        
-        /* ESTILO DE LISTA MEJORADO */
-        li { 
-            margin-bottom: 20px; 
-            display: flex; 
-            align-items: flex-start; /* Alinea el icono arriba */
-            gap: 12px; 
-            font-size: 1.05em; 
-        }
-        
-        .check { color: #22c55e; font-weight: bold; min-width: 20px; margin-top: 2px; }
-        .cross { color: #ef4444; font-weight: bold; min-width: 20px; margin-top: 2px; }
-
-        /* TEXTO PEQUEÑO DE DESCRIPCIÓN */
-        .mode-desc {
-            display: block;
-            font-size: 0.75em; /* Letra pequeña */
-            color: #94a3b8;    /* Color gris suave */
-            margin-top: 5px;
-            line-height: 1.4;
-            font-weight: normal;
-        }
-
-        .btn {
-            display: block; width: 100%; padding: 15px; border-radius: 10px;
-            font-weight: bold; font-size: 1.1em; text-decoration: none; cursor: pointer; transition: 0.3s;
-            text-align: center; box-sizing: border-box; margin-top: 30px;
-        }
-        
-        .btn-pro { background: #3b82f6; color: #fff; border: none; }
-        .btn-pro:hover { background: #2563eb; box-shadow: 0 0 20px rgba(37, 99, 235, 0.5); }
-        
-        .btn-free { background: transparent; border: 1px solid #475569; color: #fff; }
-        .btn-free:hover { border-color: #fff; }
+        /* Footer note */
+        .tok-footer { background: rgba(30,41,59,.6); border: 1px solid #1e293b; border-radius: 14px; padding: 18px 26px; color: #4b5563; font-size: .81rem; line-height: 1.9; text-align: center; }
+        .tok-footer b { color: #94a3b8; }
+        .tok-footer a { color: #6366f1; text-decoration: none; }
 
         /* Responsive */
-        @media (max-width: 768px) { .pricing-grid { grid-template-columns: 1fr; } }
-
+        @media (max-width: 640px) { .tok-grid { grid-template-columns: 1fr 1fr; gap: 14px; } .page-header h1 { font-size: 2rem; } }
+        @media (max-width: 400px) { .tok-grid { grid-template-columns: 1fr; } }
     </style>
-
-<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+    <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
     <script>
         Weglot.initialize({
-            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
-            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
-            auto_switch: true            // Detecta idioma automático
+            api_key: 'wg_169c193b22e7a117be85a2f56113ab415',
+            hide_switcher: true,
+            auto_switch: true
         });
     </script>
-
 </head>
 <body>
 
+<!-- Translate (hidden) -->
 <div id="google_translate_element" style="display:none;"></div>
+<script>function googleTranslateElementInit(){new google.translate.TranslateElement({pageLanguage:'es',includedLanguages:'en,fr,it,pt,de',autoDisplay:false},'google_translate_element');}</script>
+<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<script>window.addEventListener('load',function(){var l=(navigator.language||navigator.userLanguage).split('-')[0];if(l!=='es'){setTimeout(function(){var s=document.querySelector('select.goog-te-combo');if(s){s.value=l;s.dispatchEvent(new Event('change'));}},1000);}});</script>
+<style>.goog-te-banner-frame{display:none!important;}body{top:0!important;}#google_translate_element{display:none!important;}</style>
 
-<script type="text/javascript">
-    function googleTranslateElementInit() {
-        new google.translate.TranslateElement({
-            pageLanguage: 'es', 
-            includedLanguages: 'en,fr,it,pt,de', // Idiomas permitidos
-            autoDisplay: false
-        }, 'google_translate_element');
-    }
-</script>
-<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
-<script type="text/javascript">
-    window.addEventListener('load', function() {
-        // A. Detectamos el idioma del navegador del usuario (ej: 'en-US' o 'pt-BR')
-        var idiomaUsuario = navigator.language || navigator.userLanguage; 
-        idiomaUsuario = idiomaUsuario.split('-')[0]; // Nos quedamos solo con las dos letras ('en', 'pt', etc.)
-
-        // B. Si el usuario NO habla español, activamos la traducción
-        if (idiomaUsuario !== 'es') {
-            
-            // Esperamos un segundo a que Google cargue en el fondo
-            setTimeout(function() {
-                var select = document.querySelector('select.goog-te-combo');
-                if (select) {
-                    select.value = idiomaUsuario; // Seleccionamos su idioma
-                    select.dispatchEvent(new Event('change')); // ¡Clic virtual!
-                }
-            }, 1000); // 1000ms = 1 segundo de espera
-        }
-    });
-</script>
-
-<style>
-    .goog-te-banner-frame { display: none !important; }
-    body { top: 0px !important; }
-    #google_translate_element { display: none !important; }
-</style>
-
-<div style="position: absolute; top: 20px; right: 20px; z-index: 1000; font-family: sans-serif;">
-        {% if user.is_authenticated %}
-            <span style="color: #94a3b8;">Hola,</span> 
-            <strong style="color: #fff;">{{ user.username }}</strong> 
-            <span style="margin: 0 10px; color: #334155;">|</span>
-            <a href="/logout/" style="color: #ef4444; text-decoration: none; font-weight: bold;">Salir <i class="fas fa-sign-out-alt"></i></a>
-        {% else %}
-            <a href="/login/" style="color: #3b82f6; text-decoration: none; font-weight: bold; background: rgba(15, 23, 42, 0.8); padding: 8px 15px; border-radius: 20px; border: 1px solid #3b82f6;">Ingresar</a>
-        {% endif %}
-    </div>
-
-    <div class="container">
-        <h1>SUSCRIPCIÓN</h1>
-        <p class="subtitle">Desbloquea el poder de los datos meteorológicos profesionales.</p>
-
-        <div class="pricing-grid">
-            
-            <div class="card-free">
-                <div class="card-title">Visitante</div>
-                <div class="price">$0</div>
-                <ul>
-                    <li><span class="check">✓</span> Clima Básico Actual</li>
-                    <li><span class="cross">✕</span> Modo Agro</li>
-                    <li><span class="cross">✕</span> Modo Aéreo</li>
-                    <li><span class="cross">✕</span> Modo Naval</li>
-                    <li><span class="cross">✕</span> Modo Energías</li>
-                </ul>
-                <a href="/" class="btn btn-free">Volver al Inicio</a>
-            </div>
-
-            <div class="card-pro">
-                <span class="badge-pop">Recomendado</span>
-                <div class="card-title">PRO SUITE</div>
-                <div class="price">$15uds <span class="period">/ mes</span></div>
-                <ul>
-                    <li>
-                        <span class="check">✓</span> 
-                        <div>
-                            <strong>Acceso Total a los 4 Modos</strong>
-                        </div>
-                    </li>
-                    
-                    <li>
-                        <span class="check">✓</span>
-                        <div>
-                            <strong>Modo Agro</strong>
-                            <small class="mode-desc">Crecimiento GDD, perfil hídrico, pulverización (Delta T), atmósfera, radiación solar, balance hídrico, zona radicular, estrés cultivo, evapotranspiración, pronóstico 14 días.</small>
-                        </div>
-                    </li>
-
-                    <li>
-                        <span class="check">✓</span>
-                        <div>
-                            <strong>Modo Aéreo</strong>
-                            <small class="mode-desc">Metar virtual, categoría de vuelo, altimetría, viento en pista, techo de nubes, riesgos (hielo/shear), vientos en altura, luz/astros, ambiente, sigmet, visibilidad.</small>
-                        </div>
-                    </li>
-
-                    <li>
-                        <span class="check">✓</span>
-                        <div>
-                            <strong>Modo Naval</strong>
-                            <small class="mode-desc">Condición de puerto, estado del mar (Douglas), viento superficie (Beaufort), dinámica de ola, swell, ambiente, visibilidad, oleaje.</small>
-                        </div>
-                    </li>
-
-                    <li>
-                        <span class="check">✓</span>
-                        <div>
-                            <strong>Modo Energías</strong>
-                            <small class="mode-desc">Fotovoltaica (DNI/GHI), potencia eólica (80m/120m), curva de generación, eficiencia estimada, recurso solar.</small>
-                        </div>
-                    </li>
-                </ul>
-                <div class="card-action">
+<!-- User bar -->
+<div class="user-bar">
     {% if user.is_authenticated %}
-        <a href="{% url 'metodos_pago' %}" class="btn btn-pro">Elegir Plan PRO</a>
+        <span style="color:#94a3b8;">Hola,</span>
+        <strong style="color:#fff;"> {{ user.username }}</strong>
+        <span style="margin:0 8px;color:#334155;">|</span>
+        <a href="/mi-cuenta/" style="color:#a5b4fc;text-decoration:none;font-weight:600;margin-right:10px;"><i class="fas fa-user-circle"></i> Mi cuenta</a>
+        <a href="/logout/" style="color:#ef4444;text-decoration:none;font-weight:600;">Salir <i class="fas fa-sign-out-alt"></i></a>
     {% else %}
-        <a href="{% url 'registro' %}" class="btn btn-pro">Crear cuenta para comprar</a>
+        <a href="/login/" style="color:#3b82f6;text-decoration:none;font-weight:bold;background:rgba(15,23,42,.8);padding:8px 16px;border-radius:20px;border:1px solid #3b82f6;">Ingresar</a>
     {% endif %}
 </div>
+
+<div class="page-w">
+
+    <!-- Page header -->
+    <div class="page-header">
+        <h1><i class="fas fa-layer-group" style="margin-right:12px;"></i>Planes TuClima</h1>
+        <p>Acceso a los 4 modos profesionales · IA Gemini incluida · Tokens diarios · Memoria IA por modo</p>
+    </div>
+
+    <!-- Token plans -->
+    <div class="tok-title-block">
+        <h2><i class="fas fa-microchip" style="margin-right:8px;"></i>Planes de Tokens IA</h2>
+        <p>Tokens diarios · se renuevan automáticamente · incluyen acceso a todos los modos Pro</p>
+    </div>
+
+    {% if user.is_authenticated and plan_tokens_activo %}
+    <div style="text-align:center;margin-bottom:8px;">
+        <div class="tok-activo">
+            <i class="fas fa-check-circle"></i>
+            Plan activo: <b>{{ tokens_diarios_limite|floatformat:0 }} tokens/día</b>&nbsp;·&nbsp;Hoy disponibles: <b>{{ tokens_disponibles|default:0|floatformat:0 }}</b>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user.is_authenticated %}
+    <div style="text-align:center;">
+        <div class="tok-saldo-bar">
+            <div>
+                <div class="tok-saldo-lbl">Tokens disponibles hoy</div>
+                <div class="tok-saldo-val">{{ tokens_disponibles|default:0|floatformat:0 }}</div>
+            </div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:center;">
+                <span class="tok-chip">Chat IA: <b>{{ costos.CHAT_N8N|default:3000|floatformat:0 }}</b></span>
+                <span class="tok-chip">Generación doc: <b>{{ costos.CHAT_HEAVY|default:5000|floatformat:0 }}</b></span>
+                <span class="tok-chip">Análisis archivo: <b>{{ costos.ANALISIS_ARCHIVO|default:10000|floatformat:0 }}</b></span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div style="text-align:center;">
+        <span class="daily-note">
+            <i class="fas fa-sync-alt" style="color:#a5b4fc;margin-right:5px;"></i>
+            Los tokens se <b>renuevan cada día</b>. Los no usados no se acumulan al siguiente.
+        </span>
+    </div>
+
+    <!-- ── Explicador de tokens ── -->
+    <div style="max-width:820px; margin:0 auto 48px;">
+    <div style="background:rgba(255,255,255,0.03); border:1px solid #1e293b; border-radius:22px; padding:32px 28px;">
+
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fas fa-brain" style="color:#818cf8;font-size:1.1rem;"></i>
+            </div>
+            <div>
+                <div style="font-size:1.05rem;font-weight:800;color:#e2e8f0;">¿Cómo funcionan los tokens?</div>
+                <div style="font-size:0.8rem;color:#64748b;margin-top:2px;">Todo lo que necesitás saber antes de elegir tu plan</div>
+            </div>
+        </div>
+
+        <p style="color:#94a3b8;font-size:0.88rem;line-height:1.7;margin:18px 0 24px;">
+            Los <strong style="color:#a5b4fc;">tokens son créditos digitales</strong> que usa la IA para procesar y responder tus consultas.
+            Cada vez que hacés una pregunta, la IA lee tu consulta, el historial de la conversación y los datos del clima en tiempo real — todo eso consume tokens.
+            Una vez que los tokens del día se agotan, se renuevan automáticamente a la mañana siguiente.
+        </p>
+
+        <!-- Tabla de costos -->
+        <div style="font-size:0.78rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Costo por tipo de consulta</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:28px;">
+
+            <div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:14px 16px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <i class="fas fa-comment-dots" style="color:#60a5fa;font-size:1rem;"></i>
+                    <span style="font-weight:700;font-size:0.88rem;">Chat IA</span>
+                </div>
+                <div style="font-size:1.6rem;font-weight:900;color:#60a5fa;line-height:1;">{{ costos.CHAT_N8N|default:3000|floatformat:0 }}</div>
+                <div style="font-size:0.7rem;color:#64748b;margin-top:3px;">tokens por consulta</div>
+                <div style="font-size:0.73rem;color:#475569;margin-top:8px;line-height:1.5;">Preguntas de clima, análisis naval/agro/aéreo, recomendaciones IA.</div>
+            </div>
+
+            <div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:14px 16px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <i class="fas fa-file-export" style="color:#f59e0b;font-size:1rem;"></i>
+                    <span style="font-weight:700;font-size:0.88rem;">Generar documento</span>
+                </div>
+                <div style="font-size:1.6rem;font-weight:900;color:#f59e0b;line-height:1;">{{ costos.CHAT_HEAVY|default:5000|floatformat:0 }}</div>
+                <div style="font-size:0.7rem;color:#64748b;margin-top:3px;">tokens por operación</div>
+                <div style="font-size:0.73rem;color:#475569;margin-top:8px;line-height:1.5;">Exportar Excel, crear informe en Google Docs o reporte BI.</div>
+            </div>
+
+            <div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:14px 16px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <i class="fas fa-file-upload" style="color:#a855f7;font-size:1rem;"></i>
+                    <span style="font-weight:700;font-size:0.88rem;">Analizar archivo</span>
+                </div>
+                <div style="font-size:1.6rem;font-weight:900;color:#a855f7;line-height:1;">{{ costos.ANALISIS_ARCHIVO|default:10000|floatformat:0 }}</div>
+                <div style="font-size:0.7rem;color:#64748b;margin-top:3px;">tokens por archivo</div>
+                <div style="font-size:0.73rem;color:#475569;margin-top:8px;line-height:1.5;">Subir CSV, JSON o Excel para que la IA lo interprete y genere análisis.</div>
             </div>
 
         </div>
+
+        <!-- Equivalencias por plan -->
+        <div style="font-size:0.78rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">¿Cuántas consultas por día incluye cada plan?</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;">
+
+            {% for plan in planes_tokens %}
+            <div style="background:{{ plan.icono_fa.bg }};border:1px solid {{ plan.icono_fa.color }}33;border-radius:14px;padding:14px 12px;text-align:center;">
+                <div style="font-size:0.75rem;font-weight:800;color:{{ plan.icono_fa.color }};margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em;">{{ plan.nombre }}</div>
+                <div style="font-size:0.78rem;color:#94a3b8;line-height:2.2;">
+                    <div>
+                        <i class="fas fa-comment-dots" style="color:#60a5fa;margin-right:4px;"></i>
+                        ~<strong style="color:#e2e8f0;">{% widthratio plan.tokens_dia 3000 1 %}</strong> chats/día
+                    </div>
+                    <div>
+                        <i class="fas fa-file-export" style="color:#f59e0b;margin-right:4px;"></i>
+                        ~<strong style="color:#e2e8f0;">{% widthratio plan.tokens_dia 5000 1 %}</strong> reportes/día
+                    </div>
+                    <div style="font-size:0.7rem;color:#475569;margin-top:4px;">{{ plan.tokens_dia }} tokens/día</div>
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+
+        <div style="margin-top:20px;background:rgba(99,102,241,.06);border:1px dashed rgba(99,102,241,.2);border-radius:10px;padding:12px 16px;font-size:0.8rem;color:#64748b;line-height:1.7;">
+            <i class="fas fa-lightbulb" style="color:#f59e0b;margin-right:6px;"></i>
+            <strong style="color:#94a3b8;">Ejemplo real:</strong> Un productor agropecuario que consulta el clima mañana y tarde, genera un reporte semanal y un Excel de balance hídrico usará aproximadamente
+            <strong style="color:#a5b4fc;">2 chats + 1 reporte = 11,000 tokens</strong> en un día — el plan <strong style="color:#a5b4fc;">Starter</strong> lo cubre cómodamente.
+        </div>
+
+    </div>
     </div>
 
+    <div class="tok-grid">
+        {% for plan in planes_tokens %}
+        <div class="tok-card {% if plan.popular %}popular{% endif %}" id="card-{{ plan.id }}">
+            {% if plan.popular %}<div class="tok-popular-badge"><i class="fas fa-star"></i> Más popular</div>{% endif %}
+
+            <div class="tok-icon" style="background:{{ plan.icono_fa.bg }};">
+                <i class="fas fa-{{ plan.icono_fa.fa }}" style="color:{{ plan.icono_fa.color }};"></i>
+            </div>
+            <div class="tok-name">{{ plan.nombre }}</div>
+            <div class="tok-tnum">{{ plan.tokens_dia|floatformat:0 }}</div>
+            <div class="tok-tlbl">tokens / día</div>
+            <div class="tok-desc">{{ plan.descripcion }}</div>
+
+            <ul class="tok-feats">
+                <li><i class="fas fa-check-circle fi"></i> Acceso a los 4 modos Pro</li>
+                <li><i class="fas fa-robot fi"></i> IA Gemini incluida</li>
+                <li><i class="fas fa-database fi fi-db"></i> Memoria IA por modo</li>
+                <li><i class="fas fa-file-upload fi fi-mem"></i> Análisis de archivos</li>
+            </ul>
+
+            <!-- Duration tabs — event delegation, no inline onclick -->
+            <div class="tok-tabs" id="tabs-{{ plan.id }}">
+                {% for v in plan.variantes %}
+                <button
+                    class="tok-tab {% if forloop.first %}active{% endif %}"
+                    data-plan="{{ plan.id }}"
+                    data-pac="{{ plan.id }}_{{ v.sufijo }}"
+                    data-precio="{{ v.precio }}"
+                    data-meses="{{ v.meses }}"
+                    data-regalo="{{ v.regalo }}">
+                    {{ v.meses }}m{% if v.regalo %}<span class="tok-gift">+{{ v.regalo }}</span>{% endif %}
+                </button>
+                {% endfor %}
+            </div>
+
+            <div class="tok-price" id="tokp-{{ plan.id }}"><sup>$</sup>{{ plan.variantes.0.precio|floatformat:0 }}</div>
+            <div class="tok-period" id="tokper-{{ plan.id }}">1 mes de acceso</div>
+            <div class="tok-saving" id="tokah-{{ plan.id }}">&nbsp;</div>
+
+            {% if user.is_authenticated %}
+            <a href="/activar-plan/?paquete={{ plan.id }}_{{ plan.variantes.0.sufijo }}"
+               class="tok-btn" id="tokbtn-{{ plan.id }}"
+               style="background: linear-gradient(135deg, {{ plan.icono_fa.color }}, {{ plan.icono_fa.color2 }}); box-shadow: 0 5px 18px {{ plan.icono_fa.color }}44;">
+                <i class="fas fa-{{ plan.icono_fa.fa }}"></i>&nbsp;Activar ahora
+                <i class="fas fa-arrow-right btn-arrow"></i>
+            </a>
+            {% else %}
+            <a href="{% url 'registro' %}" class="tok-btn"
+               style="background: linear-gradient(135deg, {{ plan.icono_fa.color }}, {{ plan.icono_fa.color2 }}); box-shadow: 0 5px 18px {{ plan.icono_fa.color }}44;">
+                <i class="fas fa-user-plus"></i>&nbsp;Crear cuenta para activar
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="tok-footer">
+        <i class="fas fa-info-circle" style="color:#6366f1;margin-right:5px;"></i>
+        Todos los planes incluyen <b>acceso completo a los 4 modos Pro</b> y <b>IA Gemini</b>.<br>
+        La <b>Memoria IA por modo</b> guarda el contexto de tus conversaciones — configurable en Mi Cuenta.<br>
+        ¿Dudas? <a href="mailto:climapro00@gmail.com">climapro00@gmail.com</a>
+    </div>
+
+</div><!-- /page-w -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.tok-tab').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var planId = this.dataset.plan;
+            var pacId  = this.dataset.pac;
+            var precio = parseFloat(this.dataset.precio);
+            var meses  = parseInt(this.dataset.meses, 10);
+            var regalo = parseInt(this.dataset.regalo, 10);
+
+            // Activate this tab
+            var tabsContainer = document.getElementById('tabs-' + planId);
+            tabsContainer.querySelectorAll('.tok-tab').forEach(function (t) { t.classList.remove('active'); });
+            this.classList.add('active');
+
+            // Price
+            document.getElementById('tokp-' + planId).innerHTML = '<sup>$</sup>' + Math.round(precio);
+
+            // Period text
+            var total = meses + regalo;
+            var txt = total + ' mes' + (total > 1 ? 'es' : '') + ' de acceso';
+            if (regalo > 0) txt += ' (' + meses + ' pag. + ' + regalo + ' de regalo 🎁)';
+            document.getElementById('tokper-' + planId).innerText = txt;
+
+            // Saving text
+            var ahEl = document.getElementById('tokah-' + planId);
+            if (regalo > 0) {
+                var ahorrado = Math.round((precio / meses) * regalo);
+                ahEl.innerText = '🎉 Ahorrás $' + ahorrado + ' vs pago mensual';
+            } else {
+                ahEl.innerHTML = '&nbsp;';
+            }
+
+            // Button href
+            var cta = document.getElementById('tokbtn-' + planId);
+            if (cta) cta.href = '/activar-plan/?paquete=' + pacId;
+        });
+    });
+});
+</script>
 </body>
 </html>

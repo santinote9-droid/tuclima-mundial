@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Plan Activado! | TuClima</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0f172a; color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; padding: 20px;
+        }
+        .container { max-width: 520px; width: 100%; text-align: center; }
+        .check-circle {
+            width: 110px; height: 110px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 30px;
+            font-size: 3.2rem;
+            animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.4);
+        }
+        @keyframes pop {
+            0%   { transform: scale(0); opacity: 0; }
+            80%  { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        h1 {
+            font-size: 2.4rem; margin-bottom: 10px;
+            background: linear-gradient(90deg, #818cf8, #c084fc);
+            -webkit-background-clip: text; color: transparent;
+        }
+        .subtitle { color: #94a3b8; font-size: 1.05rem; margin-bottom: 35px; }
+        .data-card {
+            background: #1e293b; border: 1px solid #334155;
+            border-radius: 16px; padding: 28px 32px;
+            margin-bottom: 30px; text-align: left;
+        }
+        .data-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0; border-bottom: 1px solid #334155;
+        }
+        .data-row:last-child { border-bottom: none; }
+        .data-label { color: #64748b; font-size: 0.9rem; }
+        .data-value { color: #fff; font-weight: 600; font-size: 0.95rem; }
+        .data-value.purple { color: #a5b4fc; }
+        .data-value.green  { color: #4ade80; }
+        .btn-primary {
+            display: block; width: 100%; padding: 15px;
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            color: #fff; text-decoration: none; border-radius: 12px;
+            font-weight: 700; font-size: 1.05rem; margin-bottom: 12px;
+            transition: 0.3s; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary {
+            display: block; width: 100%; padding: 12px;
+            background: transparent; color: #64748b; text-decoration: none;
+            border-radius: 12px; font-weight: 500; border: 1px solid #334155; transition: 0.3s;
+        }
+        .btn-secondary:hover { color: #fff; border-color: #4b5563; }
+        .mail-note { color: #475569; font-size: 0.82rem; margin-top: 20px; }
+        .mail-note a { color: #6366f1; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="check-circle">🤖</div>
+
+    <h1>¡Plan Activado!</h1>
+    <p class="subtitle">Tu plan de tokens IA fue activado. Los tokens se renuevan cada día.</p>
+
+    <div class="data-card">
+        <div class="data-row">
+            <span class="data-label">Plan</span>
+            <span class="data-value">{{ paquete.icono }} {{ paquete.nombre }}</span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Tokens por día</span>
+            <span class="data-value purple">{{ paquete.tokens_dia|floatformat:0 }} / día</span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Duración</span>
+            <span class="data-value">30 días</span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Saldo hoy</span>
+            <span class="data-value green">{{ tokens_disponibles|floatformat:0 }} créditos</span>
+        </div>
+    </div>
+
+    <a href="/" class="btn-primary">
+        <i class="fas fa-rocket" style="margin-right:8px;"></i>Ir a la plataforma
+    </a>
+    <a href="/recargar-tokens/" class="btn-secondary">Ver planes</a>
+
+    <p class="mail-note">¿Problemas? <a href="mailto:climapro00@gmail.com">climapro00@gmail.com</a></p>
+
+</div>
+</body>
+</html>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0f172a;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container { max-width: 520px; width: 100%; text-align: center; }
+
+        .check-circle {
+            width: 110px;
+            height: 110px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            font-size: 3.2rem;
+            animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.4);
+        }
+        @keyframes pop {
+            0%   { transform: scale(0); opacity: 0; }
+            80%  { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        h1 {
+            font-size: 2.4rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .subtitle { color: #94a3b8; font-size: 1.05rem; margin-bottom: 35px; }
+
+        .data-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #334155;
+        }
+        .data-row:last-child { border-bottom: none; }
+        .data-label { color: #64748b; font-size: 0.9rem; }
+        .data-value { color: #fff; font-weight: 600; font-size: 0.95rem; }
+        .data-value.purple { color: #a5b4fc; }
+        .data-value.green  { color: #4ade80; }
+
+        .btn-primary {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin-bottom: 12px;
+            transition: 0.3s;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .btn-secondary {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: #64748b;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            border: 1px solid #334155;
+            transition: 0.3s;
+        }
+        .btn-secondary:hover { color: #fff; border-color: #4b5563; }
+
+        .mail-note {
+            color: #475569;
+            font-size: 0.82rem;
+            margin-top: 20px;
+        }
+        .mail-note a { color: #6366f1; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="check-circle">🤖</div>
+
+    <h1>¡Tokens Acreditados!</h1>
+    <p class="subtitle">Tu recarga fue procesada. Ya podés usar la IA Gemini Pro.</p>
+
+    <div class="data-card">
+        <div class="data-row">
+            <span class="data-label">Paquete</span>
+            <span class="data-value">{{ paquete.icono }} {{ paquete.nombre }}</span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Créditos agregados</span>
+            <span class="data-value purple">+{{ paquete.tokens|floatformat:0 }}</span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Saldo actual</span>
+            <span class="data-value green">{{ tokens_disponibles|floatformat:0 }} créditos</span>
+        </div>
+    </div>
+
+    <a href="/" class="btn-primary">
+        <i class="fas fa-rocket" style="margin-right:8px;"></i>Ir a la plataforma
+    </a>
+    <a href="/recargar-tokens/" class="btn-secondary">Comprar más tokens</a>
+
+    <p class="mail-note">¿Problemas? <a href="mailto:climapro00@gmail.com">climapro00@gmail.com</a></p>
+
+</div>
+</body>
+</html>

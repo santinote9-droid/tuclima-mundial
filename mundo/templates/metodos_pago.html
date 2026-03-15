@@ -113,29 +113,65 @@
     </div>
 
 <div class="box">
+        <!-- Badge de plan seleccionado -->
+        {% if plan == 'anual' %}
+        <div style="display:inline-block; background:#1e3a5f; border:1px solid #3b82f6; border-radius:12px; padding:10px 24px; margin-bottom:24px; font-size:1rem; color:#60a5fa;">
+            Plan seleccionado: <strong>Anual</strong> &mdash; <strong style="color:#fff;">$200 USD</strong>
+            <span style="display:inline-block; background:#16a34a; color:#fff; font-size:0.72em; font-weight:bold; padding:2px 9px; border-radius:20px; margin-left:8px; vertical-align:middle;">Ahorrás $40</span>
+        </div>
+        {% else %}
+        <div style="display:inline-block; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:10px 24px; margin-bottom:24px; font-size:1rem; color:#94a3b8;">
+            Plan seleccionado: <strong style="color:#fff;">Mensual</strong> &mdash; <strong style="color:#fff;">$20 USD</strong>
+        </div>
+        {% endif %}
+
+        {% if paypal_sandbox %}
+        <div style="background:#422006; border:1px solid #f97316; border-radius:10px; padding:12px 18px; margin-bottom:20px; font-size:0.88rem; color:#fed7aa; display:flex; align-items:center; gap:10px;">
+            <i class="fas fa-flask" style="color:#f97316; font-size:1.2rem;"></i>
+            <span><strong>PayPal en modo SANDBOX (pruebas).</strong> Los pagos con PayPal son simulados. Para producción, cambiar <code>PAYPAL_MODE=live</code> en el archivo <code>.env</code>.</span>
+        </div>
+        {% endif %}
         <h2>Selecciona tu método de pago seguro</h2>
         <div class="grid">
             
-            <a href="/pagar-paypal/" class="option option-paypal">
+            <!-- PAYPAL: automático -->
+            <a href="/pagar-paypal/?plan={{ plan }}" class="option option-paypal">
                 <div class="icon-container">
                     <i class="fab fa-paypal"></i>
                 </div>
                 <h3>PayPal / Tarjeta</h3>
-                <p>Pago internacional automático en Dólares (USD). Activación inmediata del servicio.</p>
-                <div class="btn-go btn-paypal">Pagar $15 USD con PayPal</div>
+                <p>Pago internacional en USD. <strong style="color:#4ade80">Activación inmediata y automática.</strong></p>
+                <div class="btn-go btn-paypal">
+                    {% if plan == 'anual' %}Pagar $200 USD con PayPal{% else %}Pagar $20 USD con PayPal{% endif %}
+                </div>
             </a>
 
-            <a href="/transferencia/" class="option option-bank">
+            <!-- MERCADOPAGO CHECKOUT: automático -->
+            <a href="/pagar-mercadopago/?plan={{ plan }}" class="option" style="border-color:#334155;">
+                <div class="icon-container">
+                    <i class="fas fa-credit-card" style="font-size:4rem; color:#00bcf2;"></i>
+                </div>
+                <h3>MercadoPago</h3>
+                <p>Tarjeta de crédito, débito o saldo MP. <strong style="color:#4ade80">Activación inmediata y automática.</strong></p>
+                <div class="btn-go" style="background:#00bcf2; color:#000;">
+                    {% if plan == 'anual' %}Pagar $200 USD con MP{% else %}Pagar $20 USD con MP{% endif %}
+                </div>
+            </a>
+
+            <!-- TRANSFERENCIA BRUBANK: manual -->
+            <a href="/transferencia/?plan={{ plan }}" class="option option-bank" style="opacity:0.8;">
                 <div class="icon-container">
                     <i class="fas fa-university"></i>
                 </div>
                 <h3>Transferencia Bancaria</h3>
-                <p>Transferencia local en Pesos Argentinos (ARS). Requiere envío de comprobante.</p>
+                <p>CVU Brubank en Pesos ARS. <strong style="color:#facc15;">Activación manual (hasta 24 hs).</strong> Requiere envío de comprobante.</p>
                 <div class="btn-go btn-bank">Ver Datos de CBU</div>
             </a>
         </div>
         <br><br>
         <a href="/pricing/" style="color:#64748b; text-decoration:none; font-weight:bold;">← Volver a los planes</a>
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        <a href="/mi-cuenta/" style="color:#3b82f6; text-decoration:none; font-weight:bold;"><i class="fas fa-user-circle"></i> Mi Cuenta</a>
     </div>
 </body>
 </html>

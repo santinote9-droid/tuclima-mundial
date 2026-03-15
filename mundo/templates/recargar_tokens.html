@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planes de Tokens IA | TuClima</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0f172a; color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh; padding: 40px 20px;
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
+        }
+        .container { max-width: 1060px; margin: 0 auto; }
+
+        .btn-back {
+            display: inline-flex; align-items: center; gap: 8px;
+            color: #64748b; text-decoration: none; font-size: 0.9rem;
+            margin-bottom: 32px; transition: color 0.2s;
+        }
+        .btn-back:hover { color: #fff; }
+
+        .header { text-align: center; margin-bottom: 36px; }
+        .header h1 {
+            font-size: 2.5rem; font-weight: 800;
+            background: linear-gradient(90deg, #818cf8, #c084fc);
+            -webkit-background-clip: text; color: transparent; margin-bottom: 10px;
+        }
+        .header p { color: #94a3b8; font-size: 1rem; }
+
+        /* PLAN ACTIVO */
+        .plan-activo-card {
+            background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.3);
+            border-radius: 14px; padding: 14px 22px;
+            display: flex; align-items: center; gap: 14px; margin-bottom: 22px; flex-wrap: wrap;
+        }
+        .plan-activo-titulo { font-weight: 700; color: #34d399; font-size: 0.92rem; }
+        .plan-activo-detalle { color: #94a3b8; font-size: 0.8rem; margin-top: 2px; }
+
+        /* SALDO */
+        .saldo-bar {
+            background: rgba(99,102,241,.1); border: 1px solid rgba(99,102,241,.3);
+            border-radius: 14px; padding: 16px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 12px; margin-bottom: 28px;
+        }
+        .saldo-label { color: #94a3b8; font-size: 0.85rem; }
+        .saldo-valor { font-size: 1.6rem; font-weight: 800; color: #a5b4fc; }
+        .costos-ref { display: flex; gap: 8px; flex-wrap: wrap; }
+        .costo-chip {
+            background: rgba(30,41,59,.8); border: 1px solid #334155;
+            border-radius: 20px; padding: 5px 12px;
+            font-size: 0.78rem; color: #94a3b8;
+        }
+        .costo-chip b { color: #e2e8f0; }
+
+        /* RENEWAL BANNER */
+        .daily-banner {
+            background: rgba(99,102,241,.05); border: 1px dashed rgba(99,102,241,.25);
+            border-radius: 12px; padding: 10px 18px;
+            text-align: center; color: #64748b; font-size: 0.82rem; margin-bottom: 32px;
+        }
+        .daily-banner b { color: #a5b4fc; }
+
+        /* GRID DE PLANES */
+        .planes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 26px;
+            margin-bottom: 44px;
+        }
+
+        .plan-card {
+            background: #1e293b; border: 1px solid #334155;
+            border-radius: 22px; padding: 28px 20px 24px;
+            position: relative; display: flex; flex-direction: column;
+            transition: transform .2s, box-shadow .2s, border-color .2s;
+        }
+        .plan-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(99,102,241,.18); border-color: #6366f1; }
+        .plan-card.popular { border-color: #6366f1; background: rgba(99,102,241,.07); box-shadow: 0 0 36px rgba(99,102,241,.15); }
+
+        .badge-popular {
+            position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            color: #fff; padding: 4px 16px; border-radius: 20px;
+            font-size: 0.7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
+        }
+
+        .plan-header { text-align: center; margin-bottom: 18px; }
+        .plan-icono { font-size: 2.2rem; margin-bottom: 8px; }
+        .plan-nombre { font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 6px; }
+        .plan-tokens {
+            font-size: 1.9rem; font-weight: 900; color: #a5b4fc; line-height: 1;
+        }
+        .plan-tokens-label { font-size: 0.74rem; color: #64748b; margin-bottom: 8px; }
+        .plan-descripcion { color: #64748b; font-size: 0.8rem; }
+
+        /* SELECTOR DE DURACIÓN */
+        .duracion-tabs {
+            display: flex; border: 1px solid #334155; border-radius: 10px;
+            overflow: hidden; margin: 16px 0 14px; flex-shrink: 0;
+        }
+        .duracion-tab {
+            flex: 1; padding: 7px 4px;
+            background: transparent; border: none; cursor: pointer;
+            color: #64748b; font-size: 0.76rem; font-weight: 600;
+            transition: background .15s, color .15s;
+            position: relative;
+        }
+        .duracion-tab.active {
+            background: rgba(99,102,241,.2); color: #a5b4fc;
+        }
+        .duracion-tab .badge-regalo {
+            display: inline-block; background: #16a34a;
+            color: #fff; font-size: 0.6rem; font-weight: 700;
+            padding: 1px 5px; border-radius: 6px; margin-left: 3px; vertical-align: middle;
+        }
+
+        /* PRECIO según variante */
+        .plan-precio-display {
+            text-align: center; margin-bottom: 6px;
+        }
+        .precio-num {
+            font-size: 2.4rem; font-weight: 900; color: #fff;
+        }
+        .precio-sup { font-size: 1rem; vertical-align: super; color: #94a3b8; }
+        .precio-periodo { font-size: 0.76rem; color: #475569; text-align: center; margin-bottom: 16px; }
+        .precio-ahorro { font-size: 0.74rem; color: #4ade80; text-align: center; margin-bottom: 10px; }
+
+        /* BOTÓN */
+        .btn-comprar {
+            display: block; width: 100%; padding: 12px; margin-top: auto;
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            color: #fff; border: none; border-radius: 12px;
+            font-weight: 700; font-size: 0.92rem; cursor: pointer;
+            text-decoration: none; text-align: center;
+            transition: opacity .2s, transform .2s;
+            box-shadow: 0 4px 18px rgba(99,102,241,.25);
+        }
+        .btn-comprar:hover { opacity: .9; transform: translateY(-1px); }
+
+        /* NOTA INFERIOR */
+        .nota-bottom {
+            background: rgba(30,41,59,.5); border: 1px solid #334155;
+            border-radius: 14px; padding: 18px 26px;
+            text-align: center; color: #4b5563; font-size: 0.82rem; line-height: 1.75;
+        }
+        .nota-bottom b { color: #94a3b8; }
+        .nota-bottom a { color: #6366f1; text-decoration: none; }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1.9rem; }
+            .planes-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+            .saldo-bar { flex-direction: column; text-align: center; }
+        }
+        @media (max-width: 420px) { .planes-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <a href="/mi-cuenta/" class="btn-back"><i class="fas fa-arrow-left"></i> Mi cuenta</a>
+
+    <div class="header">
+        <h1>🤖 Planes de Tokens IA</h1>
+        <p>Tokens diarios · se renuevan automáticamente · incluyen acceso a todos los modos Pro</p>
+    </div>
+
+    {% if plan_activo %}
+    <div class="plan-activo-card">
+        <div style="font-size:1.5rem">✅</div>
+        <div>
+            <div class="plan-activo-titulo">Plan activo: {{ plan_activo.limite_dia|floatformat:0 }} tokens/día</div>
+            <div class="plan-activo-detalle">Hoy disponibles: <b style="color:#e2e8f0">{{ tokens_disponibles|floatformat:0 }}</b> · Vence: {{ plan_activo.vencimiento }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="saldo-bar">
+        <div>
+            <div class="saldo-label">Tokens disponibles hoy</div>
+            <div class="saldo-valor">{{ tokens_disponibles|floatformat:0 }}</div>
+        </div>
+        <div class="costos-ref">
+            <div class="costo-chip">Chat IA: <b>{{ costos.CHAT_N8N|floatformat:0 }}</b> créditos</div>
+            <div class="costo-chip">Análisis archivo: <b>{{ costos.ANALISIS_ARCHIVO|floatformat:0 }}</b> créditos</div>
+        </div>
+    </div>
+
+    <div class="daily-banner">
+        🔄 Los tokens se <b>renuevan cada día</b>. Los tokens no usados no se acumulan al día siguiente.
+    </div>
+
+    <div class="planes-grid">
+        {% for plan in planes %}
+        <div class="plan-card {% if plan.popular %}popular{% endif %}" id="card-{{ plan.id }}">
+            {% if plan.popular %}<div class="badge-popular">⭐ Más popular</div>{% endif %}
+
+            <div class="plan-header">
+                <div class="plan-icono">{{ plan.icono }}</div>
+                <div class="plan-nombre">{{ plan.nombre }}</div>
+                <div class="plan-tokens">{{ plan.tokens_dia|floatformat:0 }}</div>
+                <div class="plan-tokens-label">tokens / día</div>
+                <div class="plan-descripcion">{{ plan.descripcion }}</div>
+            </div>
+
+            <!-- Tabs de duración -->
+            <div class="duracion-tabs">
+                {% for v in plan.variantes %}
+                <button
+                    class="duracion-tab {% if forloop.first %}active{% endif %}"
+                    onclick="seleccionarVariante('{{ plan.id }}', '{{ plan.id }}_{{ v.sufijo }}', {{ v.precio }}, {{ v.meses }}, {{ v.regalo }}, this)"
+                >
+                    {{ v.meses }}m{% if v.regalo %}<span class="badge-regalo">+{{ v.regalo }}</span>{% endif %}
+                </button>
+                {% endfor %}
+            </div>
+
+            <!-- Precio dinámico -->
+            <div class="plan-precio-display" id="precio-{{ plan.id }}">
+                <div class="precio-num"><span class="precio-sup">$</span>{{ plan.variantes.0.precio|floatformat:0 }}</div>
+            </div>
+            <div class="precio-periodo" id="periodo-{{ plan.id }}">
+                1 mes de acceso
+            </div>
+            <div class="precio-ahorro" id="ahorro-{{ plan.id }}" style="visibility:hidden">
+                &nbsp;
+            </div>
+
+            <a href="/pagar-tokens/?paquete={{ plan.id }}_{{ plan.variantes.0.sufijo }}"
+               class="btn-comprar"
+               id="btn-{{ plan.id }}">
+                <i class="fas fa-bolt" style="margin-right:6px"></i>Activar plan
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="nota-bottom">
+        💡 <b>¿Ya tenés el Plan Pro ($20/mes)?</b> Incluye <b>10,000 tokens/día</b> automáticos.<br>
+        Los planes de arriba son adicionales para mayor capacidad y también activan el acceso Pro si no lo tenés.<br>
+        Los tokens no se acumulan entre días. ¿Dudas? <a href="mailto:climapro00@gmail.com">climapro00@gmail.com</a>
+    </div>
+
+</div>
+
+<script>
+function seleccionarVariante(planId, paqueteId, precio, meses, regalo, tabEl) {
+    // Actualizar tabs activas
+    const tabs = tabEl.parentElement.querySelectorAll('.duracion-tab');
+    tabs.forEach(t => t.classList.remove('active'));
+    tabEl.classList.add('active');
+
+    // Actualizar precio
+    document.getElementById('precio-' + planId).innerHTML =
+        '<div class="precio-num"><span class="precio-sup">$</span>' + precio.toFixed(0) + '</div>';
+
+    // Texto de duración total
+    const totalMeses = meses + regalo;
+    let periodoTxt = totalMeses + ' mes' + (totalMeses > 1 ? 'es' : '') + ' de acceso';
+    if (regalo > 0) periodoTxt += ' (' + meses + ' pagados + ' + regalo + ' de regalo 🎁)';
+    document.getElementById('periodo-' + planId).innerText = periodoTxt;
+
+    // Ahorro
+    const ahorroEl = document.getElementById('ahorro-' + planId);
+    if (regalo > 0) {
+        const precioPorMes = precio / meses;
+        const valorReal = precioPorMes * totalMeses;
+        const ahorro = valorReal - precio;
+        ahorroEl.style.visibility = 'visible';
+        ahorroEl.innerText = '🎉 Ahorrás $' + ahorro.toFixed(0) + ' vs pago mensual';
+    } else {
+        ahorroEl.style.visibility = 'hidden';
+    }
+
+    // Actualizar href del botón
+    document.getElementById('btn-' + planId).href = '/pagar-tokens/?paquete=' + paqueteId;
+}
+</script>
+</body>
+</html>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0f172a;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            padding: 40px 20px;
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
+        }
+
+        .container { max-width: 980px; margin: 0 auto; }
+
+        /* ENCABEZADO */
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+        }
+        .header p { color: #94a3b8; font-size: 1.05rem; }
+
+        /* PLAN ACTIVO */
+        .plan-activo-card {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 14px;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .plan-activo-icon { font-size: 1.6rem; }
+        .plan-activo-texto { flex: 1; }
+        .plan-activo-titulo { font-weight: 700; color: #34d399; font-size: 0.95rem; }
+        .plan-activo-detalle { color: #94a3b8; font-size: 0.82rem; margin-top: 2px; }
+
+        /* SALDO ACTUAL */
+        .saldo-card {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            border-radius: 16px;
+            padding: 20px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+        .saldo-label { color: #94a3b8; font-size: 0.9rem; margin-bottom: 4px; }
+        .saldo-valor { font-size: 1.8rem; font-weight: 800; color: #a5b4fc; }
+        .costo-chip {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+        .costo-chip span { color: #fff; font-weight: 600; }
+        .costos-ref { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        /* MENSAJE DIARIO */
+        .daily-banner {
+            background: rgba(99, 102, 241, 0.06);
+            border: 1px dashed rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 12px 20px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-bottom: 32px;
+        }
+        .daily-banner strong { color: #a5b4fc; }
+
+        /* GRID DE PAQUETES */
+        .paquetes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .paquete-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 20px;
+            padding: 32px 22px 26px;
+            text-align: center;
+            position: relative;
+            transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+        }
+        .paquete-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.18);
+            border-color: #6366f1;
+        }
+        .paquete-card.popular {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.07);
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.15);
+        }
+        .badge-popular {
+            position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            color: #fff; padding: 4px 16px; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em;
+            text-transform: uppercase; white-space: nowrap;
+        }
+        .paquete-icono { font-size: 2.4rem; margin-bottom: 12px; }
+        .paquete-nombre { font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 14px; }
+
+        /* TOKENS POR DÍA — número grande */
+        .tokens-dia-num {
+            font-size: 2.1rem;
+            font-weight: 900;
+            color: #a5b4fc;
+            line-height: 1;
+        }
+        .tokens-dia-label {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .tokens-mes-equiv {
+            font-size: 0.78rem;
+            color: #4b5563;
+            margin-bottom: 16px;
+        }
+
+        /* EQUIVALENCIAS */
+        .equiv-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .equiv-chip {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 4px 10px;
+            font-size: 0.74rem;
+            color: #94a3b8;
+        }
+        .equiv-chip b { color: #e2e8f0; }
+
+        .paquete-descripcion { color: #94a3b8; font-size: 0.83rem; margin-bottom: 18px; }
+        .paquete-precio {
+            font-size: 2.2rem; font-weight: 900; color: #fff; margin-bottom: 6px;
+        }
+        .paquete-precio sup { font-size: 1rem; vertical-align: super; color: #94a3b8; }
+        .paquete-periodo { font-size: 0.78rem; color: #475569; margin-bottom: 18px; }
+
+        .btn-comprar {
+            display: block; width: 100%; padding: 12px;
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            color: #fff; border: none; border-radius: 12px;
+            font-weight: 700; font-size: 0.95rem; cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.2s, transform 0.2s;
+            box-shadow: 0 4px 18px rgba(99, 102, 241, 0.25);
+        }
+        .btn-comprar:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        /* NOTA SUSCRIPCIÓN */
+        .nota-suscripcion {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #334155;
+            border-radius: 14px;
+            padding: 20px 28px;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            margin-bottom: 32px;
+        }
+        .nota-suscripcion strong { color: #94a3b8; }
+        .nota-suscripcion a { color: #6366f1; text-decoration: none; }
+
+        .btn-back {
+            display: inline-flex; align-items: center; gap: 8px;
+            color: #64748b; text-decoration: none; font-size: 0.9rem;
+            margin-bottom: 32px; transition: color 0.2s;
+        }
+        .btn-back:hover { color: #fff; }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 2rem; }
+            .paquetes-grid { grid-template-columns: 1fr 1fr; }
+            .saldo-card { flex-direction: column; text-align: center; }
+        }
+        @media (max-width: 420px) { .paquetes-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <a href="/mi-cuenta/" class="btn-back">
+        <i class="fas fa-arrow-left"></i> Mi cuenta
+    </a>
+
+    <div class="header">
+        <h1>🤖 Planes de Tokens IA</h1>
+        <p>Tokens diarios para usar la IA Gemini Pro — se renuevan automáticamente cada día</p>
+    </div>
+
+    <!-- Plan activo (si lo tiene) -->
+    {% if plan_activo %}
+    <div class="plan-activo-card">
+        <div class="plan-activo-icon">✅</div>
+        <div class="plan-activo-texto">
+            <div class="plan-activo-titulo">Tenés un plan activo: {{ plan_activo.limite_dia|floatformat:0 }} tokens/día</div>
+            <div class="plan-activo-detalle">Saldo hoy: <strong style="color:#e2e8f0">{{ tokens_disponibles|floatformat:0 }}</strong> tokens restantes — Vence: {{ plan_activo.vencimiento }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Saldo y costos -->
+    <div class="saldo-card">
+        <div>
+            <div class="saldo-label">Tus tokens disponibles hoy</div>
+            <div class="saldo-valor">{{ tokens_disponibles|floatformat:0 }}</div>
+        </div>
+        <div class="costos-ref">
+            <div class="costo-chip">Chat IA: <span>{{ costos.CHAT_N8N|floatformat:0 }} créditos</span></div>
+            <div class="costo-chip">Análisis archivo: <span>{{ costos.ANALISIS_ARCHIVO|floatformat:0 }} créditos</span></div>
+        </div>
+    </div>
+
+    <div class="daily-banner">
+        🔄 Los tokens se <strong>renuevan cada día</strong>. Si no usás todos un día, no se acumulan al siguiente.
+    </div>
+
+    <!-- Paquetes -->
+    <div class="paquetes-grid">
+        {% for p in paquetes %}
+        <div class="paquete-card {% if p.popular %}popular{% endif %}">
+            {% if p.popular %}
+            <div class="badge-popular">⭐ Más popular</div>
+            {% endif %}
+
+            <div class="paquete-icono">{{ p.icono }}</div>
+            <div class="paquete-nombre">{{ p.nombre }}</div>
+
+            <div class="tokens-dia-num">{{ p.tokens_dia|floatformat:0 }}</div>
+            <div class="tokens-dia-label">tokens / día</div>
+            <div class="tokens-mes-equiv">≈ {{ p.tokens_dia|floatformat:0 }} × 30 = {{ p.tokens_dia|stringformat:"d" }} / mes</div>
+
+            <div class="equiv-row">
+                <div class="equiv-chip"><b>~{{ p.tokens_dia|divisibleby:2000 }}</b> chats IA</div>
+                <div class="equiv-chip"><b>~{{ p.tokens_dia|divisibleby:8000 }}</b> archivos</div>
+            </div>
+
+            <div class="paquete-descripcion">{{ p.descripcion }}</div>
+            <div class="paquete-precio"><sup>$</sup>{{ p.precio|floatformat:0 }}</div>
+            <div class="paquete-periodo">por mes • 30 días</div>
+
+            <a href="/pagar-tokens/?paquete={{ p.id }}" class="btn-comprar">
+                <i class="fas fa-bolt" style="margin-right:6px;"></i>Activar plan
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Nota sobre suscripción Pro -->
+    <div class="nota-suscripcion">
+        <strong>💡 ¿Ya tenés el Plan Pro ($20/mes)?</strong><br>
+        Tu suscripción incluye <strong>10,000 tokens/día</strong> automáticamente.<br>
+        Los planes de arriba son adicionales para mayor capacidad.<br><br>
+        ¿Dudas? <a href="mailto:climapro00@gmail.com">climapro00@gmail.com</a>
+    </div>
+
+</div>
+</body>
+</html>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0f172a;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            padding: 40px 20px;
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
+        }
+
+        .container { max-width: 960px; margin: 0 auto; }
+
+        /* ENCABEZADO */
+        .header { text-align: center; margin-bottom: 48px; }
+        .header h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+        }
+        .header p { color: #94a3b8; font-size: 1.05rem; }
+
+        /* SALDO ACTUAL */
+        .saldo-card {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            border-radius: 16px;
+            padding: 20px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+        .saldo-label { color: #94a3b8; font-size: 0.95rem; }
+        .saldo-valor {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #a5b4fc;
+        }
+        .saldo-hint { color: #64748b; font-size: 0.82rem; }
+
+        /* COSTOS DE REFERENCIA */
+        .costos-ref {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .costo-chip {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+        .costo-chip span { color: #fff; font-weight: 600; }
+
+        /* GRID DE PAQUETES */
+        .paquetes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .paquete-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 20px;
+            padding: 32px 24px 28px;
+            text-align: center;
+            position: relative;
+            transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+            cursor: default;
+        }
+        .paquete-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.18);
+            border-color: #6366f1;
+        }
+        .paquete-card.popular {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.07);
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.15);
+        }
+
+        .badge-popular {
+            position: absolute;
+            top: -13px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            color: #fff;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .paquete-icono { font-size: 2.4rem; margin-bottom: 14px; }
+        .paquete-nombre { font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 10px; }
+        .paquete-tokens {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #a5b4fc;
+            margin-bottom: 4px;
+            line-height: 1;
+        }
+        .paquete-tokens-label { font-size: 0.78rem; color: #64748b; margin-bottom: 14px; }
+        .paquete-descripcion { color: #94a3b8; font-size: 0.85rem; margin-bottom: 20px; min-height: 36px; }
+        .paquete-precio {
+            font-size: 2.4rem;
+            font-weight: 900;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        .paquete-precio sup { font-size: 1rem; vertical-align: super; color: #94a3b8; }
+
+        .btn-comprar {
+            display: block;
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.2s, transform 0.2s;
+            box-shadow: 0 4px 18px rgba(99, 102, 241, 0.25);
+        }
+        .btn-comprar:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        /* NOTAS INFERIORES */
+        .notas {
+            text-align: center;
+            color: #475569;
+            font-size: 0.82rem;
+            line-height: 1.6;
+        }
+        .notas a { color: #6366f1; text-decoration: none; }
+        .notas a:hover { text-decoration: underline; }
+
+        /* VOLVER */
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 32px;
+            transition: color 0.2s;
+        }
+        .btn-back:hover { color: #fff; }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 2rem; }
+            .paquetes-grid { grid-template-columns: 1fr 1fr; }
+            .saldo-card { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 420px) {
+            .paquetes-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <a href="/mi-cuenta/" class="btn-back">
+        <i class="fas fa-arrow-left"></i> Mi cuenta
+    </a>
+
+    <div class="header">
+        <h1>🤖 Recargar Tokens IA</h1>
+        <p>Comprá créditos para usar la IA Gemini Pro en análisis y consultas</p>
+    </div>
+
+    <!-- Saldo actual -->
+    <div class="saldo-card">
+        <div>
+            <div class="saldo-label">Tu saldo actual</div>
+            <div class="saldo-valor">{{ tokens_disponibles|floatformat:0 }} créditos</div>
+        </div>
+        <div class="costos-ref">
+            <div class="costo-chip">Consulta chat IA: <span>{{ costos.CHAT_N8N|floatformat:0 }} créditos</span></div>
+            <div class="costo-chip">Análisis de archivo: <span>{{ costos.ANALISIS_ARCHIVO|floatformat:0 }} créditos</span></div>
+        </div>
+    </div>
+
+    <!-- Paquetes -->
+    <div class="paquetes-grid">
+        {% for p in paquetes %}
+        <div class="paquete-card {% if p.popular %}popular{% endif %}">
+            {% if p.popular %}
+            <div class="badge-popular">⭐ Más popular</div>
+            {% endif %}
+
+            <div class="paquete-icono">{{ p.icono }}</div>
+            <div class="paquete-nombre">{{ p.nombre }}</div>
+            <div class="paquete-tokens">{{ p.tokens|floatformat:0 }}</div>
+            <div class="paquete-tokens-label">créditos</div>
+            <div class="paquete-descripcion">{{ p.descripcion }}</div>
+            <div class="paquete-precio"><sup>$</sup>{{ p.precio|floatformat:0 }}</div>
+
+            <a href="/pagar-tokens/?paquete={{ p.id }}" class="btn-comprar">
+                <i class="fas fa-bolt" style="margin-right:6px;"></i>Comprar
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Nota sobre suscripción -->
+    <div class="notas">
+        <p>💡 La <strong>suscripción mensual ($20)</strong> incluye <strong>100,000 créditos</strong> automáticamente al activarse.<br>
+        Los paquetes de recarga son adicionales y no vencen con el plan.<br>
+        ¿Dudas? <a href="mailto:climapro00@gmail.com">climapro00@gmail.com</a></p>
+    </div>
+
+</div>
+</body>
+</html>

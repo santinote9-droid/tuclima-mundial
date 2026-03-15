@@ -2,9 +2,14 @@ from django.shortcuts import render, redirect
 import requests
 import json
 import time
+import threading
+import hmac
+import hashlib
 import feedparser
 import urllib3
 import paypalrestsdk
+import mercadopago
+from cachetools import TTLCache, cached
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from django.contrib.auth import login, authenticate, logout
@@ -14,10 +19,13 @@ from django.contrib.auth.models import Group, User
 from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import PerfilUsuario, DatoSectorial
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Count
+from django.core.mail import send_mail
+from django.conf import settings
+from django import forms
 import pandas as pd
 import io
 import openai
@@ -31,6 +39,46 @@ import xml.etree.ElementTree as ET
 # Cargar variables de entorno
 load_dotenv()
 logger = logging.getLogger(__name__)
+
+
+# ============================================================
+# CACHÉ DE API OPEN-METEO
+# TTL = 20 minutos. maxsize = 256 combinaciones lat/lon distintas.
+# Thread-safe con Lock para entornos multi-worker (Gunicorn).
+# ============================================================
+_meteo_cache: TTLCache = TTLCache(maxsize=256, ttl=1200)
+_meteo_lock = threading.Lock()
+
+
+def _get_meteo(url: str, timeout: int = 6) -> dict:
+    """
+    Realiza un GET a la API de Open-Meteo con caché de 20 minutos.
+    La URL completa (incluye lat/lon y parámetros) actúa como clave.
+    """
+    with _meteo_lock:
+        if url in _meteo_cache:
+            return _meteo_cache[url]
+
+    data = requests.get(url, timeout=timeout).json()
+
+    with _meteo_lock:
+        _meteo_cache[url] = data
+
+    return data
+
+
+# ============================================================
+# FORMULARIO DE REGISTRO CON EMAIL REQUERIDO
+# ============================================================
+class RegistroConEmailForm(UserCreationForm):
+    email = forms.EmailField(
+        required=True,
+        label='Correo electrónico',
+        widget=forms.EmailInput(attrs={'placeholder': 'tu@email.com'})
+    )
+
+    class Meta(UserCreationForm.Meta):
+        fields = ('username', 'email', 'password1', 'password2')
 
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -320,7 +368,7 @@ def home(request):
         if lat != 0.0 and lon != 0.0:
             url_clima = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,weathercode,precipitation_probability,is_day&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto"
             
-            response = requests.get(url_clima, timeout=3).json()
+            response = _get_meteo(url_clima, timeout=3)
             actual = response['current']
             hourly = response['hourly']
             daily = response['daily']
@@ -472,6 +520,11 @@ def home(request):
         print(f"Error home: {e}")
 
     contexto.update({'ciudad': nombre_ciudad, 'pais': pais, 'lat': lat, 'lon': lon, 'opciones_ciudades': opciones_ciudades, 'mensaje_error': mensaje_error})
+    if request.user.is_authenticated:
+        try:
+            contexto['perfil'] = request.user.perfil
+        except Exception:
+            pass
     return render(request, 'home.html', contexto)  
 
 
@@ -533,7 +586,7 @@ def clima_data_api(request):
         # Obtener datos del clima
         url_clima = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,weathercode,precipitation_probability,is_day&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto"
         
-        response = requests.get(url_clima, timeout=3).json()
+        response = _get_meteo(url_clima, timeout=3)
         actual = response['current']
         hourly = response['hourly']
         daily = response['daily']
@@ -697,15 +750,30 @@ def clima_data_api(request):
 
 
 def pricing(request):
-    return render(request, 'pricing.html')
+    from .models import COSTO_TOKENS
+    context = {'planes_tokens': PLANES_TOKENS, 'costos': COSTO_TOKENS}
+    if request.user.is_authenticated:
+        try:
+            perfil = request.user.perfil
+            perfil._reset_diario_si_necesario()
+            context.update({
+                'tokens_disponibles': perfil.tokens_disponibles,
+                'tokens_diarios_limite': perfil.tokens_diarios_limite,
+                'plan_tokens_activo': bool(
+                    perfil.tokens_diarios_limite
+                    and perfil.fecha_vencimiento_tokens
+                    and perfil.fecha_vencimiento_tokens > timezone.now()
+                ),
+            })
+        except Exception:
+            pass
+    return render(request, 'pricing.html', context)
 
 
+@login_required
 def activar_suscripcion(request):
-    # Simulamos que el pago fue exitoso
-    request.session['is_premium'] = True
-    print("✅ PAGO EXITOSO: Usuario ahora es Premium")
-    # Lo mandamos de vuelta al inicio
-    return redirect('home') # Asegúrate que tu vista de inicio se llame 'home' en urls.py
+    # Vista legacy — no activa nada real. Redirige a pricing.
+    return redirect('pricing')
 
 def check_premium(user):
     return user.groups.filter(name='Premium').exists()
@@ -757,8 +825,7 @@ def agro(request):
     contexto = {}
 
     try:
-        response = requests.get(url)
-        data = response.json()
+        data = _get_meteo(url)
         
         if 'error' in data: 
             raise Exception(f"API Error: {data.get('reason')}")
@@ -1014,8 +1081,8 @@ def naval(request):
     contexto = {}
 
     try:
-        res_w = requests.get(url_weather).json()
-        res_m = requests.get(url_marine).json()
+        res_w = _get_meteo(url_weather)
+        res_m = _get_meteo(url_marine)
 
         if 'error' in res_w or 'error' in res_m:
             raise Exception("Error de conexión con boyas virtuales.")
@@ -1221,9 +1288,9 @@ def aereo(request):
     )
 
     try:
-        response = requests.get(url, timeout=6)
-        response.raise_for_status()
-        data = response.json()
+        data = _get_meteo(url, timeout=6)
+        if 'error' in data:
+            raise Exception(data.get('reason', 'API error'))
 
         curr = data.get('current', {})
         hourly = data.get('hourly', {})
@@ -1383,9 +1450,9 @@ def energia(request):
     )
 
     try:
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
-        data = response.json()
+        data = _get_meteo(url, timeout=5)
+        if 'error' in data:
+            raise Exception(data.get('reason', 'API error'))
 
         curr = data.get('current', {})
         hourly = data.get('hourly', {})
@@ -1556,7 +1623,7 @@ def comparador_modelos(request):
     color_confianza = "#94a3b8"
 
     try:
-        response = requests.get(url).json()
+        response = _get_meteo(url)
         
         if 'hourly' in response:
             hourly = response['hourly']
@@ -1751,72 +1818,194 @@ def meteorologia_espacial(request):
 # 5. SISTEMA DE PAGOS (PAYPAL)
 # ==========================================
 
-# CONFIGURACIÓN (Pon tus claves aquí)
+# Credenciales desde variables de entorno (nunca hardcodear en el código)
 paypalrestsdk.configure({
-  "mode": "sandbox", # Cambiar a "live" cuando sea real
-  "client_id": "REDACTED_PAYPAL_CLIENT_ID",
-  "client_secret": "REDACTED_PAYPAL_SECRET"
+    "mode": os.getenv('PAYPAL_MODE', 'sandbox'),  # 'sandbox' en dev, 'live' en producción
+    "client_id": os.getenv('PAYPAL_CLIENT_ID', ''),
+    "client_secret": os.getenv('PAYPAL_CLIENT_SECRET', '')
 })
 
+@login_required
 def crear_pago_paypal(request):
+    # El plan se pasa como query param (?plan=mensual o ?plan=anual)
+    plan = request.GET.get('plan', 'mensual')
+    if plan not in ('mensual', 'anual'):
+        plan = 'mensual'
+
+    # Guardar plan en sesión para recuperarlo al volver de PayPal
+    request.session['plan_pago'] = plan
+
+    if plan == 'anual':
+        precio = '200.00'
+        nombre_item = 'Suscripción Weather PRO Anual'
+        sku = 'pro_anual'
+        descripcion = 'Acceso anual a Weather Pro Suite (12 meses)'
+    else:
+        precio = '20.00'
+        nombre_item = 'Suscripción Weather PRO Mensual'
+        sku = 'pro_mensual'
+        descripcion = 'Acceso mensual a Weather Pro Suite'
+
     # 1. Crear el objeto de pago
+    site = settings.SITE_URL.rstrip('/')
     payment = paypalrestsdk.Payment({
         "intent": "sale",
         "payer": {
             "payment_method": "paypal"
         },
         "redirect_urls": {
-            "return_url": "http://127.0.0.1:8000/paypal-retorno/",
-            "cancel_url": "http://127.0.0.1:8000/pricing/"
+            "return_url": f"{site}/paypal-retorno/",
+            "cancel_url": f"{site}/pricing/"
         },
         "transactions": [{
             "item_list": {
                 "items": [{
-                    "name": "Suscripción Weather PRO",
-                    "sku": "pro_monthly",
-                    "price": "15.00",
+                    "name": nombre_item,
+                    "sku": sku,
+                    "price": precio,
                     "currency": "USD",
                     "quantity": 1
                 }]
             },
             "amount": {
-                "total": "15.00",
+                "total": precio,
                 "currency": "USD"
             },
-            "description": "Acceso mensual a Weather Pro Suite"
+            "description": descripcion
         }]
     })
 
     # 2. Enviar a PayPal
     if payment.create():
-        # Buscamos el link de aprobación en la respuesta
         for link in payment.links:
             if link.rel == "approval_url":
-                # Redirigimos al usuario a PayPal para que acepte
                 return redirect(link.href)
     else:
         print(payment.error)
         return redirect('pricing')
 
+@login_required
 def paypal_retorno(request):
     # 3. El usuario volvió. Ahora EJECUTAMOS el cobro.
     payment_id = request.GET.get('paymentId')
-    payer_id = request.GET.get('PayerID')
+    payer_id   = request.GET.get('PayerID')
 
     if payment_id and payer_id:
         payment = paypalrestsdk.Payment.find(payment_id)
-        
-        # Confirmar la transacción
-    if payment.execute({"payer_id": payer_id}):
-        if request.user.is_authenticated:
-            activar_30_dias(request.user) # <--- AQUI SE SUMAN LOS 30 DIAS
-            return redirect('home')
+
+        if payment.execute({"payer_id": payer_id}):
+            plan = request.session.pop('plan_pago', 'mensual')
+            dias = 365 if plan == 'anual' else 30
+            activar_suscripcion_dias(request.user, dias, plan)
+            return redirect('pago_exitoso_view')
         else:
-            print(payment.error)
-    
+            logger.error(f'[PAYPAL RETORNO] Error ejecutando pago: {payment.error}')
+
     # Si algo falló
     return redirect('pricing')
 
+
+# ==========================================
+# 5b. LEMON SQUEEZY
+# ==========================================
+
+@login_required
+def ls_checkout(request):
+    """Redirige al checkout de Lemon Squeezy para un plan de tokens."""
+    paquete_id = request.GET.get('paquete', '')
+    paquete    = _PAQUETES_MAP.get(paquete_id)
+
+    if not paquete or not paquete.get('ls_variant_id'):
+        return redirect('recargar_tokens')
+
+    store_slug = settings.LEMONSQUEEZY_STORE_SLUG
+    variant_id = paquete['ls_variant_id']
+    site       = settings.SITE_URL.rstrip('/')
+
+    from urllib.parse import quote
+    redirect_url = quote(f"{site}/ls-retorno/?paquete_id={paquete_id}", safe='')
+    checkout_url = (
+        f"https://{store_slug}.lemonsqueezy.com/checkout/buy/{variant_id}"
+        f"?checkout[custom][user_id]={request.user.id}"
+        f"&checkout[custom][paquete_id]={paquete_id}"
+        f"&checkout[redirect_url]={redirect_url}"
+    )
+    return redirect(checkout_url)
+
+
+@login_required
+def ls_retorno(request):
+    """Página de retorno desde Lemon Squeezy. El webhook activa el plan en segundos."""
+    paquete_id = request.GET.get('paquete_id', '')
+    paquete    = _PAQUETES_MAP.get(paquete_id)
+    return render(request, 'pago_exitoso_tokens.html', {
+        'paquete':           paquete,
+        'tokens_disponibles': request.user.perfil.tokens_disponibles,
+    })
+
+
+@csrf_exempt
+def ls_webhook(request):
+    """Webhook de Lemon Squeezy. Verifica HMAC-SHA256 y activa el plan de tokens."""
+    if request.method != 'POST':
+        return HttpResponse(status=200)
+
+    # 1. Verificar firma
+    secret = getattr(settings, 'LEMONSQUEEZY_WEBHOOK_SECRET', '').encode('utf-8')
+    if secret:
+        sig_header = request.headers.get('X-Signature', '')
+        computed   = hmac.new(secret, request.body, hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(computed, sig_header):
+            logger.warning('[LS WEBHOOK] Firma inválida')
+            return HttpResponse(status=401)
+
+    try:
+        body  = json.loads(request.body.decode('utf-8'))
+        event = body.get('meta', {}).get('event_name', '')
+
+        if event != 'order_created':
+            return HttpResponse(status=200)
+
+        if body.get('data', {}).get('attributes', {}).get('status') != 'paid':
+            return HttpResponse(status=200)
+
+        custom     = body.get('meta', {}).get('custom_data', {})
+        user_id    = custom.get('user_id')
+        paquete_id = custom.get('paquete_id')
+
+        if not user_id or not paquete_id:
+            logger.warning(f'[LS WEBHOOK] Faltan custom_data: {custom}')
+            return HttpResponse(status=200)
+
+        paquete = _PAQUETES_MAP.get(paquete_id)
+        if not paquete:
+            logger.warning(f'[LS WEBHOOK] Paquete desconocido: {paquete_id}')
+            return HttpResponse(status=200)
+
+        user = User.objects.get(id=int(user_id))
+
+        from .models import HistorialTokens
+        ya_procesado = HistorialTokens.objects.filter(
+            usuario=user,
+            tipo='RECARGA',
+            descripcion__icontains=paquete['nombre'],
+            fecha__date=timezone.now().date(),
+        ).exists()
+        if not ya_procesado:
+            meses_label = f"{paquete['meses']}m" + (f"+{paquete['regalo']}regalo" if paquete['regalo'] else '')
+            user.perfil.activar_plan_tokens(
+                paquete['tokens_dia'],
+                paquete['dias'],
+                f"Plan {paquete['nombre']} {meses_label} — {paquete['tokens_dia']:,} tokens/día",
+            )
+            logger.info(f"[LS WEBHOOK] Plan activado: {user.username} — {paquete_id}")
+
+    except User.DoesNotExist:
+        logger.error(f'[LS WEBHOOK] Usuario no encontrado: user_id={user_id}')
+    except Exception as e:
+        logger.error(f'[LS WEBHOOK] Error: {e}')
+
+    return HttpResponse(status=200)
 
 
 # ==========================================
@@ -1825,56 +2014,369 @@ def paypal_retorno(request):
 
 @login_required
 def metodos_pago(request):
-    # Pantalla intermedia para elegir tarjeta/paypal o banco
-    return render(request, 'metodos_pago.html')
+    plan = request.GET.get('plan', 'mensual')
+    if plan not in ('mensual', 'anual'):
+        plan = 'mensual'
+    precio = '200' if plan == 'anual' else '20'
+    paypal_mode = os.getenv('PAYPAL_MODE', 'sandbox')
+    return render(request, 'metodos_pago.html', {
+        'plan': plan,
+        'precio': precio,
+        'paypal_sandbox': paypal_mode == 'sandbox',
+    })
 
 @login_required
 def transferencia(request):
-    # Muestra los datos del CBU
-    return render(request, 'transferencia.html')
+    plan = request.GET.get('plan', 'mensual')
+    if plan not in ('mensual', 'anual'):
+        plan = 'mensual'
+    precio_usd = '200' if plan == 'anual' else '20'
+    # Monto ARS referencial (el admin actualiza según cotización)
+    monto_ars_brubank = '200000' if plan == 'anual' else '20000'
+    monto_ars_mp = '200000' if plan == 'anual' else '20000'
+    return render(request, 'transferencia.html', {
+        'plan': plan,
+        'precio_usd': precio_usd,
+        'monto_ars_brubank': monto_ars_brubank,
+        'monto_ars_mp': monto_ars_mp,
+    })
 
 @login_required
 def confirmar_manual(request):
-    # ANTES: request.session['is_premium'] = True  <--- ESTO ERA EL ERROR (REGALABA EL ACCESO)
-    
-    # AHORA: Simplemente mostramos la pantalla de espera.
-    # El usuario NO tiene acceso PRO todavía.
-    return render(request, 'pending.html')
+    # El usuario dice que ya hizo la transferencia.
+    # No activamos todavía — le avisamos al admin por email.
+    plan = request.GET.get('plan', 'mensual')
+    precio = '$200 USD' if plan == 'anual' else '$20 USD'
 
+    # Notificar al admin para que active manualmente
+    try:
+        send_mail(
+            subject=f'[Weather PRO] Transferencia pendiente — {request.user.username}',
+            message='',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=['climapro00@gmail.com'],
+            fail_silently=True,
+            html_message=f"""
+            <div style="font-family:'Segoe UI',sans-serif;background:#0f172a;color:#fff;padding:30px;border-radius:12px;max-width:480px;margin:auto;">
+                <h3 style="color:#f59e0b;">⏳ Transferencia pendiente de verificación</h3>
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr><td style="color:#94a3b8;padding:6px 0;">Usuario</td><td style="color:#fff;font-weight:bold;">{request.user.username}</td></tr>
+                    <tr><td style="color:#94a3b8;padding:6px 0;">Email</td><td style="color:#fff;">{request.user.email or '(sin email)'}</td></tr>
+                    <tr><td style="color:#94a3b8;padding:6px 0;">Plan</td><td style="color:#fff;">{plan.capitalize()} — {precio}</td></tr>
+                    <tr><td style="color:#94a3b8;padding:6px 0;">ID Usuario</td><td style="color:#fff;">{request.user.id}</td></tr>
+                </table>
+                <p style="margin-top:20px;color:#94a3b8;">Para activar ejecut\u00e1 en la shell:</p>
+                <code style="background:#1e293b;color:#4ade80;padding:10px;display:block;border-radius:8px;font-size:0.85em;">
+                    activar_suscripcion_dias(User.objects.get(id={request.user.id}), {'365' if plan == 'anual' else '30'}, '{plan}')
+                </code>
+            </div>
+            """
+        )
+    except Exception as e:
+        print(f"[CONFIRMAR_MANUAL] Error enviando mail admin: {e}")
+
+    return render(request, 'pending.html', {'plan': plan})
+
+
+
+def _enviar_mail_activacion(usuario, plan):
+    """Envía un email de bienvenida/renovación al usuario tras activar su suscripción."""
+    if not usuario.email:
+        return
+    plan_label = 'Anual (12 meses)' if plan == 'anual' else 'Mensual (30 días)'
+    precio = '$200 USD' if plan == 'anual' else '$20 USD'
+    try:
+        send_mail(
+            subject='✅ Tu suscripción Weather PRO está activa',
+            message='',  # Usamos html_message
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[usuario.email],
+            fail_silently=True,
+            html_message=f"""
+            <div style="font-family:'Segoe UI',sans-serif;background:#0f172a;color:#fff;padding:40px;border-radius:16px;max-width:500px;margin:auto;">
+                <h2 style="color:#60a5fa;margin-bottom:4px;">Weather PRO</h2>
+                <p style="color:#94a3b8;margin-top:0;">Plataforma Meteorológica Profesional</p>
+                <hr style="border-color:#334155;">
+                <h3 style="color:#4ade80;">✅ Suscripción Activada</h3>
+                <p>Hola <strong>{usuario.username}</strong>, tu acceso PRO ya está disponible.</p>
+                <table style="width:100%;border-collapse:collapse;margin:20px 0;">
+                    <tr><td style="color:#94a3b8;padding:6px 0;">Plan</td><td style="color:#fff;font-weight:bold;">{plan_label}</td></tr>
+                    <tr><td style="color:#94a3b8;padding:6px 0;">Precio</td><td style="color:#fff;">{precio}</td></tr>
+                    <tr><td style="color:#94a3b8;padding:6px 0;">Acceso</td><td style="color:#4ade80;">Modo Agro · Aéreo · Naval · Energías + IA Gemini</td></tr>
+                </table>
+                <a href="{settings.SITE_URL}" style="display:inline-block;background:#3b82f6;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:bold;">Ir a la plataforma →</a>
+                <p style="color:#475569;font-size:0.82em;margin-top:30px;">Si no realizaste este pago, contactanos en climapro00@gmail.com</p>
+            </div>
+            """
+        )
+    except Exception as e:
+        print(f"[EMAIL] Error al enviar mail a {usuario.email}: {e}")
+
+
+def activar_suscripcion_dias(usuario, dias, plan='mensual'):
+    """Activa o extiende la suscripción del usuario por `dias` días."""
+    from .models import TOKENS_DIARIOS_SUSCRIPCION
+    perfil = usuario.perfil
+    ahora = timezone.now()
+
+    if perfil.fecha_vencimiento and perfil.fecha_vencimiento > ahora:
+        perfil.fecha_vencimiento += timedelta(days=dias)
+    else:
+        perfil.fecha_vencimiento = ahora + timedelta(days=dias)
+
+    perfil.plan_tipo = plan
+    perfil.save()
+
+    # Activar tokens diarios incluidos en el plan Pro
+    perfil.activar_plan_tokens(
+        TOKENS_DIARIOS_SUSCRIPCION,
+        dias,
+        f'Tokens incluidos en suscripción {plan} — {TOKENS_DIARIOS_SUSCRIPCION:,}/día'
+    )
+
+    _enviar_mail_activacion(usuario, plan)
 
 
 def activar_30_dias(usuario):
-    perfil = usuario.perfil # Buscamos su perfil
-    
-    # Obtenemos la fecha de hoy
-    ahora = timezone.now()
-    
-    # LÓGICA INTELIGENTE:
-    # 1. Si ya tiene una fecha futura (ej: le quedan 5 días), le sumamos 30 más.
-    # 2. Si no tiene fecha o ya venció, le damos 30 días desde hoy.
-    if perfil.fecha_vencimiento and perfil.fecha_vencimiento > ahora:
-        perfil.fecha_vencimiento += timedelta(days=30)
+    """Compatibilidad hacia atrás: activa plan mensual (30 días)."""
+    activar_suscripcion_dias(usuario, 30, 'mensual')
+
+
+# ============================================================
+# MERCADOPAGO CHECKOUT PRO (pago automatizado)
+# ============================================================
+
+@login_required
+def mp_crear_preferencia(request):
+    """Crea una preferencia de pago en MP Checkout Pro y redirige al usuario."""
+    plan = request.GET.get('plan', 'mensual')
+    if plan not in ('mensual', 'anual'):
+        plan = 'mensual'
+
+    if plan == 'anual':
+        titulo = 'Weather PRO — Plan Anual (12 meses)'
+        precio = 200.0
     else:
-        perfil.fecha_vencimiento = ahora + timedelta(days=30)
-        
-    perfil.save() # Guardamos en la base de datos
+        titulo = 'Weather PRO — Plan Mensual'
+        precio = 20.0
+
+    sdk = mercadopago.SDK(settings.MP_ACCESS_TOKEN)
+    site = settings.SITE_URL.rstrip('/')
+
+    preference_data = {
+        "items": [{
+            "title": titulo,
+            "quantity": 1,
+            "unit_price": precio,
+            "currency_id": "USD",
+        }],
+        "back_urls": {
+            "success": f"{site}/mp-retorno/?plan={plan}&status=approved",
+            "failure": f"{site}/pricing/",
+            "pending": f"{site}/mp-retorno/?plan={plan}&status=pending",
+        },
+        "auto_return": "approved",
+        # external_reference codifica usuario + plan para el webhook
+        "external_reference": f"{request.user.id}_{plan}",
+        "notification_url": f"{site}/mp-webhook/",
+    }
+
+    result = sdk.preference().create(preference_data)
+    response = result.get("response", {})
+
+    if result.get("status") in (200, 201) and "init_point" in response:
+        return redirect(response["init_point"])
+
+    # Si MP falla (ej: token no configurado), redirigir a transferencia manual
+    print(f"[MP] Error creando preferencia: {result}")
+    return redirect(f'/transferencia/?plan={plan}')
 
 
+@csrf_exempt
+def mp_webhook(request):
+    """
+    Webhook de MercadoPago. MP envía una notificación cuando un pago cambia de estado.
+    Verifica el pago con la API de MP antes de activar la suscripción.
+    """
+    if request.method != 'POST':
+        return HttpResponse(status=200)
 
-def pago_exitoso(request):
-    status = request.GET.get('collection_status')
-    
-    # Verificamos que MercadoPago/PayPal diga 'approved'
-    if status == 'approved' and request.user.is_authenticated:
-        
-        # ¡AQUÍ LLAMAMOS A LA MAGIA!
-        activar_30_dias(request.user) 
-        
-        print(f"PAGO APROBADO: {request.user.username} tiene 30 días de acceso.")
-        return redirect('home') # Lo mandamos al inicio ya siendo PRO
-        
-    # Si algo falló, lo mandamos de vuelta a precios
+    try:
+        # MP puede enviar JSON en el body
+        body = json.loads(request.body.decode('utf-8'))
+        topic = body.get('type') or body.get('topic', '')
+        payment_id = body.get('data', {}).get('id') or body.get('id')
+    except Exception:
+        topic = request.GET.get('topic', '')
+        payment_id = request.GET.get('id')
+
+    if topic not in ('payment', 'merchant_order') or not payment_id:
+        return HttpResponse(status=200)
+
+    try:
+        sdk = mercadopago.SDK(settings.MP_ACCESS_TOKEN)
+        payment_info = sdk.payment().get(int(payment_id))
+
+        if payment_info.get("status") != 200:
+            return HttpResponse(status=200)
+
+        payment = payment_info["response"]
+
+        if payment.get("status") != "approved":
+            return HttpResponse(status=200)
+
+        external_ref = payment.get("external_reference", "")
+        if not external_ref or "_" not in external_ref:
+            return HttpResponse(status=200)
+
+        partes = external_ref.split("_", 2)
+        user_id_str = partes[0]
+        user = User.objects.get(id=int(user_id_str))
+
+        # ¿Es compra de tokens? (external_reference: "123_tk_tokens_estandar")
+        if len(partes) >= 3 and partes[1] == 'tk':
+            paquete_id = partes[2]
+            paquete = _PAQUETES_MAP.get(paquete_id)
+            if not paquete:
+                return HttpResponse(status=200)
+            from .models import HistorialTokens
+            ya_procesado = HistorialTokens.objects.filter(
+                usuario=user,
+                tipo='RECARGA',
+                descripcion__icontains=paquete['nombre'],
+                fecha__date=timezone.now().date(),
+            ).exists()
+            if not ya_procesado:
+                meses_label = f"{paquete['meses']}m" + (f"+{paquete['regalo']}regalo" if paquete['regalo'] else '')
+                user.perfil.activar_plan_tokens(
+                    paquete['tokens_dia'],
+                    paquete['dias'],
+                    f"Plan {paquete['nombre']} {meses_label} — {paquete['tokens_dia']:,} tokens/día",
+                )
+                logger.info(f"[MP WEBHOOK] Plan tokens activado: {user.username} — {paquete['nombre']} {meses_label}")
+            return HttpResponse(status=200)
+
+        # Es suscripción mensual/anual (external_reference: "123_mensual" o "123_anual")
+        plan = partes[1]
+        dias = 365 if plan == 'anual' else 30
+
+        # Idempotencia: rechazamos si el payment_id ya fue procesado
+        # (guardamos el id en la sesión no aplica en webhook; usamos fecha como proxy:
+        # si el usuario ya tiene más de `dias` días desde ahora, probablemente ya se processó)
+        # La forma más simple: activar_suscripcion_dias ya maneja la lógica de extensión correctamente,
+        # así que una doble llamada solo extiende una vez más. Para evitar eso,
+        # chequeamos si la fecha de vencimiento ya supera el tiempo esperado.
+        perfil = user.perfil
+        ahora = timezone.now()
+        limite = ahora + timedelta(days=dias)
+        if perfil.fecha_vencimiento and perfil.fecha_vencimiento >= limite:
+            print(f"[MP WEBHOOK] Pago ya procesado para {user.username}, ignorando.")
+            return HttpResponse(status=200)
+
+        activar_suscripcion_dias(user, dias, plan)
+        print(f"[MP WEBHOOK] Suscripción activada: {user.username} — plan {plan}")
+
+    except User.DoesNotExist:
+        print(f"[MP WEBHOOK] Usuario no encontrado para external_reference={external_ref}")
+    except Exception as e:
+        print(f"[MP WEBHOOK] Error: {e}")
+
+    # Siempre responder 200 para que MP no reintente
+    return HttpResponse(status=200)
+
+
+@login_required
+def mp_retorno(request):
+    """Pantalla de retorno desde MP Checkout (fallback si el webhook tarda)."""
+    status     = request.GET.get('status', '')
+    plan       = request.GET.get('plan', 'mensual')
+    payment_id = request.GET.get('payment_id') or request.GET.get('collection_id')
+
+    if status == 'approved':
+        # Verificar el pago directamente con la API de MP antes de activar
+        pago_verificado = False
+        if payment_id:
+            try:
+                sdk = mercadopago.SDK(settings.MP_ACCESS_TOKEN)
+                payment_info = sdk.payment().get(int(payment_id))
+                if payment_info.get('status') == 200:
+                    payment = payment_info['response']
+                    ext_ref = payment.get('external_reference', '')
+                    # Verificar que el pago es de este usuario y está realmente aprobado
+                    if (payment.get('status') == 'approved'
+                            and ext_ref.startswith(f"{request.user.id}_")):
+                        pago_verificado = True
+            except Exception as e:
+                logger.error(f'[MP RETORNO] Error verificando pago {payment_id}: {e}')
+
+        if pago_verificado:
+            # Activar solo si el webhook todavía no lo hizo
+            perfil = request.user.perfil
+            ahora  = timezone.now()
+            dias   = 365 if plan == 'anual' else 30
+            limite = ahora + timedelta(days=dias - 1)  # margen de 1 día
+            if not perfil.fecha_vencimiento or perfil.fecha_vencimiento < limite:
+                activar_suscripcion_dias(request.user, dias, plan)
+            return redirect('pago_exitoso_view')
+        else:
+            logger.warning(f'[MP RETORNO] Pago no verificado para usuario {request.user.id}, payment_id={payment_id}')
+            return redirect('pricing')
+
+    if status == 'pending':
+        return render(request, 'pending.html', {'plan': plan, 'metodo': 'mercadopago'})
+
     return redirect('pricing')
+
+
+@login_required
+def pago_exitoso(request):
+    # Fallback legacy para MercadoPago redirect con collection_status.
+    # Verifica el pago con la API de MP antes de activar la suscripción.
+    status     = request.GET.get('collection_status')
+    payment_id = request.GET.get('collection_id') or request.GET.get('payment_id')
+    plan       = request.GET.get('plan', request.session.get('plan_pago', 'mensual'))
+    if plan not in ('mensual', 'anual'):
+        plan = 'mensual'
+
+    if status == 'approved' and payment_id:
+        pago_verificado = False
+        try:
+            sdk = mercadopago.SDK(settings.MP_ACCESS_TOKEN)
+            payment_info = sdk.payment().get(int(payment_id))
+            if payment_info.get('status') == 200:
+                payment = payment_info['response']
+                ext_ref = payment.get('external_reference', '')
+                if (payment.get('status') == 'approved'
+                        and ext_ref.startswith(f"{request.user.id}_")):
+                    pago_verificado = True
+        except Exception as e:
+            logger.error(f'[PAGO_EXITOSO LEGACY] Error verificando pago {payment_id}: {e}')
+
+        if pago_verificado:
+            request.session.pop('plan_pago', None)
+            dias = 365 if plan == 'anual' else 30
+            perfil = request.user.perfil
+            ahora  = timezone.now()
+            limite = ahora + timedelta(days=dias - 1)
+            if not perfil.fecha_vencimiento or perfil.fecha_vencimiento < limite:
+                activar_suscripcion_dias(request.user, dias, plan)
+            return redirect('pago_exitoso_view')
+        else:
+            logger.warning(f'[PAGO_EXITOSO LEGACY] Pago no verificado, usuario {request.user.id}, payment_id={payment_id}')
+
+    return redirect('pricing')
+
+
+@login_required
+def pago_exitoso_view(request):
+    """Pantalla de confirmación que se muestra tras cualquier pago aprobado."""
+    perfil = request.user.perfil
+    plan_label = 'Anual (12 meses)' if perfil.plan_tipo == 'anual' else 'Mensual (30 días)'
+    vencimiento = perfil.fecha_vencimiento.strftime('%d/%m/%Y') if perfil.fecha_vencimiento else '—'
+    return render(request, 'pago_exitoso.html', {
+        'plan_label': plan_label,
+        'vencimiento': vencimiento,
+    })
 
 
 
@@ -1885,15 +2387,18 @@ def pago_exitoso(request):
 
 def registro(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = RegistroConEmailForm(request.POST)
         if form.is_valid():
             user = form.save()
+            # Guardar email en el modelo User
+            user.email = form.cleaned_data['email']
+            user.save()
             # Creamos el perfil vacio al registrarse
             PerfilUsuario.objects.create(user=user)
             login(request, user)
-            return redirect('pricing') # Al registrarse, lo mandamos a ver precios
+            return redirect('pricing')
     else:
-        form = UserCreationForm()
+        form = RegistroConEmailForm()
     return render(request, 'registro.html', {'form': form})
 
 def login_view(request):
@@ -2134,6 +2639,19 @@ def procesar_archivo_sectorial(request):
     Vista principal para procesar archivos y detectar sector automáticamente
     """
     try:
+        # --- Verificar tokens disponibles ---
+        from .models import COSTO_TOKENS
+        if request.user.is_authenticated:
+            perfil = request.user.perfil
+            costo = COSTO_TOKENS['ANALISIS_ARCHIVO']
+            if not perfil.tiene_tokens(costo):
+                return JsonResponse({
+                    'error': 'tokens_insuficientes',
+                    'mensaje': f'No tenés créditos suficientes para procesar un archivo ({costo:,} créditos requeridos). Podés recargar desde tu cuenta.',
+                    'tokens_disponibles': perfil.tokens_disponibles,
+                    'costo': costo,
+                }, status=402)
+
         # Verificar que se enviñ un archivo
         if 'archivo' not in request.FILES:
             return JsonResponse({'error': 'No se proporcionó ningún archivo'}, status=400)
@@ -2202,7 +2720,15 @@ def procesar_archivo_sectorial(request):
             
             # Enviar a BigQuery
             exito, mensaje = dato_sectorial.enviar_a_bigquery()
-            
+
+            # --- Descontar tokens tras procesamiento exitoso ---
+            if request.user.is_authenticated:
+                from .models import COSTO_TOKENS
+                request.user.perfil.descontar_tokens(
+                    COSTO_TOKENS['ANALISIS_ARCHIVO'],
+                    f'Análisis archivo: {archivo.name} (sector {sector})'
+                )
+
             return JsonResponse({
                 'success': True,
                 'id': dato_sectorial.id,
@@ -2211,6 +2737,7 @@ def procesar_archivo_sectorial(request):
                 'bigquery_success': exito,
                 'bigquery_mensaje': mensaje,
                 'metadatos': metadatos,
+                'tokens_restantes': request.user.perfil.tokens_disponibles if request.user.is_authenticated else None,
                 'mensaje': f'Archivo procesado exitosamente. Sector detectado: {sector}'
             })
             
@@ -2237,7 +2764,7 @@ def vista_carga_archivos(request):
 
 # --- FUNCIONES PARA ENVÍO A WEBHOOKS N8N ---
 
-def enviar_a_webhook_n8n(sector, datos):
+def enviar_a_webhook_n8n(sector, datos, user_id=None, session_id=None):
     """
     Envía datos a los webhooks de n8n según el sector
     """
@@ -2260,22 +2787,25 @@ def enviar_a_webhook_n8n(sector, datos):
             'sector': sector,
             'timestamp': datetime.now().isoformat(),
             'source': 'django-app',
+            'sessionId': session_id,
+            'user_id': user_id,
             'data': datos
         }
         
-        # Headers
+        # Headers — incluye secreto compartido para que n8n rechace llamadas externas
+        n8n_secret = os.getenv('N8N_WEBHOOK_SECRET', '')
         headers = {
             'Content-Type': 'application/json',
-            'User-Agent': 'Django-ClimaApp/1.0'
+            'User-Agent': 'Django-ClimaApp/1.0',
+            'X-N8N-Secret': n8n_secret,
         }
         
         # Enviar POST request
         response = requests.post(
-            webhook_url, 
-            json=payload, 
-            headers=headers, 
+            webhook_url,
+            json=payload,
+            headers=headers,
             timeout=30,
-            verify=False  # Para evitar problemas SSL en desarrollo
         )
         
         if response.status_code == 200:
@@ -2407,6 +2937,19 @@ def enviar_dato_sectorial_a_n8n(request):
     Vista para enviar un DatoSectorial específico a n8n
     """
     try:
+        # --- Verificar tokens disponibles ---
+        from .models import COSTO_TOKENS
+        if request.user.is_authenticated:
+            perfil = request.user.perfil
+            costo = COSTO_TOKENS['CHAT_N8N']
+            if not perfil.tiene_tokens(costo):
+                return JsonResponse({
+                    'error': 'tokens_insuficientes',
+                    'mensaje': f'No tenés créditos suficientes para consultar la IA ({costo:,} créditos requeridos). Podés recargar desde tu cuenta.',
+                    'tokens_disponibles': perfil.tokens_disponibles,
+                    'costo': costo,
+                }, status=402)
+
         data = json.loads(request.body)
         dato_id = data.get('dato_id')
         
@@ -2429,20 +2972,352 @@ def enviar_dato_sectorial_a_n8n(request):
         }
         
         # Enviar a webhook n8n
-        exito, mensaje = enviar_a_webhook_n8n(dato.sector, datos_envio)
+        exito, mensaje = enviar_a_webhook_n8n(
+            dato.sector,
+            datos_envio,
+            user_id=request.user.id if request.user.is_authenticated else None,
+            session_id=request.session.session_key,
+        )
         
+        # --- Descontar tokens tras envío exitoso ---
+        if exito and request.user.is_authenticated:
+            from .models import COSTO_TOKENS
+            request.user.perfil.descontar_tokens(
+                COSTO_TOKENS['CHAT_N8N'],
+                f'Consulta IA n8n — sector {dato.sector}'
+            )
+
         return JsonResponse({
             'success': exito,
             'mensaje': mensaje,
             'sector': dato.sector,
-            'dato_id': dato.id
+            'dato_id': dato.id,
+            'tokens_restantes': request.user.perfil.tokens_disponibles if request.user.is_authenticated else None,
         })
-        
+
     except DatoSectorial.DoesNotExist:
         return JsonResponse({'error': 'Dato no encontrado'}, status=404)
     except Exception as e:
         logger.error(f"Error enviando dato a n8n: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
+
+
+# ==========================================
+# SISTEMA DE TOKENS IA
+# ==========================================
+
+@login_required
+def api_saldo_tokens(request):
+    """Devuelve el saldo de tokens del usuario autenticado."""
+    from .models import COSTO_TOKENS, HistorialTokens
+    perfil = request.user.perfil
+    perfil._reset_diario_si_necesario()
+    historial = HistorialTokens.objects.filter(usuario=request.user)[:10]
+    return JsonResponse({
+        'tokens_disponibles': perfil.tokens_disponibles,
+        'tokens_diarios_limite': perfil.tokens_diarios_limite,
+        'tokens_usados_total': perfil.tokens_usados_total,
+        'plan_activo': bool(perfil.tokens_diarios_limite),
+        'fecha_vencimiento_tokens': perfil.fecha_vencimiento_tokens.strftime('%Y-%m-%d') if perfil.fecha_vencimiento_tokens else None,
+        'costos': COSTO_TOKENS,
+        'historial': [
+            {
+                'tipo': h.tipo,
+                'cantidad': h.cantidad,
+                'descripcion': h.descripcion,
+                'tokens_restantes': h.tokens_restantes,
+                'fecha': h.fecha.strftime('%Y-%m-%d %H:%M'),
+            }
+            for h in historial
+        ],
+    })
+
+
+@login_required
+def admin_recargar_tokens(request):
+    """
+    Vista exclusiva para staff/admin que otorga tokens a un usuario.
+    POST: { "username": "...", "cantidad": 50000, "descripcion": "..." }
+    """
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Acceso denegado'}, status=403)
+
+    try:
+        data = json.loads(request.body)
+        username   = data.get('username')
+        cantidad   = int(data.get('cantidad', 0))
+        descripcion = data.get('descripcion', 'Recarga manual por administrador')
+
+        if not username or cantidad <= 0:
+            return JsonResponse({'error': 'Parámetros inválidos (username requerido, cantidad > 0)'}, status=400)
+
+        target_user = User.objects.get(username=username)
+        target_user.perfil.recargar_tokens(cantidad, descripcion)
+
+        return JsonResponse({
+            'success': True,
+            'usuario': username,
+            'tokens_agregados': cantidad,
+            'tokens_disponibles': target_user.perfil.tokens_disponibles,
+        })
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
+    except Exception as e:
+        logger.error(f"Error recargando tokens: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# Planes de tokens con variantes de duración (1, 3 y 6 meses)
+# Cada variante: meses pagados + meses de regalo = días de acceso total
+PLANES_TOKENS = [
+    {
+        'id':          'starter',
+        'nombre':      'Starter',
+        'tokens_dia':  27_000,  # 9 mensajes/día (8-10)
+        'icono':       '⚡',
+        'icono_fa':    {'fa': 'bolt',   'color': '#f59e0b', 'color2': '#fb923c', 'bg': 'rgba(245,158,11,.12)'},
+        'popular':     False,
+        'descripcion': 'Para uso diario moderado',
+        'variantes': [
+            {'sufijo': '1m', 'meses': 1, 'regalo': 0, 'dias': 30,  'precio': 20.0,  'ls_variant_id': '1404219'},
+            {'sufijo': '3m', 'meses': 3, 'regalo': 1, 'dias': 120, 'precio': 60.0,  'ls_variant_id': '1404160'},
+            {'sufijo': '6m', 'meses': 6, 'regalo': 2, 'dias': 240, 'precio': 120.0, 'ls_variant_id': '1404236'},
+        ],
+    },
+    {
+        'id':          'plus',
+        'nombre':      'Plus',
+        'tokens_dia':  51_000,  # 17 mensajes/día (15-20)
+        'icono':       '🚀',
+        'icono_fa':    {'fa': 'rocket', 'color': '#3b82f6', 'color2': '#818cf8', 'bg': 'rgba(59,130,246,.12)'},
+        'popular':     True,
+        'descripcion': 'Ideal para análisis frecuentes',
+        'variantes': [
+            {'sufijo': '1m', 'meses': 1, 'regalo': 0, 'dias': 30,  'precio': 35.0,  'ls_variant_id': '1404246'},
+            {'sufijo': '3m', 'meses': 3, 'regalo': 1, 'dias': 120, 'precio': 105.0, 'ls_variant_id': '1404247'},
+            {'sufijo': '6m', 'meses': 6, 'regalo': 2, 'dias': 240, 'precio': 210.0, 'ls_variant_id': '1404252'},
+        ],
+    },
+    {
+        'id':          'pro_ia',
+        'nombre':      'Pro IA',
+        'tokens_dia':  84_000,  # 28 mensajes/día (25-30)
+        'icono':       '💎',
+        'icono_fa':    {'fa': 'gem',    'color': '#a855f7', 'color2': '#ec4899', 'bg': 'rgba(168,85,247,.12)'},
+        'popular':     False,
+        'descripcion': 'Para usuarios intensivos',
+        'variantes': [
+            {'sufijo': '1m', 'meses': 1, 'regalo': 0, 'dias': 30,  'precio': 75.0,  'ls_variant_id': '1404261'},
+            {'sufijo': '3m', 'meses': 3, 'regalo': 1, 'dias': 120, 'precio': 225.0, 'ls_variant_id': '1404272'},
+            {'sufijo': '6m', 'meses': 6, 'regalo': 2, 'dias': 240, 'precio': 450.0, 'ls_variant_id': '1404275'},
+        ],
+    },
+    {
+        'id':          'power',
+        'nombre':      'Power',
+        'tokens_dia':  135_000,  # 45 mensajes/día (40-50)
+        'icono':       '🌟',
+        'icono_fa':    {'fa': 'star',   'color': '#eab308', 'color2': '#f59e0b', 'bg': 'rgba(234,179,8,.12)'},
+        'popular':     False,
+        'descripcion': 'Máxima capacidad — ideal para empresas',
+        'variantes': [
+            {'sufijo': '1m', 'meses': 1, 'regalo': 0, 'dias': 30,  'precio': 150.0, 'ls_variant_id': '1404277'},
+            {'sufijo': '3m', 'meses': 3, 'regalo': 1, 'dias': 120, 'precio': 450.0, 'ls_variant_id': '1404280'},
+            {'sufijo': '6m', 'meses': 6, 'regalo': 2, 'dias': 240, 'precio': 900.0, 'ls_variant_id': '1404282'},
+        ],
+    },
+]
+
+# Mapa plano id → datos completos para lookup rápido en webhook/retorno
+_PAQUETES_MAP = {}
+for _plan in PLANES_TOKENS:
+    for _v in _plan['variantes']:
+        _key = f"{_plan['id']}_{_v['sufijo']}"
+        _PAQUETES_MAP[_key] = {
+            'id':            _key,
+            'nombre':        _plan['nombre'],
+            'tokens_dia':    _plan['tokens_dia'],
+            'icono':         _plan['icono'],
+            'icono_fa':      _plan['icono_fa'],
+            'bg':            _plan['icono_fa']['bg'],
+            'descripcion':   _plan['descripcion'],
+            'meses':         _v['meses'],
+            'regalo':        _v['regalo'],
+            'dias':          _v['dias'],
+            'precio':        _v['precio'],
+            'ls_variant_id': _v.get('ls_variant_id', ''),
+        }
+
+
+@login_required
+def seleccionar_pago_tokens(request):
+    """Página de selección de método de pago para un plan de tokens."""
+    paquete_id = request.GET.get('paquete', '')
+    paquete    = _PAQUETES_MAP.get(paquete_id)
+    if not paquete:
+        return redirect('/pricing/#tokens')
+
+    # Tipo de cambio referencial ARS (actualizar según cotización)
+    ARS_POR_USD = 1000
+    monto_ars = int(paquete['precio'] * ARS_POR_USD)
+    monto_ars_fmt = f"{monto_ars:,}".replace(',', '.')
+
+    meses_label = f"{paquete['meses']} mes{'es' if paquete['meses'] > 1 else ''}"
+    regalo_label = f" + {paquete['regalo']} de regalo" if paquete['regalo'] else ''
+
+    return render(request, 'pago_tokens.html', {
+        'paquete':     paquete,
+        'paquete_id':  paquete_id,
+        'monto_ars':   monto_ars_fmt,
+        'precio_usd':  int(paquete['precio']),
+        'periodo':     meses_label + regalo_label,
+    })
+
+
+@login_required
+def confirmar_manual_tokens(request):
+    """El usuario declara haber transferido para un plan de tokens."""
+    paquete_id = request.GET.get('paquete', '')
+    paquete    = _PAQUETES_MAP.get(paquete_id)
+    plan_label = paquete['nombre'] if paquete else 'tokens'
+    precio     = f"${int(paquete['precio'])} USD" if paquete else '—'
+
+    try:
+        from django.core.mail import send_mail
+        send_mail(
+            subject=f'[Weather PRO] Transferencia TOKENS pendiente — {request.user.username}',
+            message='',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=['climapro00@gmail.com'],
+            fail_silently=True,
+            html_message=f"""
+            <div style="font-family:'Segoe UI',sans-serif;background:#0f172a;color:#fff;padding:30px;border-radius:12px;max-width:480px;margin:auto;">
+                <h3 style="color:#f59e0b;">&#9203; Transferencia TOKENS pendiente</h3>
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr><td style="color:#94a3b8;padding:6px 0;">Usuario</td><td style="color:#fff;font-weight:bold;">{request.user.username}</td></tr>
+                    <tr><td style="color:#94a3b8;padding:6px 0;">Email</td><td style="color:#fff;">{request.user.email or '(sin email)'}</td></tr>
+                    <tr><td style="color:#94a3b8;padding:6px 0;">Plan</td><td style="color:#fff;">{plan_label} &mdash; {precio}</td></tr>
+                    <tr><td style="color:#94a3b8;padding:6px 0;">Paquete ID</td><td style="color:#fff;">{paquete_id}</td></tr>
+                    <tr><td style="color:#94a3b8;padding:6px 0;">ID Usuario</td><td style="color:#fff;">{request.user.id}</td></tr>
+                </table>
+                <p style="margin-top:20px;color:#94a3b8;">Para activar en la shell de admin:</p>
+                <code style="background:#1e293b;color:#4ade80;padding:10px;display:block;border-radius:8px;font-size:0.85em;">
+                    user = User.objects.get(id={request.user.id})<br>
+                    user.perfil.activar_plan_tokens({paquete['tokens_dia'] if paquete else 0}, {paquete['dias'] if paquete else 30}, "{plan_label}")
+                </code>
+            </div>
+            """
+        )
+    except Exception as e:
+        print(f"[CONFIRMAR_MANUAL_TOKENS] Error enviando mail admin: {e}")
+
+    return render(request, 'pending.html', {
+        'plan':   'tokens',
+        'metodo': 'transferencia',
+        'paquete': paquete,
+    })
+
+
+@login_required
+def recargar_tokens_view(request):
+    """Redirige a /pricing/#tokens — los planes de tokens están en la página de planes."""
+    return redirect('/pricing/#tokens')
+
+
+@login_required
+def mp_crear_preferencia_tokens(request):
+    """Crea una preferencia de pago en MP para un plan de tokens (con variante de duración)."""
+    paquete_id = request.GET.get('paquete', '')
+    paquete = _PAQUETES_MAP.get(paquete_id)
+
+    if not paquete:
+        return redirect('recargar_tokens')
+
+    sdk  = mercadopago.SDK(settings.MP_ACCESS_TOKEN)
+    site = settings.SITE_URL.rstrip('/')
+
+    meses_label = f"{paquete['meses']} mes{'es' if paquete['meses'] > 1 else ''}"
+    regalo_label = f" + {paquete['regalo']} de regalo" if paquete['regalo'] else ''
+
+    preference_data = {
+        "items": [{
+            "title": f"Weather PRO — {paquete['nombre']} {paquete['tokens_dia']:,} tokens/día · {meses_label}{regalo_label}",
+            "quantity": 1,
+            "unit_price": paquete['precio'],
+            "currency_id": "USD",
+        }],
+        "back_urls": {
+            "success": f"{site}/tokens-retorno/?paquete={paquete_id}&status=approved",
+            "failure": f"{site}/recargar-tokens/",
+            "pending": f"{site}/tokens-retorno/?paquete={paquete_id}&status=pending",
+        },
+        "auto_return": "approved",
+        "external_reference": f"{request.user.id}_tk_{paquete_id}",
+        "notification_url": f"{site}/mp-webhook/",
+    }
+
+    result   = sdk.preference().create(preference_data)
+    response = result.get("response", {})
+
+    if result.get("status") in (200, 201) and "init_point" in response:
+        return redirect(response["init_point"])
+
+    logger.error(f"[MP Tokens] Error creando preferencia: {result}")
+    return redirect('recargar_tokens')
+
+
+@login_required
+def tokens_retorno_view(request):
+    """Pantalla de retorno de MP para compra de tokens (fallback al webhook)."""
+    status     = request.GET.get('status', '')
+    paquete_id = request.GET.get('paquete', '')
+    payment_id = request.GET.get('payment_id') or request.GET.get('collection_id')
+    paquete    = _PAQUETES_MAP.get(paquete_id)
+
+    if status == 'approved' and paquete:
+        # Verificar el pago con la API de MP antes de activar tokens
+        pago_verificado = False
+        if payment_id:
+            try:
+                sdk = mercadopago.SDK(settings.MP_ACCESS_TOKEN)
+                payment_info = sdk.payment().get(int(payment_id))
+                if payment_info.get('status') == 200:
+                    payment = payment_info['response']
+                    ext_ref = payment.get('external_reference', '')
+                    if (payment.get('status') == 'approved'
+                            and ext_ref.startswith(f"{request.user.id}_tk_")):
+                        pago_verificado = True
+            except Exception as e:
+                logger.error(f'[MP TOKENS RETORNO] Error verificando pago {payment_id}: {e}')
+
+        if not pago_verificado:
+            logger.warning(f'[MP TOKENS RETORNO] Pago no verificado para usuario {request.user.id}, payment_id={payment_id}')
+            return redirect('recargar_tokens')
+
+        from .models import HistorialTokens
+        # Usar tipo 'RECARGA' (mismo que usa el webhook) para la verificación de idempotencia
+        ya_procesado = HistorialTokens.objects.filter(
+            usuario=request.user,
+            tipo='RECARGA',
+            descripcion__icontains=paquete['nombre'],
+            fecha__date=timezone.now().date(),
+        ).exists()
+        if not ya_procesado:
+            meses_label = f"{paquete['meses']}m" + (f"+{paquete['regalo']}regalo" if paquete['regalo'] else '')
+            request.user.perfil.activar_plan_tokens(
+                paquete['tokens_dia'],
+                paquete['dias'],
+                f"Plan {paquete['nombre']} {meses_label} — {paquete['tokens_dia']:,} tokens/día",
+            )
+        return render(request, 'pago_exitoso_tokens.html', {
+            'paquete': paquete,
+            'tokens_disponibles': request.user.perfil.tokens_disponibles,
+        })
+
+    if status == 'pending':
+        return render(request, 'pending.html', {'plan': 'tokens', 'metodo': 'mercadopago'})
+
+    return redirect('recargar_tokens')
 
 
 # ==========================================
@@ -2640,7 +3515,26 @@ def admin_dashboard(request):
         'usuarios_nuevos_mes': User.objects.filter(
             date_joined__gte=primer_dia_mes
         ).count(),
-        
+
+        # Suscripciones por plan
+        'usuarios_mensual': PerfilUsuario.objects.filter(
+            fecha_vencimiento__gt=hoy, plan_tipo='mensual'
+        ).count(),
+        'usuarios_anual': PerfilUsuario.objects.filter(
+            fecha_vencimiento__gt=hoy, plan_tipo='anual'
+        ).count(),
+        'vencen_7_dias': PerfilUsuario.objects.filter(
+            fecha_vencimiento__gt=hoy,
+            fecha_vencimiento__lt=hoy + timedelta(days=7)
+        ).count(),
+        'con_recordatorio': PerfilUsuario.objects.filter(
+            renovacion_automatica=True, fecha_vencimiento__gt=hoy
+        ).count(),
+        'ingresos_estimados': (
+            PerfilUsuario.objects.filter(fecha_vencimiento__gt=hoy, plan_tipo='mensual').count() * 20 +
+            PerfilUsuario.objects.filter(fecha_vencimiento__gt=hoy, plan_tipo='anual').count() * 200
+        ),
+
         # Feedback
         'total_feedback': FeedbackIA.objects.count(),
         'feedback_hoy': FeedbackIA.objects.filter(
@@ -2688,6 +3582,7 @@ def admin_dashboard(request):
     feedback_reciente = FeedbackIA.objects.select_related('usuario').order_by('-fecha_creacion')[:20]
     reportes = ReporteUsuario.objects.select_related('usuario').order_by('-fecha')[:15]
     datos_recientes = DatoSectorial.objects.select_related('usuario_carga').order_by('-fecha_registro')[:15]
+    perfiles_suscripcion = PerfilUsuario.objects.select_related('user').order_by('-fecha_vencimiento')[:60]
     
     context = {
         'stats': stats,
@@ -2695,9 +3590,68 @@ def admin_dashboard(request):
         'feedback_reciente': feedback_reciente,
         'reportes': reportes,
         'datos_recientes': datos_recientes,
+        'perfiles_suscripcion': perfiles_suscripcion,
+        'hoy': hoy,
     }
     
     return render(request, 'admin_dashboard.html', context)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ADMIN — Activar/extender suscripción de un usuario desde el dashboard
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+def admin_activar_usuario(request):
+    """Endpoint AJAX: solo superusuarios. Extiende la suscripción de un usuario."""
+    if not request.user.is_superuser:
+        return JsonResponse({'error': 'Acceso denegado'}, status=403)
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+    from django.contrib.auth.models import User as AuthUser
+    user_id = request.POST.get('user_id')
+    dias = int(request.POST.get('dias', 30))
+    plan = request.POST.get('plan', 'mensual')
+
+    if dias not in (30, 365) or plan not in ('mensual', 'anual'):
+        return JsonResponse({'error': 'Parámetros inválidos'}, status=400)
+
+    try:
+        usuario = AuthUser.objects.get(id=user_id)
+    except AuthUser.DoesNotExist:
+        return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
+
+    activar_suscripcion_dias(usuario, dias, plan)
+    perfil = usuario.perfil
+    return JsonResponse({
+        'ok': True,
+        'username': usuario.username,
+        'vencimiento': perfil.fecha_vencimiento.strftime('%d/%m/%Y'),
+        'plan': plan,
+    })
+
+
+@login_required
+def admin_toggle_renovacion(request):
+    """Endpoint AJAX: cambia renovacion_automatica de un usuario."""
+    if not request.user.is_superuser:
+        return JsonResponse({'error': 'Acceso denegado'}, status=403)
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+    from django.contrib.auth.models import User as AuthUser
+    user_id = request.POST.get('user_id')
+
+    try:
+        usuario = AuthUser.objects.get(id=user_id)
+        perfil = usuario.perfil
+    except (AuthUser.DoesNotExist, PerfilUsuario.DoesNotExist):
+        return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
+
+    perfil.renovacion_automatica = not perfil.renovacion_automatica
+    perfil.save(update_fields=['renovacion_automatica'])
+    return JsonResponse({'ok': True, 'renovacion_automatica': perfil.renovacion_automatica})
 
 
 def obtener_noticias_clima(request):
@@ -2727,3 +3681,180 @@ def obtener_noticias_clima(request):
     
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+
+def laboratorio(request):
+    """Vista para el Laboratorio 3D del planeta."""
+    return render(request, 'laboratorio.html')
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PROXIES Open-Meteo para el Laboratorio 3D
+# Los datos se cacheán en memoria durante 1 hora para que múltiples usuarios
+# no consuman el límite gratuito de Open-Meteo.
+# ─────────────────────────────────────────────────────────────────────────────
+_lab_cache = {}   # { 'viento': (timestamp, data), 'eventos': (timestamp, data) }
+LAB_CACHE_TTL = 3600  # segundos
+
+
+def _lab_get_or_fetch(key, url):
+    """Devuelve datos cacheados o los descarga de Open-Meteo."""
+    now = time.time()
+    if key in _lab_cache:
+        ts, data = _lab_cache[key]
+        if now - ts < LAB_CACHE_TTL:
+            return data
+    resp = pedir_datos_seguro(url)
+    resp.raise_for_status()
+    raw = resp.json()
+    _lab_cache[key] = (now, raw)
+    return raw
+
+
+def api_viento_proxy(request):
+    """Devuelve corrientes de viento (grid 7×12) cacheadas 1 h."""
+    WIND_LATS = [-75, -50, -25, 0, 25, 50, 75]
+    WIND_LONS = [-165,-135,-105,-75,-45,-15,15,45,75,105,135,165]
+    lats, lons = [], []
+    for la in WIND_LATS:
+        for lo in WIND_LONS:
+            lats.append(la); lons.append(lo)
+    url = (
+        'https://api.open-meteo.com/v1/forecast'
+        f'?latitude={",".join(map(str,lats))}'
+        f'&longitude={",".join(map(str,lons))}'
+        '&current=wind_speed_10m,wind_direction_10m&wind_speed_unit=kmh&timezone=GMT'
+    )
+    try:
+        raw = _lab_get_or_fetch('viento', url)
+        pts = (raw if isinstance(raw, list) else [raw])
+        result = [
+            {
+                'lat':   p['latitude'],
+                'lon':   p['longitude'],
+                'speed': (p.get('current') or {}).get('wind_speed_10m', 0),
+                'dir':   (p.get('current') or {}).get('wind_direction_10m', 0),
+            }
+            for p in pts
+        ]
+        return JsonResponse(result, safe=False)
+    except Exception as e:
+        logger.error('api_viento_proxy error: %s', e)
+        return JsonResponse([], safe=False)
+
+
+def api_eventos_proxy(request):
+    """Devuelve eventos climáticos severos clasificados (grid 9×11) cacheados 1 h."""
+    SEV_LATS = [-55, -35, -20, -10, 0, 10, 20, 35, 55]
+    SEV_LONS = [-150,-120,-90,-60,-30,0,30,60,90,120,150]
+    lats, lons = [], []
+    for la in SEV_LATS:
+        for lo in SEV_LONS:
+            lats.append(la); lons.append(lo)
+    url = (
+        'https://api.open-meteo.com/v1/forecast'
+        f'?latitude={",".join(map(str,lats))}'
+        f'&longitude={",".join(map(str,lons))}'
+        '&current=weather_code,wind_gusts_10m,wind_speed_10m,temperature_2m'
+        '&wind_speed_unit=kmh&timezone=GMT'
+    )
+    try:
+        raw = _lab_get_or_fetch('eventos', url)
+    except Exception as e:
+        logger.error('api_eventos_proxy error: %s', e)
+        return JsonResponse([], safe=False)
+
+    def classify(wmo, gust, speed, temp, lat):
+        tropical = abs(lat) <= 30
+        if tropical  and gust > 118: return {'name':'Huracán / Ciclón',          'color':'#ef4444','severity':5,'icon':'🌀'}
+        if tropical  and gust >  88: return {'name':'Tormenta tropical severa',   'color':'#f97316','severity':4,'icon':'🌀'}
+        if tropical  and gust >  62: return {'name':'Depresión tropical',         'color':'#fb923c','severity':3,'icon':'🌀'}
+        if not tropical and gust>90: return {'name':'Ciclón extratropical',       'color':'#ef4444','severity':4,'icon':'🌀'}
+        if wmo == 99:                return {'name':'Tormenta eléctrica extrema', 'color':'#ef4444','severity':4,'icon':'⛈️'}
+        if wmo == 96:                return {'name':'Tormenta con granizo severo','color':'#f97316','severity':3,'icon':'⛈️'}
+        if wmo == 95:                return {'name':'Tormenta eléctrica',         'color':'#a78bfa','severity':3,'icon':'⛈️'}
+        if gust > 75:                return {'name':'Vientos huracanados',        'color':'#f97316','severity':4,'icon':'💨'}
+        if (wmo in (75,77)) and temp < -5: return {'name':'Ventisca / Blizzard', 'color':'#60a5fa','severity':3,'icon':'❄️'}
+        if 71 <= wmo <= 77:          return {'name':'Tormenta de nieve',          'color':'#93c5fd','severity':2,'icon':'🌨️'}
+        if wmo == 82 or (wmo == 81 and gust > 50): return {'name':'Chubascos intensos','color':'#818cf8','severity':2,'icon':'🌧️'}
+        if wmo >= 80 and gust > 55:  return {'name':'Frente tormentoso',          'color':'#a78bfa','severity':2,'icon':'⛅'}
+        return None
+
+    def region(lat, lon):
+        if -100<=lon<=-20 and  8<=lat<=35:  return 'Atlántico tropical'
+        if -175<=lon<=-90 and  5<=lat<=30:  return 'Pacífico E. tropical'
+        if   60<=lon<=120 and  5<=lat<=25:  return 'Océano Índico N.'
+        if  100<=lon<=180 and -25<=lat<=20: return 'Pacífico Occidental'
+        if  -30<=lon<=90 and -30<=lat<=-5:  return 'Índico Sur'
+        if lat >  55: return 'Polar Norte'
+        if lat < -55: return 'Polar Sur / Antártida'
+        la = f"{abs(lat):.0f}°{'N' if lat>=0 else 'S'}"
+        lo = f"{abs(lon):.0f}°{'E' if lon>=0 else 'O'}"
+        return f"{la}, {lo}"
+
+    raw_list = raw if isinstance(raw, list) else [raw]
+    events = []
+    for p in raw_list:
+        cur   = p.get('current') or {}
+        wmo   = cur.get('weather_code', 0)
+        gust  = cur.get('wind_gusts_10m', 0)
+        speed = cur.get('wind_speed_10m', 0)
+        temp  = cur.get('temperature_2m', 20)
+        lat   = p['latitude'];  lon = p['longitude']
+        ev = classify(wmo, gust, speed, temp, lat)
+        if ev:
+            events.append({**ev, 'lat': lat, 'lon': lon,
+                           'gust': gust, 'region': region(lat, lon)})
+
+    # Deduplicar: mayor severidad por celda ~20°
+    deduped = []
+    for ev in events:
+        close = next((e for e in deduped
+                      if abs(e['lat']-ev['lat'])<20 and abs(e['lon']-ev['lon'])<20), None)
+        if not close:
+            deduped.append(ev)
+        elif ev['severity'] > close['severity']:
+            close.update(ev)
+
+    deduped.sort(key=lambda e: -e['severity'])
+    return JsonResponse(deduped, safe=False)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MI CUENTA — perfil y preferencia de renovación
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+def mi_cuenta(request):
+    perfil, _ = PerfilUsuario.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST':
+        nuevo_valor = request.POST.get('renovacion_automatica') == 'on'
+        perfil.renovacion_automatica = nuevo_valor
+        perfil.save(update_fields=['renovacion_automatica'])
+        return redirect('/mi-cuenta/?guardado=1')
+
+    from .models import COSTO_TOKENS
+    perfil._reset_diario_si_necesario()
+    plan_tokens = None
+    if (perfil.tokens_diarios_limite and perfil.fecha_vencimiento_tokens
+            and perfil.fecha_vencimiento_tokens > timezone.now()):
+        plan_tokens = {
+            'limite_dia': perfil.tokens_diarios_limite,
+            'vencimiento': perfil.fecha_vencimiento_tokens.strftime('%d/%m/%Y'),
+        }
+
+    from .models import HistorialTokens
+    historial = (HistorialTokens.objects
+                 .filter(usuario=request.user)
+                 .order_by('-fecha')[:20])
+
+    return render(request, 'mi_cuenta.html', {
+        'perfil': perfil,
+        'plan_tokens': plan_tokens,
+        'tokens_disponibles': perfil.tokens_disponibles,
+        'costos': COSTO_TOKENS,
+        'guardado': request.GET.get('guardado') == '1',
+        'historial': historial,
+    })
+

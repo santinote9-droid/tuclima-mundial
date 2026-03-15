@@ -1,0 +1,114 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "latitude"
+            },
+            {
+              "name": "longitude"
+            }
+          ]
+        }
+      },
+      "id": "c055762a-8fe7-4141-a639-df2372f30060",
+      "typeVersion": 1.1,
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        272,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "current",
+              "value": "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,cloud_cover,pressure_msl,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility,is_day,dew_point_2m,shortwave_radiation,direct_radiation,diffuse_radiation,soil_temperature_0cm,soil_temperature_6cm,soil_temperature_18cm,soil_moisture_0_to_1cm,soil_moisture_3_to_9cm,vapor_pressure_deficit"
+            },
+            {
+              "name": "daily",
+              "value": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,et0_fao_evapotranspiration,precipitation_probability_max"
+            },
+            {
+              "name": "latitude",
+              "value": "={{ $json.latitude }}"
+            },
+            {
+              "name": "longitude",
+              "value": "={{ $json.longitude }}"
+            },
+            {
+              "name": "timezone",
+              "value": "auto"
+            },
+            {
+              "name": "forecast_hours",
+              "value": "48"
+            },
+            {
+              "name": "hourly",
+              "value": "temperature_2m,dew_point_2m,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,wind_speed_950hPa,wind_speed_850hPa,wind_speed_700hPa,wind_speed_300hPa,cape,lifted_index,wind_direction_10m,visibility"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        480,
+        352
+      ],
+      "id": "423732ac-7c15-4a45-a9a3-b03a283b9224",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const clima = $input.first().json;\n\n// 1. Extraemos el clima actual (es un solo bloque, así que lo dejamos casi igual)\nconst actual = clima.current || {};\n\n// 2. Procesamos el pronóstico DIARIO (Convertimos listas a objetos)\nconst d = clima.daily || {};\nlet dailyOrdenado = [];\nif (d.time) {\n    for (let i = 0; i < d.time.length; i++) {\n        dailyOrdenado.push({\n            fecha: d.time[i],\n            clima_codigo: d.weather_code[i],\n            temp_max: d.temperature_2m_max[i],\n            temp_min: d.temperature_2m_min[i],\n            precipitacion_mm: d.precipitation_sum[i],\n            evapotranspiracion: d.et0_fao_evapotranspiration[i],\n            prob_precipitacion_pct: d.precipitation_probability_max[i]\n        });\n    }\n}\n\n// 3. Procesamos el pronóstico POR HORA (Convertimos listas a objetos)\nconst h = clima.hourly || {};\nlet hourlyOrdenado = [];\nif (h.time) {\n    for (let i = 0; i < h.time.length; i++) {\n        hourlyOrdenado.push({\n            hora: h.time[i],\n            temp: h.temperature_2m[i],\n            punto_rocio: h.dew_point_2m[i],\n            nubosidad_total: h.cloud_cover[i],\n            nubosidad_baja: h.cloud_cover_low[i],\n            nubosidad_media: h.cloud_cover_mid[i],\n            nubosidad_alta: h.cloud_cover_high[i],\n            viento_950hPa: h.wind_speed_950hPa[i],\n            viento_850hPa: h.wind_speed_850hPa[i],\n            viento_700hPa: h.wind_speed_700hPa[i],\n            viento_300hPa: h.wind_speed_300hPa[i],\n            cape: h.cape[i],\n            lifted_index: h.lifted_index[i]\n        });\n    }\n}\n\n// 4. Empaquetamos todo en una estructura hermosa y profesional\nconst reporteEstructurado = {\n    ubicacion: { latitud: clima.latitude, longitud: clima.longitude },\n    clima_actual: actual,\n    pronostico_diario: dailyOrdenado,\n    pronostico_por_hora: hourlyOrdenado\n};\n\n// 5. ¡LA MAGIA ANTI-ERRORES! \n// Convertimos el JSON final en una cadena de texto (Stringify). \n// Así Gemini recibe texto plano estructurado y jamás vuelve a tirar el error de 'parts'.\nreturn [{ json: { response: JSON.stringify(reporteEstructurado) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        352
+      ],
+      "id": "c757155a-4095-433e-a177-313cf36c2606",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "19ee95c84ac845adb5e56f055bd53b79a0e674016338a7de7b71fc1ecea83ccf"
+  }
+}

@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-q5drmer^4i%i@l#iv4x5=&v&3^%qzp_pj+aq&=i$3y343w-v$9')
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
@@ -90,7 +90,7 @@ WSGI_APPLICATION = 'nucleo.wsgi.application'
 # Configuración mejorada de base de datos con persistencia garantizada
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL', 'postgresql://postgres.lmumvstjdyaozewqygfx:REDACTED_DB_PASSWORD@aws-1-us-east-2.pooler.supabase.com:5432/postgres'),
+        default=os.getenv('DATABASE_URL'),
         conn_max_age=int(os.getenv('DB_CONN_MAX_AGE', 600)),  # Mantener conexiones por 10 minutos
         conn_health_checks=True,  # Verificar salud de conexiones
     )
@@ -172,3 +172,42 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000'
 ]
+
+# ============================================================
+# EMAIL (SMTP) — configura estas variables en tu .env
+# Gmail: EMAIL_HOST_USER=tu@gmail.com  EMAIL_HOST_PASSWORD=app_password_16_chars
+# ============================================================
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST      = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT      = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS   = True
+EMAIL_HOST_USER     = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'Weather Pro <climapro00@gmail.com>')
+
+# ============================================================
+# MERCADOPAGO — configura en .env
+# MP_ACCESS_TOKEN=APP_USR-...    (producción)
+# MP_PUBLIC_KEY=APP_USR-...      (front-end, no usada en backend)
+# SITE_URL=https://tuclima-mundial.onrender.com  (para webhooks y back_urls)
+# ============================================================
+MP_ACCESS_TOKEN = os.getenv('MP_ACCESS_TOKEN', '')
+SITE_URL        = os.getenv('SITE_URL', 'http://127.0.0.1:8000')  # ngrok en desarrollo
+
+# ============================================================
+# PAYPAL — configura en .env
+# PAYPAL_MODE=sandbox (desarrollo) o live (producción)
+# PAYPAL_CLIENT_ID=REDACTED_PAYPAL_HINT
+# PAYPAL_CLIENT_SECRET=REDACTED_PAYPAL_HINT
+# ============================================================
+PAYPAL_MODE          = os.getenv('PAYPAL_MODE', 'sandbox')
+PAYPAL_CLIENT_ID     = os.getenv('PAYPAL_CLIENT_ID', '')
+PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', '')
+
+# ============================================================
+# LEMON SQUEEZY
+# LEMONSQUEEZY_STORE_SLUG=tuclima  (el slug de tu tienda en LS)
+# LEMONSQUEEZY_WEBHOOK_SECRET=whsec_...
+# ============================================================
+LEMONSQUEEZY_STORE_SLUG       = os.getenv('LEMONSQUEEZY_STORE_SLUG', '')
+LEMONSQUEEZY_WEBHOOK_SECRET   = os.getenv('LEMONSQUEEZY_WEBHOOK_SECRET', '')

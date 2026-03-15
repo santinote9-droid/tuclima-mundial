@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Cuenta | TuClima</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0f172a;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 20px;
+        }
+        .container { max-width: 560px; width: 100%; }
+
+        .card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid #1e293b;
+            border-radius: 18px;
+            padding: 32px;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 16px;
+        }
+        .card-header .icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem;
+        }
+        h2 { font-size: 1.1rem; font-weight: 700; }
+        .subtitle { color: #64748b; font-size: 0.82rem; margin-top: 2px; }
+
+        /* Estado de suscripción */
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600;
+        }
+        .status-active   { background: rgba(34,197,94,0.12); border: 1px solid #16a34a; color: #4ade80; }
+        .status-inactive { background: rgba(239,68,68,0.12); border: 1px solid #dc2626; color: #f87171; }
+        .info-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0; border-bottom: 1px solid #1e293b; font-size: 0.9rem;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #64748b; }
+        .info-value { font-weight: 600; }
+
+        /* Toggle switch */
+        .toggle-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 0; border-bottom: 1px solid #1e293b;
+        }
+        .toggle-row:last-child { border-bottom: none; }
+        .toggle-label { font-size: 0.9rem; }
+        .toggle-desc  { font-size: 0.78rem; color: #64748b; margin-top: 3px; }
+
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 27px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; inset: 0;
+            background: #1e293b; border-radius: 27px;
+            transition: .3s; border: 1px solid #334155;
+        }
+        .slider:before {
+            content: ""; position: absolute;
+            width: 19px; height: 19px; border-radius: 50%;
+            background: #64748b; bottom: 3px; left: 4px;
+            transition: .3s;
+        }
+        input:checked + .slider { background: #16a34a; border-color: #22c55e; }
+        input:checked + .slider:before { background: #fff; transform: translateX(23px); }
+
+        .btn-save {
+            width: 100%; padding: 14px; border: none; border-radius: 12px;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: #fff; font-size: 1rem; font-weight: 700;
+            cursor: pointer; margin-top: 8px; transition: opacity .2s;
+        }
+        .btn-save:hover { opacity: 0.88; }
+
+        .btn-link {
+            display: inline-block; color: #3b82f6; text-decoration: none;
+            font-size: 0.88rem; font-weight: 600;
+        }
+        .btn-link:hover { text-decoration: underline; }
+        .back-link {
+            text-align: center; margin-top: 10px;
+        }
+        .notice {
+            background: #1e293b; border: 1px solid #334155;
+            border-radius: 10px; padding: 12px 16px;
+            font-size: 0.82rem; color: #94a3b8; margin-top: 16px;
+            display: flex; gap: 10px; align-items: flex-start;
+        }
+        .notice i { color: #3b82f6; flex-shrink: 0; margin-top: 2px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    {% if guardado %}
+    <div style="background:rgba(16,185,129,.12); border:1px solid #16a34a; border-radius:12px; padding:12px 20px; margin-bottom:18px; color:#34d399; font-size:.88rem; display:flex; align-items:center; gap:10px;">
+        <i class="fas fa-check-circle"></i> Preferencias guardadas correctamente.
+    </div>
+    {% endif %}
+
+    <!-- ── Estado de suscripción ── -->
+    <div class="card">
+        <div class="card-header">
+            <div class="icon" style="background:rgba(99,102,241,0.15); color:#818cf8;">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <div>
+                <h2>{{ user.username }}</h2>
+                <div class="subtitle">{{ user.email|default:"(sin email)" }}</div>
+            </div>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Estado</span>
+            {% if perfil.suscripcion_activa %}
+                <span class="status-badge status-active"><i class="fas fa-circle" style="font-size:.55rem;"></i>Activa</span>
+            {% else %}
+                <span class="status-badge status-inactive"><i class="fas fa-circle" style="font-size:.55rem;"></i>Inactiva</span>
+            {% endif %}
+        </div>
+        <div class="info-row">
+            <span class="info-label">Plan</span>
+            <span class="info-value">
+                {% if perfil.plan_tipo == 'anual' %}Anual — $200 USD/año{% else %}Mensual — $20 USD/mes{% endif %}
+            </span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Vencimiento</span>
+            <span class="info-value">
+                {% if perfil.fecha_vencimiento %}
+                    {{ perfil.fecha_vencimiento|date:"d/m/Y" }}
+                {% else %}
+                    —
+                {% endif %}
+            </span>
+        </div>
+
+        {% if not perfil.suscripcion_activa %}
+        <a href="/pricing/" class="btn-link" style="display:block; text-align:center; margin-top:18px; padding:12px; background:rgba(59,130,246,0.1); border:1px solid #3b82f6; border-radius:10px;">
+            <i class="fas fa-arrow-right"></i> Ver planes y suscribirme
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- ── Preferencias ── -->
+    <div class="card">
+        <div class="card-header">
+            <div class="icon" style="background:rgba(34,197,94,0.1); color:#4ade80;">
+                <i class="fas fa-sliders-h"></i>
+            </div>
+            <div>
+                <h2>Preferencias</h2>
+                <div class="subtitle">Controlá cómo querés gestionar tu suscripción</div>
+            </div>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label"><strong>Recordatorio de renovación</strong></div>
+                    <div class="toggle-desc">
+                        Recibís un email 5 días antes del vencimiento con tu link de renovación.
+                        <br>Si lo desactivás, el pago siempre será manual.
+                    </div>
+                </div>
+                <label class="toggle-switch" style="margin-left:20px;">
+                    <input type="checkbox" name="renovacion_automatica"
+                           {% if perfil.renovacion_automatica %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="notice">
+                <i class="fas fa-info-circle"></i>
+                <span>El cobro automático sin intervención requiere una tarjeta guardada (próximamente). Por ahora, el recordatorio te manda un link para que vos decidas renovar.</span>
+            </div>
+
+            <br>
+            <button type="submit" class="btn-save">
+                <i class="fas fa-save"></i> Guardar preferencias
+            </button>
+        </form>
+    </div>
+
+    <!-- ── Tokens IA ── -->
+    <div class="card">
+        <div class="card-header">
+            <div class="icon" style="background:rgba(99,102,241,0.12); color:#818cf8;">
+                <i class="fas fa-microchip"></i>
+            </div>
+            <div>
+                <h2>Tokens IA</h2>
+                <div class="subtitle">Tu saldo de créditos para usar la IA</div>
+            </div>
+        </div>
+
+        {% if plan_tokens %}
+        <div style="background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.3); border-radius:10px; padding:10px 16px; margin-bottom:14px; color:#34d399; font-size:.85rem;">
+            <i class="fas fa-check-circle"></i>
+            Plan activo: <b>{{ plan_tokens.limite_dia|floatformat:0 }} tokens/día</b> &nbsp;·&nbsp; Vence {{ plan_tokens.vencimiento }}
+        </div>
+        {% endif %}
+
+        <div class="info-row">
+            <span class="info-label">Disponibles hoy</span>
+            <span class="info-value" style="color:#a5b4fc; font-size:1.2rem;">{{ tokens_disponibles|floatformat:0 }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Costo Chat IA</span>
+            <span class="info-value">{{ costos.CHAT_N8N|floatformat:0 }} créditos</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Costo Análisis</span>
+            <span class="info-value">{{ costos.ANALISIS_ARCHIVO|floatformat:0 }} créditos</span>
+        </div>
+
+        <a href="/pricing/#tokens" class="btn-link" style="display:block; text-align:center; margin-top:16px; padding:12px; background:rgba(99,102,241,0.1); border:1px solid #6366f1; border-radius:10px;">
+            <i class="fas fa-bolt"></i> Ver planes de tokens
+        </a>
+    </div>
+
+    <!-- ── Historial de uso ── -->
+    {% if historial %}
+    <div class="card">
+        <div class="card-header">
+            <div class="icon" style="background:rgba(245,158,11,0.12); color:#fbbf24;">
+                <i class="fas fa-history"></i>
+            </div>
+            <div>
+                <h2>Historial de créditos</h2>
+                <div class="subtitle">Últimos 20 movimientos</div>
+            </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.83rem;">
+            <thead>
+                <tr style="border-bottom:1px solid #1e293b; color:#64748b; text-align:left;">
+                    <th style="padding:8px 6px; font-weight:600;">Fecha</th>
+                    <th style="padding:8px 6px; font-weight:600;">Tipo</th>
+                    <th style="padding:8px 6px; font-weight:600;">Descripción</th>
+                    <th style="padding:8px 6px; font-weight:600; text-align:right;">Créditos</th>
+                    <th style="padding:8px 6px; font-weight:600; text-align:right;">Saldo</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for mov in historial %}
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                    <td style="padding:8px 6px; color:#94a3b8; white-space:nowrap;">{{ mov.fecha|date:"d/m H:i" }}</td>
+                    <td style="padding:8px 6px;">
+                        {% if mov.tipo == 'USO' %}
+                            <span style="color:#f87171; font-size:0.78rem; font-weight:600;">USO</span>
+                        {% elif mov.tipo == 'RECARGA' %}
+                            <span style="color:#4ade80; font-size:0.78rem; font-weight:600;">RECARGA</span>
+                        {% else %}
+                            <span style="color:#a5b4fc; font-size:0.78rem; font-weight:600;">BONO</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding:8px 6px; color:#cbd5e1;">{{ mov.descripcion|truncatechars:40 }}</td>
+                    <td style="padding:8px 6px; text-align:right; font-weight:700;
+                               color:{% if mov.cantidad < 0 %}#f87171{% else %}#4ade80{% endif %}">
+                        {% if mov.cantidad > 0 %}+{% endif %}{{ mov.cantidad|floatformat:0 }}
+                    </td>
+                    <td style="padding:8px 6px; text-align:right; color:#94a3b8;">{{ mov.tokens_restantes|floatformat:0 }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="back-link">
+        <a href="/" class="btn-link">&larr; Volver al inicio</a>
+    </div>
+
+</div>
+</body>
+</html>

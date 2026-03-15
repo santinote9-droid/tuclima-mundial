@@ -296,6 +296,32 @@
         .badge-idea { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
         .badge-otro { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
 
+        /* Suscripciones */
+        .badge-mensual { background: rgba(59,130,246,0.2); color:#60a5fa; }
+        .badge-anual   { background: rgba(139,92,246,0.2);  color:#a78bfa; }
+        .badge-activa  { background: rgba(16,185,129,0.2);  color:#34d399; }
+        .badge-vencida { background: rgba(239,68,68,0.2);   color:#f87171; }
+        .badge-pronto  { background: rgba(245,158,11,0.2);  color:#fbbf24; }
+
+        .btn-accion {
+            padding: 5px 12px; border: none; border-radius: 7px;
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            transition: opacity .2s;
+        }
+        .btn-accion:hover { opacity: .75; }
+        .btn-activar-30  { background: #1d4ed8; color:#fff; }
+        .btn-activar-365 { background: #6d28d9; color:#fff; }
+        .btn-renovacion { background: none; border: 1px solid #334155;
+            color: #94a3b8; font-size: 13px; padding: 3px 8px; border-radius: 6px;
+            cursor: pointer; }
+        .renovacion-on  { border-color:#16a34a; color:#4ade80; }
+        .renovacion-off { border-color:#991b1b; color:#f87171; }
+        .flash-ok { animation: flashGreen .6s ease; }
+        @keyframes flashGreen {
+            0%   { background: rgba(16,185,129,.3); }
+            100% { background: transparent; }
+        }
+
         .sector-badge {
             padding: 4px 10px;
             border-radius: 8px;
@@ -447,6 +473,13 @@
                 </svg>
                 Ir al Sitio
             </a>
+            <a href="#suscripciones" class="action-btn" style="text-decoration: none; --card-color:#10b981; border-color:rgba(16,185,129,.3); background:rgba(16,185,129,.1);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                    <line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+                💳 Suscripciones
+            </a>
         </div>
 
         <!-- Stats Grid -->
@@ -521,6 +554,56 @@
                 </div>
                 <div class="stat-value">{{ stats.reportes_pendientes }}</div>
                 <div class="stat-label">Reportes Pendientes</div>
+            </div>
+
+            <!-- Stat cards de suscripciones -->
+            <div class="stat-card blue" style="--card-color:#3b82f6">
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                    </svg>
+                </div>
+                <div class="stat-value">{{ stats.usuarios_mensual }}</div>
+                <div class="stat-label">Plan Mensual Activo</div>
+                <div class="stat-change positive">${{ stats.usuarios_mensual|add:0 }} × $20 USD</div>
+            </div>
+
+            <div class="stat-card purple" style="--card-color:#8b5cf6">
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/>
+                    </svg>
+                </div>
+                <div class="stat-value">{{ stats.usuarios_anual }}</div>
+                <div class="stat-label">Plan Anual Activo</div>
+                <div class="stat-change positive">${{ stats.usuarios_anual|add:0 }} × $200 USD</div>
+            </div>
+
+            <div class="stat-card green" style="--card-color:#10b981">
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"/>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                </div>
+                <div class="stat-value">${{ stats.ingresos_estimados }}</div>
+                <div class="stat-label">Ingresos估算 USD</div>
+                <div class="stat-change positive">Suscripciones activas</div>
+            </div>
+
+            <div class="stat-card orange" style="--card-color:#f59e0b">
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                </div>
+                <div class="stat-value">{{ stats.vencen_7_dias }}</div>
+                <div class="stat-label">Vencen en 7 días</div>
+                {% if stats.vencen_7_dias > 0 %}
+                <div class="stat-change negative">⚠ Requieren atención</div>
+                {% else %}
+                <div class="stat-change positive">✓ Todo en orden</div>
+                {% endif %}
             </div>
         </div>
 
@@ -643,6 +726,96 @@
                         <polyline points="14 2 14 8 20 8"/>
                     </svg>
                     <p>No hay reportes de usuarios</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <!-- GESTIÓN DE SUSCRIPCIONES                                      -->
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <div class="data-section" id="suscripciones">
+            <div class="section-header">
+                <h2>💳 Gestión de Suscripciones</h2>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" onclick="filtrarSubs('todos', this)">Todos</button>
+                    <button class="filter-btn" onclick="filtrarSubs('activo', this)">Activos</button>
+                    <button class="filter-btn" onclick="filtrarSubs('vencido', this)">Vencidos</button>
+                    <button class="filter-btn" onclick="filtrarSubs('pronto', this)">Vencen pronto</button>
+                </div>
+            </div>
+
+            <div class="data-table">
+                {% if perfiles_suscripcion %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Email</th>
+                            <th>Plan</th>
+                            <th>Vencimiento</th>
+                            <th>Estado</th>
+                            <th>Recordatorio</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-subs">
+                        {% for perfil in perfiles_suscripcion %}
+                        {% with uid=perfil.user.id %}
+                        <tr id="sub-row-{{ uid }}"
+                            data-estado="{% if perfil.suscripcion_activa %}{% if perfil.fecha_vencimiento < hoy|timeuntil and perfil.fecha_vencimiento %}pronto{% else %}activo{% endif %}{% else %}vencido{% endif %}">
+                            <td><strong>{{ perfil.user.username }}</strong></td>
+                            <td style="color:#94a3b8; font-size:13px;">{{ perfil.user.email|default:"—" }}</td>
+                            <td>
+                                <span class="badge badge-{{ perfil.plan_tipo|default:'mensual' }}">
+                                    {{ perfil.get_plan_tipo_display|default:"Mensual" }}
+                                </span>
+                            </td>
+                            <td id="venc-{{ uid }}">
+                                {% if perfil.fecha_vencimiento %}
+                                    {{ perfil.fecha_vencimiento|date:"d/m/Y" }}
+                                {% else %}
+                                    <span style="color:#64748b;">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if perfil.suscripcion_activa %}
+                                    <span class="badge badge-activa">✓ Activa</span>
+                                {% else %}
+                                    <span class="badge badge-vencida">✗ Vencida</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button
+                                    class="btn-renovacion {% if perfil.renovacion_automatica %}renovacion-on{% else %}renovacion-off{% endif %}"
+                                    id="renov-{{ uid }}"
+                                    onclick="toggleRenovacion({{ uid }}, this)"
+                                    title="{% if perfil.renovacion_automatica %}Recordatorio ON — click para desactivar{% else %}Recordatorio OFF — click para activar{% endif %}">
+                                    {% if perfil.renovacion_automatica %}🔔 ON{% else %}🔕 OFF{% endif %}
+                                </button>
+                            </td>
+                            <td style="white-space:nowrap;">
+                                <button class="btn-accion btn-activar-30"
+                                    onclick="activarUsuario({{ uid }}, 30, '{{ perfil.plan_tipo|default:'mensual' }}', this)">
+                                    +30 días
+                                </button>
+                                &nbsp;
+                                <button class="btn-accion btn-activar-365"
+                                    onclick="activarUsuario({{ uid }}, 365, 'anual', this)">
+                                    +1 año
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                    </svg>
+                    <p>No hay perfiles de usuario aún</p>
                 </div>
                 {% endif %}
             </div>
@@ -807,6 +980,74 @@
                 }
             });
         }
+
+        // ── Filtrar tabla de suscripciones ──
+        function filtrarSubs(estado, btn) {
+            document.querySelectorAll('#suscripciones .filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('#tabla-subs tr').forEach(row => {
+                if (estado === 'todos') { row.style.display = ''; return; }
+                row.style.display = (row.dataset.estado === estado) ? '' : 'none';
+            });
+        }
+
+        // ── Activar/extender suscripción ──
+        function activarUsuario(userId, dias, plan, btn) {
+            if (!confirm(`¿Activar ${dias} día(s) al usuario?`)) return;
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                              getCookie('csrftoken');
+            btn.disabled = true;
+            btn.textContent = '...';
+
+            fetch('/admin-activar-usuario/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken},
+                body: `user_id=${userId}&dias=${dias}&plan=${plan}`
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    const vencEl = document.getElementById(`venc-${userId}`);
+                    if (vencEl) vencEl.textContent = data.vencimiento;
+                    const row = document.getElementById(`sub-row-${userId}`);
+                    if (row) { row.dataset.estado = 'activo'; row.classList.add('flash-ok'); }
+                    btn.textContent = '✓ Listo';
+                    setTimeout(() => { btn.textContent = dias === 30 ? '+30 días' : '+1 año'; btn.disabled = false; }, 2000);
+                } else {
+                    alert(data.error || 'Error al activar');
+                    btn.textContent = dias === 30 ? '+30 días' : '+1 año';
+                    btn.disabled = false;
+                }
+            })
+            .catch(() => { alert('Error de red'); btn.disabled = false; });
+        }
+
+        // ── Toggle recordatorio de renovación ──
+        function toggleRenovacion(userId, btn) {
+            const csrfToken = getCookie('csrftoken');
+            fetch('/admin-toggle-renovacion/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken},
+                body: `user_id=${userId}`
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    btn.textContent = data.renovacion_automatica ? '🔔 ON' : '🔕 OFF';
+                    btn.classList.toggle('renovacion-on',  data.renovacion_automatica);
+                    btn.classList.toggle('renovacion-off', !data.renovacion_automatica);
+                    btn.title = data.renovacion_automatica
+                        ? 'Recordatorio ON — click para desactivar'
+                        : 'Recordatorio OFF — click para activar';
+                }
+            });
+        }
+
+        function getCookie(name) {
+            let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+            return v ? v[2] : null;
+        }
     </script>
+    <form id="csrf-form" style="display:none;">{% csrf_token %}</form>
 </body>
 </html>
