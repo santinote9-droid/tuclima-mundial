@@ -1664,11 +1664,11 @@ def meteorologia_espacial(request):
 # 5. SISTEMA DE PAGOS (PAYPAL)
 # ==========================================
 
-# CONFIGURACIÓN (Pon tus claves aquí)
+# CONFIGURACIÓN — leer desde variables de entorno
 paypalrestsdk.configure({
-  "mode": "sandbox", # Cambiar a "live" cuando sea real
-  "client_id": "REDACTED_PAYPAL_CLIENT_ID",
-  "client_secret": "REDACTED_PAYPAL_SECRET"
+  "mode": os.getenv('PAYPAL_MODE', 'sandbox'),
+  "client_id": os.getenv('PAYPAL_CLIENT_ID', ''),
+  "client_secret": os.getenv('PAYPAL_CLIENT_SECRET', '')
 })
 
 def crear_pago_paypal(request):

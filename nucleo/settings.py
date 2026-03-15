@@ -197,8 +197,8 @@ SITE_URL        = os.getenv('SITE_URL', 'http://127.0.0.1:8000')  # ngrok en des
 # ============================================================
 # PAYPAL — configura en .env
 # PAYPAL_MODE=sandbox (desarrollo) o live (producción)
-# PAYPAL_CLIENT_ID=REDACTED_PAYPAL_HINT
-# PAYPAL_CLIENT_SECRET=REDACTED_PAYPAL_HINT
+# PAYPAL_CLIENT_ID=<tu_client_id>
+# PAYPAL_CLIENT_SECRET=<tu_client_secret>
 # ============================================================
 PAYPAL_MODE          = os.getenv('PAYPAL_MODE', 'sandbox')
 PAYPAL_CLIENT_ID     = os.getenv('PAYPAL_CLIENT_ID', '')

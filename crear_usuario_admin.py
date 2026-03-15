@@ -11,10 +11,10 @@ django.setup()
 
 from django.contrib.auth.models import User
 
-# Datos del usuario
-username = 'sangioff'
-email = 'sangioff@tuclima.com'
-password = 'REDACTED_PASSWORD'
+# Datos del usuario — cargar desde entorno o pasar por argumento
+username = os.environ.get('ADMIN_USERNAME', 'sangioff')
+email    = os.environ.get('ADMIN_EMAIL', 'sangioff@tuclima.com')
+password = os.environ.get('ADMIN_PASSWORD', '')  # Obligatorio: setear ADMIN_PASSWORD en entorno
 
 # Verificar si el usuario ya existe
 user = User.objects.filter(username=username).first()

@@ -129,7 +129,7 @@ proyecto_clima/
 
 ### Variables de Entorno (`.env`)
 ```env
-DATABASE_URL=postgresql://postgres.lmumvstjdyaozewqygfx:REDACTED_DB_PASSWORD@aws-1-us-east-2.pooler.supabase.com:5432/postgres
+DATABASE_URL=postgresql://<usuario>:<password>@<host>:5432/postgres
 DB_CONN_MAX_AGE=600
 DB_ATOMIC_REQUESTS=True
 ```
