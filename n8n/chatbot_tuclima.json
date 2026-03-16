@@ -309,7 +309,7 @@
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $('Webhook').item.json.body.sessionId }}"
+        "sessionKey": "={{ $('Webhook').item.json.body?.sessionId || $('Webhook').item.json.body?.userId || 'default_session' }}"
       },
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
