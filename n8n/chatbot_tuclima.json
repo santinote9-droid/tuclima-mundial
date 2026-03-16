@@ -56,7 +56,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Validación de secreto compartido entre Django y n8n.\n// Lee N8N_WEBHOOK_SECRET desde Variables de n8n (Settings > Variables) o .\n// Si no está configurado, deja pasar (modo desarrollo).\n\nlet secretEsperado = '';\ntry {\n  secretEsperado = ['N8N_WEBHOOK_SECRET'] || ['N8N_WEBHOOK_SECRET'] || '';\n} catch(e) {\n  //  bloqueado en task runner — intentar solo \n  try { secretEsperado = ['N8N_WEBHOOK_SECRET'] || ''; } catch(e2) { secretEsperado = ''; }\n}\n\nconst secretRecibido = .first().json.headers?.['x-n8n-secret'] || '';\n\nif (!secretEsperado) {\n  // Variable no configurada → dejar pasar con advertencia\n  return .all();\n}\n\nif (secretRecibido !== secretEsperado) {\n  throw new Error('401 Unauthorized: X-N8N-Secret invalido o ausente');\n}\n\nreturn .all();"
+        "jsCode": "// Validacion de origen — sin autenticacion activa\n// Para activar: reemplazar '' por el secreto y configurar X-N8N-Secret en Django\nconst secretEsperado = '';\nconst secretRecibido = $input.first().json.headers?.['x-n8n-secret'] || '';\n\nif (secretEsperado && secretRecibido !== secretEsperado) {\n  throw new Error('401 Unauthorized: X-N8N-Secret invalido o ausente');\n}\n\nreturn $input.all();"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
