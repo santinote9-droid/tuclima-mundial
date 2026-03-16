@@ -271,7 +271,9 @@
       "parameters": {
         "mode": "combine",
         "combineBy": "combineByPosition",
-        "options": {}
+        "options": {
+          "includeUnpaired": true
+        }
       },
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
