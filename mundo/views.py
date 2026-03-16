@@ -3073,7 +3073,7 @@ PLANES_TOKENS = [
     {
         'id':          'starter',
         'nombre':      'Starter',
-        'tokens_dia':  27_000,  # 9 mensajes/día (8-10)
+        'tokens_dia':  42_000,  # ~14 mensajes/día (chat normal)
         'icono':       '⚡',
         'icono_fa':    {'fa': 'bolt',   'color': '#f59e0b', 'color2': '#fb923c', 'bg': 'rgba(245,158,11,.12)'},
         'popular':     False,
@@ -3087,7 +3087,7 @@ PLANES_TOKENS = [
     {
         'id':          'plus',
         'nombre':      'Plus',
-        'tokens_dia':  51_000,  # 17 mensajes/día (15-20)
+        'tokens_dia':  75_000,  # ~25 mensajes/día (chat normal)
         'icono':       '🚀',
         'icono_fa':    {'fa': 'rocket', 'color': '#3b82f6', 'color2': '#818cf8', 'bg': 'rgba(59,130,246,.12)'},
         'popular':     True,
@@ -3101,7 +3101,7 @@ PLANES_TOKENS = [
     {
         'id':          'pro_ia',
         'nombre':      'Pro IA',
-        'tokens_dia':  84_000,  # 28 mensajes/día (25-30)
+        'tokens_dia':  150_000, # ~50 mensajes/día (chat normal)
         'icono':       '💎',
         'icono_fa':    {'fa': 'gem',    'color': '#a855f7', 'color2': '#ec4899', 'bg': 'rgba(168,85,247,.12)'},
         'popular':     False,
@@ -3115,7 +3115,7 @@ PLANES_TOKENS = [
     {
         'id':          'power',
         'nombre':      'Power',
-        'tokens_dia':  135_000,  # 45 mensajes/día (40-50)
+        'tokens_dia':  300_000, # ~100 mensajes/día (chat normal)
         'icono':       '🌟',
         'icono_fa':    {'fa': 'star',   'color': '#eab308', 'color2': '#f59e0b', 'bg': 'rgba(234,179,8,.12)'},
         'popular':     False,

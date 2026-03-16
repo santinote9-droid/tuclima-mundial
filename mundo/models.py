@@ -403,8 +403,8 @@ COSTO_TOKENS = {
 }
 
 # Tokens diarios incluidos en la suscripción Pro ($20/mes)
-# Equivale a ~9 chats/día al nivel Starter
-TOKENS_DIARIOS_SUSCRIPCION = 27_000
+# Equivale a ~14 chats/día al nivel Starter
+TOKENS_DIARIOS_SUSCRIPCION = 42_000
 
 
 class HistorialTokens(models.Model):
