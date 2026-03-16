@@ -1244,7 +1244,7 @@
         "operation": "executeQuery",
         "query": "SELECT * FROM conversaciones_memoria \nWHERE session_id = $1 \nORDER BY timestamp DESC \nLIMIT 10;",
         "options": {
-          "queryReplacement": "={{ $('Webhook').item.json.body.sessionId }}"
+          "queryReplacement": "={{ [$('Webhook').item.json.body?.sessionId ?? $('Webhook').item.json.body?.userId ?? 'default'] }}"
         }
       },
       "type": "n8n-nodes-base.postgres",
