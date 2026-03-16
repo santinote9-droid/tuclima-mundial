@@ -178,20 +178,20 @@ class TestLsWebhookActivacion(TestCase):
         resp = self._post('starter_1m')
         self.assertEqual(resp.status_code, 200)
         self.user.perfil.refresh_from_db()
-        self.assertEqual(self.user.perfil.tokens_diarios_limite, 27_000)
+        self.assertEqual(self.user.perfil.tokens_diarios_limite, 42_000)
         self.assertGreater(self.user.perfil.tokens_disponibles, 0)
 
     def test_plus_3m_activa_tokens(self):
         resp = self._post('plus_3m')
         self.assertEqual(resp.status_code, 200)
         self.user.perfil.refresh_from_db()
-        self.assertEqual(self.user.perfil.tokens_diarios_limite, 51_000)
+        self.assertEqual(self.user.perfil.tokens_diarios_limite, 75_000)
 
     def test_power_6m_activa_tokens(self):
         resp = self._post('power_6m')
         self.assertEqual(resp.status_code, 200)
         self.user.perfil.refresh_from_db()
-        self.assertEqual(self.user.perfil.tokens_diarios_limite, 135_000)
+        self.assertEqual(self.user.perfil.tokens_diarios_limite, 300_000)
 
     def test_plan_extiende_fecha_vencimiento(self):
         from django.utils import timezone
