@@ -1269,7 +1269,7 @@
         "operation": "executeQuery",
         "query": "DELETE FROM conversaciones_memoria\nWHERE session_id = $1\nAND id NOT IN (\n    SELECT id \n    FROM conversaciones_memoria \n    WHERE session_id = $1 \n    ORDER BY timestamp DESC \n    LIMIT 20\n);",
         "options": {
-          "queryReplacement": "={{ $('Webhook').item.json.body.sessionId }}"
+          "queryReplacement": "={{ [$('Webhook').item.json.body?.sessionId ?? $('Webhook').item.json.body?.userId ?? 'default'] }}"
         }
       },
       "type": "n8n-nodes-base.postgres",
