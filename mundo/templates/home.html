@@ -411,14 +411,7 @@
 
     </style>
 
-<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
-    <script>
-        Weglot.initialize({
-            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
-            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
-            auto_switch: true            // Detecta idioma automático
-        });
-    </script>
+<!-- Weglot se inicializa una sola vez, al final del body -->
 
 <meta name="google" content="notranslate">
 </head>
@@ -775,16 +768,9 @@
     </div>
 </div>
 
-<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
 <script>
-    // 1. INICIALIZAR MOTOR
-    Weglot.initialize({
-        api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // Tu clave real
-        hide_switcher: true,
-        auto_switch: false 
-    });
+    // Weglot ya está inicializado al final del body; aquí solo definimos las funciones del menú
 
-    // 2. FUNCIÓN VISUAL DEL MENÚ
     function toggleSidebarLang() {
         const list = document.getElementById('sidebar-lang-list');
         const arrow = document.getElementById('lang-arrow');
@@ -1902,9 +1888,10 @@
     </script>
 
     <script>
-        const datosSemana = JSON.parse('{{ datos_json|safe }}');
-        let labelsIniciales = {{ horas_grafico|safe }};
-        let tempsIniciales = {{ temps_grafico|safe }};
+        // datos_json puede venir vacío en cold start — defensivo
+        const datosSemana = (function() { try { return JSON.parse('{{ datos_json|escapejs }}'); } catch(e) { return {}; } })();
+        let labelsIniciales = {{ horas_grafico|default:"[]"|safe }};
+        let tempsIniciales = {{ temps_grafico|default:"[]"|safe }};
         
         const ctx = document.getElementById('graficoHoras');
         let chartInstance = new Chart(ctx, {
