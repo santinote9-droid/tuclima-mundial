@@ -288,12 +288,24 @@ def obtener_barrio_exacto(lat, lon):
         # EL USER-AGENT ES OBLIGATORIO PARA QUE NO TE BLOQUEEN
         headers = {'User-Agent': 'MiClimaApp/1.0'}
         
-        response = requests.get(url, headers=headers, timeout=4).json()
+        response = requests.get(url, headers=headers, timeout=5).json()
         
         if 'address' in response:
             ad = response['address']
-            # Orden de prioridad: Barrio > Villa > Suburbio > Distrito > Pueblo > Ciudad
-            nombre = ad.get('neighbourhood') or ad.get('suburb') or ad.get('village') or ad.get('city_district') or ad.get('town') or ad.get('city')
+            # Orden de prioridad ampliado para cubrir GBA y otras regiones
+            nombre = (
+                ad.get('neighbourhood') or
+                ad.get('quarter') or
+                ad.get('suburb') or
+                ad.get('village') or
+                ad.get('city_district') or
+                ad.get('town') or
+                ad.get('municipality') or
+                ad.get('city') or
+                ad.get('county') or
+                ad.get('state_district') or
+                ad.get('state')
+            )
             pais = ad.get('country', '')
             return nombre, pais
             
@@ -340,8 +352,9 @@ def home(request):
                 if barrio:
                     nombre_ciudad = barrio
                     pais = pais_det
-                else: nombre_ciudad = "Ubicación Exacta"
-            except: nombre_ciudad = "Ubicación GPS"
+                # Si Nominatim no devuelve nada útil, quedamos con string genérico
+                # (se sobreescribe luego con el timezone de Open-Meteo si está disponible)
+            except: pass
 
         # Buscador
         elif busqueda:
@@ -422,6 +435,13 @@ def home(request):
             contexto['icono'] = obtener_icono_url(code, actual['is_day'])
             contexto['fondo'] = obtener_fondo(code, actual['is_day'])
             contexto['descripcion'] = descifrar_desc(code)
+
+            # Si Nominatim no resolvió un nombre, usamos el timezone de Open-Meteo
+            # Ej: "America/Argentina/Buenos_Aires" → "Buenos Aires"
+            if nombre_ciudad in ('Detectando ubicación...', 'Ubicación Exacta', 'Ubicación GPS', ''):
+                tz = response.get('timezone', '')
+                if tz and '/' in tz:
+                    nombre_ciudad = tz.split('/')[-1].replace('_', ' ')
 
             # Hora Local
             offset = response['utc_offset_seconds']
@@ -583,10 +603,9 @@ def clima_data_api(request):
                 if barrio:
                     nombre_ciudad = barrio
                     pais = pais_det
-                else:
-                    nombre_ciudad = "Ubicación Exacta"
+                # Si no hay nombre, se sobreescribe con timezone más abajo
             except:
-                nombre_ciudad = "Ubicación GPS"
+                pass
         
         # Obtener datos del clima
         url_clima = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,weather_code,precipitation_probability,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto"
@@ -700,6 +719,12 @@ def clima_data_api(request):
                     delta_temp = round(actual['temperature_2m'] - ta, 1)
         except:
             pass
+
+        # Fallback timezone si Nominatim no resolvió el nombre
+        if nombre_ciudad in ('Ubicación Desconocida', 'Ubicación Exacta', 'Ubicación GPS', ''):
+            tz = response.get('timezone', '')
+            if tz and '/' in tz:
+                nombre_ciudad = tz.split('/')[-1].replace('_', ' ')
 
         # Construir respuesta JSON
         data = {
