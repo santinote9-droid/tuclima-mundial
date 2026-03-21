@@ -12,7 +12,7 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-image: url('{% static fondo %}');
+            background-image: url('/static/{{ fondo }}');
             background-size: cover;
             background-position: center;
             /* scroll en vez de fixed: iOS Safari no soporta fixed en body */
@@ -1148,7 +1148,7 @@
 
         // 5. ACTUALIZACIÓN VISUAL
         function actualizarInterfaz(data) {
-            // fondo_url ya viene con el hash correcto del ManifestStaticFilesStorage
+            // fondo_url viene del servidor: settings.STATIC_URL + ruta (siempre funciona con Whitenoise)
             const fondoUrl = data.fondo_url || `/static/${data.fondo}`;
             document.body.style.backgroundImage = `url('${fondoUrl}')`;
             

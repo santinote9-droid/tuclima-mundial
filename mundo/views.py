@@ -19,7 +19,6 @@ from django.contrib.auth.models import Group, User
 from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import PerfilUsuario, DatoSectorial
-from django.contrib.staticfiles.storage import staticfiles_storage
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -743,7 +742,7 @@ def clima_data_api(request):
             'lluvia_hoy': actual['precipitation'],
             'icono': obtener_icono_url(code, actual['is_day']),
             'fondo': obtener_fondo(code, actual['is_day']),
-            'fondo_url': staticfiles_storage.url(obtener_fondo(code, actual['is_day'])),
+            'fondo_url': settings.STATIC_URL + obtener_fondo(code, actual['is_day']),
             'descripcion': descifrar_desc(code),
             'tipo_nube': nube_txt,
             'alerta_texto': alerta_txt,
