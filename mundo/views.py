@@ -371,7 +371,7 @@ def home(request):
     try:
         # Solo obtener datos del clima si tenemos coordenadas válidas
         if lat != 0.0 and lon != 0.0:
-            url_clima = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,weathercode,precipitation_probability,is_day&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto"
+            url_clima = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,weather_code,precipitation_probability,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto"
             
             response = _get_meteo(url_clima, timeout=8)
             actual = response['current']
@@ -444,7 +444,7 @@ def home(request):
                 f_clave = dt_obj.strftime('%Y-%m-%d')
                 if f_clave not in datos_por_dia: datos_por_dia[f_clave] = []
                 es_act = (f_clave == fecha_hoy and dt_obj.strftime('%H:%M') == hora_key)
-                item = {'tipo': 'normal', 'hora': dt_obj.strftime('%H:%M'), 'orden': dt_obj.timestamp(), 'temp': hourly['temperature_2m'][i], 'icono': obtener_icono_url(hourly['weathercode'][i], hourly['is_day'][i]), 'lluvia': hourly['precipitation_probability'][i], 'es_actual': es_act}
+                item = {'tipo': 'normal', 'hora': dt_obj.strftime('%H:%M'), 'orden': dt_obj.timestamp(), 'temp': hourly['temperature_2m'][i], 'icono': obtener_icono_url(hourly['weather_code'][i], hourly['is_day'][i]), 'lluvia': hourly['precipitation_probability'][i], 'es_actual': es_act}
                 datos_por_dia[f_clave].append(item)
 
             for i in range(len(daily['time'])):
@@ -473,7 +473,7 @@ def home(request):
                 lista_pronostico.append({
                     'nombre_dia': nom, 'fecha_corta': dt.strftime('%d/%m'), 'fecha_full': daily['time'][i],
                     'max': daily['temperature_2m_max'][i], 'min': daily['temperature_2m_min'][i],
-                    'icono': obtener_icono_url(daily['weathercode'][i], 1), 'desc': descifrar_desc(daily['weathercode'][i])
+                    'icono': obtener_icono_url(daily['weather_code'][i], 1), 'desc': descifrar_desc(daily['weather_code'][i])
                 })
             contexto['pronostico'] = lista_pronostico
             
@@ -591,7 +591,7 @@ def clima_data_api(request):
                 nombre_ciudad = "Ubicación GPS"
         
         # Obtener datos del clima
-        url_clima = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,weathercode,precipitation_probability,is_day&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto"
+        url_clima = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,weather_code,precipitation_probability,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto"
         
         response = _get_meteo(url_clima, timeout=8)
         actual = response['current']
@@ -642,7 +642,7 @@ def clima_data_api(request):
                 'hora': dt_obj.strftime('%H:%M'),
                 'orden': dt_obj.timestamp(),
                 'temp': hourly['temperature_2m'][i],
-                'icono': obtener_icono_url(hourly['weathercode'][i], hourly['is_day'][i]),
+                'icono': obtener_icono_url(hourly['weather_code'][i], hourly['is_day'][i]),
                 'lluvia': hourly['precipitation_probability'][i],
                 'es_actual': es_act
             }
@@ -686,8 +686,8 @@ def clima_data_api(request):
                 'fecha_full': daily['time'][i],
                 'max': daily['temperature_2m_max'][i],
                 'min': daily['temperature_2m_min'][i],
-                'icono': obtener_icono_url(daily['weathercode'][i], 1),
-                'desc': descifrar_desc(daily['weathercode'][i])
+                'icono': obtener_icono_url(daily['weather_code'][i], 1),
+                'desc': descifrar_desc(daily['weather_code'][i])
             })
 
         # Anomalía de temperatura
