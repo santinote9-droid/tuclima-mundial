@@ -48,6 +48,10 @@ n8n_password.txt
 
 # Scripts de debug/utilidad con claves hardcodeadas
 _inspect.py
+_inspect_excel_pdf.py
+_inspect_excel_tool.py
+_inspect_n8n.py
+_update_n8n_excel.py
 _r.py
 _test_vision.py
 n8n_logs.py

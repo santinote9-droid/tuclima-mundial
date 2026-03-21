@@ -2045,7 +2045,21 @@ async function enviarMensaje() {
         formData.append("userId", djangoUserId);
         formData.append("sector", "energia");
         if (archivo) {
-            formData.append("data00", archivo); 
+            if (archivo.type.startsWith('image/')) {
+                await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        formData.append("imageBase64", reader.result.split(',')[1]);
+                        formData.append("imageMimeType", archivo.type);
+                        formData.append("imageName", archivo.name);
+                        resolve();
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(archivo);
+                });
+            } else {
+                formData.append("data00", archivo);
+            }
         }
 
         const respuesta = await fetch(urlN8N, {
@@ -2178,6 +2192,49 @@ function extractChartData(aiResponse) {
     };
 }
 
+// OVERRIDE: Parser mejorado — acepta key=value y mapea alias de nombres que genera la IA
+extractChartData = function(aiResponse) {
+    const fullOutput = aiResponse.output || aiResponse.texto_limpio || "";
+    const _gm = fullOutput.match(/\[MOSTRAR_GRAFICO\]([\s\S]*)$/i);
+    if (!_gm) return null;
+    const bloque = _gm[1].trim();
+    const ALIAS = {
+        chart_type:'type', labels:'etiquetas', horas:'etiquetas', fechas:'etiquetas', periodos:'etiquetas', turnos:'etiquetas',
+        nubosidad_porcentaje:'nubosidad', cobertura_nube:'nubosidad', nubosidad_oktas:'nubosidad',
+        viento_sfc_kt:'corrientes_viento', viento_kt:'corrientes_viento', velocidad_viento_kt:'corrientes_viento', viento_altura_kt:'corrientes_viento',
+        direccion_viento_grados:'viento_direccion', dir_viento:'viento_direccion', direccion_viento:'viento_direccion', wind_dir:'viento_direccion',
+        temp_c:'temperatura', temperatura_c:'temperatura',
+        lluvia_mm:'precipitacion', precip_mm:'precipitacion',
+        visibilidad_nm:'visibilidad', vis_nm:'visibilidad',
+        altura_olas_m:'altura_olas', olas_m:'altura_olas',
+        vel_viento:'velocidad_viento', wind_speed:'velocidad_viento',
+    };
+    const resultado = { type: 'line', etiquetas: ['Actual'] };
+    for (const linea of bloque.split('\n')) {
+        const t = linea.trim();
+        if (!t || t.startsWith('#') || t.startsWith('//')) continue;
+        const sep = t.search(/[=:]/);
+        if (sep === -1) continue;
+        let key = t.slice(0, sep).trim().toLowerCase().replace(/[\s\-]+/g, '_');
+        const raw = t.slice(sep + 1).trim();
+        if (!key || !raw) continue;
+        key = ALIAS[key] || key;
+        let parsed;
+        try { parsed = JSON.parse(raw); }
+        catch {
+            const c = raw.replace(/^\s*\[/, '').replace(/\]\s*$/, '').trim();
+            parsed = c.split(',').map(v => {
+                v = v.trim().replace(/^["'`]|["'`]$/g, '');
+                const n = Number(v);
+                return (v !== '' && !isNaN(n)) ? n : v;
+            });
+        }
+        resultado[key] = Array.isArray(parsed) ? parsed : [parsed];
+    }
+    if (Array.isArray(resultado.type)) resultado.type = resultado.type[0] || 'line';
+    return resultado;
+};
+
 // 3. FUNCIÓN DEL DASHBOARD INTERACTIVO (Chart.js)
 function createSampleChart(chartData = null) {
     if (!chartData) return;
@@ -2229,6 +2286,19 @@ function createSampleChart(chartData = null) {
         { key: 'viento_direccion', label: 'Dir. Viento (°)', color: '#a855f7' },
         { key: 'direccion_viento', label: 'Dir. Viento (°)', color: '#a855f7' }
     ];
+
+    // Variables dinámicas: si la IA usó nombres propios no contemplados en allVariables
+    if (chartData) {
+        const _knownKeys = new Set(allVariables.map(v => v.key));
+        const _skipKeys = new Set(['type', 'etiquetas', 'titulo', '_titulo']);
+        const _dynColors = ['#06b6d4','#f59e0b','#10b981','#f43f5e','#a855f7','#fbbf24','#3b82f6'];
+        let _dynIdx = 0;
+        for (const [_k, _v] of Object.entries(chartData)) {
+            if (_knownKeys.has(_k) || _skipKeys.has(_k)) continue;
+            if (!Array.isArray(_v) || _v.length === 0 || _v[0] === null || typeof _v[0] === 'string') continue;
+            allVariables.push({ key: _k, label: _k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), color: _dynColors[_dynIdx++ % _dynColors.length] });
+        }
+    }
 
     // Filtrar variables disponibles y evitar duplicados viento_direccion/direccion_viento
     let variablesDisponibles = allVariables.filter(v => 

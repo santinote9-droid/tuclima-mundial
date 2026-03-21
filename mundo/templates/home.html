@@ -236,6 +236,70 @@
             scrollbar-color: rgba(56, 189, 248, 0.8) rgba(15, 23, 42, 0.6);
         }
 
+        /* ============================================================
+           RESPONSIVE — móvil y tablet
+           ============================================================ */
+        @media (max-width: 640px) {
+
+            /* Tarjeta principal de clima */
+            .card {
+                min-width: unset !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 25px 14px !important;
+                box-sizing: border-box;
+            }
+            h1 { font-size: 2em; }
+            .dato-grande { font-size: 3em; }
+
+            /* Barra de usuario (ya está en el sidebar en móvil) */
+            .user-info { display: none !important; }
+
+            /* Main container */
+            .main-container { padding: 10px 8px 0 8px; }
+
+            /* Amanecer / Atardecer */
+            .sunblock { gap: 20px !important; padding: 12px 15px !important; }
+
+            /* Calendario de pronóstico */
+            .contenedor-dias { padding: 12px 8px !important; gap: 10px !important; }
+            .tarjeta-dia { width: 110px !important; min-height: 155px !important; }
+            .icono-chico { width: 46px !important; height: 46px !important; }
+
+            /* Carrusel horario */
+            .carrusel-horas { gap: 10px !important; padding: 12px 10px !important; }
+            .item-hora { min-width: 68px !important; padding: 10px 6px !important; }
+            .icono-hora { width: 38px !important; height: 38px !important; }
+
+            /* Papers (cards JS con width:350px fijo) */
+            #papers-container > div {
+                width: calc(100vw - 40px) !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            /* Noticias */
+            .contenedor-noticias { padding: 10px !important; }
+            .tarjeta-noticia-mejorada { min-height: unset !important; }
+        }
+
+        @media (max-width: 768px) {
+            /* Sección de detalles (UV, nubes, visibilidad…) */
+            .card {
+                min-width: unset !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                box-sizing: border-box;
+            }
+
+            /* Papers en tablet */
+            #papers-container > div {
+                width: calc(50vw - 40px) !important;
+                min-width: 280px !important;
+                box-sizing: border-box !important;
+            }
+        }
+
     </style>
 
 <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
@@ -251,6 +315,17 @@
 </head>
 
 <body>
+
+<!-- Loader de progreso (barra superior + spinner esquina) -->
+<div id="clima-loader" style="display:none; position:fixed; top:0; left:0; width:100%; height:4px; z-index:99999; background:rgba(0,0,0,0.2); overflow:hidden;">
+    <div class="loader-bar"></div>
+</div>
+<div class="loader-spinner">
+    <div class="loader-spinner-content">
+        <div class="spinner-icon"></div>
+        <span class="spinner-text">Cargando...</span>
+    </div>
+</div>
 
 <div class="user-info" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; font-family: 'Segoe UI', sans-serif;">
     {% if user.is_authenticated %}
@@ -457,28 +532,54 @@
         <span style="position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: linear-gradient(180deg, #38bdf8 0%, #0ea5e9 100%); box-shadow: 0 0 8px #38bdf8; opacity: 1;"></span>
     </a>
 
-    <div style="color: #64748b; font-size: 0.72em; margin-top: 18px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding-left: 8px; opacity: 0.8;">MODOS PROFESIONALES</div>
+    <div style="color: #64748b; font-size: 0.72em; margin-top: 18px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding-left: 8px; opacity: 0.8;">MODOS PROFESIONALES</div>
 
-    <a href="/agro?lat={{ lat }}&lon={{ lon }}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
-        <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 6.5-5.2 14.6l-3.3 2.6C13.5 18.3 8 15 4 10"></path></svg>
-        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Modo Agro</span>
+    <!-- AGRO -->
+    <a href="/agro?lat={{ lat }}&lon={{ lon }}" class="sidebar-pro-link" style="--c: #4ade80; --cs: rgba(74,222,128,0.12); --cb: rgba(74,222,128,0.25);">
+        <span class="sidebar-pro-icon" style="background: rgba(74,222,128,0.15); color: #4ade80;">
+            <svg style="width:15px; height:15px; stroke-width:1.8;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 6.5-5.2 14.6l-3.3 2.6C13.5 18.3 8 15 4 10"/></svg>
+        </span>
+        <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 0.85em; font-weight: 700; color: #4ade80; letter-spacing: 0.5px;">Modo Agro</div>
+            <div style="font-size: 0.68em; color: #64748b; margin-top: 1px;">ETo · Suelo · Pulverización</div>
+        </div>
+        <span style="font-size: 0.58em; background: rgba(74,222,128,0.2); color: #4ade80; border: 1px solid rgba(74,222,128,0.35); padding: 2px 6px; border-radius: 10px; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap;">PRO</span>
     </a>
-    
-    <a href="/naval?lat={{ lat }}&lon={{ lon }}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
-        <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="5" r="3"></circle><line x1="12" y1="22" x2="12" y2="8"></line><path d="M5 12H2a10 10 0 0 0 20 0h-3"></path></svg>
-        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Modo Naval</span>
+
+    <!-- NAVAL -->
+    <a href="/naval?lat={{ lat }}&lon={{ lon }}" class="sidebar-pro-link" style="--c: #38bdf8; --cs: rgba(56,189,248,0.12); --cb: rgba(56,189,248,0.25);">
+        <span class="sidebar-pro-icon" style="background: rgba(56,189,248,0.15); color: #38bdf8;">
+            <svg style="width:15px; height:15px; stroke-width:1.8;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></svg>
+        </span>
+        <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 0.85em; font-weight: 700; color: #38bdf8; letter-spacing: 0.5px;">Modo Naval</div>
+            <div style="font-size: 0.68em; color: #64748b; margin-top: 1px;">Oleaje · Corrientes · Puerto</div>
+        </div>
+        <span style="font-size: 0.58em; background: rgba(56,189,248,0.2); color: #38bdf8; border: 1px solid rgba(56,189,248,0.35); padding: 2px 6px; border-radius: 10px; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap;">PRO</span>
     </a>
-    
-    <a href="/aereo?lat={{ lat }}&lon={{ lon }}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
-    <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/>
-    </svg>
-    <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Modo Aéreo</span>
-</a>
-    
-    <a href="/energia?lat={{ lat }}&lon={{ lon }}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
-        <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-        <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Modo Energías</span>
+
+    <!-- AÉREO -->
+    <a href="/aereo?lat={{ lat }}&lon={{ lon }}" class="sidebar-pro-link" style="--c: #e2e8f0; --cs: rgba(226,232,240,0.08); --cb: rgba(226,232,240,0.18);">
+        <span class="sidebar-pro-icon" style="background: rgba(226,232,240,0.12); color: #e2e8f0;">
+            <svg style="width:15px; height:15px; stroke-width:1.8;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>
+        </span>
+        <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 0.85em; font-weight: 700; color: #e2e8f0; letter-spacing: 0.5px;">Modo Aéreo</div>
+            <div style="font-size: 0.68em; color: #64748b; margin-top: 1px;">Vientos · Visibilidad · METAR</div>
+        </div>
+        <span style="font-size: 0.58em; background: rgba(226,232,240,0.12); color: #e2e8f0; border: 1px solid rgba(226,232,240,0.25); padding: 2px 6px; border-radius: 10px; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap;">PRO</span>
+    </a>
+
+    <!-- ENERGÍAS -->
+    <a href="/energia?lat={{ lat }}&lon={{ lon }}" class="sidebar-pro-link" style="--c: #fbbf24; --cs: rgba(251,191,36,0.1); --cb: rgba(251,191,36,0.22);">
+        <span class="sidebar-pro-icon" style="background: rgba(251,191,36,0.15); color: #fbbf24;">
+            <svg style="width:15px; height:15px; stroke-width:1.8;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </span>
+        <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 0.85em; font-weight: 700; color: #fbbf24; letter-spacing: 0.5px;">Modo Energías</div>
+            <div style="font-size: 0.68em; color: #64748b; margin-top: 1px;">Solar · Eólica · Demanda</div>
+        </div>
+        <span style="font-size: 0.58em; background: rgba(251,191,36,0.2); color: #fbbf24; border: 1px solid rgba(251,191,36,0.35); padding: 2px 6px; border-radius: 10px; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap;">PRO</span>
     </a>
 
     <div style="color: #64748b; font-size: 0.72em; margin-top: 20px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding-left: 8px; opacity: 0.8;">CIENCIA</div>
@@ -506,9 +607,9 @@
     <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Meteorología Espacial</span>
 </a>
 
-<a href="{% url 'laboratorio' %}" style="text-decoration: none; color: #c4b5fd; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px; background: linear-gradient(90deg, rgba(139,92,246,0.08) 0%, transparent 100%); border: 1px solid rgba(139,92,246,0.2);" onmouseover="this.style.background='rgba(139,92,246,0.18)'; this.style.color='#a78bfa'; this.style.borderColor='rgba(139,92,246,0.5)';" onmouseout="this.style.background='linear-gradient(90deg, rgba(139,92,246,0.08) 0%, transparent 100%)'; this.style.color='#c4b5fd'; this.style.borderColor='rgba(139,92,246,0.2)';">
-    <svg style="width:17px; height:17px; stroke-width:1.5; filter: drop-shadow(0 0 4px #8b5cf6);" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(0 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg>
-    <span style="font-size: 0.88em; font-weight: 600; letter-spacing: 0.3px;">Laboratorio 3D</span>
+<a href="{% url 'laboratorio' %}" style="text-decoration: none; color: #94a3b8; padding: 10px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;" onmouseover="this.style.background='rgba(56,189,248,0.1)'; this.style.color='#38bdf8';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+    <svg style="width:17px; height:17px; stroke-width:1.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(0 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg>
+    <span style="font-size: 0.88em; font-weight: 500; letter-spacing: 0.3px;">Laboratorio 3D</span>
 </a>
 
     <div style="color: #64748b; font-size: 0.72em; margin-top: 20px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding-left: 8px; opacity: 0.8;">PLATAFORMA</div>
@@ -599,6 +700,46 @@
         background: rgba(56, 189, 248, 0.1);
         color: #38bdf8;
         padding-left: 25px;
+    }
+
+    /* Modos Profesionales - sidebar */
+    .sidebar-pro-link {
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 12px;
+        border-radius: 10px;
+        margin-bottom: 5px;
+        border: 1px solid var(--cb);
+        background: var(--cs);
+        transition: background 0.2s, border-color 0.2s, transform 0.15s;
+        position: relative;
+        overflow: hidden;
+    }
+    .sidebar-pro-link::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 3px;
+        background: var(--c);
+        border-radius: 3px 0 0 3px;
+        box-shadow: 0 0 8px var(--c);
+        opacity: 0.7;
+    }
+    .sidebar-pro-link:hover {
+        background: var(--cb);
+        border-color: var(--c);
+        transform: translateX(3px);
+    }
+    .sidebar-pro-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
     }
 </style>
 
@@ -951,6 +1092,14 @@
             
             if(document.getElementById('latInput')) document.getElementById('latInput').value = data.lat.toFixed(6);
             if(document.getElementById('lonInput')) document.getElementById('lonInput').value = data.lon.toFixed(6);
+
+            // Actualizar links de sectores con la nueva ubicación
+            document.querySelectorAll('.sidebar-pro-link').forEach(a => {
+                const url = new URL(a.href, location.origin);
+                url.searchParams.set('lat', data.lat.toFixed(6));
+                url.searchParams.set('lon', data.lon.toFixed(6));
+                a.href = url.toString();
+            });
         }
 
         // 6. MANEJO DE FORMULARIOS Y FLECHAS
@@ -1022,8 +1171,18 @@
         });
 
         // Utilidades UI (Asegurate de que estas existan en tu HTML, si no, puedes dejarlas así)
-        function mostrarLoader() { /* Tu lógica de loader original */ }
-        function ocultarLoader() { /* Tu lógica de loader original */ }
+        function mostrarLoader() {
+            const loader = document.getElementById('clima-loader');
+            if (loader) loader.style.display = 'block';
+            const spinner = document.querySelector('.loader-spinner');
+            if (spinner) spinner.style.display = 'block';
+        }
+        function ocultarLoader() {
+            const loader = document.getElementById('clima-loader');
+            if (loader) loader.style.display = 'none';
+            const spinner = document.querySelector('.loader-spinner');
+            if (spinner) spinner.style.display = 'none';
+        }
         function mostrarError(msg) { console.warn(msg); }
     </script>
 
@@ -1062,7 +1221,7 @@
             </div>
         </div>
 
-        <div style="background: rgba(0,0,0,0.3); padding: 15px 25px; border-radius: 18px; margin: 20px 0; display: inline-flex; gap: 50px; align-items: center;">
+        <div class="sunblock" style="background: rgba(0,0,0,0.3); padding: 15px 25px; border-radius: 18px; margin: 20px 0; display: inline-flex; gap: 50px; align-items: center;">
             <div style="text-align: center;">
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunrise.svg" style="width: 55px; height: 55px; margin-bottom: 8px;">
                 <div style="font-size: 0.85em; color: #ddd;">AMANECER</div>
@@ -1179,7 +1338,7 @@
             </div>
 
             <div style="width: 100%; height: 5px; background: #333; margin-top: 10px; border-radius: 5px;">
-                <div style="width: {{ uv_index|make_list|length|add:uv_index|add:0 }}0%; max-width: 100%; height: 100%; background: linear-gradient(90deg, #2ed573, #ffa502, #ff4757); border-radius: 5px;"></div>
+                <div style="width: {{ uv_index }}0%; max-width: 100%; height: 100%; background: linear-gradient(90deg, #2ed573, #ffa502, #ff4757); border-radius: 5px;"></div>
             </div>
         </div>
 
@@ -2019,22 +2178,22 @@
         <h4>MODOS PRO</h4>
         <ul class="footer-links">
             <li>
-            <a href="#"> <svg class="f-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5a4 4 0 0 1 5.66 0"/><path d="M10 10a2 2 0 0 1 2.83 0"/></svg>
+            <a href="{% url 'agro' %}"> <svg class="f-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5a4 4 0 0 1 5.66 0"/><path d="M10 10a2 2 0 0 1 2.83 0"/></svg>
                 Modo Agro
             </a>
             </li>
             <li>
-            <a href="#"> <svg class="f-icon" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></svg>
+            <a href="{% url 'naval' %}"> <svg class="f-icon" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></svg>
                 Modo Naval
             </a>
             </li>
             <li>
-            <a href="#"> <svg class="f-icon" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>
+            <a href="{% url 'aereo' %}"> <svg class="f-icon" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>
                 Modo Aéreo
             </a>
             </li>
             <li>
-            <a href="#"> <svg class="f-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <a href="{% url 'energia' %}"> <svg class="f-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                 Modo Energías
             </a>
             </li>
