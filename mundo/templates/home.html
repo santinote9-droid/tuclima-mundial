@@ -1058,43 +1058,45 @@
         }
 
         // 2. INICIO Y GESTIÓN DE RUTA
+        // Siempre llamamos al AJAX para obtener datos frescos.
+        // El servidor puede haber renderizado con valores por defecto (cold start, timeout),
+        // así que no confiamos en lo que está en el HTML — siempre actualizamos por AJAX.
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const latActual = limpiarCoordenada(urlParams.get('lat'));
             const lonActual = limpiarCoordenada(urlParams.get('lon'));
             const ciudadBuscada = urlParams.get('ciudad');
-            
-            console.log('🌍 Parámetros URL:', { latActual, lonActual, ciudadBuscada });
-            
-            if (ciudadBuscada || (latActual && lonActual && latActual !== '0' && lonActual !== '0')) {
-                console.log('✅ Mostrando ubicación manual/buscada');
-                if (latActual && lonActual) {
-                    const ubicacionActual = { 
-                        lat: latActual, lon: lonActual, ciudad: '{{ ciudad }}' || ciudadBuscada || 'Ubicación guardada', timestamp: Date.now() 
-                    };
-                    localStorage.setItem('ultimaUbicacion', JSON.stringify(ubicacionActual));
-                }
-                return; 
+
+            // Caso 1: hay coordenadas en la URL → llamar AJAX directamente
+            if (latActual && lonActual && latActual !== '0' && lonActual !== '0') {
+                localStorage.setItem('ultimaUbicacion', JSON.stringify({
+                    lat: latActual, lon: lonActual, timestamp: Date.now()
+                }));
+                cargarDatosClima(latActual, lonActual);
+                return;
             }
-            
-            if (window.location.search === "" || (!latActual && !lonActual)) {
-                const ultimaUbicacion = localStorage.getItem('ultimaUbicacion');
-                if (ultimaUbicacion) {
-                    try {
-                        const ubicacion = JSON.parse(ultimaUbicacion);
-                        const diasTranscurridos = (Date.now() - ubicacion.timestamp) / (1000 * 60 * 60 * 24);
-                        if (diasTranscurridos < 7 && ubicacion.lat && ubicacion.lon) {
-                            console.log('📍 Cargando última ubicación (AJAX):', ubicacion.ciudad);
-                            cargarDatosClima(limpiarCoordenada(ubicacion.lat), limpiarCoordenada(ubicacion.lon));
-                            return;
-                        }
-                    } catch (e) {
-                        console.log('Error localStorage');
+
+            // Caso 2: búsqueda por ciudad en la URL
+            if (ciudadBuscada) {
+                cargarDatosClima(0, 0, ciudadBuscada);
+                return;
+            }
+
+            // Caso 3: sin params → intentar localStorage, si no GPS
+            const ultimaUbicacion = localStorage.getItem('ultimaUbicacion');
+            if (ultimaUbicacion) {
+                try {
+                    const ubicacion = JSON.parse(ultimaUbicacion);
+                    const diasTranscurridos = (Date.now() - ubicacion.timestamp) / (1000 * 60 * 60 * 24);
+                    if (diasTranscurridos < 7 && ubicacion.lat && ubicacion.lon) {
+                        console.log('📍 Cargando última ubicación:', ubicacion.lat, ubicacion.lon);
+                        cargarDatosClima(limpiarCoordenada(ubicacion.lat), limpiarCoordenada(ubicacion.lon));
+                        return;
                     }
-                }
-                console.log('🛰️ Activando GPS automático...');
-                usarGPSAsincrono();
+                } catch (e) {}
             }
+            console.log('🛰️ Activando GPS...');
+            usarGPSAsincrono();
         };
 
         // 3. MOTOR GPS (Conectado al botón)
@@ -1142,19 +1144,20 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    console.log('✅ Datos recibidos');
+                    console.log('✅ Datos recibidos:', data.ciudad, data.temp + '°');
                     actualizarInterfaz(data);
-                    
-                    const newUrl = `/?lat=${safeLat}&lon=${safeLon}`;
-                    window.history.pushState({lat: safeLat, lon: safeLon}, '', newUrl);
+                    // Actualizar URL sin recargar
+                    if (safeLat && safeLon && safeLat !== '0' && safeLon !== '0') {
+                        const newUrl = `/?lat=${safeLat}&lon=${safeLon}`;
+                        window.history.replaceState({lat: safeLat, lon: safeLon}, '', newUrl);
+                    }
                 } else {
                     console.error('❌ Error API:', data.error);
-                    // Red de seguridad: Si falla el AJAX, recargamos la página normal
-                    window.location.href = `/?lat=${safeLat}&lon=${safeLon}${ciudad ? '&ciudad='+ciudad : ''}`;
+                    mostrarError('No se pudieron obtener los datos del clima');
                 }
             } catch (error) {
                 console.error('❌ Fallo Fetch:', error);
-                window.location.href = `/?lat=${safeLat}&lon=${safeLon}${ciudad ? '&ciudad='+ciudad : ''}`;
+                mostrarError('Error de conexión al obtener el clima');
             } finally {
                 cargandoDatos = false;
                 ocultarLoader();
