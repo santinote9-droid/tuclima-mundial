@@ -319,7 +319,12 @@ def home(request):
         'visibilidad': 10, 'uv_index': 0, 'lluvia_hoy': 0,
         'tira_horas': [], 'datos_json': '{}', 'horas_grafico': [], 'temps_grafico': [],
         'pronostico': [], 'noticias': [], 'papers': [],
-        'hora_local': datetime.now(), 'delta_temp': 0
+        'hora_local': datetime.now(), 'delta_temp': 0,
+        'icono': 'https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/not-available.svg',
+        'fondo': 'img/dia_radiante.jpg',
+        'descripcion': 'Cargando...', 'tipo_nube': '', 'alerta_texto': '',
+        'alerta_color': '#a4b0be', 'alerta_tipo': 'normal',
+        'sunrise': '--:--', 'sunset': '--:--'
     }
 
     # --- GEOLOCALIZACIÓN ---
@@ -368,7 +373,7 @@ def home(request):
         if lat != 0.0 and lon != 0.0:
             url_clima = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,weathercode,precipitation_probability,is_day&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto"
             
-            response = _get_meteo(url_clima, timeout=3)
+            response = _get_meteo(url_clima, timeout=8)
             actual = response['current']
             hourly = response['hourly']
             daily = response['daily']
@@ -517,7 +522,9 @@ def home(request):
             })
 
     except Exception as e:
-        print(f"Error home: {e}")
+        import traceback
+        print(f"[ERROR home] {e}")
+        traceback.print_exc()
 
     contexto.update({'ciudad': nombre_ciudad, 'pais': pais, 'lat': lat, 'lon': lon, 'opciones_ciudades': opciones_ciudades, 'mensaje_error': mensaje_error})
     if request.user.is_authenticated:
@@ -586,7 +593,7 @@ def clima_data_api(request):
         # Obtener datos del clima
         url_clima = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,weathercode,precipitation_probability,is_day&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto"
         
-        response = _get_meteo(url_clima, timeout=3)
+        response = _get_meteo(url_clima, timeout=8)
         actual = response['current']
         hourly = response['hourly']
         daily = response['daily']
