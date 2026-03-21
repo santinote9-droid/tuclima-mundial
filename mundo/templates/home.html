@@ -15,7 +15,8 @@
             background-image: url('{% static fondo %}');
             background-size: cover;
             background-position: center;
-            background-attachment: fixed;
+            /* scroll en vez de fixed: iOS Safari no soporta fixed en body */
+            background-attachment: scroll;
             background-repeat: no-repeat;
             background-color: #1a2a3a;
             color: white;
@@ -23,6 +24,7 @@
             padding: 0;
             box-shadow: inset 0 0 0 2000px rgba(0, 0, 0, 0.4);
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         .main-container {
@@ -47,9 +49,10 @@
             padding: 35px; 
             border-radius: 20px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-            min-width: 420px; 
+            min-width: min(420px, calc(100% - 16px));
             max-width: 500px;
             width: 100%;
+            box-sizing: border-box;
             position: relative;
         }
         
@@ -237,132 +240,160 @@
         }
 
         /* ============================================================
-           RESPONSIVE — móvil y tablet
+           RESPONSIVE — Desktop se mantiene intacto.
+           Todo lo que está aquí abajo sólo afecta 
+           tablets (≤ 900px) y móviles (≤ 600px).
            ============================================================ */
 
-        /* --- TABLET (≤ 900px) --- */
+        /* ---- TABLET (≤ 900px) ---- */
         @media (max-width: 900px) {
+
+            /* iOS Safari: fixed background no funciona */
+            body { background-attachment: scroll !important; }
+
+            /* Ocultar barra de usuario (está en sidebar) */
             .user-info { display: none !important; }
 
+            /* Tarjeta principal: quitar min-width fijo */
             .card {
                 min-width: unset !important;
-                max-width: 100% !important;
-                width: 100% !important;
+                max-width: 96% !important;
+                width: 96% !important;
                 box-sizing: border-box;
             }
 
-            #papers-container > div {
-                width: calc(50vw - 40px) !important;
-                min-width: 260px !important;
+            /* Detalles: 2 columnas */
+            .detalle-grid {
+                gap: 14px !important;
+                padding: 0 12px !important;
+            }
+            .detalle-grid > div {
+                width: calc(50% - 7px) !important;
+                box-sizing: border-box !important;
+            }
+
+            /* Papers: 2 columnas */
+            .paper-card {
+                width: calc(50% - 10px) !important;
+                min-width: 240px !important;
                 box-sizing: border-box !important;
             }
         }
 
-        /* --- MÓVIL (≤ 600px) --- */
+        /* ---- MÓVIL (≤ 600px) ---- */
         @media (max-width: 600px) {
 
-            /* Contenedor principal */
+            /* Tipografía */
+            h1 { font-size: 1.8em !important; }
+            h2 { font-size: 1.15em !important; }
+            .dato-grande { font-size: 2.8em !important; }
+
+            /* Contenedor principal: padding mínimo */
             .main-container {
-                padding: 10px 8px 0 8px !important;
+                padding: 8px 8px 0 8px !important;
+                width: 100% !important;
             }
 
-            /* Tarjeta principal */
+            /* Tarjeta principal: ancho total */
             .card {
                 min-width: unset !important;
                 max-width: 100% !important;
                 width: 100% !important;
-                padding: 20px 12px !important;
+                padding: 18px 14px !important;
                 box-sizing: border-box;
             }
-            h1 { font-size: 1.8em !important; }
-            .dato-grande { font-size: 3em !important; }
-            .user-info { display: none !important; }
+
+            /* Buscador ciudad: row con input + botón GPS */
+            .buscador {
+                padding: 12px 0 !important;
+                gap: 10px !important;
+            }
+            .buscador > div:first-child {
+                width: 100% !important;
+            }
+            .buscador input[name="ciudad"] {
+                font-size: 0.9em !important;
+                padding: 11px 14px !important;
+            }
+
+            /* Ocultar el buscador de coordenadas en móvil:
+               nadie tipea lat/lon en el celular */
+            #contenedorCoordenadas {
+                display: none !important;
+            }
 
             /* Amanecer / Atardecer */
             .sunblock {
                 gap: 20px !important;
-                padding: 12px 15px !important;
-                flex-wrap: wrap !important;
+                padding: 12px 8px !important;
+                justify-content: center !important;
             }
 
-            /* Buscador: apilar verticalmente */
-            .buscador {
-                padding: 15px 8px !important;
-                gap: 12px !important;
-            }
-            .buscador > div:first-child {
-                flex-direction: row !important;
-                flex-wrap: nowrap !important;
-            }
-            .buscador input[name="ciudad"] {
-                font-size: 0.95em !important;
-                padding: 12px 16px !important;
-            }
-
-            /* Formulario lat/lon: apilar verticalmente */
-            #formCoordenadas {
-                flex-direction: column !important;
-                gap: 14px !important;
-                align-items: center !important;
-            }
-            .coord-input-container {
-                width: 100% !important;
-                max-width: 280px !important;
-            }
-            #formCoordenadas button[type="submit"] {
-                width: 100% !important;
-                max-width: 280px !important;
-                margin-left: 0 !important;
-                border-radius: 14px !important;
-                padding: 12px 20px !important;
-            }
-
-            /* Calendario pronóstico */
+            /* Calendario pronóstico: tarjetas más small */
             .contenedor-dias {
-                padding: 12px 6px !important;
-                gap: 8px !important;
+                padding: 10px 6px !important;
+                gap: 6px !important;
                 justify-content: flex-start !important;
             }
             .tarjeta-dia {
-                width: 100px !important;
-                min-height: 148px !important;
-                padding: 10px 6px !important;
+                width: 90px !important;
+                min-height: 138px !important;
+                padding: 8px 4px !important;
             }
-            .icono-chico { width: 42px !important; height: 42px !important; }
+            .icono-chico { width: 38px !important; height: 38px !important; }
 
             /* Carrusel horario */
             .carrusel-horas {
-                gap: 8px !important;
-                padding: 12px 8px !important;
+                gap: 6px !important;
+                padding: 10px 6px !important;
             }
             .item-hora {
-                min-width: 64px !important;
-                padding: 8px 5px !important;
+                min-width: 58px !important;
+                padding: 7px 4px !important;
             }
-            .icono-hora { width: 36px !important; height: 36px !important; }
+            .icono-hora { width: 32px !important; height: 32px !important; }
 
-            /* Sección Detalles: 1 columna */
-            .contenedor-noticias { padding: 8px !important; }
-            .tarjeta-noticia { width: calc(100vw - 40px) !important; }
-            .tarjeta-noticia-mejorada { min-height: unset !important; }
-
-            /* Papers */
-            #papers-container {
+            /* Detalles: 1 columna */
+            .detalle-grid {
                 flex-direction: column !important;
-                align-items: center !important;
+                align-items: stretch !important;
+                padding: 0 8px !important;
+                gap: 10px !important;
             }
-            #papers-container > div {
+            .detalle-grid > div {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            /* Papers: 1 columna */
+            .paper-card {
                 width: calc(100vw - 32px) !important;
                 max-width: 100% !important;
                 box-sizing: border-box !important;
             }
+            #papers-container {
+                flex-direction: column !important;
+                align-items: center !important;
+                padding: 8px !important;
+                gap: 10px !important;
+            }
 
-            /* Cards de detalle (UV, nubes, visibilidad, alerta) */
-            .main-container div[style*="display: flex; flex-wrap: wrap"] > div[style*="width: 250px"],
-            .main-container div[style*="flex-wrap: wrap"] > div[style*="width: 250px"] {
-                width: calc(100vw - 48px) !important;
-                max-width: 100% !important;
-                box-sizing: border-box !important;
+            /* Noticias: 1 columna */
+            .contenedor-noticias {
+                grid-template-columns: 1fr !important;
+                padding: 8px !important;
+                gap: 12px !important;
+            }
+            .tarjeta-noticia-mejorada { min-height: unset !important; }
+
+            /* Footer: centrar todo */
+            .footer-bottom {
+                flex-direction: column !important;
+                text-align: center !important;
+            }
+            .legal-links {
+                justify-content: center !important;
             }
         }
 
@@ -947,7 +978,7 @@
             }
         </style>
 
-        <div style="display: flex; justify-content: center; width: 100%; margin-top: 20px;">
+        <div id="contenedorCoordenadas" style="display: flex; justify-content: center; width: 100%; margin-top: 20px;">
     <form method="get" id="formCoordenadas" style="display: flex; align-items: center; justify-content: center; gap: 40px; width: 100%; max-width: 700px; flex-wrap: nowrap;">
         
         <div class="coord-input-container">
@@ -1378,7 +1409,7 @@
         Detalles y Precauciones
     </h2>
     
-    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 0 20px; max-width: 1200px; margin: 0 auto;">
+    <div class="detalle-grid" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 0 20px; max-width: 1200px; margin: 0 auto;">
         
         <div style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; width: 250px; text-align: left;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -1907,7 +1938,9 @@
                     const pdfLink = paper.link.replace('/abs/', '/pdf/') + '.pdf';
                     
                     const tarjeta = document.createElement('div');
-                    tarjeta.style.cssText = 'background: rgba(10, 10, 20, 0.8); border-left: 4px solid #a29bfe; padding: 20px; border-radius: 10px; width: 350px; text-align: left; transition: transform 0.3s, box-shadow 0.3s; animation: fadeInUp 0.5s ease forwards; cursor: pointer;';
+                    tarjeta.classList.add('paper-card');
+                    tarjeta.classList.add('paper-card');
+                    tarjeta.style.cssText = 'background: rgba(10, 10, 20, 0.8); border-left: 4px solid #a29bfe; padding: 20px; border-radius: 10px; width: 350px; text-align: left; transition: transform 0.3s, box-shadow 0.3s; animation: fadeInUp 0.5s ease forwards; cursor: pointer; box-sizing: border-box;';
                     tarjeta.style.animationDelay = `${index * 0.1}s`;
                     
                     tarjeta.addEventListener('mouseenter', () => {
