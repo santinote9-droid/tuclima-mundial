@@ -10,18 +10,23 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        /* El fondo se pone en html (no en body) para cubrir toda la altura del documento */
+        html {
             background-image: url('/static/{{ fondo }}');
             background-size: cover;
-            background-position: center;
-            /* scroll en vez de fixed: iOS Safari no soporta fixed en body */
+            background-position: center top;
             background-attachment: scroll;
             background-repeat: no-repeat;
             background-color: #1a2a3a;
+            min-height: 100%;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: transparent;
             color: white;
             margin: 0;
             padding: 0;
+            /* overlay oscuro sobre el fondo */
             box-shadow: inset 0 0 0 2000px rgba(0, 0, 0, 0.4);
             min-height: 100vh;
             overflow-x: hidden;
@@ -249,7 +254,7 @@
         @media (max-width: 900px) {
 
             /* iOS Safari: fixed background no funciona */
-            body { background-attachment: scroll !important; }
+            html { background-attachment: scroll !important; }
 
             /* Ocultar barra de usuario (está en sidebar) */
             .user-info { display: none !important; }
@@ -1150,7 +1155,7 @@
         function actualizarInterfaz(data) {
             // fondo_url viene del servidor: settings.STATIC_URL + ruta (siempre funciona con Whitenoise)
             const fondoUrl = data.fondo_url || `/static/${data.fondo}`;
-            document.body.style.backgroundImage = `url('${fondoUrl}')`;
+            document.documentElement.style.backgroundImage = `url('${fondoUrl}')`;
             
             const titulo = document.querySelector('h1');
             if (titulo) titulo.textContent = data.ciudad;
