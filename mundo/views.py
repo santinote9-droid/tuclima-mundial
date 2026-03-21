@@ -19,6 +19,7 @@ from django.contrib.auth.models import Group, User
 from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import PerfilUsuario, DatoSectorial
+from django.contrib.staticfiles.storage import staticfiles_storage
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -208,9 +209,6 @@ def obtener_papers_cientificos():
     import time
     import random
     
-    # Añadir un pequeño delay aleatorio para evitar rate limiting
-    time.sleep(random.uniform(1, 3))
-    
     url_arxiv = "https://export.arxiv.org/api/query?search_query=cat:physics.ao-ph+OR+cat:physics.geo-ph&start=0&max_results=6&sortBy=submittedDate&sortOrder=descending"
     
     # Papers de respaldo si falla ArXiv
@@ -380,8 +378,8 @@ def home(request):
 
             # Variables Críticas
             code = actual['weather_code']
-            uv = daily['uv_index_max'][0]
-            vis_metros = actual['visibility']
+            uv = daily['uv_index_max'][0] or 0  # puede ser None en algunas regiones/horarios
+            vis_metros = actual['visibility'] or 10000
             vis_km = round(vis_metros / 1000, 1)
             
             # --- AQUÍ USAMOS TU FUNCIÓN Y TU LÓGICA ---
@@ -600,8 +598,8 @@ def clima_data_api(request):
 
         # Análisis de condiciones
         code = actual['weather_code']
-        uv = daily['uv_index_max'][0]
-        vis_metros = actual['visibility']
+        uv = daily['uv_index_max'][0] or 0  # puede ser None en algunas regiones/horarios
+        vis_metros = actual['visibility'] or 10000
         vis_km = round(vis_metros / 1000, 1)
         
         nube_txt, alerta_txt, icono_alerta = analizar_detalles(code, uv, vis_metros)
@@ -720,6 +718,7 @@ def clima_data_api(request):
             'lluvia_hoy': actual['precipitation'],
             'icono': obtener_icono_url(code, actual['is_day']),
             'fondo': obtener_fondo(code, actual['is_day']),
+            'fondo_url': staticfiles_storage.url(obtener_fondo(code, actual['is_day'])),
             'descripcion': descifrar_desc(code),
             'tipo_nube': nube_txt,
             'alerta_texto': alerta_txt,

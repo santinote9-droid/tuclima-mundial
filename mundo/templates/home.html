@@ -1148,7 +1148,9 @@
 
         // 5. ACTUALIZACIÓN VISUAL
         function actualizarInterfaz(data) {
-            document.body.style.backgroundImage = `url('/static/${data.fondo}')`;
+            // fondo_url ya viene con el hash correcto del ManifestStaticFilesStorage
+            const fondoUrl = data.fondo_url || `/static/${data.fondo}`;
+            document.body.style.backgroundImage = `url('${fondoUrl}')`;
             
             const titulo = document.querySelector('h1');
             if (titulo) titulo.textContent = data.ciudad;
