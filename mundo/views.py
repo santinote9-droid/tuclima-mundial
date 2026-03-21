@@ -10,6 +10,7 @@ import urllib3
 import paypalrestsdk
 import mercadopago
 from cachetools import TTLCache, cached
+from django.core.cache import cache as django_cache
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from django.contrib.auth import login, authenticate, logout
@@ -42,15 +43,12 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================
-# CACHÉ DE API OPEN-METEO
-# TTL = 20 minutos. maxsize = 256 combinaciones lat/lon distintas.
-# Thread-safe con Lock para entornos multi-worker (Gunicorn).
-# _meteo_error_cache: cachea errores 60 segundos para no re-hammear en rate-limit.
+# CACHÉ DE API OPEN-METEO — persistente en base de datos PostgreSQL
+# Usa django.core.cache (configurado en settings.py como DatabaseCache).
+# Sobrevive reinicios del servidor: 100 usuarios = 1 sola llamada a la API.
+# Respuestas válidas: 30 minutos (definido en settings.CACHES).
+# Respuestas de error (rate-limit, etc): 60 segundos.
 # ============================================================
-_meteo_cache: TTLCache = TTLCache(maxsize=256, ttl=1200)
-_meteo_error_cache: TTLCache = TTLCache(maxsize=256, ttl=60)
-_meteo_lock = threading.Lock()
-
 _METEO_HEADERS = {
     'User-Agent': 'TuClimaMundial/1.0 (proyectoclima@gmail.com)'
 }
@@ -58,26 +56,24 @@ _METEO_HEADERS = {
 
 def _get_meteo(url: str, timeout: int = 6) -> dict:
     """
-    Realiza un GET a la API de Open-Meteo con caché de 20 minutos.
-    - Respuestas válidas: cacheadas 20 minutos.
-    - Respuestas de error (rate-limit, etc): cacheadas 60 segundos
-      para no seguir gastando cuota cuando ya estamos bloqueados.
-    - Incluye User-Agent para evitar throttling anónimo.
+    GET a Open-Meteo con caché persistente en base de datos.
+    - Respuestas válidas: cacheadas 30 min (settings.CACHES TIMEOUT).
+    - Errores de rate-limit: cacheados 60 s para no seguir gastando cuota.
+    - 100 usuarios pidiendo el mismo lugar = 1 sola llamada a la API.
     """
-    with _meteo_lock:
-        if url in _meteo_cache:
-            return _meteo_cache[url]
-        if url in _meteo_error_cache:
-            return _meteo_error_cache[url]
+    cache_key = 'meteo_' + str(hash(url))
+    cached_data = django_cache.get(cache_key)
+    if cached_data is not None:
+        return cached_data
 
     data = requests.get(url, timeout=timeout, headers=_METEO_HEADERS).json()
 
-    with _meteo_lock:
-        if not data.get('error') and ('current' in data or 'hourly' in data):
-            _meteo_cache[url] = data
-        else:
-            # Cachear el error 60 s para no re-hammear la API
-            _meteo_error_cache[url] = data
+    if not data.get('error') and ('current' in data or 'hourly' in data):
+        # Respuesta válida: guardar 30 minutos (usa el TIMEOUT de settings)
+        django_cache.set(cache_key, data)
+    else:
+        # Error de API (rate-limit, fuera de rango, etc): guardar solo 60 segundos
+        django_cache.set(cache_key, data, timeout=60)
 
     return data
 

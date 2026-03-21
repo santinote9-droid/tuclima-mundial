@@ -104,6 +104,23 @@ DATABASES['default']['OPTIONS'] = {
     'sslmode': 'require',
 }
 
+# ============================================================
+# CACHÉ DE DJANGO — persiste en la base de datos PostgreSQL
+# Sobrevive reinicios del servidor (a diferencia de memoria RAM).
+# TTL por defecto: 30 minutos (1800 s). Se crea la tabla con:
+#   python manage.py createcachetable
+# ============================================================
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache_clima',
+        'TIMEOUT': 1800,  # 30 minutos
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        },
+    }
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
