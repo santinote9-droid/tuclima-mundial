@@ -1163,57 +1163,129 @@
 
         // 5. ACTUALIZACIÓN VISUAL
         function actualizarInterfaz(data) {
-            // Actualizar fondo via el div fijo #bg-layer
-            const fondoUrl = data.fondo_url || `/static/${data.fondo}`;
-            const bgLayer = document.getElementById('bg-layer');
-            if (bgLayer) bgLayer.style.backgroundImage = `url('${fondoUrl}')`;
-            
-            const titulo = document.querySelector('h1');
-            if (titulo) titulo.textContent = data.ciudad;
-            
-            const pais = document.querySelector('p[style*="color: #ddd"]');
-            if (pais) pais.textContent = data.pais || '';
-            
-            const coord = document.querySelector('.coord');
-            if (coord) coord.innerHTML = ` <span class="notranslate">${data.lat.toFixed(6)}, ${data.lon.toFixed(6)}</span>`;
-            
-            const temp = document.querySelector('.dato-grande');
-            if (temp) temp.textContent = `${Math.round(data.temp)}°`;
-            
-            const icono = document.querySelector('.icono-principal');
-            if (icono) icono.src = data.icono;
-            
-            const desc = document.querySelector('h2[style*="color: #00d2ff"]');
-            if (desc) desc.textContent = data.descripcion;
-            
-            const meta = document.querySelectorAll('.main-container div[style*="background: rgba(255,255,255,0.1)"] div');
-            if(meta.length >= 3) {
-                const sensDiv = meta[0].querySelectorAll('div');
-                if(sensDiv.length >= 2) sensDiv[1].textContent = `${Math.round(data.sensacion)}°`;
-                const humDiv = meta[1].querySelectorAll('div');
-                if(humDiv.length >= 2) humDiv[1].textContent = `${data.humedad}%`;
-                const lluDiv = meta[2].querySelectorAll('div');
-                if(lluDiv.length >= 2) lluDiv[1].textContent = `${data.lluvia_hoy}mm`;
-            }
-            
-            if(data.tira_horas) actualizarCarruselHorario(data.tira_horas);
-            if(data.pronostico) actualizarPronostico(data.pronostico);
-            
-            if (window.chartInstance && data.horas_grafico && data.temps_grafico) {
-                chartInstance.data.labels = data.horas_grafico;
-                chartInstance.data.datasets[0].data = data.temps_grafico;
-                chartInstance.update();
-            }
-            
-            if(document.getElementById('latInput')) document.getElementById('latInput').value = data.lat.toFixed(6);
-            if(document.getElementById('lonInput')) document.getElementById('lonInput').value = data.lon.toFixed(6);
+            try {
+                // Fondo
+                const fondoUrl = data.fondo_url || `/static/${data.fondo}`;
+                const bgLayer = document.getElementById('bg-layer');
+                if (bgLayer) bgLayer.style.backgroundImage = `url('${fondoUrl}')`;
 
-            // Actualizar links de sectores con la nueva ubicación
-            document.querySelectorAll('.sidebar-pro-link').forEach(a => {
-                const url = new URL(a.href, location.origin);
-                url.searchParams.set('lat', data.lat.toFixed(6));
-                url.searchParams.set('lon', data.lon.toFixed(6));
-                a.href = url.toString();
+                // Texto principal
+                const titulo = document.querySelector('h1');
+                if (titulo) titulo.textContent = data.ciudad;
+
+                const pais = document.querySelector('p[style*="color: #ddd"]');
+                if (pais) pais.textContent = data.pais || '';
+
+                const coord = document.querySelector('.coord');
+                if (coord) coord.innerHTML = `<span class="notranslate">${Number(data.lat).toFixed(6)}, ${Number(data.lon).toFixed(6)}</span>`;
+
+                const temp = document.querySelector('.dato-grande');
+                if (temp) temp.textContent = `${Math.round(data.temp)}°`;
+
+                const icono = document.querySelector('.icono-principal');
+                if (icono) icono.src = data.icono;
+
+                const desc = document.querySelector('h2[style*="color: #00d2ff"]');
+                if (desc) desc.textContent = data.descripcion;
+
+                const meta = document.querySelectorAll('.main-container div[style*="background: rgba(255,255,255,0.1)"] div');
+                if (meta.length >= 3) {
+                    const sensDiv = meta[0].querySelectorAll('div');
+                    if (sensDiv.length >= 2) sensDiv[1].textContent = `${Math.round(data.sensacion)}°`;
+                    const humDiv = meta[1].querySelectorAll('div');
+                    if (humDiv.length >= 2) humDiv[1].textContent = `${data.humedad}%`;
+                    const lluDiv = meta[2].querySelectorAll('div');
+                    if (lluDiv.length >= 2) lluDiv[1].textContent = `${data.lluvia_hoy}mm`;
+                }
+
+                // Carrusel horario
+                if (data.tira_horas) actualizarCarruselHorario(data.tira_horas);
+
+                // Pronóstico semanal
+                if (data.pronostico) actualizarPronostico(data.pronostico);
+
+                // Actualizar datosSemana global para que cambiarDia funcione
+                if (data.datos_json && typeof data.datos_json === 'object') {
+                    window.datosSemana = data.datos_json;
+                    if (typeof datosSemana !== 'undefined') {
+                        // sobrescribir la variable local del segundo script
+                        Object.assign(datosSemana, data.datos_json);
+                    }
+                }
+
+                // Gráfico
+                if (window.chartInstance && data.horas_grafico && data.temps_grafico) {
+                    chartInstance.data.labels = data.horas_grafico;
+                    chartInstance.data.datasets[0].data = data.temps_grafico;
+                    chartInstance.update();
+                }
+
+                // Inputs de coordenadas
+                if (document.getElementById('latInput')) document.getElementById('latInput').value = Number(data.lat).toFixed(6);
+                if (document.getElementById('lonInput')) document.getElementById('lonInput').value = Number(data.lon).toFixed(6);
+
+                // Actualizar links de sectores
+                document.querySelectorAll('.sidebar-pro-link').forEach(a => {
+                    const url = new URL(a.href, location.origin);
+                    url.searchParams.set('lat', Number(data.lat).toFixed(6));
+                    url.searchParams.set('lon', Number(data.lon).toFixed(6));
+                    a.href = url.toString();
+                });
+
+            } catch (err) {
+                console.error('❌ Error en actualizarInterfaz:', err);
+                // Fallback: recargar la página con las coordenadas del servidor
+                if (data && data.lat && data.lon) {
+                    window.location.href = `/?lat=${data.lat}&lon=${data.lon}`;
+                }
+            }
+        }
+
+        // Renderiza el carrusel horario con los datos recibidos por AJAX
+        function actualizarCarruselHorario(tira) {
+            const contenedor = document.getElementById('carruselHoras');
+            if (!contenedor) return;
+            contenedor.innerHTML = '';
+            tira.forEach(h => {
+                let html = '';
+                if (h.tipo === 'evento') {
+                    html = `<div class="item-hora evento-solar">
+                        <span style="color:#fff;font-weight:bold;font-size:1em;">${h.hora}</span>
+                        <img src="${h.icono}" class="icono-hora">
+                        <span style="color:#ffcc00;font-weight:bold;font-size:0.8em;margin-top:5px;">${h.evento_titulo}</span>
+                    </div>`;
+                } else {
+                    const ahoraLabel = h.es_actual ? '<div style="font-size:0.7em;color:#00d2ff;font-weight:bold;margin-top:8px;">AHORA</div>' : '';
+                    const claseExtra = h.es_actual ? 'hora-destacada' : '';
+                    html = `<div class="item-hora ${claseExtra}">
+                        <span style="color:#ccc;font-size:0.9em;">${h.hora}</span>
+                        <img src="${h.icono}" class="icono-hora">
+                        <span style="color:#ffcc00;font-weight:bold;font-size:1.1em;">${h.temp}°</span>
+                        <span style="font-size:0.8em;color:#4ecdc4;margin-top:4px;">💧${h.lluvia}%</span>
+                        ${ahoraLabel}
+                    </div>`;
+                }
+                contenedor.innerHTML += html;
+            });
+        }
+
+        // Renderiza las tarjetas del pronóstico semanal con los datos recibidos por AJAX
+        function actualizarPronostico(pronostico) {
+            const lista = document.getElementById('listaDias');
+            if (!lista) return;
+            lista.innerHTML = '';
+            pronostico.forEach((dia, i) => {
+                const activo = i === 0 ? 'dia-activo' : '';
+                lista.innerHTML += `<div class="tarjeta-dia ${activo}"
+                    onclick="cambiarDia('${dia.fecha_full}', '${dia.nombre_dia}', '${dia.fecha_corta}', this)">
+                    <div style="font-weight:bold;font-size:0.9em;margin-bottom:3px;width:100%;">${dia.nombre_dia}</div>
+                    <div class="fecha" style="font-size:0.75em;color:#ccc;margin-bottom:8px;width:100%;">${dia.fecha_corta}</div>
+                    <img src="${dia.icono}" class="icono-chico" style="margin:8px 0;">
+                    <div class="temp-rango" style="margin-top:6px;width:100%;">
+                        <span class="max">${dia.max}°</span> / <span class="min">${dia.min}°</span>
+                    </div>
+                    <div style="font-size:0.7em;opacity:0.8;margin-top:6px;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${dia.desc}</div>
+                </div>`;
             });
         }
 
