@@ -54,6 +54,7 @@ def _get_meteo(url: str, timeout: int = 6) -> dict:
     """
     Realiza un GET a la API de Open-Meteo con caché de 20 minutos.
     La URL completa (incluye lat/lon y parámetros) actúa como clave.
+    No cachea respuestas de error para permitir reintentos.
     """
     with _meteo_lock:
         if url in _meteo_cache:
@@ -61,8 +62,10 @@ def _get_meteo(url: str, timeout: int = 6) -> dict:
 
     data = requests.get(url, timeout=timeout).json()
 
-    with _meteo_lock:
-        _meteo_cache[url] = data
+    # Solo cachear respuestas válidas (con al menos 'current' o 'hourly')
+    if not data.get('error') and ('current' in data or 'hourly' in data):
+        with _meteo_lock:
+            _meteo_cache[url] = data
 
     return data
 
@@ -610,6 +613,9 @@ def clima_data_api(request):
         url_clima = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,weather_code,precipitation_probability,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto"
         
         response = _get_meteo(url_clima, timeout=8)
+        if 'current' not in response:
+            motivo = response.get('reason', 'Servicio meteorológico no disponible temporalmente')
+            return JsonResponse({'success': False, 'error': motivo}, status=503)
         actual = response['current']
         hourly = response['hourly']
         daily = response['daily']
