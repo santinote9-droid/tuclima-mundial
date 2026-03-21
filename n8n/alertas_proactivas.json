@@ -1,0 +1,279 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 * * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [0, 300],
+      "id": "alerta-001-schedule",
+      "name": "Trigger Cada Hora"
+    },
+    {
+      "parameters": {
+        "url": "https://tuclima-mundial.onrender.com/api/alertas/usuarios/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Alertas-Secret",
+              "value": "REEMPLAZAR_CON_N8N_ALERTAS_SECRET"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [240, 300],
+      "id": "alerta-002-get-users",
+      "name": "Obtener Usuarios"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convertir el array de usuarios en items separados (uno por usuario)\nconst data = $input.first().json;\nif (!data.usuarios || data.usuarios.length === 0) {\n  return [];\n}\nreturn data.usuarios.map(u => ({ json: u }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300],
+      "id": "alerta-003-expand",
+      "name": "Expandir Usuarios"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "filter-hora-alerta",
+              "leftValue": "={{ $json.hora_alerta }}",
+              "rightValue": "={{ $now.setZone('America/Argentina/Buenos_Aires').hour }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [720, 300],
+      "id": "alerta-004-filter-hora",
+      "name": "Filtrar por Hora"
+    },
+    {
+      "parameters": {
+        "url": "https://geocoding-api.open-meteo.com/v1/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $json.ubicacion_nombre }}"
+            },
+            {
+              "name": "count",
+              "value": "1"
+            },
+            {
+              "name": "language",
+              "value": "es"
+            },
+            {
+              "name": "format",
+              "value": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [960, 300],
+      "id": "alerta-005-geocoding",
+      "name": "Geocodificar Ubicacion"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verificar que la geocodificación tuvo resultado\nconst geo = $input.first().json;\nif (!geo.results || geo.results.length === 0) {\n  // Ciudad no encontrada: saltar este usuario\n  return [];\n}\nconst loc = geo.results[0];\nreturn [{\n  json: {\n    lat: loc.latitude,\n    lon: loc.longitude,\n    city_resolved: `${loc.name}, ${loc.country_code || loc.country || ''}`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 300],
+      "id": "alerta-006-verify-geo",
+      "name": "Verificar Geocodificacion"
+    },
+    {
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "latitude",
+              "value": "={{ $json.lat }}"
+            },
+            {
+              "name": "longitude",
+              "value": "={{ $json.lon }}"
+            },
+            {
+              "name": "timezone",
+              "value": "America/Argentina/Buenos_Aires"
+            },
+            {
+              "name": "forecast_days",
+              "value": "3"
+            },
+            {
+              "name": "current",
+              "value": "temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,wind_speed_10m,wind_gusts_10m,visibility"
+            },
+            {
+              "name": "daily",
+              "value": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,et0_fao_evapotranspiration"
+            },
+            {
+              "name": "hourly",
+              "value": "cape,lifted_index,shortwave_radiation,cloud_cover"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "TuClimaApp-Alertas"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1440, 300],
+      "id": "alerta-007-forecast",
+      "name": "Obtener Pronostico"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Evaluar umbrales climáticos por sector y preparar datos para el AI Agent\nconst usuario = $('Filtrar por Hora').item.json;\nconst geo     = $('Verificar Geocodificacion').item.json;\nconst fc      = $input.first().json;  // forecast\n\nconst sectores = (usuario.sectores || 'agro').split(',').map(s => s.trim().toLowerCase());\nconst alertas  = [];\nconst current  = fc.current  || {};\nconst daily    = fc.daily    || {};\nconst hourly   = fc.hourly   || {};\n\n// --- Valores clave del pronóstico ---\nconst tempMin3d   = daily.temperature_2m_min?.length ? Math.min(...daily.temperature_2m_min) : 99;\nconst tempMax3d   = daily.temperature_2m_max?.length ? Math.max(...daily.temperature_2m_max) : 0;\nconst lluviaMax   = daily.precipitation_sum?.length  ? Math.max(...daily.precipitation_sum)  : 0;\nconst vientoMax3d = daily.wind_speed_10m_max?.length ? Math.max(...daily.wind_speed_10m_max) : 0;\nconst vientoActual  = current.wind_speed_10m  || 0;\nconst rafagaActual  = current.wind_gusts_10m  || 0;\nconst visibilidad   = current.visibility      || 99999;\nconst capePico      = hourly.cape?.length    ? Math.max(...hourly.cape.slice(0, 48))                        : 0;\nconst radMedia      = hourly.shortwave_radiation?.length\n  ? hourly.shortwave_radiation.slice(0, 24).reduce((a, b) => a + b, 0) / 24\n  : 200;\n\n// --- Umbrales por sector ---\nif (sectores.includes('agro')) {\n  if (tempMin3d <= 2)   alertas.push(`🥶 HELADA: mínima de ${tempMin3d.toFixed(1)}°C en los próximos 3 días`);\n  if (lluviaMax >= 30)  alertas.push(`🌧️ LLUVIA INTENSA: ${lluviaMax.toFixed(0)} mm máx pronosticados`);\n  if (vientoMax3d >= 60) alertas.push(`💨 VIENTO FUERTE: ráfagas de hasta ${vientoMax3d.toFixed(0)} km/h`);\n}\n\nif (sectores.includes('naval')) {\n  if (vientoActual > 40)  alertas.push(`⚓ VIENTO PELIGROSO: ${vientoActual.toFixed(0)} km/h — operaciones en riesgo`);\n  if (visibilidad < 1000) alertas.push(`🌫️ NIEBLA ESPESA: visibilidad ${Math.round(visibilidad)} m`);\n  if (lluviaMax >= 20 && rafagaActual > 35)\n    alertas.push(`🌊 MAL TIEMPO COMBINADO: lluvia + ráfagas de ${rafagaActual.toFixed(0)} km/h`);\n}\n\nif (sectores.includes('aereo')) {\n  if (capePico > 1500)    alertas.push(`⚡ ALTA INESTABILIDAD: CAPE ${Math.round(capePico)} J/kg — tormentas posibles`);\n  if (vientoActual > 60)  alertas.push(`✈️ VIENTOS INTENSOS: ${vientoActual.toFixed(0)} km/h en superficie`);\n  if (visibilidad < 3000) alertas.push(`🌫️ VISIBILIDAD REDUCIDA: ${(visibilidad / 1000).toFixed(1)} km`);\n}\n\nif (sectores.includes('energia')) {\n  if (radMedia < 50)       alertas.push(`☁️ BAJA RADIACIÓN SOLAR: ${radMedia.toFixed(0)} W/m² promedio — impacto en paneles`);\n  if (vientoMax3d > 80)    alertas.push(`🌀 VIENTO EXTREMO: ${vientoMax3d.toFixed(0)} km/h — revisar turbinas eólicas`);\n}\n\nreturn [{\n  json: {\n    ...usuario,\n    alertas,\n    nivel: alertas.length > 0 ? 'alerta' : 'normal',\n    alertas_texto: alertas.length > 0 ? alertas.join('\\n') : 'Sin condiciones críticas hoy.',\n    ubicacion_resuelta: geo.city_resolved || usuario.ubicacion_nombre,\n    clima_resumen: {\n      temp_actual:  current.temperature_2m,\n      temp_min_3d:  tempMin3d,\n      temp_max_3d:  tempMax3d,\n      lluvia_max_3d: lluviaMax,\n      viento_actual: vientoActual,\n      rafaga_actual: rafagaActual,\n      humedad:      current.relative_humidity_2m,\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 300],
+      "id": "alerta-008-umbrales",
+      "name": "Evaluar Umbrales"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {
+          "maxOutputTokens": 700
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [1800, 520],
+      "id": "alerta-009-gemini",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "UcE6zBeBch9QD2vO",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Sos el asistente climático profesional de TuClima.\n\nDatos del usuario:\n- Nombre: {{ $json.nombre }}\n- Sectores: {{ $json.sectores }}\n- Ubicación: {{ $json.ubicacion_resuelta }}\n- Nivel: {{ $json.nivel }}\n\nAlertas detectadas:\n{{ $json.alertas_texto }}\n\nClima actual y pronóstico 3 días:\n- Temperatura actual: {{ $json.clima_resumen.temp_actual }}°C | Humedad: {{ $json.clima_resumen.humedad }}%\n- Mínima próx. 3d: {{ $json.clima_resumen.temp_min_3d }}°C | Máxima: {{ $json.clima_resumen.temp_max_3d }}°C\n- Lluvia máx. 3d: {{ $json.clima_resumen.lluvia_max_3d }} mm | Viento: {{ $json.clima_resumen.viento_actual }} km/h\n\nRedactá un email en español profesional y conciso (máx 200 palabras):\n- Si nivel='alerta': asunto '⚠️ Alerta climática para tu sector — TuClima' — destacá cada alerta con UNA acción concreta por sector\n- Si nivel='normal': asunto '☀️ Tu resumen climático del día — TuClima' — tono positivo con 2-3 recomendaciones prácticas\n- Iniciá con 'Hola {{ $json.nombre }},'\n- Cerrá con 'El equipo de TuClima'\n- NO uses markdown, NO uses HTML — texto plano con saltos de línea\n\nLuego enviá el email inmediatamente usando la herramienta enviar_correo. Destinatario: {{ $json.email }}",
+        "options": {
+          "maxIterations": 3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [1920, 300],
+      "id": "alerta-010-agent",
+      "name": "AI Agent Email"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Envía el email de reporte o alerta climática al usuario. Úsala exactamente UNA vez. Pasá el asunto y el cuerpo del mensaje.",
+        "sendTo": "={{ $('Filtrar por Hora').item.json.email }}",
+        "subject": "={{ $fromAI('subject', 'Reporte climático TuClima') }}",
+        "message": "={{ $fromAI('mensaje', 'Cuerpo del email') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [2160, 520],
+      "id": "alerta-011-gmail",
+      "name": "enviar_correo",
+      "webhookId": "f8456d83-4c66-4d37-9c23-0aaecf00e8f2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "1wkewQEcmk2sw9Gz",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Trigger Cada Hora": {
+      "main": [[{"node": "Obtener Usuarios", "type": "main", "index": 0}]]
+    },
+    "Obtener Usuarios": {
+      "main": [[{"node": "Expandir Usuarios", "type": "main", "index": 0}]]
+    },
+    "Expandir Usuarios": {
+      "main": [[{"node": "Filtrar por Hora", "type": "main", "index": 0}]]
+    },
+    "Filtrar por Hora": {
+      "main": [[{"node": "Geocodificar Ubicacion", "type": "main", "index": 0}]]
+    },
+    "Geocodificar Ubicacion": {
+      "main": [[{"node": "Verificar Geocodificacion", "type": "main", "index": 0}]]
+    },
+    "Verificar Geocodificacion": {
+      "main": [[{"node": "Obtener Pronostico", "type": "main", "index": 0}]]
+    },
+    "Obtener Pronostico": {
+      "main": [[{"node": "Evaluar Umbrales", "type": "main", "index": 0}]]
+    },
+    "Evaluar Umbrales": {
+      "main": [[{"node": "AI Agent Email", "type": "main", "index": 0}]]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [[{"node": "AI Agent Email", "type": "ai_languageModel", "index": 0}]]
+    },
+    "enviar_correo": {
+      "ai_tool": [[{"node": "AI Agent Email", "type": "ai_tool", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "19ee95c84ac845adb5e56f055bd53b79a0e674016338a7de7b71fc1ecea83ccf"
+  }
+}

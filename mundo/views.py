@@ -928,6 +928,33 @@ def agro(request):
             daily.get('weather_code', [])
         ))
 
+        # --- TIRA HORARIA (próximas 24h para timeline) ---
+        _th24 = hourly.get('temperature_2m', [])
+        _lh24 = hourly.get('precipitation_probability', [])
+        _wh24 = hourly.get('wind_speed_10m', [])
+        _ch24 = hourly.get('weather_code', [])
+        tira_24h_agro = []
+        for _i in range(24):
+            _hi = idx_hora + _i
+            if _hi >= len(_th24): break
+            tira_24h_agro.append({
+                'hora': 'Ahora' if _i == 0 else f'{_hi % 24:02d}:00',
+                'temp': round(_th24[_hi] or 0, 1),
+                'lluvia': int(_lh24[_hi] or 0) if _hi < len(_lh24) else 0,
+                'viento': round(_wh24[_hi] or 0, 1) if _hi < len(_wh24) else 0,
+                'code': int(_ch24[_hi] or 0) if _hi < len(_ch24) else 0,
+            })
+
+        # --- BANNER DE ALERTA CRÍTICA ---
+        viento_actual = curr.get('wind_speed_10m', 0)
+        alerta_banner = {'activo': False, 'mensaje': '', 'color': '', 'texto': '', 'borde': ''}
+        if delta_t > 10 or viento_actual > 20:
+            alerta_banner = {'activo': True, 'mensaje': f'Pulverización PROHIBIDA — Delta T {delta_t}°C / Viento {round(viento_actual,1)} km/h. Riesgo de deriva severo.', 'color': 'rgba(239,68,68,0.12)', 'texto': '#ef4444', 'borde': 'rgba(239,68,68,0.4)'}
+        elif delta_t > 8 or vpd_val > 1.6:
+            alerta_banner = {'activo': True, 'mensaje': f'Condiciones marginales — VPD {round(vpd_val,2)} kPa / Delta T {delta_t}°C. Evaluar postergación de labores.', 'color': 'rgba(251,146,60,0.12)', 'texto': '#fb923c', 'borde': 'rgba(251,146,60,0.4)'}
+        elif balance_neto < -30:
+            alerta_banner = {'activo': True, 'mensaje': f'Déficit hídrico severo — Balance semanal {round(balance_neto,1)} mm. Riesgo de estrés en cultivos.', 'color': 'rgba(251,191,36,0.10)', 'texto': '#fbbf24', 'borde': 'rgba(251,191,36,0.3)'}
+
         # --- CONSTRUCCIÓN DEL CONTEXTO (Mapeo a HTML) ---
         contexto = {
             'lat': lat, 
@@ -1011,8 +1038,10 @@ def agro(request):
                 'fechas': fechas_json,
                 'lluvia': lluvia_json,
                 'eto': eto_json
-            }
+            },
+            'tira_24h': tira_24h_agro,
         }
+        contexto['alerta_banner'] = alerta_banner
 
     except Exception as e:
         print(f"Error en vista AGRO: {e}")
@@ -1064,7 +1093,7 @@ def naval(request):
         "&current=temperature_2m,relative_humidity_2m,apparent_temperature,pressure_msl,"
         "wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility,is_day"
         "&hourly=wind_speed_10m"
-        "&daily=sunrise,sunset,daylight_duration"
+        "&daily=sunrise,sunset,daylight_duration,wind_speed_10m_max,wind_gusts_10m_max"
         "&timezone=auto"
     )
     
@@ -1075,6 +1104,7 @@ def naval(request):
         "&current=wave_height,wave_direction,wave_period,swell_wave_height,"
         "swell_wave_period,swell_wave_direction"
         "&hourly=wave_height,wave_period,swell_wave_height"
+        "&daily=wave_height_max,swell_wave_height_max"
         "&timezone=auto"
     )
 
@@ -1180,6 +1210,42 @@ def naval(request):
         graf_viento = [round(v * 0.539957, 1) for v in raw_viento[idx:idx+24]]
         graf_horas = [f"{(idx+i)%24}:00" for i in range(len(graf_olas))]
 
+        # 8. GRÁFICO 7 DÍAS (Pronóstico Extendido Naval)
+        daily_m = res_m.get('daily', {})
+        daily_w2 = res_w.get('daily', {})
+        graf7_fechas_raw = daily_m.get('time', daily_w2.get('time', []))[:7]
+        graf7_olas_max = [round(v, 2) if v is not None else 0 for v in daily_m.get('wave_height_max', [0]*7)[:7]]
+        graf7_viento_max = [round(v * 0.539957, 1) if v is not None else 0 for v in daily_w2.get('wind_speed_10m_max', [0]*7)[:7]]
+        # Calcular color de riesgo (Beaufort) por día para JS
+        def _bft_color(kt):
+            if kt >= 22: return '#ef4444'
+            if kt >= 11: return '#facc15'
+            return '#22d3ee'
+        graf7_colores = [_bft_color(v) for v in graf7_viento_max]
+        # Formatear fechas DD/MM
+        graf7_fechas = [f[5:] for f in graf7_fechas_raw]  # "MM-DD"
+
+        # --- TIRA HORARIA NAVAL (próximas 24h) ---
+        tira_24h_naval = []
+        for _i in range(24):
+            _hi = idx + _i
+            _w = round(raw_viento[_hi] * 0.539957, 1) if _hi < len(raw_viento) and raw_viento[_hi] is not None else 0
+            _o = round(raw_olas[_hi], 2) if _hi < len(raw_olas) and raw_olas[_hi] is not None else 0
+            tira_24h_naval.append({
+                'hora': 'Ahora' if _i == 0 else f'{_hi % 24:02d}:00',
+                'viento': _w,
+                'ola': _o,
+            })
+
+        # --- BANNER DE ALERTA CRÍTICA ---
+        alerta_banner = {'activo': False, 'mensaje': '', 'color': '', 'texto': '', 'borde': ''}
+        if wave_h >= 2.5 or wind_kt >= 25:
+            alerta_banner = {'activo': True, 'mensaje': f'PUERTO CERRADO — Oleaje {wave_h}m / Viento {wind_kt}kt. No salir a navegar.', 'color': 'rgba(239,68,68,0.12)', 'texto': '#ef4444', 'borde': 'rgba(239,68,68,0.4)'}
+        elif vis_nm < 1:
+            alerta_banner = {'activo': True, 'mensaje': f'NIEBLA CERRADA — Visibilidad {vis_nm} NM. Navegación restringida hasta nuevo aviso.', 'color': 'rgba(148,163,184,0.12)', 'texto': '#94a3b8', 'borde': 'rgba(148,163,184,0.35)'}
+        elif wave_h >= 1.5 or wind_kt >= 15:
+            alerta_banner = {'activo': True, 'mensaje': f'PRECAUCIÓN — Mar {mar_estado} ({wave_h}m) / Viento F{beaufort} ({wind_kt}kt). Evaluar cada salida individualmente.', 'color': 'rgba(251,191,36,0.10)', 'texto': '#fbbf24', 'borde': 'rgba(251,191,36,0.3)'}
+
         # --- CONSTRUCCIÓN DEL CONTEXTO ---
         contexto = {
             'lat': lat, 'lon': lon,
@@ -1238,8 +1304,16 @@ def naval(request):
                 'fechas': json.dumps(graf_horas),
                 'olas': json.dumps(graf_olas),
                 'viento': json.dumps(graf_viento)
-            }
+            },
+            'grafico_naval_7d': {
+                'fechas': json.dumps(graf7_fechas),
+                'olas_max': json.dumps(graf7_olas_max),
+                'viento_max': json.dumps(graf7_viento_max),
+                'colores': json.dumps(graf7_colores),
+            },
+            'tira_24h': tira_24h_naval,
         }
+        contexto['alerta_banner'] = alerta_banner
 
     except Exception as e:
         print(f"Error Naval: {e}")
@@ -1396,6 +1470,15 @@ def aereo(request):
             {'capa': 'Altas', 'pct': get_safe(hourly.get('cloud_cover_high', []), idx), 'desc': c_desc(get_safe(hourly.get('cloud_cover_high', []), idx), 'high')},
         ]
 
+        # --- BANNER DE ALERTA CRÍTICA ---
+        alerta_banner = {'activo': False, 'mensaje': '', 'color': '', 'texto': '', 'borde': ''}
+        if cat in ('LIFR', 'IFR') or max_cape > 1000:
+            alerta_banner = {'activo': True, 'mensaje': f'{cat} ACTIVO — {"Tormentas en área · " if max_cape > 1000 else ""}Vuelo VFR restringido. Consultar METAR oficial antes de despegar.', 'color': 'rgba(239,68,68,0.12)', 'texto': '#ef4444', 'borde': 'rgba(239,68,68,0.4)'}
+        elif (gusts - wind_k) > 20:
+            alerta_banner = {'activo': True, 'mensaje': f'WIND SHEAR — Diferencial {gusts - wind_k} KT entre superficie y ráfagas. Precaución en despegue y aproximación.', 'color': 'rgba(251,146,60,0.12)', 'texto': '#fb923c', 'borde': 'rgba(251,146,60,0.4)'}
+        elif cat == 'MVFR':
+            alerta_banner = {'activo': True, 'mensaje': f'MVFR ACTIVO — Visibilidad {vis_display} km. Condiciones subóptimas para VFR. Verificar METAR antes de despegar.', 'color': 'rgba(59,130,246,0.12)', 'texto': '#60a5fa', 'borde': 'rgba(59,130,246,0.3)'}
+
         contexto = {
             'lat': lat, 'lon': lon,
             'metar': {'raw': f"VIRTUAL {datetime.utcnow().strftime('%d%H%MZ')} {int(curr.get('wind_direction_10m',0) or 0):03d}{wind_k:02d}KT {9999 if vis_km>=10 else int(vis_metros)}", 'hora': datetime.utcnow().strftime('%H:%MZ')},
@@ -1411,8 +1494,18 @@ def aereo(request):
             'ambiente': {'temp': int(temp), 'humedad': curr.get('relative_humidity_2m', 0) or 0, 'desc': 'Normal', 'sensacion': int(curr.get('apparent_temperature', temp) or temp)},
             'radar': {'estado': r_st, 'color': r_col, 'aviso': r_av, 'desc': r_desc, 'cape': int(max_cape), 'li': round(min_li, 1)},
             'visibilidad_panel': {'km': vis_display, 'estado': vis_txt, 'color': vis_color},
-            'grafico_aereo': grafico_data
+            'grafico_aereo': grafico_data,
+            'tira_24h': [
+                {
+                    'hora': 'Ahora' if _i == 0 else f'{(idx+_i) % 24:02d}Z',
+                    'nubes': int(hourly.get('cloud_cover', [0]*200)[(idx+_i)] or 0) if (idx+_i) < len(hourly.get('cloud_cover', [])) else 0,
+                    'viento': int(hourly.get('wind_speed_10m', [0]*200)[(idx+_i)] or 0) if (idx+_i) < len(hourly.get('wind_speed_10m', [])) else 0,
+                    'temp': round((hourly.get('temperature_2m', [0]*200)[(idx+_i)] or 0), 1) if (idx+_i) < len(hourly.get('temperature_2m', [])) else 0,
+                }
+                for _i in range(24) if (idx+_i) < len(hourly.get('cloud_cover', [0]*200))
+            ],
         }
+        contexto['alerta_banner'] = alerta_banner
 
     except Exception as e:
         print(f"⚠️ ERROR CRÍTICO AEREO: {e}")
@@ -1541,6 +1634,13 @@ def energia(request):
         if total_kw > 0.05:
             ganador = "SOLAR" if potencia_solar > potencia_eolica else "EÓLICA"
 
+        # --- BANNER DE ALERTA CRÍTICA ---
+        alerta_banner = {'activo': False, 'mensaje': '', 'color': '', 'texto': '', 'borde': ''}
+        if temp_now > 38:
+            alerta_banner = {'activo': True, 'mensaje': f'Temperatura crítica — {int(temp_now)}°C reduce eficiencia solar en {round((1-loss_factor)*100,1)}%. Verificar ventilación de paneles.', 'color': 'rgba(239,68,68,0.12)', 'texto': '#f87171', 'borde': 'rgba(239,68,68,0.35)'}
+        elif wind_ms > 12:
+            alerta_banner = {'activo': True, 'mensaje': f'Viento fuerte — {round(wind_ms,1)} m/s. Verificar anclaje de turbina y revisar protocolo de desconexión de emergencia.', 'color': 'rgba(251,191,36,0.10)', 'texto': '#fbbf24', 'borde': 'rgba(251,191,36,0.3)'}
+
         contexto = {
             'lat': lat, 'lon': lon,
             'solar': {'rad': int(rad_now), 'potencia': f"{int(potencia_solar)} W", 'estado': st_solar, 'color': col_solar, 'rec': "Limpieza si eficiencia < 15%."},
@@ -1579,8 +1679,18 @@ def energia(request):
                 'solar': json.dumps(arr_solar),
                 'viento': json.dumps(arr_wind),
                 'h2': json.dumps(arr_h2)
-            }
+            },
+            'tira_24h': [
+                {
+                    'hora': 'Ahora' if _i == 0 else f'{(idx+_i) % 24:02d}:00',
+                    'rad': int((hourly.get('shortwave_radiation', [0]*168)[(idx+_i) % len(hourly.get('shortwave_radiation', [1]))] or 0)),
+                    'viento': round(((hourly.get('wind_speed_10m', [0]*168)[(idx+_i) % len(hourly.get('wind_speed_10m', [1]))] or 0) / 3.6), 1),
+                    'temp': round((hourly.get('temperature_2m', [20]*168)[(idx+_i) % len(hourly.get('temperature_2m', [1]))] or 20), 1),
+                }
+                for _i in range(24)
+            ],
         }
+        contexto['alerta_banner'] = alerta_banner
 
     except Exception as e:
         print(f"Error Energia: {e}")
@@ -3458,6 +3568,128 @@ def panel_feedback(request):
     return render(request, 'panel_feedback.html', context)
 
 
+# ==============================================================================
+# DEVORADOR DE REPORTES — Procesamiento Documental con IA
+# ==============================================================================
+
+@login_required
+def devorador_vista(request):
+    """Renderiza la página del Devorador de Reportes."""
+    if hasattr(request.user, 'perfil') and not request.user.perfil.suscripcion_activa:
+        return redirect('pricing')
+    return render(request, 'devorador_reporte.html')
+
+
+@login_required
+@require_http_methods(["POST"])
+def devorador_api(request):
+    """
+    Recibe un PDF del frontend, lo reenvía al workflow n8n Devorador de Reportes
+    y devuelve el análisis ejecutivo con 5 viñetas críticas.
+    """
+    if hasattr(request.user, 'perfil') and not request.user.perfil.suscripcion_activa:
+        return JsonResponse({'error': 'Suscripción PRO requerida para usar el Devorador de Reportes.'}, status=403)
+
+    # Verificar tokens disponibles
+    from .models import COSTO_TOKENS
+    if hasattr(request.user, 'perfil'):
+        costo = COSTO_TOKENS['DEVORADOR_REPORTE']
+        if not request.user.perfil.tiene_tokens(costo):
+            return JsonResponse(
+                {'error': f'Tokens insuficientes. El Devorador de Reportes requiere {costo:,} tokens. Recargá tu plan para continuar.'},
+                status=402
+            )
+
+    # Verificar que se recibió un archivo
+    documento = request.FILES.get('documento')
+    if not documento:
+        return JsonResponse({'error': 'No se recibió ningún archivo. Por favor adjunta un PDF.'}, status=400)
+
+    # Validar extensión (whitelist)
+    nombre_lower = documento.name.lower()
+    if not nombre_lower.endswith(('.pdf', '.txt', '.docx')):
+        return JsonResponse({'error': 'Solo se aceptan archivos PDF, TXT o DOCX.'}, status=415)
+
+    # Validar tamaño (50 MB máximo)
+    tamano_mb = documento.size / (1024 * 1024)
+    if tamano_mb > 50:
+        return JsonResponse(
+            {'error': f'El archivo supera el límite de 50MB ({tamano_mb:.1f}MB).'},
+            status=400
+        )
+
+    # Sanitizar campos del formulario
+    sector_raw = request.POST.get('sector', 'GENERAL').upper().strip()
+    sectores_validos = ['AGRO', 'NAVAL', 'AEREO', 'ENERGIA', 'GENERAL']
+    sector = sector_raw if sector_raw in sectores_validos else 'GENERAL'
+
+    # Sanitizar nombre de empresa: solo alfanuméricos, espacios y guiones comunes
+    import re as _re
+    empresa_raw = request.POST.get('empresa', 'Empresa').strip()
+    empresa = _re.sub(r'[^\w\sáéíóúÁÉÍÓÚñÑ.,\-]', '', empresa_raw)[:100] or 'Empresa'
+
+    session_id = f"drc-{request.user.id}-{int(time.time())}"
+
+    # URL del webhook n8n — usar variable de entorno, nunca hardcodear en producción
+    n8n_base = os.getenv('N8N_BASE_URL', 'https://n8n-production-2651.up.railway.app')
+    webhook_url = f"{n8n_base}/webhook/devorador-reportes"
+
+    try:
+        # Leer contenido del archivo en memoria y reenviar como multipart
+        contenido = documento.read()
+        mime_type = documento.content_type or 'application/pdf'
+
+        files = {
+            'documento': (documento.name, contenido, mime_type)
+        }
+        data = {
+            'sector': sector,
+            'empresa': empresa,
+            'session_id': session_id,
+        }
+
+        respuesta = requests.post(
+            webhook_url,
+            files=files,
+            data=data,
+            timeout=120  # 2 minutos para documentos extensos
+        )
+        respuesta.raise_for_status()
+        resultado = respuesta.json()
+
+        # Descontar tokens solo si el análisis fue exitoso
+        if resultado.get('success') and hasattr(request.user, 'perfil'):
+            from .models import COSTO_TOKENS
+            request.user.perfil.descontar_tokens(
+                COSTO_TOKENS['DEVORADOR_REPORTE'],
+                f'Devorador de Reportes — {sector} — {documento.name[:50]}'
+            )
+
+        return JsonResponse(resultado)
+
+    except requests.exceptions.Timeout:
+        logger.error(f'[DEVORADOR] Timeout en n8n para usuario {request.user.username}')
+        return JsonResponse(
+            {'error': 'El análisis tardó demasiado. Por favor intenta con un documento más pequeño o en formato TXT.'},
+            status=504
+        )
+    except requests.exceptions.HTTPError as e:
+        logger.error(f'[DEVORADOR] HTTP error de n8n: {e}')
+        return JsonResponse(
+            {'error': 'Error en el servicio de análisis. Reintente en unos minutos.'},
+            status=502
+        )
+    except requests.exceptions.RequestException as e:
+        logger.error(f'[DEVORADOR] Error de conexión n8n: {e}')
+        return JsonResponse(
+            {'error': 'No se pudo conectar al servicio de análisis. Reintente en unos minutos.'},
+            status=503
+        )
+    except Exception as e:
+        logger.error(f'[DEVORADOR] Error inesperado: {e}')
+        return JsonResponse({'error': 'Error interno del servidor.'}, status=500)
+
+
 @login_required
 @require_http_methods(["POST"])
 def marcar_feedback_revisado(request, feedback_id):
@@ -3829,9 +4061,21 @@ def mi_cuenta(request):
     perfil, _ = PerfilUsuario.objects.get_or_create(user=request.user)
 
     if request.method == 'POST':
-        nuevo_valor = request.POST.get('renovacion_automatica') == 'on'
-        perfil.renovacion_automatica = nuevo_valor
-        perfil.save(update_fields=['renovacion_automatica'])
+        accion = request.POST.get('accion', 'preferencias')
+        if accion == 'alertas':
+            perfil.alertas_activas = request.POST.get('alertas_activas') == 'on'
+            sectores = request.POST.getlist('alertas_sectores')
+            perfil.alertas_sectores = ','.join(s for s in sectores if s in ('agro', 'naval', 'aereo', 'energia'))
+            try:
+                perfil.hora_alerta = max(0, min(23, int(request.POST.get('hora_alerta', 7))))
+            except (ValueError, TypeError):
+                perfil.hora_alerta = 7
+            perfil.ubicacion_nombre = request.POST.get('ubicacion_nombre', '').strip()[:100]
+            perfil.save(update_fields=['alertas_activas', 'alertas_sectores', 'hora_alerta', 'ubicacion_nombre'])
+        else:
+            nuevo_valor = request.POST.get('renovacion_automatica') == 'on'
+            perfil.renovacion_automatica = nuevo_valor
+            perfil.save(update_fields=['renovacion_automatica'])
         return redirect('/mi-cuenta/?guardado=1')
 
     from .models import COSTO_TOKENS
@@ -3856,5 +4100,41 @@ def mi_cuenta(request):
         'costos': COSTO_TOKENS,
         'guardado': request.GET.get('guardado') == '1',
         'historial': historial,
+        'sectores_alertas': [
+            ('agro',    'Agro',    '\U0001f331'),
+            ('naval',   'Naval',   '\u2693'),
+            ('aereo',   'Aéreo',   '\u2708\ufe0f'),
+            ('energia', 'Energía', '\u26a1'),
+        ],
+        'horas_alerta': list(range(5, 21)),
     })
+
+
+# ─────────────────────────────────────────────
+# ALERTAS PROACTIVAS — endpoint para n8n
+# ─────────────────────────────────────────────
+def api_alertas_usuarios(request):
+    """Endpoint interno para n8n: devuelve usuarios con alertas activas y suscripción vigente."""
+    from django.conf import settings as django_settings
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    secret = request.headers.get('X-Alertas-Secret', '')
+    if secret != getattr(django_settings, 'N8N_ALERTAS_SECRET', 'tuclima-alertas-2026'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    usuarios = []
+    for perfil in (PerfilUsuario.objects
+                   .filter(alertas_activas=True, fecha_vencimiento__gt=timezone.now())
+                   .select_related('user')):
+        if not perfil.ubicacion_nombre or not perfil.user.email:
+            continue
+        usuarios.append({
+            'id':              perfil.user.id,
+            'email':           perfil.user.email,
+            'nombre':          perfil.user.first_name or perfil.user.username,
+            'sectores':        perfil.alertas_sectores or 'agro',
+            'hora_alerta':     perfil.hora_alerta,
+            'ubicacion_nombre': perfil.ubicacion_nombre,
+        })
+    return JsonResponse({'usuarios': usuarios, 'total': len(usuarios)})
 

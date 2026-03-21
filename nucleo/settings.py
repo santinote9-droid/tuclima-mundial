@@ -91,18 +91,17 @@ WSGI_APPLICATION = 'nucleo.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         default=os.getenv('DATABASE_URL'),
-        conn_max_age=int(os.getenv('DB_CONN_MAX_AGE', 600)),  # Mantener conexiones por 10 minutos
-        conn_health_checks=True,  # Verificar salud de conexiones
+        conn_max_age=0,           # Transaction pooler requiere conn_max_age=0
+        conn_health_checks=False,
     )
 }
 
-# Configuración adicional para garantizar persistencia
-ATOMIC_REQUESTS = os.getenv('DB_ATOMIC_REQUESTS', 'True').lower() == 'true'
+ATOMIC_REQUESTS = False
 
-# Configuración de timeout para conexiones de base de datos
+# Transaction pooler NO soporta 'PREPARE' ni opciones de sesión
 DATABASES['default']['OPTIONS'] = {
     'connect_timeout': 30,
-    'options': '-c default_transaction_isolation=serializable'
+    'sslmode': 'require',
 }
 
 
@@ -211,3 +210,9 @@ PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', '')
 # ============================================================
 LEMONSQUEEZY_STORE_SLUG       = os.getenv('LEMONSQUEEZY_STORE_SLUG', '')
 LEMONSQUEEZY_WEBHOOK_SECRET   = os.getenv('LEMONSQUEEZY_WEBHOOK_SECRET', '')
+
+# ============================================================
+# ALERTAS PROACTIVAS (n8n)
+# N8N_ALERTAS_SECRET=tuclima-alertas-2026  (mismo valor en n8n y en esta variable)
+# ============================================================
+N8N_ALERTAS_SECRET = os.getenv('N8N_ALERTAS_SECRET', '')

@@ -42,6 +42,12 @@ collected-static/
 supabase_keys.txt
 
 # Credenciales y archivos sensibles
-credenciales/bigquery-credentials.json
+credenciales/
 url_ngrok.txt
 n8n_password.txt
+
+# Scripts de debug/utilidad con claves hardcodeadas
+_inspect.py
+_r.py
+_test_vision.py
+n8n_logs.py

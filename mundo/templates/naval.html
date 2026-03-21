@@ -59,18 +59,22 @@
         padding: 2px 0 !important;
         font-size: 14px !important;
         line-height: 1.4 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
     }
     
     .welcome-msg svg {
         width: 16px !important;
         height: 16px !important;
-        margin-right: 4px !important;
+        flex-shrink: 0 !important;
+        margin: 0 !important;
     }
         @media (max-width: 768px) {
             .chat-container {
                 margin: 10px 0;
                 border-radius: 12px;
-                min-height: 500px;
+                height: 420px;
             }
             
             .chat-header {
@@ -188,7 +192,7 @@
         }
     .chat-container {
         width: 100%;
-        min-height: 650px;
+        height: 560px;
         margin: 20px 0;
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         border: 1px solid rgba(51, 65, 85, 0.3);
@@ -237,7 +241,7 @@
 
     .chat-messages {
         flex: 1;
-        padding: 24px;
+        padding: 12px 24px 24px;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
@@ -801,6 +805,35 @@
         .calc-btn-exec:hover { transform: scale(1.02); box-shadow: 0 0 20px var(--accent-gold); }
         .calc-result { margin-top: 20px; text-align: center; font-size: 2.5rem; color: var(--accent-cyan); font-family: 'JetBrains Mono'; font-weight: 800; border: 1px solid var(--border-primary); padding: 20px; border-radius: 12px; background: rgba(6,182,212,0.05); }
 
+        /* ══ MODO CABINA — alto contraste para uso al aire libre ══ */
+        body.cabin-mode {
+            --bg-dark:#000; --card-bg:#0d0d0d; --border:#555;
+            --text-main:#fff; --text-muted:#ccc;
+            background-color:#000 !important; font-size:107%;
+        }
+        body.cabin-mode .header-eng, body.cabin-mode .nav-header,
+        body.cabin-mode .cockpit-header, body.cabin-mode header[class] {
+            background:#000 !important; backdrop-filter:none !important; border-bottom-color:#555 !important;
+        }
+        body.cabin-mode .card, body.cabin-mode .instrument-card,
+        body.cabin-mode .instrumento, body.cabin-mode .panel,
+        body.cabin-mode .modal-content, body.cabin-mode .modal-box {
+            background:#0d0d0d !important; border-color:#555 !important;
+        }
+        body.cabin-mode .modal-overlay, body.cabin-mode .modal-backdrop { background:rgba(0,0,0,0.98) !important; }
+        body.cabin-mode .chat-container, body.cabin-mode .chat-messages,
+        body.cabin-mode .chat-input-area, body.cabin-mode .chat-with-ai {
+            background:#0d0d0d !important; border-color:#555 !important;
+        }
+        body.cabin-mode input, body.cabin-mode select, body.cabin-mode textarea {
+            background:#111 !important; color:#fff !important; border-color:#666 !important;
+        }
+        body.cabin-mode details { border-color:#555 !important; }
+        body.cabin-mode details > summary { background:#111 !important; color:#fff !important; }
+        body.cabin-mode th, body.cabin-mode td { background:#0d0d0d !important; color:#fff !important; border-color:#444 !important; }
+        body.cabin-mode .val-big { text-shadow:0 0 16px currentColor; }
+        #tc-btn-cabina.tc-cabina-on { border-color:#facc15 !important; color:#facc15 !important; background:rgba(250,204,21,0.12) !important; }
+
     </style>
 
 <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
@@ -835,6 +868,11 @@
                 CALCULADORA
             </button>
 
+            <button id="tc-btn-cabina" class="btn-action" onclick="tcToggleCabina()" title="Modo Cabina — alto contraste solar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                CABINA
+            </button>
+
             <button class="btn-action" onclick="copiarBitacora()">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
                 BITÁCORA
@@ -843,6 +881,10 @@
             <a href="/?lat={{ lat }}&lon={{ lon }}" class="btn-logout">✕ SALIR</a>
         </div>
     </header>
+    <script>
+    function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');var b=document.getElementById('tc-btn-cabina');if(b)b.classList.toggle('tc-cabina-on',on);try{localStorage.setItem('tc_cabin',on?'1':'0');}catch(e){}}
+    (function(){try{if(localStorage.getItem('tc_cabin')==='1'){document.body.classList.add('cabin-mode');setTimeout(function(){var b=document.getElementById('tc-btn-cabina');if(b)b.classList.add('tc-cabina-on');},50);}}catch(e){}})();
+    </script>
 
     <div class="dashboard-grid">
 
@@ -1013,32 +1055,68 @@
         </div>
     </div>
 
-               
-                    
+    <!-- ══ PRONÓSTICO 7 DÍAS — MÁXIMOS DIARIOS ══ -->
+    <div style="max-width: 1720px; margin: 0 auto 40px auto;">
+        <div style="background:rgba(15,23,42,0.85); border:1px solid #1e3a8a; border-radius:16px; overflow:hidden;">
+            <div style="padding:15px 25px; background:rgba(2,6,23,0.9); border-bottom:1px solid #1e3a8a; font-family:'Rajdhani'; font-weight:700; font-size:1.4rem; color:#fff; display:flex; align-items:center; gap:15px;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><path d="M3 3v18h18"/><polyline points="7 16 12 10 15 14 20 8"/></svg>
+                PRONÓSTICO NAVAL · 7 DÍAS (MÁXIMOS DIARIOS)
+            </div>
+            <div id="navalChart7d" style="width:100%; height:300px;"></div>
+        </div>
+    </div>
 
     <div id="modConverter" class="modal-overlay" onclick="closeModal('modConverter')">
-        <div class="modal-box" style="max-width:500px;" onclick="event.stopPropagation()">
+        <div class="modal-box" style="max-width:580px;" onclick="event.stopPropagation()">
             <button class="btn-close-modal" onclick="closeModal('modConverter')">×</button>
-            <div class="modal-title">Conversor Náutico</div>
-            <div class="calc-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div class="modal-title">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                Conversor Náutico
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                 <div>
-                    <label style="color:#94a3b8; font-size:0.8rem; margin-bottom:5px; display:block;">CANTIDAD</label>
-                    <input type="number" id="calcInput" class="calc-input" placeholder="0" style="background: #020617; border: 1px solid #334155; color: #fff; padding: 15px; width: 100%; border-radius: 8px;">
+                    <label style="color:#94a3b8; font-size:0.75rem; letter-spacing:0.08em; margin-bottom:6px; display:block;">VALOR</label>
+                    <input type="number" id="calcInput" class="calc-input" placeholder="0" style="background: #020617; border: 1px solid #334155; color: #fff; padding: 14px 16px; width: 100%; border-radius: 8px; font-size: 1.1rem; box-sizing: border-box;">
                 </div>
                 <div>
-                    <label style="color:#94a3b8; font-size:0.8rem; margin-bottom:5px; display:block;">UNIDAD</label>
-                    <select id="calcType" class="calc-select" style="background: #1e3a8a; border: 1px solid #334155; color: #fff; padding: 15px; width: 100%; border-radius: 8px;">
-                        <option value="kts_kmh">Nudos → Km/h</option>
-                        <option value="kmh_kts">Km/h → Nudos</option>
-                        <option value="m_ft">Metros → Pies</option>
-                        <option value="ft_m">Pies → Metros</option>
-                        <option value="c_f">°C → °F</option>
+                    <label style="color:#94a3b8; font-size:0.75rem; letter-spacing:0.08em; margin-bottom:6px; display:block;">CONVERSIÓN</label>
+                    <select id="calcType" class="calc-select" style="background: #1e293b; border: 1px solid #334155; color: #fff; padding: 14px 16px; width: 100%; border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
+                        <optgroup label="── VELOCIDAD ──" style="color:#64748b;">
+                            <option value="kts_kmh">Nudos → km/h</option>
+                            <option value="kmh_kts">km/h → Nudos</option>
+                            <option value="kts_ms">Nudos → m/s</option>
+                            <option value="ms_kts">m/s → Nudos</option>
+                            <option value="kts_mph">Nudos → mph</option>
+                            <option value="mph_kts">mph → Nudos</option>
+                        </optgroup>
+                        <optgroup label="── DISTANCIA ──" style="color:#64748b;">
+                            <option value="nm_km">Millas náuticas → km</option>
+                            <option value="km_nm">km → Millas náuticas</option>
+                            <option value="nm_m">Millas náuticas → metros</option>
+                            <option value="fathom_m">Brazas → metros</option>
+                            <option value="m_ft">Metros → pies</option>
+                            <option value="ft_m">Pies → metros</option>
+                        </optgroup>
+                        <optgroup label="── PRESIÓN ──" style="color:#64748b;">
+                            <option value="hpa_inhg">hPa → inHg</option>
+                            <option value="inhg_hpa">inHg → hPa</option>
+                            <option value="hpa_mmhg">hPa → mmHg</option>
+                        </optgroup>
+                        <optgroup label="── TEMPERATURA ──" style="color:#64748b;">
+                            <option value="c_f">°C → °F</option>
+                            <option value="f_c">°F → °C</option>
+                        </optgroup>
                     </select>
                 </div>
             </div>
-            <button onclick="calcular()" style="width: 100%; padding: 15px; background: #facc15; color: #000; font-weight: bold; border: none; border-radius: 8px; cursor: pointer;">CALCULAR</button>
-            <div style="margin-top: 20px; text-align: center; font-size: 2.5rem; color: #06b6d4; font-family: 'JetBrains Mono'; font-weight: 800; border: 1px solid #1e3a8a; padding: 20px; border-radius: 12px; background: rgba(6,182,212,0.05);">
-                <span id="calcRes">0</span> <span id="calcUnit" style="font-size:0.5em; vertical-align:middle;">-</span>
+            <button onclick="calcular()" style="width: 100%; padding: 14px; background: #facc15; color: #000; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; letter-spacing: 0.05em;">CALCULAR</button>
+            <div style="margin-top: 16px; text-align: center; padding: 22px 20px; border: 1px solid #1e3a8a; border-radius: 12px; background: rgba(6,182,212,0.05);">
+                <div style="font-size: 2.8rem; color: #06b6d4; font-family: 'JetBrains Mono', monospace; font-weight: 800; line-height: 1.1;">
+                    <span id="calcRes">0</span>
+                </div>
+                <div style="font-size: 1rem; color: #94a3b8; margin-top: 6px; font-family: 'Segoe UI', system-ui, sans-serif;">
+                    <span id="calcUnit">—</span>
+                </div>
             </div>
         </div>
     </div>
@@ -1053,7 +1131,7 @@
             <div class="modal-text">
                 El <strong>Swell</strong> son olas generadas por tormentas a gran distancia que viajan miles de kilómetros. Son olas ordenadas, de largo periodo y gran energía.
                 <br><br>
-                <strong>⚠️ Peligro de "Shoaling":</strong> Cuando un swell de largo periodo llega a la costa, su altura puede duplicarse repentinamente al tocar fondo.
+                <strong><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle; margin-right:4px;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Peligro de Shoaling:</strong> Cuando un swell de largo periodo llega a la costa, su altura puede duplicarse repentinamente al tocar fondo.
             </div>
             
             <table class="tech-table">
@@ -1075,37 +1153,80 @@
         <div class="modal-box" onclick="event.stopPropagation()">
             <button class="btn-close-modal" onclick="closeModal('modAstro')">×</button>
             <div class="modal-title">Navegación Astronómica</div>
-            <div class="modal-text">
-                Fases de luz solar críticas para la navegación visual y el uso de sextante.
+            <div class="modal-text">Fases de luz solar críticas para la navegación visual, uso de sextante y planificación de través. El <strong>crepúsculo náutico</strong> define la ventana óptima para tomar alturas de astros con horizonte visible.</div>
+
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin:16px 0;">
+              <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(251,191,36,0.3); border-radius:10px; padding:12px; text-align:center;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.8" style="margin-bottom:6px;"><circle cx="12" cy="13" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="4.93" y1="5.93" x2="6.34" y2="7.34"/><line x1="2" y1="13" x2="4" y2="13"/><line x1="20" y1="13" x2="22" y2="13"/><line x1="17.66" y1="7.34" x2="19.07" y2="5.93"/><line x1="3" y1="20" x2="21" y2="20"/><polyline points="8 20 12 16 16 20"/></svg>
+                <div style="font-size:0.6rem; color:#92400e; text-transform:uppercase; font-weight:700; margin-bottom:4px;">Amanecer</div>
+                <div style="font-size:1.5rem; color:#fbbf24; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ astro.amanecer }}</div>
+                <div style="font-size:0.65rem; color:#64748b; margin-top:3px;">hora local</div>
+              </div>
+              <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(251,146,60,0.3); border-radius:10px; padding:12px; text-align:center;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="1.8" style="margin-bottom:6px;"><circle cx="12" cy="11" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="4.93" y1="3.93" x2="6.34" y2="5.34"/><line x1="2" y1="11" x2="4" y2="11"/><line x1="20" y1="11" x2="22" y2="11"/><line x1="17.66" y1="5.34" x2="19.07" y2="3.93"/><line x1="3" y1="18" x2="21" y2="18"/><polyline points="8 14 12 18 16 14"/></svg>
+                <div style="font-size:0.6rem; color:#92400e; text-transform:uppercase; font-weight:700; margin-bottom:4px;">Atardecer</div>
+                <div style="font-size:1.5rem; color:#fb923c; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ astro.atardecer }}</div>
+                <div style="font-size:0.65rem; color:#64748b; margin-top:3px;">hora local</div>
+              </div>
+              <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(96,165,250,0.3); border-radius:10px; padding:12px; text-align:center;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8" style="margin-bottom:6px;"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <div style="font-size:0.6rem; color:#1e3a8a; text-transform:uppercase; font-weight:700; margin-bottom:4px;">Luz Diurna</div>
+                <div style="font-size:1.5rem; color:#60a5fa; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ astro.luz }}h</div>
+                <div style="font-size:0.65rem; color:#64748b; margin-top:3px;">horas de sol</div>
+              </div>
             </div>
-            
+
             <table class="tech-table">
-                <thead><tr><th>Fase</th><th>Elevación Sol</th><th>Visibilidad Horizonte</th></tr></thead>
+                <thead><tr><th>Fase Solar</th><th>Elevación</th><th>Uso Náutico</th></tr></thead>
                 <tbody>
-                    <tr><td>Día</td><td>> 0°</td><td>Total. Navegación visual costera segura.</td></tr>
-                    <tr><td>Crepúsculo Civil</td><td>0° a -6°</td><td>Buena. Se distinguen boyas y costa sin luz artificial.</td></tr>
-                    <tr><td>Crepúsculo Náutico</td><td>-6° a -12°</td><td><strong>Límite Sextante.</strong> Se ve el horizonte pero no detalles.</td></tr>
-                    <tr><td>Noche</td><td>< -18°</td><td>Nula. Navegación por instrumentos y faros.</td></tr>
+                    <tr><td>Día pleno</td><td>&gt; +6°</td><td>Navegación visual completa. Carta náutica y derrota por vista.</td></tr>
+                    <tr><td>Crepúsculo Civil</td><td>0° a −6°</td><td>Buena. Boyas y costas visibles sin luz artificial.</td></tr>
+                    <tr><td>Crepúsculo Náutico</td><td>−6° a −12°</td><td><strong>Ventana del sextante.</strong> Horizonte visible + astros tomables.</td></tr>
+                    <tr><td>Crepúsculo Astronómico</td><td>−12° a −18°</td><td>Horizonte difuso. Solo grandes planetas y Luna utilizables.</td></tr>
+                    <tr><td>Noche cerrada</td><td>&lt; −18°</td><td>Instrumentos (GPS/Plotter). Marcaciones de faros y balizas.</td></tr>
                 </tbody>
             </table>
+
+            <div class="info-highlight">
+                <strong>Consejo de Travésía:</strong> Planifique entradas a puerto en el crepúsculo civil (45 min antes del amanecer / después del atardecer). Máxima luz real sin encandilamiento solar. Ideal para reconocer cabos, boyas y luces de enfilación.
+            </div>
         </div>
     </div>
 
     <div id="modPresion" class="modal-overlay" onclick="closeModal('modPresion')">
         <div class="modal-box" onclick="event.stopPropagation()">
             <button class="btn-close-modal" onclick="closeModal('modPresion')">×</button>
-            <div class="modal-title">Barometría y Pronóstico</div>
-            <div class="modal-text">
-                El valor absoluto de la presión (QNH) es menos importante que su <strong>tendencia</strong>. Un cambio rápido es la alerta más fiable de mal tiempo en alta mar.
+            <div class="modal-title">Barometría Naval y Pronóstico</div>
+            <div class="modal-text">El valor absoluto de la presión (QNH) es menos importante que su <strong>tendencia</strong>. Un cambio rápido es la alerta más fiable de mal tiempo en alta mar. Norma práctica: −1 hPa/hora = alerta de temporal en 24hs.</div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:16px 0;">
+              <div style="background:rgba(30,20,50,0.8); border:1px solid {% if nav.presion < 1000 %}rgba(239,68,68,0.4){% elif nav.presion < 1008 %}rgba(251,191,36,0.4){% elif nav.presion > 1025 %}rgba(96,165,250,0.4){% else %}rgba(74,222,128,0.3){% endif %}; border-radius:10px; padding:14px; text-align:center;">
+                <div style="font-size:0.6rem; color:#7c3aed; text-transform:uppercase; font-weight:700; margin-bottom:5px;">Presión QNH Actual</div>
+                <div style="font-size:2.2rem; color:#a78bfa; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ nav.presion }}</div>
+                <div style="font-size:0.7rem; color:#94a3b8; margin-top:4px;">hPa</div>
+              </div>
+              <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(51,65,85,0.5); border-radius:10px; padding:14px; text-align:center; display:flex; flex-direction:column; justify-content:center; gap:6px;">
+                <div style="font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:700;">Diagnóstico</div>
+                <div style="font-size:0.88rem; font-weight:800; color:{% if nav.presion < 1000 %}#ef4444{% elif nav.presion < 1008 %}#fbbf24{% elif nav.presion > 1025 %}#60a5fa{% else %}#4ade80{% endif %};">
+                  {% if nav.presion < 1000 %}BAJA INTENSA{% elif nav.presion < 1008 %}BAJA &mdash; INESTABLE{% elif nav.presion > 1025 %}ALTA &mdash; ESTABLE{% else %}NORMAL{% endif %}
+                </div>
+                <div style="font-size:0.68rem; color:#64748b;">ISA estándar: 1013.25 hPa</div>
+              </div>
             </div>
-            
+
+            <div style="background:rgba(15,23,42,0.8); border:1px solid #1e293b; border-radius:10px; padding:12px 14px; margin-bottom:16px;">
+              <div style="font-size:0.62rem; color:#64748b; text-transform:uppercase; font-weight:700; margin-bottom:8px;">Escala de Presión Absoluta (≈ 950–1050 hPa)</div>
+              <div style="background:linear-gradient(90deg,#ef4444,#fbbf24 30%,#4ade80 55%,#60a5fa 100%); border-radius:4px; height:8px; margin-bottom:4px;"></div>
+              <div style="display:flex; justify-content:space-between; font-size:0.58rem; color:#475569;"><span>950 Tormenta</span><span>980</span><span>1013 Normal</span><span>1030</span><span>1050 Alta</span></div>
+            </div>
+
             <table class="tech-table">
-                <thead><tr><th>Tendencia (3hs)</th><th>Pronóstico</th></tr></thead>
+                <thead><tr><th>Tendencia (3hs)</th><th>Variación</th><th>Pronóstico Náutico</th></tr></thead>
                 <tbody>
-                    <tr><td>Estable / Sube Lento</td><td>Buen tiempo continuo. Vientos suaves.</td></tr>
-                    <tr><td>Baja Lento (< 1 hPa)</td><td>Cambio gradual. Posible lluvia en 24hs.</td></tr>
-                    <tr><td>Baja Rápido (> 3 hPa)</td><td><span class="st-warn">ALERTA</span> Frente frío o tormenta inminente (6-12hs).</td></tr>
-                    <tr><td>Baja Explosiva (> 6 hPa)</td><td><span class="st-risk">CICLOGÉNESIS</span> Temporal severo inmediato. Buscar refugio.</td></tr>
+                    <tr><td>Estable / Sube Lento</td><td>&lt; 1 hPa</td><td>Buen tiempo continuo. Vientos suaves.</td></tr>
+                    <tr><td>Baja Lento</td><td>1–3 hPa</td><td>Cambio gradual. Posible lluvia en 24hs.</td></tr>
+                    <tr><td>Baja Rápido</td><td>3–6 hPa</td><td><span class="st-warn">ALERTA</span> Frente frío o tormenta inminente (6–12hs).</td></tr>
+                    <tr><td>Baja Explosiva</td><td>&gt; 6 hPa</td><td><span class="st-risk">CICLOGÉNESIS</span> Temporal severo inmediato. Buscar abrigo.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -1147,31 +1268,85 @@
     <div id="modViento" class="modal-overlay" onclick="closeModal('modViento')">
         <div class="modal-box" onclick="event.stopPropagation()">
             <button class="btn-close-modal" onclick="closeModal('modViento')">×</button>
-            <div class="modal-title">Escala Beaufort</div>
+            <div class="modal-title">Escala Beaufort — Viento Actual</div>
+            <div class="modal-text">La escala Beaufort (F0–F12) es el estándar internacional para clasificar la intensidad del viento y su efecto en el mar. Diseñada por el Almirante Sir Francis Beaufort en 1805 para la Royal Navy británica.</div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:9px; margin:16px 0;">
+              <div style="background:rgba(15,23,42,0.8); border:1px solid {% if viento.beaufort >= 8 %}rgba(239,68,68,0.4){% elif viento.beaufort >= 6 %}rgba(251,146,60,0.4){% elif viento.beaufort >= 4 %}rgba(251,191,36,0.4){% else %}rgba(34,211,238,0.4){% endif %}; border-radius:10px; padding:12px; text-align:center;">
+                <div style="font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:700; margin-bottom:5px;">Velocidad</div>
+                <div style="font-size:2rem; color:#22d3ee; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ viento.kt }}</div>
+                <div style="font-size:0.68rem; color:#94a3b8; margin-top:3px;">nudos</div>
+              </div>
+              <div style="background:rgba(15,23,42,0.8); border:1px solid {% if viento.beaufort >= 8 %}rgba(239,68,68,0.4){% elif viento.beaufort >= 6 %}rgba(251,146,60,0.4){% elif viento.beaufort >= 4 %}rgba(251,191,36,0.4){% else %}rgba(74,222,128,0.4){% endif %}; border-radius:10px; padding:12px; text-align:center;">
+                <div style="font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:700; margin-bottom:5px;">Beaufort</div>
+                <div style="font-size:2.5rem; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1; color:{% if viento.beaufort >= 8 %}#ef4444{% elif viento.beaufort >= 6 %}#fb923c{% elif viento.beaufort >= 4 %}#fbbf24{% else %}#4ade80{% endif %};">F{{ viento.beaufort }}</div>
+                <div style="font-size:0.68rem; color:#94a3b8; margin-top:3px;">fuerza</div>
+              </div>
+              <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(239,68,68,0.25); border-radius:10px; padding:12px; text-align:center;">
+                <div style="font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:700; margin-bottom:5px;">Ráfaga</div>
+                <div style="font-size:2rem; color:#ef4444; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ viento.rafaga }}</div>
+                <div style="font-size:0.68rem; color:#94a3b8; margin-top:3px;">nudos</div>
+              </div>
+              <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(51,65,85,0.5); border-radius:10px; padding:12px; text-align:center; display:flex; flex-direction:column; justify-content:center;">
+                <div style="font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:700; margin-bottom:5px;">Estado</div>
+                <div style="font-size:0.88rem; font-weight:800; color:{% if viento.beaufort >= 8 %}#ef4444{% elif viento.beaufort >= 6 %}#fb923c{% elif viento.beaufort >= 4 %}#fbbf24{% else %}#4ade80{% endif %}; line-height:1.3;">{{ viento.desc|upper }}</div>
+              </div>
+            </div>
+
             <table class="tech-table">
-                <thead><tr><th>F</th><th>Nudos</th><th>Efecto</th></tr></thead>
+                <thead><tr><th>F</th><th>Nudos</th><th>Estado del Mar</th><th>Condición</th></tr></thead>
                 <tbody>
-                    <tr><td>4</td><td>11-16</td><td>Borreguitos frecuentes.</td></tr>
-                    <tr><td>5</td><td>17-21</td><td>Olas moderadas, mucha espuma.</td></tr>
-                    <tr><td>6</td><td>22-27</td><td>Olas grandes, crestas blancas.</td></tr>
-                    <tr><td>8+</td><td>> 34</td><td><span class="st-risk">TEMPORAL</span></td></tr>
+                    <tr><td>0–1</td><td>0–3</td><td>Calma / Rizadura mínima</td><td><span class="st-safe">CALMA</span></td></tr>
+                    <tr><td>2–3</td><td>4–10</td><td>Pequeñas olas, sin cresta</td><td><span class="st-safe">SUAVE</span></td></tr>
+                    <tr><td>4</td><td>11–16</td><td>Borreguitos frecuentes</td><td><span class="st-safe">BRISA</span></td></tr>
+                    <tr><td>5</td><td>17–21</td><td>Olas moderadas, mucha espuma</td><td><span class="st-warn">PRECAUCIÓN</span></td></tr>
+                    <tr><td>6</td><td>22–27</td><td>Olas grandes, crestas blancas</td><td><span class="st-warn">PRECAUCIÓN</span></td></tr>
+                    <tr><td>7</td><td>28–33</td><td>Mar gruesa, espuma en hileras</td><td><span class="st-warn">ALERTA</span></td></tr>
+                    <tr><td>8</td><td>34–40</td><td>Olas altas, crestas en remolinos</td><td><span class="st-risk">TEMPORAL</span></td></tr>
+                    <tr><td>9–10</td><td>41–55</td><td>Olas muy altas, espuma densa</td><td><span class="st-risk">TEMPORAL FUERTE</span></td></tr>
+                    <tr><td>11–12</td><td>&gt; 56</td><td>Olas excepcionales, todo espuma</td><td><span class="st-risk">HURACÁN</span></td></tr>
                 </tbody>
             </table>
+
+            <div class="info-highlight">
+                <strong>Regla práctica Beaufort → Altura de Ola:</strong> Altura ≈ (F² × 0.5) metros. Ej.: F6 → ≈3m media. Las ráfagas pueden incrementar la altura real un 30% sobre la ola media.
+            </div>
         </div>
     </div>
 
     <div id="modVis" class="modal-overlay" onclick="closeModal('modVis')">
         <div class="modal-box" onclick="event.stopPropagation()">
             <button class="btn-close-modal" onclick="closeModal('modVis')">×</button>
-            <div class="modal-title">Visibilidad Náutica</div>
+            <div class="modal-title">Visibilidad Náutica y COLREGS</div>
+            <div class="modal-text">La Regla 19 del COLREGS (Convenio Internacional de 1972) regula el comportamiento en visibilidad reducida: velocidad de seguridad, medios de detección activos (radar) y señales fónicas cada 2 minutos.</div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:16px 0;">
+              <div style="background:rgba(15,23,42,0.8); border:1px solid {% if nav.vis_nm < 0.5 %}rgba(239,68,68,0.4){% elif nav.vis_nm < 3 %}rgba(251,191,36,0.4){% else %}rgba(34,211,238,0.35){% endif %}; border-radius:10px; padding:14px; text-align:center;">
+                <div style="font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:700; margin-bottom:5px;">Visibilidad Actual</div>
+                <div style="font-size:2.2rem; color:{% if nav.vis_nm < 0.5 %}#ef4444{% elif nav.vis_nm < 3 %}#fbbf24{% else %}#22d3ee{% endif %}; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ nav.vis_nm }}</div>
+                <div style="font-size:0.7rem; color:#94a3b8; margin-top:4px;">millas náuticas</div>
+              </div>
+              <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(51,65,85,0.5); border-radius:10px; padding:14px; text-align:center; display:flex; flex-direction:column; justify-content:center; gap:6px;">
+                <div style="font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:700;">Condición</div>
+                <div style="font-size:1rem; font-weight:800; color:{% if nav.vis_nm < 0.5 %}#ef4444{% elif nav.vis_nm < 3 %}#fbbf24{% else %}#4ade80{% endif %};">{{ nav.cond_vis|upper }}</div>
+                <div style="font-size:0.68rem; color:#94a3b8;">HR: {{ ambiente.humedad }}% &mdash; {% if ambiente.humedad > 92 %}Niebla inminente{% elif ambiente.humedad > 80 %}Riesgo moderado{% else %}Sin riesgo de niebla{% endif %}</div>
+              </div>
+            </div>
+
             <table class="tech-table">
-                <thead><tr><th>Distancia</th><th>Condición</th><th>Acción</th></tr></thead>
+                <thead><tr><th>Distancia</th><th>Categoría OMM</th><th>Protocolo COLREGS R.19</th></tr></thead>
                 <tbody>
-                    <tr><td>< 0.5 NM</td><td><span class="st-risk">NIEBLA</span></td><td>Radar. Señales fónicas.</td></tr>
-                    <tr><td>0.5 - 2 NM</td><td><span class="st-warn">REDUCIDA</span></td><td>Vel. Seguridad. Vigía.</td></tr>
-                    <tr><td>> 5 NM</td><td><span class="st-safe">BUENA</span></td><td>Navegación normal.</td></tr>
+                    <tr><td>&lt; 0.1 NM</td><td><span class="st-risk">NIEBLA DENSA</span></td><td>DETENERSE si es seguro. Señal 1 toque largo (/2min).</td></tr>
+                    <tr><td>0.1–0.5 NM</td><td><span class="st-risk">NIEBLA</span></td><td>Radar obligatorio. Vigía de proa. Velocidad mínima segura.</td></tr>
+                    <tr><td>0.5–2 NM</td><td><span class="st-warn">REDUCIDA</span></td><td>Reducir velocidad. Escucha activa VHF canal 16.</td></tr>
+                    <tr><td>2–5 NM</td><td><span class="st-warn">REGULAR</span></td><td>Precaución activa. Guardia visual reforzada.</td></tr>
+                    <tr><td>&gt; 5 NM</td><td><span class="st-safe">BUENA</span></td><td>Navegación normal. Mínimo reglamentario para regatas costeras.</td></tr>
                 </tbody>
             </table>
+
+            <div class="info-highlight">
+                <strong>Niebla de Radiación:</strong> Se forma en noches despejadas con HR &gt; 90% y viento &lt; 3kt. Típica al amanecer en rías, fondos de rada y estuarios. Suele disipar 1–2h después del alba.
+            </div>
         </div>
     </div>
 
@@ -1247,45 +1422,86 @@
     <div id="modAmbiente" class="modal-overlay" onclick="closeModal('modAmbiente')">
         <div class="modal-box" onclick="event.stopPropagation()">
             <button class="btn-close-modal" onclick="closeModal('modAmbiente')">×</button>
-            <div class="modal-title">Datos Ambientales</div>
-            <div class="modal-text">
-                En el mar, la temperatura real del aire no cuenta toda la historia. La humedad y el viento alteran drásticamente la percepción térmica.
+            <div class="modal-title">Datos Ambientales y Confort</div>
+            <div class="modal-text">En el mar, la temperatura real del aire no cuenta toda la historia. El viento y la humedad alteran drásticamente la percepción térmica y el rendimiento de la tripulación a lo largo de una guardia.</div>
+
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin:16px 0;">
+              <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(34,211,238,0.3); border-radius:10px; padding:12px; text-align:center;">
+                <div style="font-size:0.6rem; color:#164e63; text-transform:uppercase; font-weight:700; margin-bottom:5px;">Temperatura</div>
+                <div style="font-size:2rem; color:#22d3ee; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ ambiente.temp }}°</div>
+                <div style="font-size:0.65rem; color:#64748b; margin-top:3px;">bulbo seco (°C)</div>
+              </div>
+              <div style="background:rgba(15,23,42,0.8); border:1px solid {% if ambiente.sensacion > 40 %}rgba(239,68,68,0.4){% elif ambiente.sensacion < 0 %}rgba(96,165,250,0.5){% else %}rgba(34,211,238,0.3){% endif %}; border-radius:10px; padding:12px; text-align:center;">
+                <div style="font-size:0.6rem; color:#164e63; text-transform:uppercase; font-weight:700; margin-bottom:5px;">Sensación</div>
+                <div style="font-size:2rem; color:{% if ambiente.sensacion > 40 %}#ef4444{% elif ambiente.sensacion < 0 %}#60a5fa{% else %}#22d3ee{% endif %}; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ ambiente.sensacion }}°</div>
+                <div style="font-size:0.65rem; color:#64748b; margin-top:3px;">{% if ambiente.sensacion > 40 %}Calor extremo{% elif ambiente.sensacion < 0 %}Congelación (Wind Chill){% else %}confort térmico{% endif %}</div>
+              </div>
+              <div style="background:rgba(15,23,42,0.8); border:1px solid {% if ambiente.humedad > 90 %}rgba(239,68,68,0.3){% else %}rgba(34,211,238,0.25){% endif %}; border-radius:10px; padding:12px; text-align:center;">
+                <div style="font-size:0.6rem; color:#164e63; text-transform:uppercase; font-weight:700; margin-bottom:5px;">Humedad</div>
+                <div style="font-size:2rem; color:#22d3ee; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ ambiente.humedad }}%</div>
+                <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">{% if ambiente.humedad > 90 %}Riesgo niebla{% elif ambiente.humedad > 80 %}Alta &mdash; precaución{% else %}Normal{% endif %}</div>
+              </div>
             </div>
+
             <table class="tech-table">
-                <thead><tr><th>Variable</th><th>Efecto en Navegación</th></tr></thead>
+                <thead><tr><th>Variable</th><th>Umbral</th><th>Efecto en Tripulación y Equipo</th></tr></thead>
                 <tbody>
-                    <tr><td><strong>Temp. Aire</strong></td><td>Dato base medido en termómetro seco.</td></tr>
-                    <tr><td><strong>Humedad</strong></td><td>Si es > 90%, riesgo de niebla. Afecta equipos electrónicos.</td></tr>
-                    <tr><td><strong>Sensación</strong></td><td>
-                        <span style="color:#ef4444; font-weight:bold;">Golpe de Calor:</span> Si > 40°C.<br>
-                        <span style="color:#ef4444; font-weight:bold;">Congelación:</span> Si < 0°C (Wind Chill).
-                    </td></tr>
+                    <tr><td>Temp. Aire</td><td>&gt; 35°C</td><td>Riesgo golpe de calor. Hidratación cada 20min. Acortar guardias diurnas.</td></tr>
+                    <tr><td>Sensación Térmica</td><td>&lt; 0°C</td><td>Wind Chill activo. Hipotermia posible sin ropa técnica. Reducir turnos de vigía.</td></tr>
+                    <tr><td>Humedad Relativa</td><td>&gt; 90%</td><td>Niebla inminente. Equipos VHF y GPS requieren protección contra condensación.</td></tr>
+                    <tr><td>Punto de Rocío</td><td>= Temp. Aire</td><td>Saturación total. Niebla o llovizna inmediata. Precaución en cubierta.</td></tr>
                 </tbody>
             </table>
-            <div class="info-highlight" style="background: rgba(6, 182, 212, 0.05); border-left: 6px solid #06b6d4; padding: 25px; margin-top: 30px;">
-                DATOS ACTUALES: {{ ambiente.temp }}°C (Sensación: {{ ambiente.sensacion }}°C)
-            </div>
         </div>
     </div>
 
     <div id="modAgua" class="modal-overlay" onclick="closeModal('modAgua')">
         <div class="modal-box" onclick="event.stopPropagation()">
             <button class="btn-close-modal" onclick="closeModal('modAgua')">×</button>
-            <div class="modal-title">Temperatura del Agua y Supervivencia</div>
-            <div class="modal-text">
-                Estimación de tiempos críticos de supervivencia para un hombre al agua (MOB) sin traje de inmersión. El agua roba calor 25 veces más rápido que el aire.
+            <div class="modal-title">Temp. del Agua — MOB y Supervivencia</div>
+            <div class="modal-text">El agua roba calor corporal <strong>25 veces más rápido</strong> que el aire. Ante un Hombre Al Agua (MOB), la SST determina el tiempo disponible para el rescate con vida. Valores estimados sin traje de inmersión.</div>
+
+            <div style="display:grid; grid-template-columns:1fr 2fr; gap:10px; margin:16px 0; align-items:stretch;">
+              <div style="background:rgba(15,23,42,0.8); border:3px solid {% if nav.temp_agua < 5 %}#ef4444{% elif nav.temp_agua < 15 %}#fbbf24{% else %}#22d3ee{% endif %}; border-radius:12px; padding:16px; text-align:center; display:flex; flex-direction:column; justify-content:center;">
+                <div style="font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:700; margin-bottom:6px;">Temp. Superficial</div>
+                <div style="font-size:2.8rem; color:{% if nav.temp_agua < 5 %}#ef4444{% elif nav.temp_agua < 15 %}#fbbf24{% else %}#22d3ee{% endif %}; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ nav.temp_agua }}°</div>
+                <div style="font-size:0.7rem; color:#94a3b8; margin-top:5px;">°C (SST estimada)</div>
+              </div>
+              <div style="background:rgba(15,23,42,0.8); border:1px solid {% if nav.temp_agua < 5 %}rgba(239,68,68,0.4){% elif nav.temp_agua < 15 %}rgba(251,191,36,0.4){% else %}rgba(34,211,238,0.35){% endif %}; border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; justify-content:center; gap:7px;">
+                <div style="font-size:0.65rem; color:#64748b; text-transform:uppercase; font-weight:700;">Estimación MOB sin traje de inmersión</div>
+                {% if nav.temp_agua < 5 %}
+                <div style="font-size:0.85rem; color:#ef4444; font-weight:700;">CRÍTICO &mdash; Inconsciencia en &lt;15 min</div>
+                <div style="font-size:0.78rem; color:#94a3b8;">Supervivencia: <strong style="color:#ef4444;">&lt; 45 minutos</strong></div>
+                <div style="font-size:0.7rem; color:#64748b;">Rescate imposible en &gt;30 min sin traje de inmersión.</div>
+                {% elif nav.temp_agua < 10 %}
+                <div style="font-size:0.85rem; color:#fbbf24; font-weight:700;">PELIGROSO &mdash; Inconsciencia 30&ndash;60 min</div>
+                <div style="font-size:0.78rem; color:#94a3b8;">Supervivencia: <strong style="color:#fbbf24;">1–3 horas</strong></div>
+                <div style="font-size:0.7rem; color:#64748b;">Traje neopreno 5mm extiende hasta 6h. Posición HELP recomendada.</div>
+                {% elif nav.temp_agua < 20 %}
+                <div style="font-size:0.85rem; color:#fbbf24; font-weight:700;">MODERADO — Inconsciencia 1–2 horas</div>
+                <div style="font-size:0.78rem; color:#94a3b8;">Supervivencia: <strong style="color:#fbbf24;">1–6 horas</strong></div>
+                <div style="font-size:0.7rem; color:#64748b;">Posición fetal en agua. Chaleco salvavidas. Conservar calor.</div>
+                {% else %}
+                <div style="font-size:0.85rem; color:#4ade80; font-weight:700;">TOLERABLE — Inconsciencia &gt;12 horas</div>
+                <div style="font-size:0.78rem; color:#94a3b8;">Supervivencia: <strong style="color:#4ade80;">Indefinida</strong> si se mantiene a flote</div>
+                <div style="font-size:0.7rem; color:#64748b;">Riesgo de deshidratación supera al frío. No beber agua de mar.</div>
+                {% endif %}
+              </div>
             </div>
+
             <table class="tech-table">
-                <thead><tr><th>Temp. Agua</th><th>Tiempo Inconsciencia</th><th>Tiempo Muerte (Hipotermia)</th></tr></thead>
+                <thead><tr><th>Temp. Agua (°C)</th><th>Inconsciencia</th><th>Supervivencia (Hipotermia)</th></tr></thead>
                 <tbody>
-                    <tr><td>< 5°C</td><td>< 15 min</td><td style="color:#ef4444; font-weight:bold;">< 45 min</td></tr>
-                    <tr><td>5 - 10°C</td><td>30 - 60 min</td><td style="color:#facc15; font-weight:bold;">1 - 3 horas</td></tr>
-                    <tr><td>10 - 15°C</td><td>1 - 2 horas</td><td>1 - 6 horas</td></tr>
-                    <tr><td>> 20°C</td><td>> 12 horas</td><td style="color:#10b981; font-weight:bold;">Indefinido</td></tr>
+                    <tr><td style="color:{% if nav.temp_agua < 5 %}#ef4444{% else %}inherit{% endif %}">&lt; 5°C</td><td>&lt; 15 min</td><td style="color:#ef4444; font-weight:bold;">&lt; 45 min</td></tr>
+                    <tr><td style="color:{% if nav.temp_agua >= 5 and nav.temp_agua < 10 %}#fbbf24{% else %}inherit{% endif %}">5 – 10°C</td><td>30 – 60 min</td><td style="color:#facc15; font-weight:bold;">1 – 3 horas</td></tr>
+                    <tr><td style="color:{% if nav.temp_agua >= 10 and nav.temp_agua < 15 %}#fbbf24{% else %}inherit{% endif %}">10 – 15°C</td><td>1 – 2 horas</td><td>1 – 6 horas</td></tr>
+                    <tr><td style="color:{% if nav.temp_agua >= 15 and nav.temp_agua < 20 %}#4ade80{% else %}inherit{% endif %}">15 – 20°C</td><td>2 – 7 horas</td><td>3 – 12 horas</td></tr>
+                    <tr><td style="color:{% if nav.temp_agua >= 20 %}#4ade80{% else %}inherit{% endif %}">&gt; 20°C</td><td>&gt; 12 horas</td><td style="color:#10b981; font-weight:bold;">Indefinido</td></tr>
                 </tbody>
             </table>
-            <div class="info-highlight" style="background: rgba(6, 182, 212, 0.05); border-left: 6px solid #06b6d4; padding: 25px; margin-top: 30px;">
-                TEMP. SUPERFICIAL ACTUAL: <strong>{{ nav.temp_agua }}°C</strong>
+
+            <div class="info-highlight">
+                <strong>Protocolo MOB:</strong> [1] Gritar &quot;HOMBRE AL AGUA&quot;. [2] Activar MOB en GPS/Plotter. [3] Arrojar aro salvavidas + señal fumígena. [4] Mayday en VHF Canal 16. [5] Nunca perder contacto visual.
             </div>
         </div>
     </div>
@@ -1323,16 +1539,32 @@
             let type = document.getElementById('calcType').value;
             let res = 0; let unit = "";
 
-            if (isNaN(val)) { document.getElementById('calcRes').innerText = "-"; return; }
+            if (isNaN(val)) { document.getElementById('calcRes').innerText = "—"; document.getElementById('calcUnit').innerText = "—"; return; }
 
             switch(type) {
-                case 'kts_kmh': res = val * 1.852; unit = "km/h"; break;
-                case 'kmh_kts': res = val / 1.852; unit = "kts"; break;
-                case 'm_ft': res = val * 3.28084; unit = "ft"; break;
-                case 'ft_m': res = val / 3.28084; unit = "m"; break;
-                case 'c_f': res = (val * 9/5) + 32; unit = "°F"; break;
+                // VELOCIDAD
+                case 'kts_kmh': res = val * 1.852;      unit = "km/h"; break;
+                case 'kmh_kts': res = val / 1.852;      unit = "nudos"; break;
+                case 'kts_ms':  res = val * 0.514444;   unit = "m/s"; break;
+                case 'ms_kts':  res = val / 0.514444;   unit = "nudos"; break;
+                case 'kts_mph': res = val * 1.15078;    unit = "mph"; break;
+                case 'mph_kts': res = val / 1.15078;    unit = "nudos"; break;
+                // DISTANCIA
+                case 'nm_km':    res = val * 1.852;     unit = "km"; break;
+                case 'km_nm':    res = val / 1.852;     unit = "NM"; break;
+                case 'nm_m':     res = val * 1852;      unit = "m"; break;
+                case 'fathom_m': res = val * 1.8288;    unit = "m"; break;
+                case 'm_ft':     res = val * 3.28084;   unit = "ft"; break;
+                case 'ft_m':     res = val / 3.28084;   unit = "m"; break;
+                // PRESIÓN
+                case 'hpa_inhg':  res = val * 0.02953;   unit = "inHg"; break;
+                case 'inhg_hpa':  res = val / 0.02953;   unit = "hPa"; break;
+                case 'hpa_mmhg':  res = val * 0.750064;  unit = "mmHg"; break;
+                // TEMPERATURA
+                case 'c_f': res = (val * 9/5) + 32;    unit = "°F"; break;
+                case 'f_c': res = (val - 32) * 5/9;    unit = "°C"; break;
             }
-            document.getElementById('calcRes').innerText = res.toFixed(1);
+            document.getElementById('calcRes').innerText = res.toFixed(2);
             document.getElementById('calcUnit').innerText = unit;
         }
 
@@ -1391,19 +1623,72 @@
                 yAxis: [{
                     title: { text: tAxisOlas, style: { color: '#06b6d4' } },
                     gridLineColor: '#1e3a8a',
-                    labels: { style: { color: '#06b6d4' } }
+                    labels: { style: { color: '#06b6d4' } },
+                    plotBands: [{
+                        from: 0, to: 1.0,
+                        color: 'rgba(34,211,238,0.04)',
+                        label: { text: 'Mar llana', style: { color: '#22d3ee', fontSize: '9px' }, align: 'right', x: -4 }
+                    }, {
+                        from: 1.0, to: 2.5,
+                        color: 'rgba(250,204,21,0.04)',
+                        label: { text: 'Precaución', style: { color: '#facc15', fontSize: '9px' }, align: 'right', x: -4 }
+                    }, {
+                        from: 2.5, to: 20,
+                        color: 'rgba(239,68,68,0.04)',
+                        label: { text: 'Puerto cerrado', style: { color: '#ef4444', fontSize: '9px' }, align: 'right', x: -4 }
+                    }],
+                    plotLines: [{
+                        value: 1.0,
+                        color: '#facc15',
+                        width: 1,
+                        dashStyle: 'ShortDash',
+                        zIndex: 3
+                    }, {
+                        value: 2.5,
+                        color: '#ef4444',
+                        width: 1.5,
+                        dashStyle: 'ShortDash',
+                        zIndex: 3,
+                        label: { text: 'Límite 2.5m', style: { color: '#ef4444', fontSize: '10px' }, align: 'right', x: -4 }
+                    }]
                 }, {
                     title: { text: tAxisViento, style: { color: '#facc15' } },
                     opposite: true,
-                    labels: { style: { color: '#facc15' } }
+                    labels: { style: { color: '#facc15' } },
+                    plotLines: [{
+                        value: 11,
+                        color: '#facc15',
+                        width: 1,
+                        dashStyle: 'Dot',
+                        zIndex: 3,
+                        label: { text: 'F4', style: { color: '#facc15', fontSize: '9px' }, align: 'left', x: 4 }
+                    }, {
+                        value: 22,
+                        color: '#ef4444',
+                        width: 1.5,
+                        dashStyle: 'Dot',
+                        zIndex: 3,
+                        label: { text: 'F6 crítico', style: { color: '#ef4444', fontSize: '9px' }, align: 'left', x: 4 }
+                    }]
                 }],
                 legend: { itemStyle: { color: '#e2e8f0' } },
-                tooltip: { shared: true, backgroundColor: 'rgba(15,23,42,0.9)', style: { color: '#fff' }, borderColor: '#06b6d4' },
+                tooltip: {
+                    shared: true,
+                    backgroundColor: 'rgba(15,23,42,0.9)',
+                    style: { color: '#fff' },
+                    borderColor: '#06b6d4',
+                    formatter: function() {
+                        var s = '<b style="color:#e2e8f0;">' + this.x + '</b>';
+                        this.points.forEach(function(p) { s += '<br/><span style="color:' + p.color + ';">●</span> ' + p.series.name + ': <b>' + p.y + '</b>'; });
+                        return s;
+                    }
+                },
                 series: [{
                     name: tOlas,
-                    data: olas,
-                    color: '#06b6d4',
-                    borderColor: '#0ea5e9',
+                    data: olas.map(function(v) {
+                        return { y: v, color: v >= 2.5 ? '#ef4444' : v >= 1.0 ? '#facc15' : '#22d3ee' };
+                    }),
+                    borderColor: 'rgba(255,255,255,0.1)',
                     borderWidth: 1,
                     yAxis: 0
                 }, {
@@ -1422,15 +1707,256 @@
         // 3. INICIALIZACIÓN Y SINCRONIZACIÓN
         document.addEventListener("DOMContentLoaded", function() {
             renderNavalChart(); // Dibujar primera vez
+            renderNavalChart7d(); // Pronóstico 7 días
 
             // Si Weglot está presente, redibujar al cambiar idioma
             if (typeof Weglot !== 'undefined') {
-                Weglot.on('initialized', renderNavalChart);
-                Weglot.on('languageChanged', renderNavalChart);
+                Weglot.on('initialized', function(){ renderNavalChart(); renderNavalChart7d(); });
+                Weglot.on('languageChanged', function(){ renderNavalChart(); renderNavalChart7d(); });
             }
         });
+
+        // 4. GRÁFICO 7 DÍAS
+        function renderNavalChart7d() {
+            var fechas7 = {{ grafico_naval_7d.fechas|default:"[]"|safe }};
+            var olasMax = {{ grafico_naval_7d.olas_max|default:"[]"|safe }};
+            var vientoMax = {{ grafico_naval_7d.viento_max|default:"[]"|safe }};
+            var colores = {{ grafico_naval_7d.colores|default:"[]"|safe }};
+
+            if (!fechas7.length) return;
+
+            Highcharts.chart('navalChart7d', {
+                chart: { backgroundColor: 'transparent', style: { fontFamily: 'Rajdhani' }, type: 'column' },
+                title: { text: '' },
+                xAxis: {
+                    categories: fechas7,
+                    lineColor: '#1e3a8a',
+                    labels: { style: { color: '#94a3b8', fontFamily: 'JetBrains Mono', fontSize: '11px' } }
+                },
+                yAxis: [{
+                    title: { text: 'Ola máx (m)', style: { color: '#06b6d4', fontSize: '11px' } },
+                    gridLineColor: '#1e3a8a',
+                    labels: { style: { color: '#06b6d4' } },
+                    plotLines: [{ value: 1.0, color: '#facc15', width: 1, dashStyle: 'ShortDash', zIndex: 3 },
+                                { value: 2.5, color: '#ef4444', width: 1.5, dashStyle: 'ShortDash', zIndex: 3 }]
+                }, {
+                    title: { text: 'Viento máx (kt)', style: { color: '#facc15', fontSize: '11px' } },
+                    opposite: true,
+                    labels: { style: { color: '#facc15' } }
+                }],
+                legend: { itemStyle: { color: '#e2e8f0', fontSize: '11px' } },
+                tooltip: { shared: true, backgroundColor: 'rgba(15,23,42,0.92)', style: { color: '#fff' }, borderColor: '#06b6d4' },
+                series: [{
+                    name: 'Ola máx.',
+                    data: olasMax.map(function(v, i) { return { y: v, color: colores[i] || '#22d3ee' }; }),
+                    borderWidth: 0,
+                    borderRadius: 3,
+                    yAxis: 0
+                }, {
+                    name: 'Viento máx.',
+                    type: 'spline',
+                    data: vientoMax,
+                    color: '#facc15',
+                    lineWidth: 2.5,
+                    marker: { symbol: 'circle', radius: 4, fillColor: '#020617', lineWidth: 2, lineColor: '#facc15' },
+                    yAxis: 1
+                }],
+                credits: { enabled: false },
+                exporting: { enabled: false }
+            });
+        }
     </script>
 
+<!-- ═══════════════════════════════════════════════════
+     TUCLIMA PRO PANEL · Naval Command
+═══════════════════════════════════════════════════ -->
+<div style="margin-bottom:20px; font-family:'Segoe UI',system-ui,-apple-system,sans-serif;">
+
+  {% if alerta_banner.activo %}<div id="tc-alert-banner" style="background:{{ alerta_banner.color }}; border:1px solid {{ alerta_banner.borde }}; border-radius:12px; padding:11px 16px; margin-bottom:14px; display:flex; align-items:flex-start; gap:10px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ alerta_banner.texto }}" stroke-width="2.5" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span style="flex:1; font-size:0.82rem; font-weight:600; color:{{ alerta_banner.texto }}; line-height:1.45; font-family:'Segoe UI',system-ui,sans-serif;">{{ alerta_banner.mensaje }}</span><button onclick="document.getElementById('tc-alert-banner').style.display='none'" style="background:none; border:none; color:{{ alerta_banner.texto }}; opacity:0.65; cursor:pointer; font-size:1.2rem; line-height:1; padding:0; flex-shrink:0;">&times;</button></div>{% endif %}
+
+  <!-- ── 1. SEMÁFORO DE RIESGO NAVAL ── -->
+  <div style="background:linear-gradient(135deg,#0f172a,#0c1a2e); border:1px solid rgba(30,58,138,0.5); border-radius:16px; padding:16px 20px; margin-bottom:12px;">
+    <div style="font-size:0.66rem; letter-spacing:0.12em; color:#475569; font-weight:700; margin-bottom:12px; text-transform:uppercase; display:flex; align-items:center; gap:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><rect x="6" y="1" width="12" height="22" rx="3" fill="#0c1a2e" stroke="#1e3a8a" stroke-width="1.5"/><circle cx="12" cy="7" r="3" fill="#ef4444"/><circle cx="12" cy="12" r="3" fill="#facc15"/><circle cx="12" cy="17" r="3" fill="#4ade80"/></svg> Semáforo de Condición Naval</div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {{ status.color }}33; border-left:3px solid {{ status.color }}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Estado Puerto</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{{ status.color }}; box-shadow:0 0 7px {{ status.color }}90; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{{ status.color }}; font-size:0.82rem;">{{ status.msg }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">Oleaje {{ mar.altura }}m</div>
+      </div>
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {% if mar.douglas >= 5 %}#ef444433{% elif mar.douglas >= 3 %}#facc1533{% else %}#4ade8033{% endif %}; border-left:3px solid {% if mar.douglas >= 5 %}#ef4444{% elif mar.douglas >= 3 %}#facc15{% else %}#4ade80{% endif %}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Estado del Mar</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{% if mar.douglas >= 5 %}#ef4444{% elif mar.douglas >= 3 %}#facc15{% else %}#4ade80{% endif %}; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{% if mar.douglas >= 5 %}#ef4444{% elif mar.douglas >= 3 %}#facc15{% else %}#4ade80{% endif %}; font-size:0.82rem;">{{ mar.estado|upper }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">Douglas {{ mar.douglas }} · {{ mar.altura }}m</div>
+      </div>
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {% if viento.beaufort >= 7 %}#ef444433{% elif viento.beaufort >= 4 %}#facc1533{% else %}#4ade8033{% endif %}; border-left:3px solid {% if viento.beaufort >= 7 %}#ef4444{% elif viento.beaufort >= 4 %}#facc15{% else %}#4ade80{% endif %}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Viento</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{% if viento.beaufort >= 7 %}#ef4444{% elif viento.beaufort >= 4 %}#facc15{% else %}#4ade80{% endif %}; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{% if viento.beaufort >= 7 %}#ef4444{% elif viento.beaufort >= 4 %}#facc15{% else %}#4ade80{% endif %}; font-size:0.82rem;">B{{ viento.beaufort }} · {{ viento.desc|upper }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">{{ viento.kt }} kt · Ráfagas {{ viento.rafaga }} kt</div>
+      </div>
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {% if nav.vis_nm < 1 %}#ef444433{% elif nav.vis_nm < 3 %}#facc1533{% else %}#4ade8033{% endif %}; border-left:3px solid {% if nav.vis_nm < 1 %}#ef4444{% elif nav.vis_nm < 3 %}#facc15{% else %}#4ade80{% endif %}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Visibilidad</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{% if nav.vis_nm < 1 %}#ef4444{% elif nav.vis_nm < 3 %}#facc15{% else %}#4ade80{% endif %}; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{% if nav.vis_nm < 1 %}#ef4444{% elif nav.vis_nm < 3 %}#facc15{% else %}#4ade80{% endif %}; font-size:0.82rem;">{{ nav.cond_vis }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">{{ nav.vis_nm }} NM</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 2. BOTONES DE ACCIÓN RÁPIDA ── -->
+  <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+    <button onclick="enviarAccionRapida('Generá un reporte PDF náutico con estado del mar, viento, visibilidad y estimación de temperatura del agua actual. Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(12,26,46,0.9); border:1px solid rgba(59,130,246,0.4); color:#93c5fd; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#1d4ed8';this.style.color='#fff'" onmouseout="this.style.background='rgba(12,26,46,0.9)';this.style.color='#93c5fd'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Generar PDF</button>
+    <button onclick="enviarAccionRapida('Generá un Excel con la evolución horaria del oleaje y el viento para las próximas 24 horas. Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(12,26,46,0.9); border:1px solid rgba(74,222,128,0.4); color:#86efac; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#16a34a';this.style.color='#fff'" onmouseout="this.style.background='rgba(12,26,46,0.9)';this.style.color='#86efac'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg> Generar Excel</button>
+    <button onclick="enviarAccionRapida('¿Cuáles son las condiciones náuticas actuales y la recomendación de operación para hoy? Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(12,26,46,0.9); border:1px solid rgba(167,139,250,0.4); color:#c4b5fd; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#1e40af';this.style.color='#fff'" onmouseout="this.style.background='rgba(12,26,46,0.9)';this.style.color='#c4b5fd'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></svg> Parte de Puerto</button>
+  </div>
+
+  <!-- ── 3. TIMELINE PRÓXIMAS 24H ── -->
+  <div style="background:linear-gradient(135deg,#0f172a,#0c1a2e); border:1px solid rgba(30,58,138,0.4); border-radius:16px; padding:16px 20px; overflow:hidden;">
+    <div style="font-size:0.66rem; letter-spacing:0.12em; color:#475569; font-weight:700; margin-bottom:12px; text-transform:uppercase; display:flex; align-items:center; gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Tendencia Océano-Viento · Próximas 24h</div>
+    <div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; scrollbar-width:thin; scrollbar-color:rgba(51,65,85,0.5) transparent;">
+      {% for h in tira_24h %}
+      <div style="flex-shrink:0; background:{% if forloop.first %}rgba(15,23,42,0.95){% else %}rgba(15,23,42,0.7){% endif %}; border:1px solid {% if forloop.first %}rgba(59,130,246,0.5){% else %}rgba(30,58,138,0.3){% endif %}; border-radius:10px; padding:10px 11px; text-align:center; min-width:72px;">
+        <div style="font-size:0.6rem; color:{% if forloop.first %}#60a5fa{% else %}#64748b{% endif %}; font-weight:700; margin-bottom:5px; white-space:nowrap;">{{ h.hora }}</div>
+        <div style="display:flex; justify-content:center; align-items:center; height:22px; margin-bottom:4px;">{% if h.ola >= 3 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2.5"><path d="M2 10s2.5-4 6-4 5.5 4 10 4 4-4 6-4"/><path d="M2 16s2.5-4 6-4 5.5 4 10 4 4-4 6-4"/></svg>{% elif h.ola >= 1 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2.5"><path d="M2 14s2.5-3 6-3 5.5 3 10 3 4-3 6-3"/></svg>{% else %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><line x1="3" y1="11" x2="21" y2="11"/><line x1="5" y1="15" x2="19" y2="15"/></svg>{% endif %}</div>
+        <div style="font-size:0.82rem; font-weight:700; color:{% if h.ola >= 2.5 %}#ef4444{% elif h.ola >= 1.5 %}#facc15{% else %}#4ade80{% endif %};">{{ h.ola }}m</div>
+        <div style="font-size:0.65rem; color:{% if h.viento >= 25 %}#ef4444{% elif h.viento >= 15 %}#facc15{% else %}#60a5fa{% endif %}; margin-top:2px;">{{ h.viento }}kt</div>
+      </div>
+      {% empty %}<div style="color:#475569; font-size:0.8rem; padding:10px;">Sin datos</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── 4. CALCULADORA DE TRAVÉSÍA ── -->
+  <details style="background:linear-gradient(135deg,#0f172a,#0c1a2e); border:1px solid rgba(30,58,138,0.4); border-radius:16px; margin-top:12px; overflow:hidden;">
+    <summary style="padding:14px 20px; cursor:pointer; color:#93c5fd; font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; list-style:none; display:flex; align-items:center; gap:9px; font-family:'Segoe UI',system-ui,sans-serif; user-select:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></svg>Calculadora de Travêsía<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div style="padding:14px 20px 18px; border-top:1px solid rgba(30,58,138,0.3);">
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; margin-bottom:14px;">
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">DISTANCIA (NM)</div><input type="number" id="tc-dist" value="50" min="1" style="width:100%; background:#0f172a; border:1px solid #1e3a8a; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">VELOCIDAD (kt)</div><input type="number" id="tc-vel" value="8" min="1" step="0.5" style="width:100%; background:#0f172a; border:1px solid #1e3a8a; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">CONSUMO (L/h)</div><input type="number" id="tc-cons" value="15" min="1" style="width:100%; background:#0f172a; border:1px solid #1e3a8a; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">RESERVA (%)</div><input type="number" id="tc-reserva" value="20" min="10" max="50" style="width:100%; background:#0f172a; border:1px solid #1e3a8a; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+      </div>
+      <button onclick="tcNavCalc()" style="background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.4); color:#60a5fa; padding:9px 20px; border-radius:9px; cursor:pointer; font-size:0.82rem; font-weight:700; font-family:inherit;">Calcular travêsía</button>
+      <div id="tcCalcNavRes" style="margin-top:12px;"></div>
+    </div>
+  </details>
+
+  <!-- ── 5. OJO BIÓNICO — VISIÓN IA ── -->
+  <div id="tc-dz-naval" style="margin-top:14px; border:2px dashed rgba(96,165,250,0.3); border-radius:16px; padding:28px 20px; text-align:center; cursor:pointer; transition:border-color 0.25s,background 0.25s; background:rgba(15,23,42,0.6);"
+    ondragover="event.preventDefault();this.style.borderColor='#60a5fa';this.style.background='rgba(96,165,250,0.07)';"
+    ondragleave="this.style.borderColor='rgba(96,165,250,0.3)';this.style.background='rgba(15,23,42,0.6)';"
+    ondrop="tcDzDrop_naval(event)"
+    onclick="var l=document.getElementById('tc-dz-loading-naval');if(!l||l.style.display==='none')document.getElementById('tc-vision-inp-naval').click()">
+    <input type="file" id="tc-vision-inp-naval" accept="image/*" style="display:none;" onchange="tcDzFile_naval(this)">
+    <div id="tc-dz-idle-naval">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 10px;display:block;opacity:0.7;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <p style="margin:0 0 4px;font-size:0.88rem;font-weight:700;color:#60a5fa;letter-spacing:0.04em;">OJO BIÓNICO</p>
+      <p style="margin:0;font-size:0.76rem;color:#94a3b8;line-height:1.5;">Arrastrá aquí la foto del estado del mar<br>o hacé clic para explorar</p>
+    </div>
+    <div id="tc-dz-loading-naval" style="display:none;">
+      <p style="margin:0 0 12px;font-size:0.82rem;color:#60a5fa;animation:tcDzPulse 1.4s ease-in-out infinite;">Analizando imagen con IA…</p>
+      <div style="height:6px;border-radius:3px;background:rgba(96,165,250,0.15);overflow:hidden;"><div style="height:100%;width:0;background:#60a5fa;border-radius:3px;animation:tcDzBar 2.2s ease-in-out infinite;"></div></div>
+    </div>
+    <div id="tc-dz-result-naval" style="display:none;text-align:left;"></div>
+  </div>
+  <script>
+  function tcDzDrop_naval(e){e.preventDefault();var dz=document.getElementById('tc-dz-naval');dz.style.borderColor='rgba(96,165,250,0.3)';dz.style.background='rgba(15,23,42,0.6)';var f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))tcDzSend_naval(f);}
+  function tcDzFile_naval(inp){if(inp.files[0])tcDzSend_naval(inp.files[0]);}
+  function tcDzSend_naval(file){
+    document.getElementById('tc-dz-idle-naval').style.display='none';
+    document.getElementById('tc-dz-loading-naval').style.display='block';
+    document.getElementById('tc-dz-result-naval').style.display='none';
+    var fd=new FormData();
+    fd.append('chatInput','Analizá esta imagen del estado del mar, radar o condición náutica y dame tu evaluación operacional para navegación.');
+    fd.append('sessionId',sessionId);
+    fd.append('userId',djangoUserId);
+    fd.append('sector','naval');
+    fd.append('data00',file);
+    fetch(urlN8N,{method:'POST',body:fd})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var txt=(d.output||d.text||JSON.stringify(d)).replace(/</g,'&lt;').replace(/\n/g,'<br>');
+        var res=document.getElementById('tc-dz-result-naval');
+        res.innerHTML='<div style="font-size:0.8rem;color:#e2e8f0;line-height:1.65;padding:4px 0 8px;">'+txt+'</div><button onclick="tcDzReset_naval()" style="background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.4);color:#60a5fa;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.75rem;font-family:inherit;">Nueva imagen</button>';
+        document.getElementById('tc-dz-loading-naval').style.display='none';
+        res.style.display='block';
+      })
+      .catch(function(){document.getElementById('tc-dz-loading-naval').style.display='none';document.getElementById('tc-dz-idle-naval').style.display='block';});
+  }
+  function tcDzReset_naval(){document.getElementById('tc-dz-idle-naval').style.display='block';document.getElementById('tc-dz-result-naval').style.display='none';document.getElementById('tc-vision-inp-naval').value='';}
+  </script>
+
+  <!-- ── 6. VENTANA SEGURA ── -->
+  <details style="background:linear-gradient(135deg,#020617,#0f1f3d); border:1px solid rgba(30,58,138,0.5); border-radius:16px; margin-top:12px; overflow:hidden;">
+    <summary style="padding:14px 20px; cursor:pointer; color:#94a3b8; font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; list-style:none; display:flex; align-items:center; gap:9px; font-family:'Segoe UI',system-ui,sans-serif; user-select:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v6M15 3v6"/></svg>Ventana Segura de Navegación<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div style="padding:14px 20px 18px; border-top:1px solid rgba(30,58,138,0.3);">
+      <p style="font-size:0.72rem; color:#64748b; margin:0 0 12px; line-height:1.5;">Encontrá las próximas N horas consecutivas segúras para hacer la travesía.</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; margin-bottom:14px;">
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">DURACIÓN (h)</div><input type="number" id="tc-vs-dur-naval" value="2" min="1" max="8" style="width:100%; background:#020617; border:1px solid #1e3a8a; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">OLA MÁX (m)</div><input type="number" id="tc-vs-ola-naval" value="1.5" min="0.3" max="4" step="0.1" style="width:100%; background:#020617; border:1px solid #1e3a8a; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">VIENTO MÁX (kt)</div><input type="number" id="tc-vs-viento-naval" value="15" min="1" max="40" style="width:100%; background:#020617; border:1px solid #1e3a8a; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+      </div>
+      <button onclick="tcVsScan_naval()" style="background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.4); color:#60a5fa; padding:9px 20px; border-radius:9px; cursor:pointer; font-size:0.82rem; font-weight:700; font-family:inherit;">Buscar ventana</button>
+      <div id="tcVsRes-naval" style="margin-top:12px;"></div>
+    </div>
+  </details>
+  <script>
+  {% load l10n %}{% localize off %}var _tc_h24_naval=[{% for h in tira_24h %}{"hora":"{{ h.hora }}","ola":{{ h.ola }},"viento":{{ h.viento }}}{% if not forloop.last %},{% endif %}{% endfor %}];{% endlocalize %}
+  function tcVsScan_naval(){
+    var dur=parseInt(document.getElementById('tc-vs-dur-naval').value)||2;
+    var mxO=parseFloat(document.getElementById('tc-vs-ola-naval').value)||1.5;
+    var mxV=parseFloat(document.getElementById('tc-vs-viento-naval').value)||15;
+    var d=_tc_h24_naval,best=null,bestS=Infinity;
+    for(var i=0;i<=d.length-dur;i++){var sl=d.slice(i,i+dur);var ok=sl.every(function(h){return h.ola<=mxO&&h.viento<=mxV;});if(ok){var sc=sl.reduce(function(a,h){return a+h.ola*10+h.viento;},0);if(sc<bestS){bestS=sc;best=sl;}}}
+    var el=document.getElementById('tcVsRes-naval');
+    if(!best){el.innerHTML='<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:12px 14px;font-size:0.8rem;color:#ef4444;">Sin ventana de '+dur+'h que cumpla los criterios en las próximas 24h.</div>';return;}
+    var mO=Math.max.apply(null,best.map(function(h){return h.ola;}));
+    var mV=Math.max.apply(null,best.map(function(h){return h.viento;}));
+    el.innerHTML='<div style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.3);border-radius:10px;padding:12px 14px;"><div style="font-size:0.72rem;color:#60a5fa;font-weight:700;letter-spacing:0.05em;margin-bottom:6px;">VENTANA ÓPTIMA</div><div style="font-size:0.88rem;font-weight:800;color:#f1f5f9;margin-bottom:8px;">'+best[0].hora+' → '+best[best.length-1].hora+'</div><div style="display:flex;flex-wrap:wrap;gap:7px;"><span style="background:#020617;border:1px solid #1e3a8a;border-radius:7px;padding:4px 10px;font-size:0.72rem;color:#94a3b8;">Ola máx: <strong style="color:#60a5fa;">'+mO+'m</strong></span><span style="background:#020617;border:1px solid #1e3a8a;border-radius:7px;padding:4px 10px;font-size:0.72rem;color:#94a3b8;">Viento máx: <strong style="color:#4ade80;">'+mV+' kt</strong></span></div></div>';
+  }
+  </script>
+
+  <script>
+  {% localize off %}var _tc_ola={{ mar.altura|floatformat:2 }}, _tc_vkt={{ viento.kt|floatformat:1 }}, _tc_bft={{ viento.beaufort }};{% endlocalize %}
+  function tcNavCalc(){
+    var dist=parseFloat(document.getElementById('tc-dist').value)||50;
+    var vel=parseFloat(document.getElementById('tc-vel').value)||8;
+    var cons=parseFloat(document.getElementById('tc-cons').value)||15;
+    var res=(parseFloat(document.getElementById('tc-reserva').value)||20)/100;
+    var factorOla=_tc_ola>=2.5?0.65:_tc_ola>=1.5?0.80:_tc_ola>=0.5?0.92:1.0;
+    var velCorr=(vel*factorOla).toFixed(1);
+    var tiempo=(dist/velCorr).toFixed(1);
+    var combTotal=((cons*parseFloat(tiempo))*(1+res)).toFixed(0);
+    var go=_tc_ola<2.5&&_tc_vkt<25;
+    var col=go?(_tc_ola>=1.5||_tc_vkt>=15?'#fb923c':'#4ade80'):'#ef4444';
+    var bg=go?(_tc_ola>=1.5||_tc_vkt>=15?'rgba(251,146,60,0.1)':'rgba(74,222,128,0.1)'):'rgba(239,68,68,0.1)';
+    var lab=go?(_tc_ola>=1.5||_tc_vkt>=15?'CONDICIONAL':'GO'):'NO-GO';
+    document.getElementById('tcCalcNavRes').innerHTML='<div style="background:'+bg+'; border:1px solid '+col+'33; border-radius:10px; padding:12px 14px;"><div style="margin-bottom:8px;"><span style="background:'+col+'22; color:'+col+'; font-size:0.72rem; font-weight:800; padding:3px 10px; border-radius:20px;">'+lab+'</span></div><div style="display:flex; flex-wrap:wrap; gap:7px;"><span style="background:#0f172a; border:1px solid #1e3a8a; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">Duración: <strong style="color:#e2e8f0;">'+tiempo+' h</strong></span><span style="background:#0f172a; border:1px solid #1e3a8a; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">Combustible: <strong style="color:#e2e8f0;">'+combTotal+' L</strong></span><span style="background:#0f172a; border:1px solid #1e3a8a; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">Vel. efectiva: <strong style="color:'+col+';">'+velCorr+' kt</strong></span><span style="background:#0f172a; border:1px solid #1e3a8a; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">Mar: <strong style="color:'+col+';">'+_tc_ola+'m (F'+_tc_bft+')</strong></span></div></div>';
+  }
+  </script>
+
+</div>
+<script>
+function enviarAccionRapida(txt) {
+    var inp = document.getElementById('user-input');
+    if (inp) { inp.value = txt; if(typeof enviarMensaje === 'function') enviarMensaje(); }
+}
+</script>
 <div class="chat-container">
     <div class="chat-header">
         <h3>
@@ -1443,35 +1969,48 @@
     </div>
     
     <div class="chat-messages" id="chat-box">
-        <div class="message bot-msg welcome-msg">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline; margin-right:6px; vertical-align:middle;">
+        <div class="message bot-msg welcome-msg" style="display:flex; align-items:center; gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
-            ¡Hola! Soy tu asistente meteorológico, ¿en qué puedo ayudarte?
+            <span>¡Hola! Soy tu asistente meteorológico, ¿en qué puedo ayudarte?</span>
         </div>
     </div>
 
-    <div class="chat-input-container" style="display: flex; align-items: center; gap: 10px; padding: 15px; background: #1e293b; border-top: 1px solid #334155;">
+    <!-- Banner: límite diario de TuClima IA -->
+    <div id="tokens-limite-banner" style="display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:28px 24px; background:linear-gradient(135deg,rgba(15,23,42,0.98),rgba(30,41,59,0.98)); border-top:1px solid rgba(239,68,68,0.25);">
+        <div style="width:52px;height:52px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.8"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
+        </div>
+        <div style="text-align:center;">
+            <p style="margin:0 0 4px; color:#f1f5f9; font-weight:600; font-size:1rem; font-family:'Segoe UI',system-ui,sans-serif;">Límite diario de TuClima IA</p>
+            <p style="margin:0; color:#94a3b8; font-size:0.85rem; font-family:'Segoe UI',system-ui,sans-serif;">Alcanzaste el uso máximo de hoy. La IA se recarga a medianoche.<br>Próxima recarga en <strong id="tokens-countdown" style="color:#e2e8f0;">—</strong></p>
+        </div>
+        <a href="/mi-cuenta/" style="background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.3);padding:9px 22px;border-radius:8px;font-size:0.85rem;text-decoration:none;font-family:'Segoe UI',system-ui,sans-serif;" onmouseover="this.style.background='rgba(99,102,241,0.25)'" onmouseout="this.style.background='rgba(99,102,241,0.15)'">Recargar tokens →</a>
+    </div>
+
+    <div class="chat-input-container" style="display: flex; align-items: center; gap: 12px; padding: 20px 24px; background: rgba(15, 23, 42, 0.8); border-top: 1px solid rgba(51, 65, 85, 0.2); backdrop-filter: blur(20px);">
     
     <input type="file" id="file-input" style="display: none;" accept="image/*,.pdf,.csv,.xlsx">
-    <button type="button" onclick="document.getElementById('file-input').click()" style="background: none; border: none; cursor: pointer; padding: 8px; color: #94a3b8; transition: 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94a3b8'">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+    <button type="button" onclick="document.getElementById('file-input').click()" style="background: rgba(51, 65, 85, 0.6); border: 1px solid rgba(71, 85, 105, 0.3); cursor: pointer; padding: 10px; color: #cbd5e1; transition: all 0.3s ease; border-radius: 10px; backdrop-filter: blur(10px);" onmouseover="this.style.color='#f1f5f9'; this.style.background='rgba(71, 85, 105, 0.8)'" onmouseout="this.style.color='#cbd5e1'; this.style.background='rgba(51, 65, 85, 0.6)'" title="Subir archivo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 6 12 1 7 6"/>
+            <line x1="12" y1="1" x2="12" y2="13"/>
         </svg>
     </button>
 
     <!-- Botón Gráficos -->
-    <button type="button" onclick="toggleChart()" style="background: none; border: none; cursor: pointer; padding: 8px; color: #94a3b8; transition: 0.2s;" onmouseover="this.style.color='#fbbf24'" onmouseout="this.style.color='#94a3b8'" title="Mostrar/Ocultar Gráfico">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="20" x2="18" y2="10"/>
-            <line x1="12" y1="20" x2="12" y2="4"/>
-            <line x1="6" y1="20" x2="6" y2="14"/>
+    <button type="button" onclick="toggleChart()" style="background: rgba(51, 65, 85, 0.6); border: 1px solid rgba(71, 85, 105, 0.3); cursor: pointer; padding: 10px; color: #cbd5e1; transition: all 0.3s ease; border-radius: 10px; backdrop-filter: blur(10px);" onmouseover="this.style.color='#fbbf24'; this.style.background='rgba(71, 85, 105, 0.8)'" onmouseout="this.style.color='#cbd5e1'; this.style.background='rgba(51, 65, 85, 0.6)'" title="Mostrar/Ocultar Gráfico">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 3v18h18"/>
+            <path d="M7 12l4-4 4 4 6-6"/>
         </svg>
     </button>
 
-    <div id="file-preview" style="min-width:120px; color:#e2e8f0; font-size:0.95em; font-family:'Poppins',sans-serif;"></div>
+    <div id="file-preview" style="min-width:120px; color:#cbd5e1; font-size:0.9em; font-family:'Segoe UI', system-ui, -apple-system, sans-serif; font-weight: 500;"></div>
 
-    <input type="text" id="user-input" placeholder="Escribir..." style="flex: 1; padding: 12px; border: 1px solid #334155; border-radius: 6px; background: #0f172a; color: #e2e8f0; outline: none; font-family: 'Poppins', sans-serif;">
+    <input type="text" id="user-input" placeholder="Escribir..." style="flex: 1; padding: 14px 16px; border: 1px solid rgba(51, 65, 85, 0.3); border-radius: 12px; background: rgba(30, 41, 59, 0.8); color: #f1f5f9; outline: none; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; backdrop-filter: blur(10px); transition: all 0.3s ease;">
 
     <button onclick="enviarMensaje()" style="background: #4ade80; color: #000; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#22c55e'" onmouseout="this.style.background='#4ade80'">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1509,8 +2048,10 @@
     // --- CONFIGURACIÓN NAVAL INTELLIGENCE PRO ---
 
 const urlN8N = "https://n8n-production-2651.up.railway.app/webhook/chat"; // Webhook principal ChatBot TuClima
-let sessionId = localStorage.getItem("chatSessionId") || generateUUID();
-localStorage.setItem("chatSessionId", sessionId);
+const djangoUserId = "{{ user.username|escapejs }}"; // Usuario autenticado de Django
+const _tcStorageKey = djangoUserId ? `chatSessionId_${djangoUserId}` : "chatSessionId";
+let sessionId = localStorage.getItem(_tcStorageKey) || (djangoUserId ? `${djangoUserId}_${generateUUID().slice(0,8)}` : generateUUID());
+localStorage.setItem(_tcStorageKey, sessionId);
 
 // Historial para flechas del teclado
 let historialMensajes = [];
@@ -1529,6 +2070,14 @@ function generateUUID() {
 
 function processMarkdown(text) {
     if (!text) return text;
+    
+    // 0. Proteger etiquetas <a> ya presentes para no corromper URLs con markdown
+    const htmlLinks = [];
+    text = text.replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, (match) => {
+        const idx = htmlLinks.length;
+        htmlLinks.push(match);
+        return '\x00LINK_' + idx + '\x00';
+    });
     
     // Procesar elementos markdown en orden (importante el orden)
     
@@ -1565,6 +2114,11 @@ function processMarkdown(text) {
     // 8. Limpiar <br> fantasma pegados a elementos de bloque
     text = text.replace(/<\/(h[1-3]|ul|ol|li)><br>/g, '</$1>');
     text = text.replace(/<br><(h[1-3]|ul|ol|li)>/g, '<$1>');
+    
+    // 9. Restaurar etiquetas <a> originales
+    htmlLinks.forEach((link, idx) => {
+        text = text.replace('\x00LINK_' + idx + '\x00', link);
+    });
     
     return text;
 }
@@ -1933,7 +2487,44 @@ document.getElementById("file-input").addEventListener("change", function() {
 });
 
 // 2. ENVÍO DE MENSAJES Y ARCHIVOS
+// --- VERIFICACIÓN DE TOKENS ANTES DE CADA MENSAJE ---
+async function verificarTokens() {
+    try {
+        const r = await fetch('/api/tokens/saldo/', { credentials: 'include' });
+        if (!r.ok) return true;
+        const data = await r.json();
+        const costoChat = (data.costos && data.costos.CHAT_N8N) || 3000;
+        if (data.tokens_disponibles < costoChat) {
+            mostrarLimiteIA();
+            return false;
+        }
+        return true;
+    } catch (e) { return true; }
+}
+
+function mostrarLimiteIA() {
+    const banner = document.getElementById('tokens-limite-banner');
+    const inputArea = document.querySelector('.chat-input-container');
+    if (banner) banner.style.display = 'flex';
+    if (inputArea) inputArea.style.display = 'none';
+    function actualizarCountdown() {
+        const el = document.getElementById('tokens-countdown');
+        if (!el) return;
+        const ahora = new Date();
+        const manana = new Date(ahora);
+        manana.setHours(24, 0, 0, 0);
+        const diff = manana - ahora;
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        el.textContent = h + 'h ' + m + 'min';
+    }
+    actualizarCountdown();
+    setInterval(actualizarCountdown, 60000);
+}
+
 async function enviarMensaje() {
+    // Verificar tokens disponibles antes de enviar
+    if (!(await verificarTokens())) return;
 
     const input = document.getElementById("user-input");
     const fileInput = document.getElementById("file-input");
@@ -1967,6 +2558,8 @@ async function enviarMensaje() {
         const formData = new FormData();
         formData.append("chatInput", texto);
         formData.append("sessionId", sessionId);
+        formData.append("userId", djangoUserId);
+        formData.append("sector", "naval");
         if (archivo) {
             formData.append("data00", archivo); 
         }
@@ -2040,13 +2633,18 @@ function toggleChart(forceShow = false) {
 
 // 2. FUNCIÓN UNIVERSAL DE EXTRACCIÓN
 function extractChartData(aiResponse) {
-    const texto_bruto = aiResponse.output || aiResponse.texto_limpio || "";
+    const fullOutput = aiResponse.output || aiResponse.texto_limpio || "";
+    // Parsear solo el bloque [MOSTRAR_GRAFICO] para evitar que el texto visible
+    // (ej: "Visibilidad: 8.8 km") contamine los datos del gráfico
+    const _graficoMatch = fullOutput.match(/\[MOSTRAR_GRAFICO\]([\s\S]*)$/i);
+    const texto_bruto = _graficoMatch ? _graficoMatch[1] : fullOutput;
 
     function pescarTexto(campo) {
         const stopWords = "cultivo|region|temperatura|temperatura_maxima|temperatura_minima|temperatura_suelo|humedad_relativa|precipitacion|horas_sol|fase_lunar|evapotranspiracion|" +
                           "puerto|condiciones_mar|viento_velocidad|viento_direccion|direccion_viento|temperatura_agua|altura_olas|visibilidad|" +
                           "aeropuerto_origen|aeropuerto_destino|altitud_vuelo|temperatura_altitud|corrientes_viento|visibilidad_km|condiciones_atmosfericas|" +
                           "tipo_energia|ubicacion|radiacion_solar|velocidad_viento|temperatura_ambiente|eficiencia_estimada|produccion_kwh|" +
+                          "gdd|delta_t|vpd|temperatura_aire|presion_atmosferica|periodo_ola|nubosidad|potencia_solar|potencia_eolica|co2_evitado|" +
                           "etiquetas|labels|chart_type|Para tus registros|¿deseas";
         const regex = new RegExp(`${campo}[:\\s]+([\\s\\S]*?)(?=(?:${stopWords}|$))`, 'i');
         const match = texto_bruto.match(regex);
@@ -2075,6 +2673,8 @@ function extractChartData(aiResponse) {
         aeropuerto_origen: pescarTexto("aeropuerto_origen"), aeropuerto_destino: pescarTexto("aeropuerto_destino"), altitud_vuelo: parseValue(pescarTexto("altitud_vuelo"), true), temperatura_altitud: parseValue(pescarTexto("temperatura_altitud"), true), corrientes_viento: parseValue(pescarTexto("corrientes_viento"), true), visibilidad_km: parseValue(pescarTexto("visibilidad_km"), true), condiciones_atmosfericas: pescarTexto("condiciones_atmosfericas"),
         // Energía
         tipo_energia: pescarTexto("tipo_energia"), ubicacion: pescarTexto("ubicacion"), radiacion_solar: parseValue(pescarTexto("radiacion_solar"), true), velocidad_viento: parseValue(pescarTexto("velocidad_viento"), true), temperatura_ambiente: parseValue(pescarTexto("temperatura_ambiente"), true), eficiencia_estimada: parseValue(pescarTexto("eficiencia_estimada"), true), produccion_kwh: parseValue(pescarTexto("produccion_kwh"), true),
+        // Calculados IA (GDD, DeltaT, VPD, Presión, etc.)
+        gdd: parseValue(pescarTexto("gdd"), true), delta_t: parseValue(pescarTexto("delta_t"), true), vpd: parseValue(pescarTexto("vpd"), true), temperatura_aire: parseValue(pescarTexto("temperatura_aire"), true), presion_atmosferica: parseValue(pescarTexto("presion_atmosferica"), true), periodo_ola: parseValue(pescarTexto("periodo_ola"), true), nubosidad: parseValue(pescarTexto("nubosidad"), true), potencia_solar: parseValue(pescarTexto("potencia_solar"), true), potencia_eolica: parseValue(pescarTexto("potencia_eolica"), true), co2_evitado: parseValue(pescarTexto("co2_evitado"), true),
         // Universales
         etiquetas: parseValue(pescarTexto("etiquetas") || pescarTexto("labels"), false) || ['Actual'], type: pescarTexto("chart_type") || 'line'
     };
@@ -2116,6 +2716,17 @@ function createSampleChart(chartData = null) {
         { key: 'temperatura_ambiente', label: 'Temp. Ambiente (°C)', color: '#10b981' },
         { key: 'eficiencia_estimada', label: 'Eficiencia (%)', color: '#14b8a6' },
         { key: 'produccion_kwh', label: 'Producción (kWh)', color: '#84cc16' },
+        // Calculados por IA
+        { key: 'gdd', label: 'GDD (grados-día)', color: '#22c55e' },
+        { key: 'delta_t', label: 'Delta T (°C)', color: '#f97316' },
+        { key: 'vpd', label: 'VPD (kPa)', color: '#e11d48' },
+        { key: 'temperatura_aire', label: 'Temp. Aire (°C)', color: '#fde047' },
+        { key: 'presion_atmosferica', label: 'Presión (hPa)', color: '#a3a3a3' },
+        { key: 'periodo_ola', label: 'Período Ola (s)', color: '#93c5fd' },
+        { key: 'nubosidad', label: 'Nubosidad (oktas)', color: '#cbd5e1' },
+        { key: 'potencia_solar', label: 'Potencia Solar (W)', color: '#facc15' },
+        { key: 'potencia_eolica', label: 'Potencia Eólica (W)', color: '#7dd3fc' },
+        { key: 'co2_evitado', label: 'CO₂ Evitado (kg)', color: '#4ade80' },
         // Universal (Dirección Viento)
         { key: 'viento_direccion', label: 'Dir. Viento (°)', color: '#a855f7' },
         { key: 'direccion_viento', label: 'Dir. Viento (°)', color: '#a855f7' }

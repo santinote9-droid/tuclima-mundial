@@ -203,6 +203,98 @@
         </form>
     </div>
 
+    <!-- ── Alertas Proactivas ── -->
+    <div class="card">
+        <div class="card-header">
+            <div class="icon" style="background:rgba(239,68,68,0.1); color:#f87171;">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div>
+                <h2>Alertas Proactivas</h2>
+                <div class="subtitle">Reporte climático diario por email para tu sector</div>
+            </div>
+        </div>
+
+        {% if guardado %}<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:8px 14px;color:#34d399;font-size:.83rem;margin-bottom:14px;"><i class="fas fa-check-circle"></i> Preferencias guardadas</div>{% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="alertas">
+
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label"><strong>Activar reporte diario</strong></div>
+                    <div class="toggle-desc">
+                        Recibís un email en tu horario con el resumen climático.
+                        Cuando hay condiciones críticas aparece una <b style="color:#f87171;">⚠️ alerta</b> con acciones concretas.
+                    </div>
+                </div>
+                <label class="toggle-switch" style="margin-left:20px;">
+                    <input type="checkbox" name="alertas_activas" {% if perfil.alertas_activas %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div style="margin:20px 0 10px; color:#94a3b8; font-size:0.78rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">Sectores a monitorear</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;">
+                {% for s, label, icon in sectores_alertas %}
+                <label style="display:flex; align-items:center; gap:7px; cursor:pointer;
+                              background:rgba(30,41,59,0.6);
+                              border:1px solid {% if s in perfil.alertas_sectores %}rgba(99,102,241,0.5){% else %}#334155{% endif %};
+                              border-radius:8px; padding:8px 14px; font-size:0.85rem;
+                              color:{% if s in perfil.alertas_sectores %}#a5b4fc{% else %}#94a3b8{% endif %};
+                              transition:all 0.2s;">
+                    <input type="checkbox" name="alertas_sectores" value="{{ s }}"
+                           {% if s in perfil.alertas_sectores %}checked{% endif %}
+                           style="accent-color:#6366f1; width:15px; height:15px;">
+                    {{ icon }} {{ label }}
+                </label>
+                {% endfor %}
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px;">
+                <div>
+                    <label style="display:block; color:#94a3b8; font-size:0.82rem; margin-bottom:6px;">📍 Ciudad / Localidad</label>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <input type="text" name="ubicacion_nombre" id="ubicacion_nombre_input"
+                               value="{{ perfil.ubicacion_nombre }}"
+                               placeholder="Ej: Buenos Aires, Rosario..."
+                               style="flex:1; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:9px 12px; color:#f1f5f9; font-size:0.9rem; box-sizing:border-box; outline:none;"
+                               maxlength="100">
+                        <button type="button" id="btn-detectar-ubicacion"
+                                onclick="detectarUbicacion()"
+                                title="Detectar mi ubicación automáticamente"
+                                style="flex-shrink:0; background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.35); border-radius:8px; padding:9px 11px; color:#818cf8; cursor:pointer; font-size:0.85rem; white-space:nowrap; transition:all 0.2s;"
+                                onmouseover="this.style.background='rgba(99,102,241,0.3)'"
+                                onmouseout="this.style.background='rgba(99,102,241,0.15)'">
+                            📍 Detectar
+                        </button>
+                    </div>
+                    <div id="ubicacion-estado" style="font-size:0.75rem; margin-top:5px; min-height:16px;"></div>
+                </div>
+                <div>
+                    <label style="display:block; color:#94a3b8; font-size:0.82rem; margin-bottom:6px;">🕐 Hora de envío (arg)</label>
+                    <select name="hora_alerta"
+                            style="width:100%; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:9px 12px; color:#f1f5f9; font-size:0.9rem; box-sizing:border-box; outline:none;">
+                        {% for h in horas_alerta %}
+                        <option value="{{ h }}" {% if perfil.hora_alerta == h %}selected{% endif %}>{{ h }}:00 hs</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div style="background:rgba(99,102,241,0.05); border:1px dashed rgba(99,102,241,0.2); border-radius:8px; padding:10px 14px; font-size:0.8rem; color:#64748b; margin-bottom:18px;">
+                <i class="fas fa-info-circle" style="color:#6366f1; margin-right:6px;"></i>
+                El email lo envía n8n + Gemini AI directamente a {{ user.email }}. Disponible con suscripción activa.
+            </div>
+
+            <button type="submit" class="btn-save"
+                    style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.35); color:#f87171;">
+                <i class="fas fa-bell"></i> Guardar alertas
+            </button>
+        </form>
+    </div>
+
     <!-- ── Tokens IA ── -->
     <div class="card">
         <div class="card-header">
@@ -296,5 +388,106 @@
     </div>
 
 </div>
+
+<script>
+// --- Geolocalización reutilizando el mismo localStorage de home.html ---
+(function autocompletarDesdeLocalStorage() {
+    const input = document.getElementById('ubicacion_nombre_input');
+    if (!input || input.value.trim()) return; // ya tiene valor guardado en BD
+    try {
+        const raw = localStorage.getItem('ultimaUbicacion');
+        if (!raw) return;
+        const ub = JSON.parse(raw);
+        const diasTranscurridos = (Date.now() - (ub.timestamp || 0)) / (1000 * 60 * 60 * 24);
+        if (diasTranscurridos < 7 && ub.ciudad && ub.ciudad !== 'Ubicación guardada') {
+            input.value = ub.ciudad;
+            const estado = document.getElementById('ubicacion-estado');
+            if (estado) {
+                estado.textContent = '📍 Completado desde tu última sesión en TuClima';
+                estado.style.color = '#818cf8';
+            }
+        }
+    } catch(e) {}
+})();
+
+async function detectarUbicacion() {
+    const btn    = document.getElementById('btn-detectar-ubicacion');
+    const input  = document.getElementById('ubicacion_nombre_input');
+    const estado = document.getElementById('ubicacion-estado');
+
+    if (!navigator.geolocation) {
+        estado.textContent = 'Tu navegador no soporta geolocalización.';
+        estado.style.color = '#f87171';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Detectando...';
+    estado.textContent = '';
+
+    navigator.geolocation.getCurrentPosition(
+        async function(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+
+            // 1. Intentar obtener ciudad desde el localStorage de home (ya geocodificado)
+            try {
+                const raw = localStorage.getItem('ultimaUbicacion');
+                if (raw) {
+                    const ub = JSON.parse(raw);
+                    const dist = Math.abs(ub.lat - lat) + Math.abs(ub.lon - lon);
+                    const diasTranscurridos = (Date.now() - (ub.timestamp || 0)) / (1000 * 60 * 60 * 24);
+                    // Si el GPS coincide con la ubicación guardada (< 0.5° ≈ ~50km) y es reciente
+                    if (dist < 0.5 && diasTranscurridos < 7 && ub.ciudad && ub.ciudad !== 'Ubicación guardada') {
+                        input.value = ub.ciudad;
+                        estado.textContent = `✓ ${ub.ciudad}`;
+                        estado.style.color = '#4ade80';
+                        btn.disabled = false;
+                        btn.textContent = '📍 Detectar';
+                        return;
+                    }
+                }
+            } catch(e) {}
+
+            // 2. Fallback: Nominatim reverse geocoding (mismo que usa home.html internamente)
+            try {
+                const r = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=es`,
+                    { headers: { 'User-Agent': 'TuClimaApp/1.0' } }
+                );
+                const data = await r.json();
+                const addr = data.address || {};
+                const ciudad = addr.city || addr.town || addr.village || addr.county || addr.state || '';
+                const pais   = addr.country_code ? addr.country_code.toUpperCase() : '';
+                const nombre = ciudad ? (pais ? `${ciudad}, ${pais}` : ciudad) : (data.display_name || '').split(',')[0].trim();
+                if (nombre) {
+                    input.value = nombre;
+                    // Guardar en localStorage por si home.html lo necesita luego
+                    localStorage.setItem('ultimaUbicacion', JSON.stringify({ lat, lon, ciudad: nombre, timestamp: Date.now() }));
+                    estado.textContent = `✓ ${nombre}`;
+                    estado.style.color = '#4ade80';
+                } else {
+                    estado.textContent = 'No se reconoció la ciudad. Ingresala manualmente.';
+                    estado.style.color = '#f87171';
+                }
+            } catch(e) {
+                estado.textContent = 'Error de red. Ingresá la ciudad manualmente.';
+                estado.style.color = '#f87171';
+            }
+            btn.disabled = false;
+            btn.textContent = '📍 Detectar';
+        },
+        function(err) {
+            const msgs = { 1: 'Permiso denegado. Ingresá la ciudad manualmente.', 2: 'No se pudo determinar la posición.', 3: 'Tiempo de espera agotado.' };
+            estado.textContent = msgs[err.code] || 'No se pudo detectar la ubicación.';
+            estado.style.color = '#f87171';
+            btn.disabled = false;
+            btn.textContent = '📍 Detectar';
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
+    );
+}
+</script>
+
 </body>
 </html>

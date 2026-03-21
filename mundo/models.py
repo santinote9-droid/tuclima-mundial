@@ -53,6 +53,27 @@ class PerfilUsuario(models.Model):
         verbose_name='Vencimiento plan tokens'
     )
 
+    # --- Alertas Proactivas ---
+    alertas_activas = models.BooleanField(
+        default=False,
+        verbose_name='Alertas diarias activas',
+    )
+    alertas_sectores = models.CharField(
+        max_length=50, default='', blank=True,
+        verbose_name='Sectores de alerta',
+        help_text='Ej: agro,naval — vacío = sin alertas configuradas',
+    )
+    hora_alerta = models.IntegerField(
+        default=7,
+        verbose_name='Hora de envío (Argentina)',
+        help_text='Hora local Argentina (0-23)',
+    )
+    ubicacion_nombre = models.CharField(
+        max_length=100, default='', blank=True,
+        verbose_name='Ubicación para alertas',
+        help_text='Ciudad o localidad, ej: Buenos Aires',
+    )
+
     # El @property debe estar alineado con 'user' y 'fecha...'
     @property
     def suscripcion_activa(self):
@@ -396,10 +417,11 @@ class FeedbackIA(models.Model):
 #   · Consulta pesada (Excel, Docs, BI):       ~5,000 tokens reales
 #   · Análisis de archivo + IA completo:      ~10,000 tokens reales
 COSTO_TOKENS = {
-    'CHAT_N8N':         3_000,   # Consulta al chat IA (con memoria y tools)
-    'CHAT_SIMPLE':      2_000,   # Consulta rápida sin tools externas
-    'CHAT_HEAVY':       5_000,   # Generación de Excel, Docs o reporte BI
-    'ANALISIS_ARCHIVO': 10_000,  # Procesar archivo + análisis IA completo
+    'CHAT_N8N':           3_000,   # Consulta al chat IA (con memoria y tools)
+    'CHAT_SIMPLE':        2_000,   # Consulta rápida sin tools externas
+    'CHAT_HEAVY':         5_000,   # Generación de Excel, Docs o reporte BI
+    'ANALISIS_ARCHIVO':  10_000,   # Procesar archivo + análisis IA completo
+    'DEVORADOR_REPORTE': 10_000,   # Devorador de Reportes: archivo PDF + análisis sectorial Gemini
 }
 
 # Tokens diarios incluidos en la suscripción Pro ($20/mes)

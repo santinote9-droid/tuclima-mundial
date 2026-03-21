@@ -98,6 +98,13 @@ urlpatterns = [
     path('confirmar-manual-tokens/', views.confirmar_manual_tokens, name='confirmar_manual_tokens'),
     path('pagar-tokens/', views.mp_crear_preferencia_tokens, name='mp_crear_preferencia_tokens'),
     path('tokens-retorno/', views.tokens_retorno_view, name='tokens_retorno'),
+
+    # Alertas Proactivas — endpoint para n8n
+    path('api/alertas/usuarios/', views.api_alertas_usuarios, name='api_alertas_usuarios'),
+
+    # Devorador de Reportes — Procesamiento Documental con IA
+    path('devorador/', views.devorador_vista, name='devorador'),
+    path('api/devorador/', views.devorador_api, name='devorador_api'),
 ]
 
 

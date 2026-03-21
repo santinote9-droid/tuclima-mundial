@@ -59,18 +59,22 @@
         padding: 2px 0 !important;
         font-size: 14px !important;
         line-height: 1.4 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
     }
     
     .welcome-msg svg {
         width: 16px !important;
         height: 16px !important;
-        margin-right: 4px !important;
+        flex-shrink: 0 !important;
+        margin: 0 !important;
     }
         @media (max-width: 768px) {
             .chat-container {
                 margin: 10px 0;
                 border-radius: 12px;
-                min-height: 500px;
+                height: 420px;
             }
             
             .chat-header {
@@ -188,7 +192,7 @@
         }
     .chat-container {
         width: 100%;
-        min-height: 650px;
+        height: 560px;
         margin: 20px 0;
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         border: 1px solid rgba(51, 65, 85, 0.3);
@@ -237,7 +241,7 @@
 
     .chat-messages {
         flex: 1;
-        padding: 24px;
+        padding: 12px 24px 24px;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
@@ -526,18 +530,36 @@
 
         .phys-box { background: rgba(59, 130, 246, 0.05); border-left: 3px solid #3b82f6; padding: 20px; border-radius: 4px; font-size: 0.9em; color: #cbd5e1; margin-bottom: 25px; line-height: 1.6; }
         .rec-box { background: rgba(34, 197, 94, 0.05); border-left: 3px solid #22c55e; padding: 20px; border-radius: 4px; font-size: 0.9em; color: #cbd5e1; line-height: 1.6; }
-    </style>
 
-<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
-    <script>
-        Weglot.initialize({
-            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
-            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
-            auto_switch: true            // Detecta idioma automático
-        });
-    </script>
-</head>
-<body>
+        /* ══ MODO CABINA — alto contraste para uso al aire libre ══ */
+        body.cabin-mode {
+            --bg-dark:#000; --card-bg:#0d0d0d; --border:#555;
+            --text-main:#fff; --text-muted:#ccc;
+            background-color:#000 !important; font-size:107%;
+        }
+        body.cabin-mode .header-eng, body.cabin-mode .nav-header,
+        body.cabin-mode .cockpit-header, body.cabin-mode header[class] {
+            background:#000 !important; backdrop-filter:none !important; border-bottom-color:#555 !important;
+        }
+        body.cabin-mode .card, body.cabin-mode .instrument-card,
+        body.cabin-mode .instrumento, body.cabin-mode .panel,
+        body.cabin-mode .modal-content, body.cabin-mode .modal-box {
+            background:#0d0d0d !important; border-color:#555 !important;
+        }
+        body.cabin-mode .modal-overlay, body.cabin-mode .modal-backdrop { background:rgba(0,0,0,0.98) !important; }
+        body.cabin-mode .chat-container, body.cabin-mode .chat-messages,
+        body.cabin-mode .chat-input-area, body.cabin-mode .chat-with-ai {
+            background:#0d0d0d !important; border-color:#555 !important;
+        }
+        body.cabin-mode input, body.cabin-mode select, body.cabin-mode textarea {
+            background:#111 !important; color:#fff !important; border-color:#666 !important;
+        }
+        body.cabin-mode details { border-color:#555 !important; }
+        body.cabin-mode details > summary { background:#111 !important; color:#fff !important; }
+        body.cabin-mode th, body.cabin-mode td { background:#0d0d0d !important; color:#fff !important; border-color:#444 !important; }
+        body.cabin-mode .val-big { text-shadow:0 0 16px currentColor; }
+        #tc-btn-cabina.tc-cabina-on { border-color:#facc15 !important; color:#facc15 !important; background:rgba(250,204,21,0.12) !important; }
+    </style>
 
 <div class="header-eng">
     <div class="titulo-seccion">
@@ -548,10 +570,18 @@
         <div style="color: #64748b; font-weight: bold;">SISTEMA <span style="color:#22c55e;">ONLINE</span></div>
         <div style="color: #94a3b8;">LAT: {{ lat }} | LON: {{ lon }}</div>
     </div>
+    <button id="tc-btn-cabina" onclick="tcToggleCabina()" title="Modo Cabina — alto contraste solar" style="background:#1e293b; border:1px solid #334155; color:#94a3b8; padding:6px 12px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:0.75em; font-weight:600; font-family:inherit; transition:0.2s;">
+        <svg class="icon-svg" style="width:16px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        CABINA
+    </button>
     <a href="/?lat={{ lat }}&lon={{ lon }}" class="btn-exit">
         <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg> Salir
     </a>
 </div>
+<script>
+function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');var b=document.getElementById('tc-btn-cabina');if(b)b.classList.toggle('tc-cabina-on',on);try{localStorage.setItem('tc_cabin',on?'1':'0');}catch(e){}}
+(function(){try{if(localStorage.getItem('tc_cabin')==='1'){document.body.classList.add('cabin-mode');setTimeout(function(){var b=document.getElementById('tc-btn-cabina');if(b)b.classList.add('tc-cabina-on');},50);}}catch(e){}})();
+</script>
 
 <div class="main-container">
     <div class="grid-energy">
@@ -684,17 +714,37 @@
         </div>
         <div class="modal-body">
             <div class="phys-box" style="border-color: #facc15; background: rgba(250, 204, 21, 0.05); color: #fef08a;">
-                <div class="info-title" style="color:#facc15; border:none; margin:0;">🧠 EFECTO FOTOVOLTAICO</div>
-                <p style="margin:5px 0 0 0;">Conversión directa de fotones con energía > 1.1eV (Band Gap del silicio) en corriente eléctrica. La eficiencia real depende críticamente de la temperatura de la celda.</p>
+                <div class="info-title" style="color:#facc15; border:none; margin:0; padding:0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636-.707.707M21 12h-1M4 12H3m3.343-5.657-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    EFECTO FOTOVOLTAICO
+                </div>
+                <p style="margin:8px 0 0 0;">Conversión directa de fotones con energía &gt; 1.1 eV (Band Gap del silicio) en corriente eléctrica. La eficiencia real depende críticamente de la temperatura de la celda.</p>
             </div>
-            <div class="tech-data-grid">
+            <div class="tech-data-grid" style="margin-bottom:16px;">
                 <div class="tech-item"><label>Irradiancia Global</label><span>{{ solar.rad }} W/m²</span></div>
                 <div class="tech-item"><label>Potencia Estimada</label><span>{{ solar.potencia }}</span></div>
                 <div class="tech-item"><label>Estado</label><span>{{ solar.estado }}</span></div>
-                <div class="tech-item"><label>Inclinación (Tilt)</label><span>Latitud + 10°</span></div>
+                <div class="tech-item"><label>Inclinación Óptima</label><span>Latitud + 10°</span></div>
             </div>
-            <div class="rec-box" style="margin-top:20px;">
-                <div class="info-title" style="color:#22c55e; border:none; margin:0;">💡 MANTENIMIENTO</div>
+            <table style="width:100%; border-collapse:collapse; font-size:0.85em; margin-bottom:16px;">
+                <thead><tr style="background:#172554;">
+                    <th style="padding:9px; color:#94a3b8; text-align:left;">Irradiancia</th>
+                    <th style="padding:9px; color:#94a3b8;">Nivel</th>
+                    <th style="padding:9px; color:#94a3b8;">Condición</th>
+                    <th style="padding:9px; color:#94a3b8;">Rendimiento</th>
+                </tr></thead>
+                <tbody>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px;"><strong style="color:#ef4444;">&gt; 800 W/m²</strong></td><td style="padding:9px; text-align:center;">Alto</td><td style="padding:9px; color:#cbd5e1;">Cielo despejado</td><td style="padding:9px; color:#22c55e; font-weight:700;">Máximo</td></tr>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px;"><strong style="color:#facc15;">400–800 W/m²</strong></td><td style="padding:9px; text-align:center;">Medio</td><td style="padding:9px; color:#cbd5e1;">Nubosidad parcial</td><td style="padding:9px; color:#facc15; font-weight:700;">Bueno</td></tr>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px;"><strong style="color:#3b82f6;">100–400 W/m²</strong></td><td style="padding:9px; text-align:center;">Bajo</td><td style="padding:9px; color:#cbd5e1;">Cubierto / lluvia</td><td style="padding:9px; color:#3b82f6; font-weight:700;">Reducido</td></tr>
+                    <tr><td style="padding:9px;"><strong style="color:#475569;">&lt; 100 W/m²</strong></td><td style="padding:9px; text-align:center;">Mínimo</td><td style="padding:9px; color:#cbd5e1;">Nocturno / tormenta</td><td style="padding:9px; color:#475569; font-weight:700;">Nulo</td></tr>
+                </tbody>
+            </table>
+            <div class="rec-box">
+                <div class="info-title" style="color:#22c55e; border:none; margin:0; padding:0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                    MANTENIMIENTO
+                </div>
                 {{ solar.rec }}
             </div>
         </div>
@@ -709,17 +759,37 @@
         </div>
         <div class="modal-body">
             <div class="phys-box">
-                <div class="info-title" style="color:#3b82f6; border:none; margin:0;">🧠 LEY DE POTENCIA CÚBICA</div>
-                <p style="margin:5px 0 0 0;">La potencia disponible es P = ½·ρ·A·v³. Un incremento del 10% en la velocidad del viento resulta en un aumento del 33% en la energía generada.</p>
+                <div class="info-title" style="color:#3b82f6; border:none; margin:0; padding:0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636-.707.707M21 12h-1M4 12H3m3.343-5.657-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    LEY DE POTENCIA CÚBICA
+                </div>
+                <p style="margin:8px 0 0 0;">La potencia disponible es <strong>P = ½·ρ·A·v³</strong>. Un incremento del 10% en la velocidad del viento resulta en un aumento del 33% en la energía generada.</p>
             </div>
-            <div class="tech-data-grid">
+            <div class="tech-data-grid" style="margin-bottom:16px;">
                 <div class="tech-item"><label>Viento (100m)</label><span>{{ eolica.w100 }}</span></div>
                 <div class="tech-item"><label>Estado</label><span>{{ eolica.estado }}</span></div>
-                <div class="tech-item"><label>Cut-in / Cut-out</label><span>3.5 / 25 m/s</span></div>
-                <div class="tech-item"><label>Potencia Actual</label><span>{{ eolica.potencia }}</span></div>
+                <div class="tech-item"><label>Cut-in / Rated</label><span>3.5 / 12 m/s</span></div>
+                <div class="tech-item"><label>Cut-out</label><span>25 m/s</span></div>
+                <div class="tech-item" style="grid-column:span 2;"><label>Potencia Actual</label><span>{{ eolica.potencia }}</span></div>
             </div>
-            <div class="rec-box" style="margin-top:20px;">
-                <div class="info-title" style="color:#22c55e; border:none; margin:0;">💡 ESTRATEGIA</div>
+            <table style="width:100%; border-collapse:collapse; font-size:0.85em; margin-bottom:16px;">
+                <thead><tr style="background:#172554;">
+                    <th style="padding:9px; color:#94a3b8; text-align:left;">Rango (m/s)</th>
+                    <th style="padding:9px; color:#94a3b8;">Zona Operativa</th>
+                    <th style="padding:9px; color:#94a3b8;">Acción del Aerogenerador</th>
+                </tr></thead>
+                <tbody>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px;"><strong style="color:#475569;">&lt; 3.5</strong></td><td style="padding:9px; color:#cbd5e1;">Por debajo de cut-in</td><td style="padding:9px; color:#64748b;">Parado, sin generación</td></tr>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px;"><strong style="color:#22c55e;">3.5 – 12</strong></td><td style="padding:9px; color:#cbd5e1;">Zona potencia variable</td><td style="padding:9px; color:#22c55e; font-weight:700;">Generando, curva cúbica</td></tr>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px;"><strong style="color:#facc15;">12 – 25</strong></td><td style="padding:9px; color:#cbd5e1;">Potencia nominal</td><td style="padding:9px; color:#facc15; font-weight:700;">Máx. producción (pitch control)</td></tr>
+                    <tr><td style="padding:9px;"><strong style="color:#ef4444;">&gt; 25</strong></td><td style="padding:9px; color:#cbd5e1;">Por encima de cut-out</td><td style="padding:9px; color:#ef4444; font-weight:700;">Parada de emergencia</td></tr>
+                </tbody>
+            </table>
+            <div class="rec-box">
+                <div class="info-title" style="color:#22c55e; border:none; margin:0; padding:0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    ESTRATEGIA
+                </div>
                 {{ eolica.rec }}
             </div>
         </div>
@@ -734,21 +804,40 @@
         </div>
         <div class="modal-body">
             <div class="phys-box" style="border-color: #10b981; background: rgba(16, 185, 129, 0.05); color: #d1fae5;">
-                <div class="info-title" style="color:#10b981; border:none; margin:0;">🧠 ELECTRÓLISIS DEL AGUA</div>
-                <p style="margin:5px 0 0 0;">
-                    Proceso electroquímico (2H<sub>2</sub>O &rarr; 2H<sub>2</sub> + O<sub>2</sub>) impulsado por energía renovable. 
-                    Se requieren aprox. <strong>55 kWh</strong> para producir 1 kg de H<sub>2</sub>.
+                <div class="info-title" style="color:#10b981; border:none; margin:0; padding:0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636-.707.707M21 12h-1M4 12H3m3.343-5.657-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    ELECTRÓLISIS DEL AGUA
+                </div>
+                <p style="margin:8px 0 0 0;">
+                    Proceso electroquímico (<strong>2H₂O → 2H₂ + O₂</strong>) impulsado por energía renovable.
+                    Se requieren aprox. <strong>55 kWh</strong> para producir 1 kg de H₂.
                 </p>
             </div>
-            <div class="tech-data-grid">
+            <div class="tech-data-grid" style="margin-bottom:16px;">
                 <div class="tech-item"><label>Producción Diaria</label><span>{{ hidro.kg }} kg</span></div>
                 <div class="tech-item"><label>Consumo Específico</label><span>55 kWh/kg</span></div>
                 <div class="tech-item"><label>Pureza Objetivo</label><span>99.99%</span></div>
-                <div class="tech-item"><label>Vector Energético</label><span>33.3 kWh/kg</span></div>
+                <div class="tech-item"><label>Densidad Energética H₂</label><span>33.3 kWh/kg</span></div>
             </div>
-            <div class="rec-box" style="margin-top:20px;">
-                <div class="info-title" style="color:#22c55e; border:none; margin:0;">💡 APLICACIÓN</div>
-                <p>Almacenar excedentes como Hidrógeno permite desacoplar la generación del consumo estacional.</p>
+            <table style="width:100%; border-collapse:collapse; font-size:0.85em; margin-bottom:16px;">
+                <thead><tr style="background:#172554;">
+                    <th style="padding:9px; color:#94a3b8; text-align:left;">Tipo H₂</th>
+                    <th style="padding:9px; color:#94a3b8;">Tecnología</th>
+                    <th style="padding:9px; color:#94a3b8;">Eficiencia</th>
+                    <th style="padding:9px; color:#94a3b8;">Huella CO₂</th>
+                </tr></thead>
+                <tbody>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px; color:#22c55e; font-weight:700;">Verde</td><td style="padding:9px; color:#cbd5e1;">Electrólisis (PEM/ALK)</td><td style="padding:9px;">60–80%</td><td style="padding:9px; color:#22c55e;">Nula</td></tr>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px; color:#3b82f6; font-weight:700;">Azul</td><td style="padding:9px; color:#cbd5e1;">SMR + captura CCS</td><td style="padding:9px;">70–85%</td><td style="padding:9px; color:#3b82f6;">Baja</td></tr>
+                    <tr><td style="padding:9px; color:#64748b; font-weight:700;">Gris</td><td style="padding:9px; color:#cbd5e1;">SMR sin captura</td><td style="padding:9px;">70–85%</td><td style="padding:9px; color:#ef4444;">Alta</td></tr>
+                </tbody>
+            </table>
+            <div class="rec-box">
+                <div class="info-title" style="color:#22c55e; border:none; margin:0; padding:0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+                    APLICACIÓN
+                </div>
+                <p>Almacenar excedentes como Hidrógeno permite desacoplar la generación del consumo estacional. Ideal para períodos de alta producción solar/eólica.</p>
             </div>
         </div>
     </div>
@@ -761,14 +850,38 @@
             <span class="modal-close" onclick="closeModalById('modEf')">✖</span>
         </div>
         <div class="modal-body">
-            <div class="tech-data-grid">
+            <div class="phys-box" style="border-color:#ef4444; background:rgba(239,68,68,0.05); color:#fecaca; margin-bottom:16px;">
+                <div class="info-title" style="color:#ef4444; border:none; margin:0; padding:0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+                    COEFICIENTE TÉRMICO (Tc)
+                </div>
+                <p style="margin:8px 0 0 0;">Los paneles de silicio cristalino pierden aprox. <strong>-0.4% de eficiencia por cada °C</strong> que superen los 25°C (STC). A mayor temperatura, menor voltaje de cóncavo (Voc).</p>
+            </div>
+            <div class="tech-data-grid" style="margin-bottom:16px;">
                 <div class="tech-item"><label>Temp. Panel</label><span>{{ eficiencia.temp_panel }}</span></div>
                 <div class="tech-item"><label>Rendimiento</label><span>{{ eficiencia.factor }}</span></div>
                 <div class="tech-item" style="grid-column: span 2;"><label>Pérdida Térmica</label><span style="color:#ef4444;">{{ eficiencia.perdida }}</span></div>
             </div>
-            <div class="rec-box" style="margin-top:20px;">
-                <div class="info-title" style="color:#22c55e; border:none; margin:0;">💡 REFRIGERACIÓN</div>
-                <p>Asegurar flujo de aire posterior para mitigar el derateo térmico.</p>
+            <table style="width:100%; border-collapse:collapse; font-size:0.85em; margin-bottom:16px;">
+                <thead><tr style="background:#172554;">
+                    <th style="padding:9px; color:#94a3b8; text-align:left;">Temp. Celda</th>
+                    <th style="padding:9px; color:#94a3b8;">Pérdida vs STC</th>
+                    <th style="padding:9px; color:#94a3b8;">Estado</th>
+                </tr></thead>
+                <tbody>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px;">25 °C</td><td style="padding:9px; color:#22c55e; font-weight:700;">0%</td><td style="padding:9px; color:#22c55e;">STC (Condic. estándar)</td></tr>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px;">35 °C</td><td style="padding:9px; color:#facc15; font-weight:700;">-4%</td><td style="padding:9px; color:#facc15;">Reducción leve</td></tr>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px;">45 °C</td><td style="padding:9px; color:#fb923c; font-weight:700;">-8%</td><td style="padding:9px; color:#fb923c;">Derating moderado</td></tr>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px;">55 °C</td><td style="padding:9px; color:#ef4444; font-weight:700;">-12%</td><td style="padding:9px; color:#ef4444;">Derating alto</td></tr>
+                    <tr><td style="padding:9px;">65 °C</td><td style="padding:9px; color:#dc2626; font-weight:700;">&gt; -16%</td><td style="padding:9px; color:#dc2626;">Crítico</td></tr>
+                </tbody>
+            </table>
+            <div class="rec-box">
+                <div class="info-title" style="color:#22c55e; border:none; margin:0; padding:0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                    REFRIGERACIÓN
+                </div>
+                <p>Asegurar flujo de aire posterior para mitigar el derating térmico. Una diferencia de 10°C puede recuperar hasta 4% de eficiencia.</p>
             </div>
         </div>
     </div>
@@ -781,6 +894,13 @@
             <span class="modal-close" onclick="closeModalById('modRed')">✖</span>
         </div>
         <div class="modal-body">
+            <div class="phys-box" style="border-color:#8b5cf6; background:rgba(139,92,246,0.05); color:#ede9fe; margin-bottom:16px;">
+                <div class="info-title" style="color:#8b5cf6; border:none; margin:0; padding:0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M3 15a4 4 0 0 0 4 4h9a5 5 0 0 0 1.02-9.89 5 5 0 0 0-9.81 1.89 4 4 0 0 0-4.21 3.99z"/></svg>
+                    DENSIDAD DEL AIRE Y GENERACIÓN
+                </div>
+                <p style="margin:8px 0 0 0;">La densidad del aire (<strong>ρ = P/(R·T)</strong>) afecta directamente la potencia eólica y la eficiencia de refrigeración de los paneles. A mayor altitud o temperatura, menor densidad y menor rendimiento.</p>
+            </div>
             <div class="tech-data-grid">
                 <div class="tech-item"><label>Presión (hPa)</label><span>{{ atm.presion|default:red.estabilidad }}</span></div>
                 <div class="tech-item"><label>Estado Sensor</label><span>ACTIVO</span></div>
@@ -798,15 +918,21 @@
         </div>
         <div class="modal-body">
             <div class="phys-box" style="border-color: #06b6d4; background: rgba(6, 182, 212, 0.05); color: #cffafe;">
-                <div class="info-title" style="color:#06b6d4; border:none; margin:0;">🧠 GESTIÓN DE LA INTERMITENCIA</div>
-                <p style="margin:5px 0 0 0;">El desafío de las renovables es su variabilidad (VRE). Una matriz robusta combina fuentes "Follow-the-Sun" (Solar diurna) con fuentes estocásticas (Eólica) y almacenamiento.</p>
+                <div class="info-title" style="color:#06b6d4; border:none; margin:0; padding:0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                    GESTIÓN DE LA INTERMITENCIA
+                </div>
+                <p style="margin:8px 0 0 0;">El desafío de las renovables es su variabilidad (VRE). Una matriz robusta combina fuentes "Follow-the-Sun" (Solar diurna) con fuentes estocásticas (Eólica) y almacenamiento (BESS).</p>
             </div>
             <div class="tech-data-grid">
                 <div class="tech-item"><label>Dominante Actual</label><span style="color:#facc15;">{{ mix.ganador }}</span></div>
                 <div class="tech-item"><label>Factor Solar</label><span>Variable (Día)</span></div>
             </div>
-            <div class="rec-box" style="margin-top:20px;">
-                <div class="info-title" style="color:#22c55e; border:none; margin:0;">💡 ESTRATEGIA OPERATIVA</div>
+            <div class="rec-box" style="margin-top:16px;">
+                <div class="info-title" style="color:#22c55e; border:none; margin:0; padding:0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    ESTRATEGIA OPERATIVA
+                </div>
                 <p><strong>{{ mix.rec }}</strong></p>
             </div>
         </div>
@@ -820,15 +946,32 @@
             <span class="modal-close" onclick="closeModalById('modBat')">✖</span>
         </div>
         <div class="modal-body">
-            <div class="tech-data-grid">
+            <div class="tech-data-grid" style="margin-bottom:16px;">
                 <div class="tech-item" style="grid-column: span 2; text-align: center;">
                     <label>Tiempo Estimado de Carga</label>
                     <span style="font-size: 2em; color:#d946ef;">{{ smart_meter.bateria_tiempo }}</span>
                 </div>
             </div>
-            <div class="rec-box" style="margin-top:20px;">
-                <div class="info-title" style="color:#22c55e; border:none; margin:0;">💡 GESTIÓN INTELIGENTE</div>
-                <p>El sistema utiliza la batería automáticamente para cubrir los picos de consumo nocturnos (Peak Shaving).</p>
+            <table style="width:100%; border-collapse:collapse; font-size:0.85em; margin-bottom:16px;">
+                <thead><tr style="background:#172554;">
+                    <th style="padding:9px; color:#94a3b8; text-align:left;">Tecnología</th>
+                    <th style="padding:9px; color:#94a3b8;">Densidad (Wh/kg)</th>
+                    <th style="padding:9px; color:#94a3b8;">Ciclos</th>
+                    <th style="padding:9px; color:#94a3b8;">Uso Ideal</th>
+                </tr></thead>
+                <tbody>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px; color:#d946ef; font-weight:700;">LFP (LiFePO4)</td><td style="padding:9px;">100–160</td><td style="padding:9px; color:#22c55e;">3,000–6,000</td><td style="padding:9px; color:#cbd5e1;">Solar residencial, BESS</td></tr>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px; color:#a78bfa; font-weight:700;">NMC (Li-ion)</td><td style="padding:9px;">150–220</td><td style="padding:9px; color:#facc15;">500–1,500</td><td style="padding:9px; color:#cbd5e1;">VE, portátiles</td></tr>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px; color:#3b82f6; font-weight:700;">Flujo Va nadio</td><td style="padding:9px;">15–25</td><td style="padding:9px; color:#22c55e;">&gt; 20,000</td><td style="padding:9px; color:#cbd5e1;">Almacenamiento a escala</td></tr>
+                    <tr><td style="padding:9px; color:#64748b; font-weight:700;">Plomo-ácido</td><td style="padding:9px;">30–50</td><td style="padding:9px; color:#ef4444;">200–500</td><td style="padding:9px; color:#cbd5e1;">Backup / UPS</td></tr>
+                </tbody>
+            </table>
+            <div class="rec-box">
+                <div class="info-title" style="color:#22c55e; border:none; margin:0; padding:0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2"/><line x1="22" y1="11" x2="22" y2="13"/></svg>
+                    GESTIÓN INTELIGENTE
+                </div>
+                <p>El sistema utiliza la batería automáticamente para cubrir los picos de consumo nocturnos (Peak Shaving) y vende excedentes a la red (Net Metering).</p>
             </div>
         </div>
     </div>
@@ -842,14 +985,29 @@
         </div>
         <div class="modal-body">
             <div class="phys-box" style="border-color: #22c55e; background: rgba(34, 197, 94, 0.05); color: #dcfce7;">
-                <div class="info-title" style="color:#22c55e; border:none; margin:0;">🧠 FACTOR DE EMISIÓN</div>
-                <p style="margin:5px 0 0 0;">Al generar tu propia energía, evitas consumir de la red nacional. Se estima un ahorro de <strong>0.4 kg de CO₂</strong> por cada kWh autogenerado.</p>
+                <div class="info-title" style="color:#22c55e; border:none; margin:0; padding:0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>
+                    FACTOR DE EMISIÓN
+                </div>
+                <p style="margin:8px 0 0 0;">Al generar tu propia energía, evitas consumir de la red nacional. Se estima un ahorro de <strong>0.4 kg de CO₂</strong> por cada kWh autogenerado (factor promedio red arg.).</p>
             </div>
-            <div class="tech-data-grid">
+            <div class="tech-data-grid" style="margin-bottom:16px;">
                 <div class="tech-item"><label>CO₂ Evitado Hoy</label><span class="digital" style="color:#22c55e;">{{ smart_meter.co2 }} kg</span></div>
                 <div class="tech-item"><label>Equivalencia</label><span>{{ smart_meter.arboles }} Árboles</span></div>
             </div>
-            <div style="background: #0b1120; padding: 20px; border-radius: 6px; border: 1px solid #334155; margin-top: 20px;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.85em; margin-bottom:16px;">
+                <thead><tr style="background:#172554;">
+                    <th style="padding:9px; color:#94a3b8; text-align:left;">1 kWh solar equivale a...</th>
+                    <th style="padding:9px; color:#94a3b8;">Valor</th>
+                </tr></thead>
+                <tbody>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px; color:#cbd5e1;">CO₂ evitado</td><td style="padding:9px; color:#22c55e; font-weight:700;">0.4 kg CO₂</td></tr>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px; color:#cbd5e1;">Km sin conducir (auto naftero)</td><td style="padding:9px;">2.5 km</td></tr>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px; color:#cbd5e1;">Minutos de vuelo en avión comercial</td><td style="padding:9px;">~0.08 min (1/12 min)</td></tr>
+                    <tr><td style="padding:9px; color:#cbd5e1;">Carga de smartphone</td><td style="padding:9px;">50–60 cargas completas</td></tr>
+                </tbody>
+            </table>
+            <div style="background: #0b1120; padding: 16px; border-radius: 6px; border: 1px solid #334155;">
                 <p style="font-size: 0.9em; color: #cbd5e1; margin:0;">Equivale a no conducir un auto por <strong style="color:#fff;">{{ smart_meter.km_auto }} km</strong>.</p>
             </div>
         </div>
@@ -863,16 +1021,32 @@
             <span class="modal-close" onclick="closeModalById('modAtm')">✖</span>
         </div>
         <div class="modal-body">
-            <div class="tech-data-grid">
+            <div class="tech-data-grid" style="margin-bottom:16px;">
                 <div class="tech-item"><label>Densidad Estándar</label><span>1.225 kg/m³</span></div>
                 <div class="tech-item"><label>Lluvia 24h</label><span>{{ hidro_clima.mm }} mm</span></div>
                 <div class="tech-item" style="grid-column: span 2; border-top: 1px solid #334155;">
                     <label>Condición Lluvia</label><span>{{ hidro_clima.estado }}</span>
                 </div>
             </div>
-            <div class="rec-box" style="margin-top:20px;">
-                <div class="info-title" style="color:#22c55e; border:none; margin:0;">💡 LIMPIEZA</div>
-                <p>{{ hidro_clima.rec }}</p> 
+            <table style="width:100%; border-collapse:collapse; font-size:0.85em; margin-bottom:16px;">
+                <thead><tr style="background:#172554;">
+                    <th style="padding:9px; color:#94a3b8; text-align:left;">Lluvia 24h</th>
+                    <th style="padding:9px; color:#94a3b8;">Clasificación</th>
+                    <th style="padding:9px; color:#94a3b8;">Impacto en Paneles</th>
+                </tr></thead>
+                <tbody>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px;"><strong style="color:#22c55e;">&lt; 2 mm</strong></td><td style="padding:9px; color:#cbd5e1;">Sin precipitación</td><td style="padding:9px; color:#facc15;">Limpieza recomendada</td></tr>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px;"><strong style="color:#3b82f6;">2–10 mm</strong></td><td style="padding:9px; color:#cbd5e1;">Lluvia débil</td><td style="padding:9px; color:#22c55e;">Autolimpieza parcial</td></tr>
+                    <tr style="border-bottom:1px solid #1e293b;"><td style="padding:9px;"><strong style="color:#60a5fa;">10–50 mm</strong></td><td style="padding:9px; color:#cbd5e1;">Lluvia moderada</td><td style="padding:9px; color:#22c55e;">Limpieza efectiva</td></tr>
+                    <tr><td style="padding:9px;"><strong style="color:#ef4444;">&gt; 50 mm</strong></td><td style="padding:9px; color:#cbd5e1;">Lluvia intensa</td><td style="padding:9px; color:#ef4444;">Riesgo inundación / barro</td></tr>
+                </tbody>
+            </table>
+            <div class="rec-box">
+                <div class="info-title" style="color:#22c55e; border:none; margin:0; padding:0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/></svg>
+                    LIMPIEZA
+                </div>
+                <p>{{ hidro_clima.rec }}</p>
             </div>
         </div>
     </div>
@@ -889,7 +1063,10 @@
                 <canvas id="graficoModal"></canvas> 
             </div>
             <div class="info-block" style="background: #0b1120; padding: 20px; border-radius: 8px; border: 1px solid #334155;">
-                <div class="info-title">📊 TELEMETRÍA (REAL)</div>
+                <div class="info-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    TELEMETRÍA (REAL)
+                </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; font-size: 0.9em;">
                     <div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
@@ -920,6 +1097,14 @@
     
     function processMarkdown(text) {
         if (!text) return text;
+        
+        // 0. Proteger etiquetas <a> ya presentes para no corromper URLs con markdown
+        const htmlLinks = [];
+        text = text.replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, (match) => {
+            const idx = htmlLinks.length;
+            htmlLinks.push(match);
+            return '\x00LINK_' + idx + '\x00';
+        });
         
         // Procesar elementos markdown en orden (importante el orden)
         
@@ -956,6 +1141,11 @@
         // 8. Limpiar <br> fantasma pegados a elementos de bloque
         text = text.replace(/<\/(h[1-3]|ul|ol|li)><br>/g, '</$1>');
         text = text.replace(/<br><(h[1-3]|ul|ol|li)>/g, '<$1>');
+        
+        // 9. Restaurar etiquetas <a> originales
+        htmlLinks.forEach((link, idx) => {
+            text = text.replace('\x00LINK_' + idx + '\x00', link);
+        });
         
         return text;
     }
@@ -1309,11 +1499,23 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
-                plugins: { legend: { labels: { color: '#94a3b8' } } },
+                plugins: {
+                    legend: { labels: { color: '#94a3b8' } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var val = context.parsed.y;
+                                if (context.datasetIndex === 0) return ' ' + context.dataset.label + ': ' + val + ' W/m²';
+                                if (context.datasetIndex === 1) return ' ' + context.dataset.label + ': ' + val + ' m/s';
+                                return ' ' + context.dataset.label + ': ' + val + ' kg/h';
+                            }
+                        }
+                    }
+                },
                 scales: {
                     x: { grid: {color: '#1e293b'}, ticks: {color: '#64748b', maxTicksLimit: 8} },
-                    y: { position: 'left', grid: {color: '#1e293b'}, ticks: {color: '#94a3b8'} },
-                    y1: { position: 'right', grid: {display: false}, ticks: {color: '#10b981'} }
+                    y: { position: 'left', grid: {color: '#1e293b'}, ticks: {color: '#94a3b8'}, title: {display: true, text: 'W/m² · m/s', color: '#475569', font: {size: 10}} },
+                    y1: { position: 'right', grid: {display: false}, ticks: {color: '#10b981'}, title: {display: true, text: 'H₂ kg/h', color: '#10b981', font: {size: 10}} }
                 }
             }
         };
@@ -1364,6 +1566,248 @@
     });
 </script>
 
+<!-- ═══════════════════════════════════════════════════
+     TUCLIMA PRO PANEL · Energy Ops
+═══════════════════════════════════════════════════ -->
+<div style="margin-bottom:20px; font-family:'Segoe UI',system-ui,-apple-system,sans-serif;">
+
+  {% if alerta_banner.activo %}<div id="tc-alert-banner" style="background:{{ alerta_banner.color }}; border:1px solid {{ alerta_banner.borde }}; border-radius:12px; padding:11px 16px; margin-bottom:14px; display:flex; align-items:flex-start; gap:10px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ alerta_banner.texto }}" stroke-width="2.5" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span style="flex:1; font-size:0.82rem; font-weight:600; color:{{ alerta_banner.texto }}; line-height:1.45; font-family:'Segoe UI',system-ui,sans-serif;">{{ alerta_banner.mensaje }}</span><button onclick="document.getElementById('tc-alert-banner').style.display='none'" style="background:none; border:none; color:{{ alerta_banner.texto }}; opacity:0.65; cursor:pointer; font-size:1.2rem; line-height:1; padding:0; flex-shrink:0;">&times;</button></div>{% endif %}
+
+  <!-- ── 1. SEMÁFORO DE GENERACIÓN ENERGÉTICA ── -->
+  <div style="background:linear-gradient(135deg,#0f172a,#1a1a2e); border:1px solid rgba(251,191,36,0.2); border-radius:16px; padding:16px 20px; margin-bottom:12px;">
+    <div style="font-size:0.66rem; letter-spacing:0.12em; color:#475569; font-weight:700; margin-bottom:12px; text-transform:uppercase; display:flex; align-items:center; gap:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><rect x="6" y="1" width="12" height="22" rx="3" fill="#1a1100" stroke="#78350f" stroke-width="1.5"/><circle cx="12" cy="7" r="3" fill="#ef4444"/><circle cx="12" cy="12" r="3" fill="#facc15"/><circle cx="12" cy="17" r="3" fill="#4ade80"/></svg> Semáforo de Generación Energética</div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {{ solar.color }}33; border-left:3px solid {{ solar.color }}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px; display:flex; align-items:center; gap:3px;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.5"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></svg>Solar</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{{ solar.color }}; box-shadow:0 0 7px {{ solar.color }}90; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{{ solar.color }}; font-size:0.82rem;">{{ solar.estado }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">{{ solar.rad }} W/m²</div>
+      </div>
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {{ eolica.color }}33; border-left:3px solid {{ eolica.color }}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px; display:flex; align-items:center; gap:3px;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2.5"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>Eólica</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{{ eolica.color }}; box-shadow:0 0 7px {{ eolica.color }}90; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{{ eolica.color }}; font-size:0.82rem;">{{ eolica.estado }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">{{ eolica.ms }} m/s · {{ eolica.w100 }}</div>
+      </div>
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {{ eficiencia.color }}33; border-left:3px solid {{ eficiencia.color }}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Eficiencia Panel</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{{ eficiencia.color }}; box-shadow:0 0 7px {{ eficiencia.color }}90; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{{ eficiencia.color }}; font-size:0.82rem;">{{ eficiencia.factor }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">T°Panel {{ eficiencia.temp_panel }} · {{ eficiencia.perdida }}</div>
+      </div>
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {{ smart_meter.color }}33; border-left:3px solid {{ smart_meter.color }}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px; display:flex; align-items:center; gap:3px;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Generación</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{{ smart_meter.color }}; box-shadow:0 0 7px {{ smart_meter.color }}90; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{{ smart_meter.color }}; font-size:0.9rem;">{{ smart_meter.total_kw }} kW</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">{{ smart_meter.dinero }}/h · {{ mix.ganador }}</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 2. BOTONES DE ACCIÓN RÁPIDA ── -->
+  <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+    <button onclick="enviarAccionRapida('Generá un reporte PDF con la producción solar y eólica actual, eficiencia del panel y proyección de ahorro económico. Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(42,30,0,0.8); border:1px solid rgba(251,191,36,0.4); color:#fcd34d; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#d97706';this.style.color='#fff'" onmouseout="this.style.background='rgba(42,30,0,0.8)';this.style.color='#fcd34d'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Generar PDF</button>
+    <button onclick="enviarAccionRapida('Generá un Excel con la producción solar y eólica hora por hora para hoy, incluyendo radiación y velocidad de viento. Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(20,83,45,0.8); border:1px solid rgba(74,222,128,0.4); color:#86efac; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#16a34a';this.style.color='#fff'" onmouseout="this.style.background='rgba(20,83,45,0.8)';this.style.color='#86efac'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg> Generar Excel</button>
+    <button onclick="enviarAccionRapida('¿Cuál es el análisis de generación energética actual y las recomendaciones de optimización? Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(42,30,0,0.8); border:1px solid rgba(251,191,36,0.3); color:#fcd34d; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#b45309';this.style.color='#fff'" onmouseout="this.style.background='rgba(42,30,0,0.8)';this.style.color='#fcd34d'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Análisis Rápido</button>
+  </div>
+
+  <!-- ── 3. TIMELINE PRÓXIMAS 24H ── -->
+  <div style="background:linear-gradient(135deg,#0f172a,#1a1a2e); border:1px solid rgba(251,191,36,0.2); border-radius:16px; padding:16px 20px; overflow:hidden;">
+    <div style="font-size:0.66rem; letter-spacing:0.12em; color:#475569; font-weight:700; margin-bottom:12px; text-transform:uppercase; display:flex; align-items:center; gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Tendencia Solar-Eólica · Próximas 24h</div>
+    <div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; scrollbar-width:thin; scrollbar-color:rgba(51,65,85,0.5) transparent;">
+      {% for h in tira_24h %}
+      <div style="flex-shrink:0; background:{% if forloop.first %}rgba(15,23,42,0.95){% else %}rgba(15,23,42,0.7){% endif %}; border:1px solid {% if forloop.first %}rgba(251,191,36,0.5){% else %}rgba(51,65,85,0.3){% endif %}; border-radius:10px; padding:10px 11px; text-align:center; min-width:72px;">
+        <div style="font-size:0.6rem; color:{% if forloop.first %}#fbbf24{% else %}#64748b{% endif %}; font-weight:700; margin-bottom:5px; white-space:nowrap;">{{ h.hora }}</div>
+        <div style="display:flex; justify-content:center; align-items:center; height:22px; margin-bottom:4px;">{% if h.rad >= 600 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></svg>{% elif h.rad >= 200 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="15" cy="9" r="4" stroke="#fbbf24"/><path d="M9 19H5a3 3 0 0 1 0-6h.26A6 6 0 0 1 18 14" stroke="#94a3b8"/></svg>{% elif h.rad >= 50 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" stroke="#94a3b8"/><circle cx="16" cy="7" r="3" stroke="#d97706"/></svg>{% else %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>{% endif %}</div>
+        <div style="font-size:0.75rem; font-weight:700; color:{% if h.rad >= 400 %}#fbbf24{% elif h.rad >= 100 %}#d97706{% else %}#475569{% endif %};">{{ h.rad }}W</div>
+        <div style="font-size:0.65rem; color:{% if h.viento >= 8 %}#3b82f6{% elif h.viento >= 4 %}#60a5fa{% else %}#475569{% endif %}; margin-top:2px;">{{ h.viento }}m/s</div>
+      </div>
+      {% empty %}<div style="color:#475569; font-size:0.8rem; padding:10px;">Sin datos</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── 4. CALCULADORA ROI SOLAR/EÓLICO ── -->
+  <details style="background:linear-gradient(135deg,#0f172a,#1a1a2e); border:1px solid rgba(251,191,36,0.2); border-radius:16px; margin-top:12px; overflow:hidden;">
+    <summary style="padding:14px 20px; cursor:pointer; color:#fbbf24; font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; list-style:none; display:flex; align-items:center; gap:9px; font-family:'Segoe UI',system-ui,sans-serif; user-select:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Calculadora ROI Solar/Eólico<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div style="padding:14px 20px 18px; border-top:1px solid rgba(251,191,36,0.15);">
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; margin-bottom:14px;">
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">PANELES (m²)</div><input type="number" id="tc-m2" value="20" min="1" style="width:100%; background:#0f172a; border:1px solid #78350f; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">TURBINA (kW)</div><input type="number" id="tc-turb" value="3" min="0" step="0.5" style="width:100%; background:#0f172a; border:1px solid #78350f; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">TARIFA ($/kWh)</div><input type="number" id="tc-tarifa" value="0.15" min="0.01" step="0.01" style="width:100%; background:#0f172a; border:1px solid #78350f; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">COSTO SISTEMA ($)</div><input type="number" id="tc-costo" value="5000" min="100" step="100" style="width:100%; background:#0f172a; border:1px solid #78350f; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+      </div>
+      <button onclick="tcEnCalc()" style="background:rgba(251,191,36,0.10); border:1px solid rgba(251,191,36,0.4); color:#fbbf24; padding:9px 20px; border-radius:9px; cursor:pointer; font-size:0.82rem; font-weight:700; font-family:inherit;">Calcular ROI</button>
+      <div id="tcCalcEnRes" style="margin-top:12px;"></div>
+    </div>
+  </details>
+
+  <!-- ── 5. OJO BIÓNICO — VISIÓN IA ── -->
+  <div id="tc-dz-energia" style="margin-top:14px; border:2px dashed rgba(251,191,36,0.3); border-radius:16px; padding:28px 20px; text-align:center; cursor:pointer; transition:border-color 0.25s,background 0.25s; background:rgba(15,23,42,0.6);"
+    ondragover="event.preventDefault();this.style.borderColor='#fbbf24';this.style.background='rgba(251,191,36,0.07)';"
+    ondragleave="this.style.borderColor='rgba(251,191,36,0.3)';this.style.background='rgba(15,23,42,0.6)';"
+    ondrop="tcDzDrop_energia(event)"
+    onclick="var l=document.getElementById('tc-dz-loading-energia');if(!l||l.style.display==='none')document.getElementById('tc-vision-inp-energia').click()">
+    <input type="file" id="tc-vision-inp-energia" accept="image/*" style="display:none;" onchange="tcDzFile_energia(this)">
+    <div id="tc-dz-idle-energia">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 10px;display:block;opacity:0.7;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <p style="margin:0 0 4px;font-size:0.88rem;font-weight:700;color:#fbbf24;letter-spacing:0.04em;">OJO BIÓNICO</p>
+      <p style="margin:0;font-size:0.76rem;color:#94a3b8;line-height:1.5;">Arrastrá aquí la foto de tu panel solar o turbina<br>o hacé clic para explorar</p>
+    </div>
+    <div id="tc-dz-loading-energia" style="display:none;">
+      <p style="margin:0 0 12px;font-size:0.82rem;color:#fbbf24;animation:tcDzPulse 1.4s ease-in-out infinite;">Analizando imagen con IA…</p>
+      <div style="height:6px;border-radius:3px;background:rgba(251,191,36,0.15);overflow:hidden;"><div style="height:100%;width:0;background:#fbbf24;border-radius:3px;animation:tcDzBar 2.2s ease-in-out infinite;"></div></div>
+    </div>
+    <div id="tc-dz-result-energia" style="display:none;text-align:left;"></div>
+  </div>
+  <script>
+  function tcDzDrop_energia(e){e.preventDefault();var dz=document.getElementById('tc-dz-energia');dz.style.borderColor='rgba(251,191,36,0.3)';dz.style.background='rgba(15,23,42,0.6)';var f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))tcDzSend_energia(f);}
+  function tcDzFile_energia(inp){if(inp.files[0])tcDzSend_energia(inp.files[0]);}
+  function tcDzSend_energia(file){
+    document.getElementById('tc-dz-idle-energia').style.display='none';
+    document.getElementById('tc-dz-loading-energia').style.display='block';
+    document.getElementById('tc-dz-result-energia').style.display='none';
+    var fd=new FormData();
+    fd.append('chatInput','Analizá esta imagen de mi panel solar o turbina eólica y reportá el estado, suciedad, sombras o daños visibles que afecten la generación.');
+    fd.append('sessionId',sessionId);
+    fd.append('userId',djangoUserId);
+    fd.append('sector','energia');
+    fd.append('data00',file);
+    fetch(urlN8N,{method:'POST',body:fd})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var txt=(d.output||d.text||JSON.stringify(d)).replace(/</g,'&lt;').replace(/\n/g,'<br>');
+        var res=document.getElementById('tc-dz-result-energia');
+        res.innerHTML='<div style="font-size:0.8rem;color:#e2e8f0;line-height:1.65;padding:4px 0 8px;">'+txt+'</div><button onclick="tcDzReset_energia()" style="background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.75rem;font-family:inherit;">Nueva imagen</button>';
+        document.getElementById('tc-dz-loading-energia').style.display='none';
+        res.style.display='block';
+      })
+      .catch(function(){document.getElementById('tc-dz-loading-energia').style.display='none';document.getElementById('tc-dz-idle-energia').style.display='block';});
+  }
+  function tcDzReset_energia(){document.getElementById('tc-dz-idle-energia').style.display='block';document.getElementById('tc-dz-result-energia').style.display='none';document.getElementById('tc-vision-inp-energia').value='';}
+  </script>
+
+  <!-- ── 6. VENTANA SEGURA ── -->
+  <details style="background:linear-gradient(135deg,#0f172a,#1c1407); border:1px solid rgba(120,80,0,0.4); border-radius:16px; margin-top:12px; overflow:hidden;">
+    <summary style="padding:14px 20px; cursor:pointer; color:#94a3b8; font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; list-style:none; display:flex; align-items:center; gap:9px; font-family:'Segoe UI',system-ui,sans-serif; user-select:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v6M15 3v6"/></svg>Ventana de Máxima Generación<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div style="padding:14px 20px 18px; border-top:1px solid rgba(120,80,0,0.3);">
+      <p style="font-size:0.72rem; color:#64748b; margin:0 0 12px; line-height:1.5;">Encontrá las próximas N horas consecutivas con irradiancia mínima superior al umbral para planificar tu generación.</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; margin-bottom:14px;">
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">DURACIÓN (h)</div><input type="number" id="tc-vs-dur-en" value="4" min="1" max="10" style="width:100%; background:#0f172a; border:1px solid #78350f; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">RAD MÍN (W/m²)</div><input type="number" id="tc-vs-rad-en" value="200" min="0" max="1000" step="50" style="width:100%; background:#0f172a; border:1px solid #78350f; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">VIENTO MÁX (m/s)</div><input type="number" id="tc-vs-viento-en" value="12" min="1" max="25" style="width:100%; background:#0f172a; border:1px solid #78350f; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+      </div>
+      <button onclick="tcVsScan_en()" style="background:rgba(251,191,36,0.10); border:1px solid rgba(251,191,36,0.4); color:#fbbf24; padding:9px 20px; border-radius:9px; cursor:pointer; font-size:0.82rem; font-weight:700; font-family:inherit;">Buscar ventana</button>
+      <div id="tcVsRes-en" style="margin-top:12px;"></div>
+    </div>
+  </details>
+  <script>
+  {% load l10n %}{% localize off %}var _tc_h24_en=[{% for h in tira_24h %}{"hora":"{{ h.hora }}","rad":{{ h.rad }},"viento":{{ h.viento }},"temp":{{ h.temp }}}{% if not forloop.last %},{% endif %}{% endfor %}];{% endlocalize %}
+  function tcVsScan_en(){
+    var dur=parseInt(document.getElementById('tc-vs-dur-en').value)||4;
+    var mnR=parseInt(document.getElementById('tc-vs-rad-en').value)||200;
+    var mxV=parseFloat(document.getElementById('tc-vs-viento-en').value)||12;
+    var d=_tc_h24_en,best=null,bestS=-Infinity;
+    for(var i=0;i<=d.length-dur;i++){var sl=d.slice(i,i+dur);var ok=sl.every(function(h){return h.rad>=mnR&&h.viento<=mxV;});if(ok){var sc=sl.reduce(function(a,h){return a+h.rad;},0);if(sc>bestS){bestS=sc;best=sl;}}}
+    var el=document.getElementById('tcVsRes-en');
+    if(!best){el.innerHTML='<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:12px 14px;font-size:0.8rem;color:#ef4444;">Sin ventana de '+dur+'h con irradiancia ≥'+mnR+' W/m² en las próximas 24h.</div>';return;}
+    var mxR=Math.max.apply(null,best.map(function(h){return h.rad;}));
+    var avgR=Math.round(best.reduce(function(a,h){return a+h.rad;},0)/best.length);
+    var mxVt=Math.max.apply(null,best.map(function(h){return h.viento;}));
+    el.innerHTML='<div style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:10px;padding:12px 14px;"><div style="font-size:0.72rem;color:#fbbf24;font-weight:700;letter-spacing:0.05em;margin-bottom:6px;">VENTANA ÓPTIMA DE GENERACIÓN</div><div style="font-size:0.88rem;font-weight:800;color:#f1f5f9;margin-bottom:8px;">'+best[0].hora+' → '+best[best.length-1].hora+'</div><div style="display:flex;flex-wrap:wrap;gap:7px;"><span style="background:#0f172a;border:1px solid #78350f;border-radius:7px;padding:4px 10px;font-size:0.72rem;color:#94a3b8;">Rad pico: <strong style="color:#fbbf24;">'+mxR+' W/m²</strong></span><span style="background:#0f172a;border:1px solid #78350f;border-radius:7px;padding:4px 10px;font-size:0.72rem;color:#94a3b8;">Rad prom: <strong style="color:#fb923c;">'+avgR+' W/m²</strong></span><span style="background:#0f172a;border:1px solid #78350f;border-radius:7px;padding:4px 10px;font-size:0.72rem;color:#94a3b8;">Viento máx: <strong style="color:#4ade80;">'+mxVt+' m/s</strong></span></div></div>';
+  }
+  </script>
+
+  <script>
+  {% localize off %}var _tc_rad={{ solar.rad }}, _tc_wms={{ eolica.ms|floatformat:1 }};{% endlocalize %}
+  function tcEnCalc(){
+    var m2=parseFloat(document.getElementById('tc-m2').value)||20;
+    var turb=parseFloat(document.getElementById('tc-turb').value)||3;
+    var tarifa=parseFloat(document.getElementById('tc-tarifa').value)||0.15;
+    var costo=parseFloat(document.getElementById('tc-costo').value)||5000;
+    var genSolar=_tc_rad*m2*0.18/1000;
+    var genEol=_tc_wms>3?Math.min(turb,10*Math.pow(_tc_wms,3)/1000):0;
+    var genTotal=genSolar+genEol;
+    var ahorroMes=(genTotal*tarifa*5*22).toFixed(0);
+    var ahorroAnio=(parseFloat(ahorroMes)*12).toFixed(0);
+    var breakEven=parseFloat(ahorroAnio)>0?(costo/parseFloat(ahorroAnio)).toFixed(1):'∞';
+    var col=genTotal>1?'#4ade80':genTotal>0.2?'#fbbf24':'#64748b';
+    document.getElementById('tcCalcEnRes').innerHTML='<div style="background:rgba(15,23,42,0.8); border:1px solid rgba(251,191,36,0.2); border-radius:10px; padding:12px 14px;"><div style="display:flex; flex-wrap:wrap; gap:7px;"><span style="background:#0f172a; border:1px solid #78350f; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">Gen. ahora: <strong style="color:'+col+';">'+genTotal.toFixed(2)+' kW</strong></span><span style="background:#0f172a; border:1px solid #78350f; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">Solar: <strong style="color:#fbbf24;">'+genSolar.toFixed(2)+' kW</strong></span><span style="background:#0f172a; border:1px solid #78350f; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">Éolico: <strong style="color:#60a5fa;">'+genEol.toFixed(2)+' kW</strong></span><span style="background:#0f172a; border:1px solid #78350f; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">Ahorro/mes: <strong style="color:#4ade80;">$'+ahorroMes+'</strong></span><span style="background:#0f172a; border:1px solid #78350f; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">Break-even: <strong style="color:#a78bfa;">'+breakEven+' años</strong></span></div></div>';
+  }
+  </script>
+
+  <!-- ── MONITOR GENERACIÓN · 24H ── -->
+  <div style="background:linear-gradient(135deg,#0f172a,#1a1100); border:1px solid rgba(251,191,36,0.2); border-radius:16px; padding:16px 20px; margin-top:12px;">
+    <div style="font-size:0.66rem; letter-spacing:0.12em; color:#475569; font-weight:700; margin-bottom:10px; text-transform:uppercase; display:flex; align-items:center; gap:6px;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Monitor Generación · Próximas 24H
+    </div>
+    <div style="position:relative; height:160px;"><canvas id="en-chart-24h"></canvas></div>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">
+      <span style="font-size:0.62rem; color:#94a3b8; display:flex; align-items:center; gap:4px;"><span style="width:12px; height:3px; background:#60a5fa; border-radius:2px; display:inline-block;"></span>Viento m/s</span>
+      <span style="font-size:0.62rem; color:#94a3b8; display:flex; align-items:center; gap:4px;"><span style="width:12px; height:8px; background:rgba(251,191,36,0.65); border-radius:2px; display:inline-block;"></span>Alta rad.</span>
+      <span style="font-size:0.62rem; color:#94a3b8; display:flex; align-items:center; gap:4px;"><span style="width:12px; height:8px; background:rgba(251,191,36,0.35); border-radius:2px; display:inline-block;"></span>Media rad.</span>
+      <span style="font-size:0.62rem; color:#94a3b8; display:flex; align-items:center; gap:4px;"><span style="width:12px; height:8px; background:rgba(100,116,139,0.45); border-radius:2px; display:inline-block;"></span>Baja/noche</span>
+    </div>
+  </div>
+  <script>
+  (function(){
+    var raw = (typeof _tc_h24_en !== 'undefined') ? _tc_h24_en : [];
+    if (!raw.length) return;
+    var ctx = document.getElementById('en-chart-24h');
+    if (!ctx) return;
+    var horas  = raw.map(function(h){ return h.hora; });
+    var rad    = raw.map(function(h){ return h.rad; });
+    var viento = raw.map(function(h){ return h.viento; });
+    function radCol(v){
+      if(v >= 600) return 'rgba(251,191,36,0.75)';
+      if(v >= 300) return 'rgba(251,191,36,0.55)';
+      if(v >= 100) return 'rgba(251,191,36,0.35)';
+      return 'rgba(100,116,139,0.40)';
+    }
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: horas,
+        datasets: [
+          { type:'bar',  label:'Rad W/m²',  data:rad,    backgroundColor:rad.map(radCol), borderWidth:0, borderRadius:3, yAxisID:'y',  order:2 },
+          { type:'line', label:'Viento m/s', data:viento, borderColor:'#60a5fa', backgroundColor:'rgba(96,165,250,0.08)', fill:true, borderWidth:2, tension:0.4, pointRadius:0, yAxisID:'y1', order:1 }
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        interaction:{ mode:'index', intersect:false },
+        plugins:{ legend:{ display:false } },
+        scales:{
+          x:  { grid:{color:'rgba(30,41,59,0.8)'}, ticks:{color:'#475569', font:{size:9}, maxTicksLimit:8} },
+          y:  { position:'left',  min:0, grid:{color:'rgba(30,41,59,0.6)'}, ticks:{color:'#92400e', font:{size:9}, callback:function(v){return v+' W';}} },
+          y1: { position:'right', min:0, grid:{display:false}, ticks:{color:'#60a5fa', font:{size:9}, callback:function(v){return v+' m/s';}} }
+        }
+      }
+    });
+  })();
+  </script>
+
+</div>
+<script>
+function enviarAccionRapida(txt) {
+    var inp = document.getElementById('user-input');
+    if (inp) { inp.value = txt; if(typeof enviarMensaje === 'function') enviarMensaje(); }
+}
+</script>
 <div class="chat-container">
     <div class="chat-header">
         <h3>
@@ -1376,15 +1820,26 @@
     </div>
     
     <div class="chat-messages" id="chat-box">
-        <div class="message bot-msg welcome-msg" style="display: flex; align-items: flex-start; gap: 6px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
-                 style="display:inline; margin-right:6px; vertical-align:top; margin-top:2px; color: #6366f1; flex-shrink: 0;">
+        <div class="message bot-msg welcome-msg" style="display:flex; align-items:center; gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" style="flex-shrink:0;">
                 <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
                 <path d="M12 17h.01"/>
                 <circle cx="12" cy="12" r="10"/>
             </svg>
-            <div style="flex: 1;">¡Hola! Soy tu asistente meteorológico, ¿en qué puedo ayudarte?</div>
+            <span>¡Hola! Soy tu asistente meteorológico, ¿en qué puedo ayudarte?</span>
         </div>
+    </div>
+
+    <!-- Banner: límite diario de TuClima IA -->
+    <div id="tokens-limite-banner" style="display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:28px 24px; background:linear-gradient(135deg,rgba(15,23,42,0.98),rgba(30,41,59,0.98)); border-top:1px solid rgba(239,68,68,0.25);">
+        <div style="width:52px;height:52px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.8"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
+        </div>
+        <div style="text-align:center;">
+            <p style="margin:0 0 4px; color:#f1f5f9; font-weight:600; font-size:1rem; font-family:'Segoe UI',system-ui,sans-serif;">Límite diario de TuClima IA</p>
+            <p style="margin:0; color:#94a3b8; font-size:0.85rem; font-family:'Segoe UI',system-ui,sans-serif;">Alcanzaste el uso máximo de hoy. La IA se recarga a medianoche.<br>Próxima recarga en <strong id="tokens-countdown" style="color:#e2e8f0;">—</strong></p>
+        </div>
+        <a href="/mi-cuenta/" style="background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.3);padding:9px 22px;border-radius:8px;font-size:0.85rem;text-decoration:none;font-family:'Segoe UI',system-ui,sans-serif;" onmouseover="this.style.background='rgba(99,102,241,0.25)'" onmouseout="this.style.background='rgba(99,102,241,0.15)'">Recargar tokens →</a>
     </div>
 
     <div class="chat-input-container" style="display: flex; align-items: center; gap: 10px; padding: 15px; background: #1e293b; border-top: 1px solid #334155;">
@@ -1397,7 +1852,7 @@
     </button>
 
     <!-- Botón Gráficos -->
-    <button type="button" onclick="toggleChart()" style="background: none; border: none; cursor: pointer; padding: 8px; color: #94a3b8; transition: 0.2s;" onmouseover="this.style.color='#fbbf24'" onmouseout="this.style.color='#94a3b8'" title="Mostrar/Ocultar Gráfico">
+    <button type="button" onclick="toggleChart()" style="background: rgba(51, 65, 85, 0.6); border: 1px solid rgba(71, 85, 105, 0.3); cursor: pointer; padding: 10px; color: #cbd5e1; transition: all 0.3s ease; border-radius: 10px; backdrop-filter: blur(10px);" onmouseover="this.style.color='#fbbf24'; this.style.background='rgba(71, 85, 105, 0.8)'" onmouseout="this.style.color='#cbd5e1'; this.style.background='rgba(51, 65, 85, 0.6)'" title="Mostrar/Ocultar Gráfico">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="20" x2="18" y2="10"/>
             <line x1="12" y1="20" x2="12" y2="4"/>
@@ -1445,8 +1900,10 @@
     // --- CONFIGURACIÓN ENERGIA INTELLIGENCE PRO ---
 
 const urlN8N = "https://n8n-production-2651.up.railway.app/webhook/chat"; // Webhook principal ChatBot TuClima
-let sessionId = localStorage.getItem("chatSessionId") || generateUUID();
-localStorage.setItem("chatSessionId", sessionId);
+const djangoUserId = "{{ user.username|escapejs }}"; // Usuario autenticado de Django
+const _tcStorageKey = djangoUserId ? `chatSessionId_${djangoUserId}` : "chatSessionId";
+let sessionId = localStorage.getItem(_tcStorageKey) || (djangoUserId ? `${djangoUserId}_${generateUUID().slice(0,8)}` : generateUUID());
+localStorage.setItem(_tcStorageKey, sessionId);
 
 // Historial para flechas del teclado
 let historialMensajes = [];
@@ -1460,54 +1917,93 @@ function generateUUID() {
 }
 
 // 1. GESTIÓN DE FLECHAS (Arriba/Abajo)
-document.getElementById("user-input").addEventListener("keydown", (e) => {
-    const input = e.target;
-    if (e.key === "ArrowUp") {
-        if (historialMensajes.length > 0 && indiceHistorial < historialMensajes.length - 1) {
-            indiceHistorial++;
-            input.value = historialMensajes[historialMensajes.length - 1 - indiceHistorial];
+document.addEventListener("DOMContentLoaded", function() {
+    document.getElementById("user-input").addEventListener("keydown", (e) => {
+        const input = e.target;
+        if (e.key === "ArrowUp") {
+            if (historialMensajes.length > 0 && indiceHistorial < historialMensajes.length - 1) {
+                indiceHistorial++;
+                input.value = historialMensajes[historialMensajes.length - 1 - indiceHistorial];
+            }
+            e.preventDefault();
+        } else if (e.key === "ArrowDown") {
+            if (indiceHistorial > 0) {
+                indiceHistorial--;
+                input.value = historialMensajes[historialMensajes.length - 1 - indiceHistorial];
+            } else {
+                indiceHistorial = -1;
+                input.value = "";
+            }
+            e.preventDefault();
+        } else if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (input.value.trim() !== "") {
+                enviarMensaje();
+            }
         }
-        e.preventDefault();
-    } else if (e.key === "ArrowDown") {
-        if (indiceHistorial > 0) {
-            indiceHistorial--;
-            input.value = historialMensajes[historialMensajes.length - 1 - indiceHistorial];
-        } else {
-            indiceHistorial = -1;
-            input.value = "";
-        }
-        e.preventDefault();
-    } else if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        if (input.value.trim() !== "") {
-            enviarMensaje();
-        }
-    }
-});
+    });
 
-// Mostrar archivo seleccionado en la casilla de mensaje
-document.getElementById("file-input").addEventListener("change", function() {
-    const file = this.files[0];
-    const preview = document.getElementById("file-preview");
-    if (file) {
-        let icon = '';
-        if (file.type.startsWith('image/')) {
-            icon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
-        } else if (file.type === 'application/pdf') {
-            icon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
-        } else if (file.type.includes('excel') || file.name.match(/\.(xlsx|xls|csv)$/i)) {
-            icon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><rect x="7" y="7" width="2" height="2"/><rect x="13" y="7" width="2" height="2"/><rect x="7" y="13" width="2" height="2"/><rect x="13" y="13" width="2" height="2"/></svg>';
+    // Mostrar archivo seleccionado en la casilla de mensaje
+    document.getElementById("file-input").addEventListener("change", function() {
+        const file = this.files[0];
+        const preview = document.getElementById("file-preview");
+        if (file) {
+            let icon = '';
+            if (file.type.startsWith('image/')) {
+                icon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+            } else if (file.type === 'application/pdf') {
+                icon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+            } else if (file.type.includes('excel') || file.name.match(/\.(xlsx|xls|csv)$/i)) {
+                icon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><rect x="7" y="7" width="2" height="2"/><rect x="13" y="7" width="2" height="2"/><rect x="7" y="13" width="2" height="2"/><rect x="13" y="13" width="2" height="2"/></svg>';
+            } else {
+                icon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+            }
+            preview.innerHTML = '<span style="display:flex; align-items:center; gap:6px;">' + icon + '<span>' + file.name + '</span></span>';
         } else {
-            icon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+            preview.innerHTML = '';
         }
-        preview.innerHTML = '<span style="display:flex; align-items:center; gap:6px;">' + icon + '<span>' + file.name + '</span></span>';
-    } else {
-        preview.innerHTML = '';
-    }
+    });
 });
 
 // 2. ENVÍO DE MENSAJES Y ARCHIVOS
+// --- VERIFICACIÓN DE TOKENS ANTES DE CADA MENSAJE ---
+async function verificarTokens() {
+    try {
+        const r = await fetch('/api/tokens/saldo/', { credentials: 'include' });
+        if (!r.ok) return true;
+        const data = await r.json();
+        const costoChat = (data.costos && data.costos.CHAT_N8N) || 3000;
+        if (data.tokens_disponibles < costoChat) {
+            mostrarLimiteIA();
+            return false;
+        }
+        return true;
+    } catch (e) { return true; }
+}
+
+function mostrarLimiteIA() {
+    const banner = document.getElementById('tokens-limite-banner');
+    const inputArea = document.querySelector('.chat-input-container');
+    if (banner) banner.style.display = 'flex';
+    if (inputArea) inputArea.style.display = 'none';
+    function actualizarCountdown() {
+        const el = document.getElementById('tokens-countdown');
+        if (!el) return;
+        const ahora = new Date();
+        const manana = new Date(ahora);
+        manana.setHours(24, 0, 0, 0);
+        const diff = manana - ahora;
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        el.textContent = h + 'h ' + m + 'min';
+    }
+    actualizarCountdown();
+    setInterval(actualizarCountdown, 60000);
+}
+
 async function enviarMensaje() {
+    // Verificar tokens disponibles antes de enviar
+    if (!(await verificarTokens())) return;
 
     const input = document.getElementById("user-input");
     const fileInput = document.getElementById("file-input");
@@ -1546,6 +2042,8 @@ async function enviarMensaje() {
         const formData = new FormData();
         formData.append("chatInput", texto);
         formData.append("sessionId", sessionId);
+        formData.append("userId", djangoUserId);
+        formData.append("sector", "energia");
         if (archivo) {
             formData.append("data00", archivo); 
         }
@@ -1621,7 +2119,11 @@ function toggleChart(forceShow = false) {
 // 2. FUNCIÓN UNIVERSAL DE EXTRACCIÓN
 // 2. FUNCIÓN UNIVERSAL DE EXTRACCIÓN
 function extractChartData(aiResponse) {
-    const texto_bruto = aiResponse.output || aiResponse.texto_limpio || "";
+    const fullOutput = aiResponse.output || aiResponse.texto_limpio || "";
+    // Parsear solo el bloque [MOSTRAR_GRAFICO] para evitar que el texto visible
+    // (ej: "Visibilidad: 8.8 km") contamine los datos del gráfico
+    const _graficoMatch = fullOutput.match(/\[MOSTRAR_GRAFICO\]([\s\S]*)$/i);
+    const texto_bruto = _graficoMatch ? _graficoMatch[1] : fullOutput;
 
     function pescarTexto(campo) {
         // MAGIA EXTRA: Escapamos los paréntesis por si buscamos texto como "visibilidad (NM)"
@@ -1632,6 +2134,7 @@ function extractChartData(aiResponse) {
                           "puerto|condiciones_mar|viento_velocidad|viento_direccion|direccion_viento|temperatura_agua|altura_olas|visibilidad|visibilidad_nm|visibilidad_km|" +
                           "aeropuerto_origen|aeropuerto_destino|altitud_vuelo|temperatura_altitud|corrientes_viento|condiciones_atmosfericas|" +
                           "tipo_energia|ubicacion|radiacion_solar|velocidad_viento|temperatura_ambiente|temperatura|temperatura_maxima|temperatura_minima|evapotranspiracion|eficiencia_estimada|produccion_kwh|" +
+                          "gdd|delta_t|vpd|temperatura_aire|presion_atmosferica|periodo_ola|nubosidad|potencia_solar|potencia_eolica|co2_evitado|" +
                           "etiquetas|labels|chart_type|Para tus registros|¿deseas";
         
         const regex = new RegExp(`${safeCampo}[:\\s]+([\\s\\S]*?)(?=(?:${stopWords}|$))`, 'i');
@@ -1667,6 +2170,8 @@ function extractChartData(aiResponse) {
         aeropuerto_origen: pescarTexto("aeropuerto_origen"), aeropuerto_destino: pescarTexto("aeropuerto_destino"), altitud_vuelo: parseValue(pescarTexto("altitud_vuelo"), true), temperatura_altitud: parseValue(pescarTexto("temperatura_altitud"), true), corrientes_viento: parseValue(pescarTexto("corrientes_viento"), true), visibilidad_km: parseValue(pescarTexto("visibilidad_km"), true), condiciones_atmosfericas: pescarTexto("condiciones_atmosfericas"),
         // Energía
         tipo_energia: pescarTexto("tipo_energia"), ubicacion: pescarTexto("ubicacion"), radiacion_solar: parseValue(pescarTexto("radiacion_solar"), true), velocidad_viento: parseValue(pescarTexto("velocidad_viento"), true), temperatura_ambiente: parseValue(pescarTexto("temperatura_ambiente"), true), temperatura: parseValue(pescarTexto("temperatura"), true), temperatura_maxima: parseValue(pescarTexto("temperatura_maxima"), true), temperatura_minima: parseValue(pescarTexto("temperatura_minima"), true), evapotranspiracion: parseValue(pescarTexto("evapotranspiracion"), true), eficiencia_estimada: parseValue(pescarTexto("eficiencia_estimada"), true), produccion_kwh: parseValue(pescarTexto("produccion_kwh"), true),
+        // Calculados IA (GDD, DeltaT, VPD, Presión, etc.)
+        gdd: parseValue(pescarTexto("gdd"), true), delta_t: parseValue(pescarTexto("delta_t"), true), vpd: parseValue(pescarTexto("vpd"), true), temperatura_aire: parseValue(pescarTexto("temperatura_aire"), true), presion_atmosferica: parseValue(pescarTexto("presion_atmosferica"), true), periodo_ola: parseValue(pescarTexto("periodo_ola"), true), nubosidad: parseValue(pescarTexto("nubosidad"), true), potencia_solar: parseValue(pescarTexto("potencia_solar"), true), potencia_eolica: parseValue(pescarTexto("potencia_eolica"), true), co2_evitado: parseValue(pescarTexto("co2_evitado"), true),
         // Universales
         direccion_viento: parseValue(pescarTexto("direccion_viento") || pescarTexto("viento_direccion"), true),
         etiquetas: parseValue(pescarTexto("etiquetas") || pescarTexto("labels"), false) || ['Actual'], type: pescarTexto("chart_type") || 'line'
@@ -1709,6 +2214,17 @@ function createSampleChart(chartData = null) {
         { key: 'evapotranspiracion', label: 'Evapotranspiración (mm)', color: '#06b6d4' },
         { key: 'eficiencia_estimada', label: 'Eficiencia (%)', color: '#14b8a6' },
         { key: 'produccion_kwh', label: 'Producción (kWh)', color: '#84cc16' },
+        // Calculados por IA
+        { key: 'gdd', label: 'GDD (grados-día)', color: '#22c55e' },
+        { key: 'delta_t', label: 'Delta T (°C)', color: '#f97316' },
+        { key: 'vpd', label: 'VPD (kPa)', color: '#e11d48' },
+        { key: 'temperatura_aire', label: 'Temp. Aire (°C)', color: '#fde047' },
+        { key: 'presion_atmosferica', label: 'Presión (hPa)', color: '#a3a3a3' },
+        { key: 'periodo_ola', label: 'Período Ola (s)', color: '#93c5fd' },
+        { key: 'nubosidad', label: 'Nubosidad (oktas)', color: '#cbd5e1' },
+        { key: 'potencia_solar', label: 'Potencia Solar (W)', color: '#facc15' },
+        { key: 'potencia_eolica', label: 'Potencia Eólica (W)', color: '#7dd3fc' },
+        { key: 'co2_evitado', label: 'CO₂ Evitado (kg)', color: '#4ade80' },
         // Universal (Dirección Viento)
         { key: 'viento_direccion', label: 'Dir. Viento (°)', color: '#a855f7' },
         { key: 'direccion_viento', label: 'Dir. Viento (°)', color: '#a855f7' }

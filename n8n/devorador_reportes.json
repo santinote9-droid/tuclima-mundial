@@ -1,0 +1,183 @@
+{
+  "name": "Devorador de Reportes — Procesamiento Documental",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "devorador-reportes",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "data0",
+          "allowedOrigins": "https://tuclima-mundial.onrender.com",
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, X-N8N-Secret" }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [200, 300],
+      "id": "drc001-4f8a-4b2c-9e1d-a3b7c8d9e0f1",
+      "name": "Webhook Devorador",
+      "webhookId": "devorador-reportes-2026-v1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validacion de origen — para activar, poner el secreto en secretEsperado\nconst secretEsperado = '';\nconst secretRecibido = $input.first().json.headers?.['x-n8n-secret'] || '';\n\nif (secretEsperado && secretRecibido !== secretEsperado) {\n  throw new Error('401 Unauthorized: X-N8N-Secret invalido o ausente');\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300],
+      "id": "drc002-5a9b-4c3d-8f2e-b4c8d9e0f1a2",
+      "name": "Validar Secreto"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Valida que se recibio un archivo y extrae metadata del formulario\nconst item = $input.first();\nconst binaryData = item.binary;\n\n// Verificar que existe el archivo\n// Nota: n8n crea el key como binaryPropertyName + indice (data0+0 = data00)\nif (!binaryData || (!binaryData.data0 && !binaryData.data00 && !binaryData.documento)) {\n  throw new Error('400 Bad Request: No se recibio ningun archivo. Por favor adjunta un PDF o documento de texto.');\n}\n\nconst archivoBin = binaryData.data0 || binaryData.data00 || binaryData.documento;\nconst fileName = archivoBin.fileName || 'documento.pdf';\nconst fileMime = archivoBin.mimeType || 'application/pdf';\nconst fileSizeBytes = archivoBin.fileSize || 0;\nconst fileSizeMB = fileSizeBytes / (1024 * 1024);\n\n// Limitar a 50MB\nif (fileSizeMB > 50) {\n  throw new Error(`400 Bad Request: El archivo '${fileName}' supera el limite de 50MB (${fileSizeMB.toFixed(1)}MB). Comprime o divide el documento.`);\n}\n\n// Tipos de archivo aceptados\nconst mimesAceptados = ['application/pdf', 'text/plain', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];\nif (!mimesAceptados.some(m => fileMime.includes(m.split('/')[1])) && !fileName.match(/\\.(pdf|txt|docx)$/i)) {\n  throw new Error(`415 Unsupported Media Type: Solo se aceptan archivos PDF, TXT o DOCX. Recibido: ${fileMime}`);\n}\n\n// Extraer campos del formulario — n8n ubica texto en json directamente en multipart\nconst sector = ((item.json.sector || item.json.body?.sector || 'GENERAL') + '').toUpperCase().trim();\nconst empresa = (item.json.empresa || item.json.body?.empresa || 'Empresa').toString().trim();\nconst sessionId = item.json.session_id || item.json.body?.session_id || `drc-${Date.now()}`;\n\nconst sectoresValidos = ['AGRO', 'NAVAL', 'AEREO', 'ENERGIA', 'GENERAL'];\nconst sectorFinal = sectoresValidos.includes(sector) ? sector : 'GENERAL';\n\n// Sanitizar empresa (solo alfanumericos, espacios y guiones)\nconst empresaSanitizada = empresa.replace(/[^\\w\\sáéíóúÁÉÍÓÚñÑ.,\\-]/g, '').substring(0, 100);\n\n// Preservar el binario en data0 para el siguiente nodo\nconst keyOriginal = binaryData.data0 ? 'data0' : 'documento';\n\nreturn [{\n  json: {\n    sector: sectorFinal,\n    empresa: empresaSanitizada,\n    session_id: sessionId,\n    nombre_archivo: fileName,\n    tipo_archivo: fileMime,\n    tamano_mb: parseFloat(fileSizeMB.toFixed(2))\n  },\n  binary: { data0: archivoBin }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 300],
+      "id": "drc003-6b0c-4d4e-7a3f-c5d9e0f1a2b3",
+      "name": "Validar Archivo"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "data0"
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [860, 300],
+      "id": "drc004-7c1d-4e5f-6b4a-d6e0f1a2b3c4",
+      "name": "Extraer Texto PDF"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Recuperar texto extraido y metadata del nodo anterior\nconst textoExtraido = ($input.first().json.text || $input.first().json.data || '').toString();\n\n// Referencia a metadata guardada en Validar Archivo\nconst sector = $('Validar Archivo').item.json.sector;\nconst empresa = $('Validar Archivo').item.json.empresa;\nconst sessionId = $('Validar Archivo').item.json.session_id;\nconst nombreArchivo = $('Validar Archivo').item.json.nombre_archivo;\nconst tamanioMB = $('Validar Archivo').item.json.tamano_mb;\n\n// Verificar que el PDF tiene texto extraible\nif (!textoExtraido || textoExtraido.trim().length < 50) {\n  throw new Error('422 Unprocessable Entity: El documento no contiene texto extraible. Posiblemente es un PDF escaneado (imagen). Utiliza un PDF con texto seleccionable o convierte con OCR primero.');\n}\n\n// Mapa de variables criticas por sector\nconst variablesPorSector = {\n  AGRO: [\n    '- Precipitacion acumulada y proyectada (mm)',\n    '- Temperaturas maximas, minimas y medias del suelo y del aire (°C)',\n    '- Humedad relativa y deficit de presion de vapor (%)',\n    '- Alertas de heladas, granizo, sequia o inundacion',\n    '- Indices agroclimaticos: ETo, GDD, estres hidrico',\n    '- Ventanas optimas de siembra, cosecha o aplicacion de agroquimicos',\n    '- Fases lunares y su impacto en ciclos vegetativos'\n  ].join('\\n'),\n  NAVAL: [\n    '- Velocidad y direccion del viento en zona de operacion (nudos/grados)',\n    '- Altura significativa de olas y periodo de pico (metros/seg)',\n    '- Visibilidad maritima y presencia de neblina (km)',\n    '- Estado de mareas, corrientes y surgencias costeras',\n    '- Ventanas operativas seguras (fechas y horas)',\n    '- Alertas de temporal, ciclon, tsunami o condiciones adversas',\n    '- Puerto de refugio recomendado y restricciones de zarpe'\n  ].join('\\n'),\n  AEREO: [\n    '- Condiciones METAR/TAF vigentes: visibilidad, techo de nubes, QNH',\n    '- Turbulencias reportadas o pronosticadas (nivel CAT y severidad)',\n    '- Alertas SIGMET/AIRMET activas en la region',\n    '- Vientos en altura, tropopausa y jet stream relevantes',\n    '- Riesgos de engelamiento (icing) en ruta o destino',\n    '- Tormentas eléctricas y cizalladura del viento (wind shear)',\n    '- Ventanas optimas de operacion VFR/IFR y alternativas de desvio'\n  ].join('\\n'),\n  ENERGIA: [\n    '- Generacion total y desglose por fuente (GWh/MWh: solar, eolica, termica)',\n    '- Demanda pico, valle y promedio del periodo analizado',\n    '- Precio spot y precio del mercado energetico mayorista ($/MWh)',\n    '- Porcentaje de penetracion de energias renovables en la matriz',\n    '- Temperatura ambiental promedio y correlacion con demanda',\n    '- Proyeccion de generacion/demanda para el siguiente periodo',\n    '- Restricciones de red, cortes programados o situaciones de emergencia'\n  ].join('\\n'),\n  GENERAL: [\n    '- Variables cuantitativas mas importantes del documento',\n    '- Indicadores de riesgo, alertas criticas o situaciones de emergencia',\n    '- Tendencias principales y anomalias detectadas',\n    '- Recomendaciones operativas inmediatas y de corto plazo',\n    '- Proyecciones, estimaciones o datos prospectivos clave',\n    '- Cualquier valor fuera de rango normal que requiera accion'\n  ].join('\\n')\n};\n\nconst variables = variablesPorSector[sector] || variablesPorSector.GENERAL;\n\n// Limitar texto a 80.000 chars para no exceder tokens de Gemini Flash\nconst LIMITE_CHARS = 80000;\nconst textoCortado = textoExtraido.length > LIMITE_CHARS;\nconst textoFinal = textoCortado\n  ? textoExtraido.substring(0, LIMITE_CHARS) + '\\n\\n[--- DOCUMENTO TRUNCADO POR LONGITUD: se procesaron los primeros 80.000 caracteres ---]'\n  : textoExtraido;\n\n// Construir el JSON de ejemplo de respuesta usando JSON.stringify para evitar problemas de escape\nconst esquemaRespuesta = JSON.stringify({\n  empresa: empresa,\n  sector: sector,\n  documento_procesado: '<tipo o nombre del documento analizado>',\n  periodo_cubierto: '<periodo temporal del reporte, ej: Febrero 2026, o null>',\n  resumen_ejecutivo: [\n    '<viñeta 1 con emoji de urgencia>',\n    '<viñeta 2 con emoji de urgencia>',\n    '<viñeta 3 con emoji de urgencia>',\n    '<viñeta 4 con emoji de urgencia>',\n    '<viñeta 5 con emoji de urgencia>'\n  ],\n  alerta_critica: '<descripcion de la alerta mas urgente del documento, o null si no hay alertas>',\n  proxima_accion: '<la accion operativa inmediata mas importante que debe tomar la empresa>',\n  confianza_extraccion: 'alta|media|baja'\n}, null, 2);\n\nconst prompt = `Eres un analista experto en meteorologia operativa y gestion de riesgos para el sector ${sector}, trabajando para la empresa \"${empresa}\".\n\nTu tarea: leer el siguiente documento tecnico completo y extraer UNICAMENTE las variables criticas de mayor impacto operativo para las actividades diarias de la empresa.\n\n== VARIABLES PRIORITARIAS A IDENTIFICAR ==\n${variables}\n\n== DOCUMENTO A ANALIZAR ==\n---\n${textoFinal}\n---\n== FIN DEL DOCUMENTO ==\n\n== INSTRUCCIONES ESTRICTAS ==\n1. Genera EXACTAMENTE 5 vinetas ejecutivas en \"resumen_ejecutivo\"\n2. Cada vineta debe ser: concisa (maximo 2 oraciones), 100% accionable, con valores numericos concretos cuando esten disponibles\n3. Usa SIEMPRE estos prefijos de urgencia al inicio de cada vineta:\n   - 🔴 CRITICO: requiere accion inmediata (alertas, valores extremos)\n   - 🟡 ATENCION: requiere monitoreo proximo (valores en limite, tendencias)\n   - 🟢 NORMAL: condicion dentro de parametros (informacion favorable)\n   - 🔵 INFO: dato relevante sin urgencia operativa\n4. Prioriza alertas y valores que requieran accion en las proximas 24-72 horas\n5. Si no hay suficientes datos para una vineta, escribe exactamente: \"🔵 INFO: Sin datos suficientes en el documento para esta categoria\"\n6. El campo \"alerta_critica\" debe ser null (sin comillas) si no hay alertas 🔴\n7. Sé especifico: menciona fechas, horas, coordenadas o regiones geograficas si el documento las incluye\n\nRESPONDE SOLAMENTE CON EL SIGUIENTE JSON (absolutamente sin markdown, sin bloques de codigo, sin texto adicional antes o despues):\n${esquemaRespuesta}`;\n\n// Construir el cuerpo de la request para Gemini API\nconst requestBody = {\n  contents: [{\n    role: 'user',\n    parts: [{ text: prompt }]\n  }],\n  generationConfig: {\n    temperature: 0.15,\n    maxOutputTokens: 2048,\n    topP: 0.8,\n    topK: 40\n  },\n  safetySettings: [\n    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },\n    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },\n    { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },\n    { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }\n  ]\n};\n\nreturn [{\n  json: {\n    requestBody: requestBody,\n    // Metadata para nodos posteriores\n    sector: sector,\n    empresa: empresa,\n    session_id: sessionId,\n    nombre_archivo: nombreArchivo,\n    texto_chars: textoFinal.length,\n    texto_truncado: textoCortado,\n    tamano_mb: tamanioMB\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1080, 300],
+      "id": "drc005-8d2e-4f6a-5c5b-e7f1a2b3c4d5",
+      "name": "Preparar Prompt Sectorial"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "authentication": "none",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{ $env.GOOGLE_API_KEY }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.requestBody) }}",
+        "options": {
+          "timeout": 90000,
+          "response": {
+            "response": {
+              "neverError": false
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1300, 300],
+      "id": "drc006-9e3f-4a7b-4d6c-f8a2b3c4d5e6",
+      "name": "Llamar Gemini API"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst promptData = $('Preparar Prompt Sectorial').item.json;\n\nlet analisis = {};\nlet parseExitoso = false;\nlet rawText = '';\n\ntry {\n  // Extraer texto de la respuesta de Gemini API\n  rawText = response.candidates?.[0]?.content?.parts?.[0]?.text || '';\n\n  if (!rawText) {\n    const finishReason = response.candidates?.[0]?.finishReason || 'UNKNOWN';\n    throw new Error(`Gemini no devolvio texto. Razon de finalizacion: ${finishReason}`);\n  }\n\n  // Limpiar posibles bloques markdown que Gemini pueda incluir a pesar de las instrucciones\n  const cleanText = rawText\n    .replace(/^```json[\\s\\r\\n]*/i, '')\n    .replace(/^```[\\s\\r\\n]*/i, '')\n    .replace(/[\\s\\r\\n]*```$/i, '')\n    .trim();\n\n  analisis = JSON.parse(cleanText);\n  parseExitoso = true;\n\n} catch(e) {\n  // Fallback robusto: construir respuesta degradada pero util\n  analisis = {\n    empresa: promptData.empresa,\n    sector: promptData.sector,\n    documento_procesado: promptData.nombre_archivo,\n    periodo_cubierto: null,\n    resumen_ejecutivo: [\n      `🔵 INFO: El documento '${promptData.nombre_archivo}' fue recibido y se extrajeron ${promptData.texto_chars.toLocaleString()} caracteres`,\n      '🟡 ATENCION: No se pudo estructurar la respuesta de la IA en formato JSON',\n      `🔵 INFO: Texto truncado: ${promptData.texto_truncado ? 'SI (documento muy extenso)' : 'NO'}`,\n      '🔵 INFO: Reintente con el mismo archivo; puede ser un fallo temporal de la API',\n      '🔵 INFO: Si el problema persiste, verifique que el PDF contiene texto seleccionable'\n    ],\n    alerta_critica: null,\n    proxima_accion: 'Reintentar el analisis o revisar la calidad del PDF',\n    confianza_extraccion: 'baja'\n  };\n}\n\nreturn [{\n  json: {\n    success: parseExitoso,\n    analisis: analisis,\n    metadata: {\n      session_id: promptData.session_id,\n      nombre_archivo: promptData.nombre_archivo,\n      sector: promptData.sector,\n      empresa: promptData.empresa,\n      tamano_mb: promptData.tamano_mb,\n      caracteres_procesados: promptData.texto_chars,\n      texto_truncado: promptData.texto_truncado,\n      modelo_ia: 'gemini-2.0-flash',\n      parse_exitoso: parseExitoso,\n      timestamp: new Date().toISOString()\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1520, 300],
+      "id": "drc007-0f4a-4b8c-3e7d-a9b3c4d5e6f7",
+      "name": "Formatear Respuesta"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              { "name": "Content-Type", "value": "application/json" }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1740, 300],
+      "id": "drc008-1a5b-4c9d-2f8e-b0c4d5e6f7a8",
+      "name": "Responder Exito"
+    }
+  ],
+  "connections": {
+    "Webhook Devorador": {
+      "main": [
+        [{ "node": "Validar Secreto", "type": "main", "index": 0 }]
+      ]
+    },
+    "Validar Secreto": {
+      "main": [
+        [{ "node": "Validar Archivo", "type": "main", "index": 0 }]
+      ]
+    },
+    "Validar Archivo": {
+      "main": [
+        [{ "node": "Extraer Texto PDF", "type": "main", "index": 0 }]
+      ]
+    },
+    "Extraer Texto PDF": {
+      "main": [
+        [{ "node": "Preparar Prompt Sectorial", "type": "main", "index": 0 }]
+      ]
+    },
+    "Preparar Prompt Sectorial": {
+      "main": [
+        [{ "node": "Llamar Gemini API", "type": "main", "index": 0 }]
+      ]
+    },
+    "Llamar Gemini API": {
+      "main": [
+        [{ "node": "Formatear Respuesta", "type": "main", "index": 0 }]
+      ]
+    },
+    "Formatear Respuesta": {
+      "main": [
+        [{ "node": "Responder Exito", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [],
+  "pinData": {}
+}

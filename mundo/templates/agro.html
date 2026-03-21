@@ -1,4 +1,4 @@
-{% load static %}
+{% load static l10n %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -60,18 +60,22 @@
         padding: 2px 0 !important;
         font-size: 14px !important;
         line-height: 1.4 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
     }
     
     .welcome-msg svg {
         width: 16px !important;
         height: 16px !important;
-        margin-right: 4px !important;
+        flex-shrink: 0 !important;
+        margin: 0 !important;
     }
         @media (max-width: 768px) {
             .chat-container {
                 margin: 10px 0;
                 border-radius: 12px;
-                min-height: 500px;
+                height: 420px;
             }
             
             .chat-header {
@@ -131,7 +135,7 @@
         }
     .chat-container {
         width: 100%;
-        min-height: 650px;
+        height: 560px;
         margin: 20px 0;
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         border: 1px solid rgba(51, 65, 85, 0.3);
@@ -180,7 +184,7 @@
 
     .chat-messages {
         flex: 1;
-        padding: 24px;
+        padding: 12px 24px 24px;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
@@ -692,6 +696,35 @@
         .risk-warn { color: var(--warning); font-weight: bold; }
         .risk-crit { color: var(--danger); font-weight: bold; }
 
+        /* ══ MODO CABINA — alto contraste para uso al aire libre ══ */
+        body.cabin-mode {
+            --bg-dark:#000; --card-bg:#0d0d0d; --border:#555;
+            --text-main:#fff; --text-muted:#ccc;
+            background-color:#000 !important; font-size:107%;
+        }
+        body.cabin-mode .header-eng, body.cabin-mode .nav-header,
+        body.cabin-mode .cockpit-header, body.cabin-mode header[class] {
+            background:#000 !important; backdrop-filter:none !important; border-bottom-color:#555 !important;
+        }
+        body.cabin-mode .card, body.cabin-mode .instrument-card,
+        body.cabin-mode .instrumento, body.cabin-mode .panel,
+        body.cabin-mode .modal-content, body.cabin-mode .modal-box {
+            background:#0d0d0d !important; border-color:#555 !important;
+        }
+        body.cabin-mode .modal-overlay, body.cabin-mode .modal-backdrop { background:rgba(0,0,0,0.98) !important; }
+        body.cabin-mode .chat-container, body.cabin-mode .chat-messages,
+        body.cabin-mode .chat-input-area, body.cabin-mode .chat-with-ai {
+            background:#0d0d0d !important; border-color:#555 !important;
+        }
+        body.cabin-mode input, body.cabin-mode select, body.cabin-mode textarea {
+            background:#111 !important; color:#fff !important; border-color:#666 !important;
+        }
+        body.cabin-mode details { border-color:#555 !important; }
+        body.cabin-mode details > summary { background:#111 !important; color:#fff !important; }
+        body.cabin-mode th, body.cabin-mode td { background:#0d0d0d !important; color:#fff !important; border-color:#444 !important; }
+        body.cabin-mode .val-big { text-shadow:0 0 16px currentColor; }
+        #tc-btn-cabina.tc-cabina-on { border-color:#facc15 !important; color:#facc15 !important; background:rgba(250,204,21,0.12) !important; }
+
     </style>
 
 <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
@@ -726,6 +759,10 @@
             </div>
 
             <div style="display: flex; gap: 10px;">
+                <button id="tc-btn-cabina" onclick="tcToggleCabina()" title="Modo Cabina — alto contraste solar" style="background:#1e293b; border:1px solid #334155; color:#94a3b8; padding:8px 12px; border-radius:6px; cursor:pointer; transition:0.2s; display:flex; align-items:center; gap:6px;" onmouseover="this.style.borderColor='#facc15'; this.style.color='#facc15';" onmouseout="if(!this.classList.contains('tc-cabina-on')){this.style.borderColor='#334155'; this.style.color='#94a3b8';}">                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                    <span style="font-family:'JetBrains Mono'; font-size:0.8em;">CABINA</span>
+                </button>
+
                 <button onclick="copiarReporte()" title="Copiar Resumen al Portapapeles" style="background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.borderColor='#3b82f6'; this.style.color='#fff'" onmouseout="this.style.borderColor='#334155'; this.style.color='#94a3b8'">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
                     <span style="font-family:'JetBrains Mono'; font-size:0.8em;">COPIAR</span>
@@ -742,6 +779,10 @@
             </div>
         </div>
     </header>
+    <script>
+    function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');var b=document.getElementById('tc-btn-cabina');if(b)b.classList.toggle('tc-cabina-on',on);try{localStorage.setItem('tc_cabin',on?'1':'0');}catch(e){}}
+    (function(){try{if(localStorage.getItem('tc_cabin')==='1'){document.body.classList.add('cabin-mode');setTimeout(function(){var b=document.getElementById('tc-btn-cabina');if(b)b.classList.add('tc-cabina-on');},50);}}catch(e){}})();
+    </script>
 
     <div class="dashboard-container">
 
@@ -913,7 +954,18 @@
                 </div>
             </div>
 
-        </div> <div class="analysis-btn" onclick="openModal('modGraph')">
+        </div> <!-- Monitor Climático 24H — Chart.js embebido -->
+        <div style="background:linear-gradient(135deg,#0d1f2d,#0a1628); border:1px solid rgba(74,222,128,0.18); border-radius:14px; padding:14px 18px; margin-bottom:14px;">
+            <div style="font-size:0.66rem; letter-spacing:0.12em; color:#475569; font-weight:700; margin-bottom:10px; text-transform:uppercase; display:flex; align-items:center; gap:6px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Monitor Climático · Próximas 24 Horas
+            </div>
+            <div style="position:relative; height:160px;">
+                <canvas id="agro-chart-24h"></canvas>
+            </div>
+        </div>
+
+        <div class="analysis-btn" onclick="openModal('modGraph')">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>
             ABRIR ANÁLISIS DE BALANCE HÍDRICO (GRÁFICO)
         </div>
@@ -971,27 +1023,57 @@
         <div class="modal-content">
             <button class="btn-close" onclick="closeModal('modGDD')">×</button>
             <div class="pop-title">Grados Día de Crecimiento (GDD)</div>
-            <div class="pop-text">
-                Unidad biológica de tiempo. El GDD mide la acumulación de calor útil para la fotosíntesis, descartando temperaturas extremas que detienen el metabolismo.
-                <br>Fórmula: <code>((Tmáx + Tmín) / 2) - Tbase</code>.
+            <div class="pop-text">Unidad biológica de tiempo. El GDD cuantifica el calor acumulado útil para el metabolismo vegetal, descartando temperaturas extremas.<br><strong>Fórmula:</strong> <code>GDD = ((Tmáx + Tmín) / 2) − Tbase</code> · Si resultado &lt; 0, se asigna 0.</div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:16px 0;">
+              <div style="background:rgba(42,28,0,0.8); border:1px solid #78350f; border-radius:10px; padding:14px; text-align:center;">
+                <div style="font-size:0.6rem; color:#92400e; text-transform:uppercase; font-weight:700; margin-bottom:6px;">GDD Acumulados (7d)</div>
+                <div style="font-size:2.2rem; color:#fbbf24; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ gdd.valor }}</div>
+                <div style="font-size:0.7rem; color:#94a3b8; margin-top:4px;">G·Día (base 10°C)</div>
+              </div>
+              <div style="background:rgba(42,28,0,0.8); border:1px solid #78350f; border-radius:10px; padding:14px; text-align:center;">
+                <div style="font-size:0.6rem; color:#92400e; text-transform:uppercase; font-weight:700; margin-bottom:6px;">Tasa Diaria</div>
+                <div style="font-size:2.2rem; color:#f59e0b; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{% widthratio gdd.valor 7 1 %}</div>
+                <div style="font-size:0.7rem; color:#94a3b8; margin-top:4px;">GDD/día promedio</div>
+              </div>
             </div>
-            
+
+            <div style="color:#fff; font-family:'JetBrains Mono',monospace; font-weight:bold; margin:20px 0 10px; border-left:4px solid #fbbf24; padding-left:10px;">PROGRESO HACIA HITOS FENOLÓGICOS</div>
+            <div style="display:flex; flex-direction:column; gap:9px; margin-bottom:20px;">
+              <div style="background:rgba(15,23,42,0.8); border:1px solid #1e293b; border-radius:10px; padding:11px 14px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span style="font-size:0.72rem; color:#e2e8f0; font-weight:600;">Maíz — Floración (VT)</span><span style="font-size:0.7rem; color:#fbbf24; font-weight:700;">{{ gdd.valor }} / 800 GDD</span></div>
+                <div style="background:#0f172a; border-radius:4px; height:7px; overflow:hidden;"><div style="height:100%; width:{% widthratio gdd.valor 800 100 %}%; background:linear-gradient(90deg,#fbbf24,#f59e0b); border-radius:4px;"></div></div>
+                <div style="display:flex; gap:10px; margin-top:5px; flex-wrap:wrap;">
+                  <span style="font-size:0.6rem; color:{% if gdd.valor >= 60 %}#4ade80{% else %}#475569{% endif %};">● Emergencia 60</span>
+                  <span style="font-size:0.6rem; color:{% if gdd.valor >= 280 %}#4ade80{% else %}#475569{% endif %};">● V6 (6 hojas) 280</span>
+                  <span style="font-size:0.6rem; color:{% if gdd.valor >= 800 %}#4ade80{% else %}#475569{% endif %};">● Floración VT 800</span>
+                </div>
+              </div>
+              <div style="background:rgba(15,23,42,0.8); border:1px solid #1e293b; border-radius:10px; padding:11px 14px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span style="font-size:0.72rem; color:#e2e8f0; font-weight:600;">Soja — Floración (R1)</span><span style="font-size:0.7rem; color:#4ade80; font-weight:700;">{{ gdd.valor }} / 600 GDD</span></div>
+                <div style="background:#0f172a; border-radius:4px; height:7px; overflow:hidden;"><div style="height:100%; width:{% widthratio gdd.valor 600 100 %}%; background:linear-gradient(90deg,#4ade80,#22c55e); border-radius:4px;"></div></div>
+                <div style="display:flex; gap:10px; margin-top:5px; flex-wrap:wrap;">
+                  <span style="font-size:0.6rem; color:{% if gdd.valor >= 60 %}#4ade80{% else %}#475569{% endif %};">● Emergencia 60</span>
+                  <span style="font-size:0.6rem; color:{% if gdd.valor >= 120 %}#4ade80{% else %}#475569{% endif %};">● V3 120</span>
+                  <span style="font-size:0.6rem; color:{% if gdd.valor >= 600 %}#4ade80{% else %}#475569{% endif %};">● Floración R1 600</span>
+                </div>
+              </div>
+              <div style="background:rgba(15,23,42,0.8); border:1px solid #1e293b; border-radius:10px; padding:11px 14px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span style="font-size:0.72rem; color:#e2e8f0; font-weight:600;">Trigo — Espigazón</span><span style="font-size:0.7rem; color:#60a5fa; font-weight:700;">{{ gdd.valor }} / 500 GDD</span></div>
+                <div style="background:#0f172a; border-radius:4px; height:7px; overflow:hidden;"><div style="height:100%; width:{% widthratio gdd.valor 500 100 %}%; background:linear-gradient(90deg,#60a5fa,#3b82f6); border-radius:4px;"></div></div>
+              </div>
+            </div>
+
             <table class="tech-table">
-                <thead>
-                    <tr><th>Cultivo</th><th>T. Base</th><th>T. Óptima</th><th>Riesgo Calor</th></tr>
-                </thead>
+                <thead><tr><th>Cultivo</th><th>T. Base</th><th>T. Óptima</th><th>Riesgo Calor</th></tr></thead>
                 <tbody>
-                    <tr><td>Trigo / Cebada</td><td>0 - 4°C</td><td>15 - 20°C</td><td class="risk-crit">> 28°C</td></tr>
-                    <tr><td>Maíz (Zea Mays)</td><td>10°C</td><td>25 - 30°C</td><td class="risk-crit">> 35°C</td></tr>
-                    <tr><td>Soja (Glycine max)</td><td>10°C</td><td>22 - 28°C</td><td class="risk-crit">> 38°C</td></tr>
-                    <tr><td>Girasol</td><td>6°C</td><td>20 - 25°C</td><td class="risk-crit">> 32°C</td></tr>
-                    <tr><td>Algodón</td><td>15°C</td><td>28 - 32°C</td><td class="risk-crit">> 40°C</td></tr>
+                    <tr><td>Trigo / Cebada</td><td>0 – 4°C</td><td>15 – 20°C</td><td class="risk-crit">&gt;28°C</td></tr>
+                    <tr><td>Maíz (Zea Mays)</td><td>10°C</td><td>25 – 30°C</td><td class="risk-crit">&gt;35°C</td></tr>
+                    <tr><td>Soja (Glycine max)</td><td>10°C</td><td>22 – 28°C</td><td class="risk-crit">&gt;38°C</td></tr>
+                    <tr><td>Girasol</td><td>6°C</td><td>20 – 25°C</td><td class="risk-crit">&gt;32°C</td></tr>
+                    <tr><td>Algodón</td><td>15°C</td><td>28 – 32°C</td><td class="risk-crit">&gt;40°C</td></tr>
                 </tbody>
             </table>
-            
-            <div class="highlight-box" style="border-left-color: var(--warning);">
-                <strong>ESTADO ACTUAL:</strong> {{ gdd.valor }} GDD Acumulados ({{ gdd.estado }})
-            </div>
         </div>
     </div>
 
@@ -1090,32 +1172,93 @@
         <div class="modal-content">
             <button class="btn-close" onclick="closeModal('modAtm')">×</button>
             <div class="pop-title">Dinámica Atmosférica</div>
-            <div class="pop-text">
-                Variables que afectan la presión de plagas y enfermedades.
+            <div class="pop-text">Variables que determinan la presión de plagas, enfermedades y aptitud para labores de campo.</div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; margin:16px 0;">
+              <div style="background:rgba(15,23,42,0.8); border:1px solid #1e3a8a; border-radius:10px; padding:12px 14px;">
+                <div style="font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:700; margin-bottom:6px;">Humedad Relativa</div>
+                <div style="font-size:1.6rem; color:#60a5fa; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ ambiente.humedad }}%</div>
+                <div style="font-size:0.68rem; color:#94a3b8; margin-top:4px;">{% if ambiente.humedad > 80 %}Riesgo fúngico alto{% elif ambiente.humedad > 60 %}Condición moderada{% else %}Baja &mdash; posible estrés{% endif %}</div>
+              </div>
+              <div style="background:rgba(15,23,42,0.8); border:1px solid #1e3a8a; border-radius:10px; padding:12px 14px;">
+                <div style="font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:700; margin-bottom:6px;">Punto de Rocío</div>
+                <div style="font-size:1.6rem; color:#38bdf8; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ atmosfera.rocio }}°C</div>
+                <div style="font-size:0.68rem; color:#94a3b8; margin-top:4px;">Hoja mojada si T° ≤ Rocío</div>
+              </div>
+              <div style="background:rgba(15,23,42,0.8); border:1px solid #312e81; border-radius:10px; padding:12px 14px;">
+                <div style="font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:700; margin-bottom:6px;">Presión QNH</div>
+                <div style="font-size:1.3rem; color:#a78bfa; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ atmosfera.presion }} <span style="font-size:0.62rem;">hPa</span></div>
+                <div style="font-size:0.68rem; color:#94a3b8; margin-top:4px;">{% if atmosfera.presion < 1005 %}Baja — actividad ciclónica{% elif atmosfera.presion < 1013 %}Débil — posible inestabilidad{% elif atmosfera.presion > 1020 %}Alta — condición estable{% else %}Normal (ISA 1013 hPa){% endif %}</div>
+              </div>
+              <div style="background:rgba(15,23,42,0.8); border:1px solid #1e293b; border-radius:10px; padding:12px 14px;">
+                <div style="font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:700; margin-bottom:6px;">Nubosidad</div>
+                <div style="font-size:1.6rem; color:#94a3b8; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ atmosfera.nubes }}%</div>
+                <div style="font-size:0.68rem; color:#94a3b8; margin-top:4px;">{% if atmosfera.nubes > 75 %}Comprometida — baja PAR{% elif atmosfera.nubes > 40 %}Parcial — fotosíntesis reducida{% else %}Despejado — PAR óptima{% endif %}</div>
+              </div>
             </div>
+
             <table class="tech-table">
-                <thead>
-                    <tr><th>Variable</th><th>Valor Actual</th><th>Impacto Agronómico</th></tr>
-                </thead>
+                <thead><tr><th>Variable</th><th>Valor</th><th>Impacto Agronómico</th></tr></thead>
                 <tbody>
-                    <tr><td>Punto de Rocío</td><td>{{ atmosfera.rocio }}°C</td><td>Si T° Ambiente = P. Rocío => Hoja Mojada (Riesgo Fúngico).</td></tr>
-                    <tr><td>Presión QNH</td><td>{{ atmosfera.presion }} hPa</td><td>Baja presión (<1010) favorece emergencia de insectos.</td></tr>
-                    <tr><td>Nubosidad</td><td>{{ atmosfera.nubes }}%</td><td>Afecta la tasa fotosintética neta.</td></tr>
+                    <tr><td>Presión QNH</td><td>{{ atmosfera.presion }} hPa</td><td>Caída &lt;1010 hPa favorece emergencia de insectos y diseminación de esporas fúngicas por corrientes ascendentes.</td></tr>
+                    <tr><td>Punto de Rocío</td><td>{{ atmosfera.rocio }}°C</td><td>T° = P. Rocío → <strong>Hoja Mojada</strong>. 8–10h húmedas activan Botrytis, Roya y Tizón tardío.</td></tr>
+                    <tr><td>Humedad Relativa</td><td>{{ ambiente.humedad }}%</td><td>HR &gt;80% por 8+h = germinación de esporas garantizada. HR &lt;40% = cierre estomático.</td></tr>
+                    <tr><td>Nubosidad</td><td>{{ atmosfera.nubes }}%</td><td>Sobre 70% la PAR cae 50%. Retrasa maduración de granos y acumulación de proteínas.</td></tr>
+                    <tr><td>Viento</td><td>{{ pulverizacion.viento }} km/h</td><td>&gt;15 km/h = deriva de agroquímicos. &lt;2 km/h = posible inversión térmica (riesgo de depósito nocturno).</td></tr>
                 </tbody>
             </table>
+
+            <div class="highlight-box" style="border-left-color:{% if ambiente.humedad > 80 and atmosfera.nubes > 50 %}#ef4444{% elif ambiente.humedad > 65 %}#facc15{% else %}#4ade80{% endif %}; margin-top:16px;">
+                <div><strong>Índice de Presión Fúngica:</strong>
+                {% if ambiente.humedad > 80 and atmosfera.nubes > 50 %}<span style="color:#ef4444;"> ALTO</span> — Condiciones óptimas para Botrytis/Roya. Considerar fungicida preventivo en las próximas 48h.
+                {% elif ambiente.humedad > 65 %}<span style="color:#facc15;"> MODERADO</span> — Vigilancia preventiva. Revisar pronóstico de rocío nocturno.
+                {% else %}<span style="color:#4ade80;"> BAJO</span> — Condiciones desfavorables para hongos foliares. Sin acción urgente.
+                {% endif %}</div>
+            </div>
         </div>
     </div>
 
     <div id="modRad" class="modal-overlay">
         <div class="modal-content">
             <button class="btn-close" onclick="closeModal('modRad')">×</button>
-            <div class="pop-title">Radiación Solar (PAR)</div>
-            <div class="pop-text">
-                No toda la luz sirve. La Radiación Fotosintéticamente Activa (PAR) es la fracción que la planta usa para producir biomasa.
+            <div class="pop-title">Radiación Solar e Índice PAR</div>
+            <div class="pop-text">La Radiación Fotosintéticamente Activa (PAR, 400–700 nm) representa ~45% de la radiación global. Es la única fracción que las plantas convierten en biomasa mediante fotosíntesis. Las plantas C4 (maíz) son hasta 2× más eficientes que las C3 (soja, trigo).</div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; margin:16px 0;">
+              <div style="background:rgba(42,28,0,0.8); border:1px solid #78350f; border-radius:10px; padding:14px; text-align:center;">
+                <div style="font-size:0.6rem; color:#92400e; text-transform:uppercase; font-weight:700; margin-bottom:6px;">Rad. Global</div>
+                <div style="font-size:2rem; color:#fbbf24; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ radiacion.watts }}</div>
+                <div style="font-size:0.7rem; color:#94a3b8; margin-top:4px;">W/m²</div>
+              </div>
+              <div style="background:rgba(42,28,0,0.8); border:1px solid #78350f; border-radius:10px; padding:14px; text-align:center;">
+                <div style="font-size:0.6rem; color:#92400e; text-transform:uppercase; font-weight:700; margin-bottom:6px;">PAR Estimada</div>
+                <div style="font-size:2rem; color:#f59e0b; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{% widthratio radiacion.watts 100 45 %}</div>
+                <div style="font-size:0.7rem; color:#94a3b8; margin-top:4px;">W/m² (× 0.45)</div>
+              </div>
+              <div style="background:rgba(15,23,42,0.8); border:1px solid #1e293b; border-radius:10px; padding:14px; text-align:center;">
+                <div style="font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:700; margin-bottom:6px;">Estado</div>
+                <div style="font-size:1rem; font-weight:800; margin-top:8px; color:{% if radiacion.watts > 700 %}#4ade80{% elif radiacion.watts > 300 %}#fbbf24{% else %}#94a3b8{% endif %};">{{ radiacion.estado|upper }}</div>
+                <div style="font-size:0.68rem; color:#64748b; margin-top:4px;">{% if radiacion.watts > 700 %}Fotosíntesis plena{% elif radiacion.watts > 300 %}Fotosíntesis activa{% elif radiacion.watts > 50 %}Crecimiento lento{% else %}Sin ganancia neta{% endif %}</div>
+              </div>
             </div>
-            <div class="highlight-box" style="background: rgba(251, 191, 36, 0.1); border-left-color: #fbbf24;">
-                <strong>POTENCIA ACTUAL:</strong> {{ radiacion.watts }} W/m² <br>
-                Estado: {{ radiacion.estado }}
+
+            <table class="tech-table">
+                <thead><tr><th>Umbral</th><th>≈ W/m²</th><th>Respuesta Fisiológica</th></tr></thead>
+                <tbody>
+                    <tr><td>Punto Compensación</td><td>20 – 50</td><td class="risk-warn">Fotosíntesis = Respiración. Sin acumulación de biomasa neta.</td></tr>
+                    <tr><td>Crecimiento Lento</td><td>50 – 200</td><td>Fotosíntesis positiva pero sub-óptima. Típico de días muy nublados.</td></tr>
+                    <tr><td>Crecimiento Activo</td><td>200 – 700</td><td class="risk-ok">Zona óptima. Máxima eficiencia de conversión de CO₂ en biomasa.</td></tr>
+                    <tr><td>Saturación Lumínica</td><td>&gt; 700</td><td>No suma ganancias adicionales. Riesgo de fotoinhibición bajo estrés hídrico.</td></tr>
+                </tbody>
+            </table>
+
+            <div style="margin-top:16px; background:rgba(15,23,42,0.8); border:1px solid rgba(251,191,36,0.2); border-radius:10px; padding:14px 16px;">
+                <div style="font-size:0.65rem; color:#92400e; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:10px;">Eficiencia por Vía Fotosintética</div>
+                <div style="display:flex; flex-direction:column; gap:6px; font-size:0.77rem;">
+                    <div style="display:flex; justify-content:space-between;"><span style="color:#94a3b8;">Maíz / Sorgo / Caña (C4)</span><span style="color:#4ade80; font-weight:700;">Alta — satura a ~1500 µmol/m²/s</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span style="color:#94a3b8;">Soja / Trigo / Girasol (C3)</span><span style="color:#fbbf24; font-weight:700;">Media — satura a ~800 µmol/m²/s</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span style="color:#94a3b8;">Pasturas mixtas</span><span style="color:#94a3b8; font-weight:600;">Variable según especie dominante</span></div>
+                </div>
             </div>
         </div>
     </div>
@@ -1149,23 +1292,70 @@
     <div id="modRaiz" class="modal-overlay">
         <div class="modal-content">
             <button class="btn-close" onclick="closeModal('modRaiz')">×</button>
-            <div class="pop-title">Fisiología Radicular (-18cm)</div>
-            <div class="pop-text">
-                Las raíces detienen su absorción de nutrientes (especialmente Fósforo) con temperaturas bajas.
+            <div class="pop-title">Perfil Radicular y Absorción de Nutrientes</div>
+            <div class="pop-text">La temperatura del suelo por capa determina la actividad radicular. El Fósforo es el nutriente más sensible: su absorción se bloquea casi por completo por debajo de los 12–15°C, aun con buena disponibilidad en el suelo.</div>
+
+            <div style="color:#fff; font-family:'JetBrains Mono',monospace; font-weight:bold; margin:20px 0 10px; border-left:4px solid #4ade80; padding-left:10px;">ESTADO ACTUAL POR CAPA</div>
+            <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
+
+              <div style="background:rgba(15,23,42,0.8); border:1px solid #1e293b; border-radius:10px; padding:11px 14px; display:flex; align-items:center; gap:14px;">
+                <div style="flex-shrink:0; width:48px; text-align:center; border-right:1px solid #1e293b; padding-right:10px;">
+                  <div style="font-size:0.6rem; color:#64748b; font-weight:700;">0 cm</div>
+                  <div style="font-size:1.3rem; color:#fbbf24; font-weight:800; font-family:'JetBrains Mono',monospace;">{{ suelo.temp_0 }}°</div>
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:0.72rem; color:#e2e8f0; font-weight:600;">Superficie · Cuello de plántula</div>
+                  <div style="font-size:0.67rem; color:#64748b; margin-top:2px;">Riesgo golpe de calor · Volatilización de herbicidas · Hum: <strong style="color:#60a5fa;">{{ suelo.sup_hum }}%</strong></div>
+                </div>
+                <span style="flex-shrink:0; background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.3); border-radius:6px; padding:3px 8px; font-size:0.62rem; color:#fbbf24; font-weight:700;">SUPERFICIAL</span>
+              </div>
+
+              <div style="background:rgba(15,23,42,0.8); border:1px solid {% if suelo.temp_6 >= 10 %}rgba(74,222,128,0.35){% else %}rgba(239,68,68,0.35){% endif %}; border-radius:10px; padding:11px 14px; display:flex; align-items:center; gap:14px;">
+                <div style="flex-shrink:0; width:48px; text-align:center; border-right:1px solid #1e293b; padding-right:10px;">
+                  <div style="font-size:0.6rem; color:#64748b; font-weight:700;">6 cm</div>
+                  <div style="font-size:1.3rem; color:{% if suelo.temp_6 >= 10 %}#4ade80{% else %}#ef4444{% endif %}; font-weight:800; font-family:'JetBrains Mono',monospace;">{{ suelo.temp_6 }}°</div>
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:0.72rem; color:#e2e8f0; font-weight:600;">Cama de Siembra · <strong>CRÍTICO GERMINACIÓN</strong></div>
+                  <div style="font-size:0.67rem; color:#64748b; margin-top:2px;">Maíz requiere T° &gt;10°C estables · Hum: <strong style="color:#60a5fa;">{{ suelo.prof_hum }}%</strong></div>
+                </div>
+                <span style="flex-shrink:0; background:rgba({% if suelo.temp_6 >= 10 %}74,222,128{% else %}239,68,68{% endif %},0.1); border:1px solid rgba({% if suelo.temp_6 >= 10 %}74,222,128{% else %}239,68,68{% endif %},0.3); border-radius:6px; padding:3px 8px; font-size:0.62rem; color:{% if suelo.temp_6 >= 10 %}#4ade80{% else %}#ef4444{% endif %}; font-weight:700;">{% if suelo.temp_6 >= 10 %}APTA{% else %}SUB-ÓPTIMA{% endif %}</span>
+              </div>
+
+              <div style="background:rgba(15,23,42,0.8); border:1px solid {% if suelo.temp_18 >= 15 %}rgba(74,222,128,0.25){% elif suelo.temp_18 >= 10 %}rgba(251,191,36,0.25){% else %}rgba(239,68,68,0.25){% endif %}; border-radius:10px; padding:11px 14px; display:flex; align-items:center; gap:14px;">
+                <div style="flex-shrink:0; width:48px; text-align:center; border-right:1px solid #1e293b; padding-right:10px;">
+                  <div style="font-size:0.6rem; color:#64748b; font-weight:700;">18 cm</div>
+                  <div style="font-size:1.3rem; color:{% if suelo.temp_18 >= 15 %}#4ade80{% elif suelo.temp_18 >= 10 %}#fbbf24{% else %}#ef4444{% endif %}; font-weight:800; font-family:'JetBrains Mono',monospace;">{{ suelo.temp_18 }}°</div>
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:0.72rem; color:#e2e8f0; font-weight:600;">Raíz Activa · Absorción de Nutrientes</div>
+                  <div style="font-size:0.67rem; color:#64748b; margin-top:2px;">&lt;15°C bloquea Fósforo (hojas violetas) · Hum: <strong style="color:#60a5fa;">{{ raices.hum }}%</strong></div>
+                </div>
+                <span style="flex-shrink:0; background:rgba({% if suelo.temp_18 >= 15 %}74,222,128{% elif suelo.temp_18 >= 10 %}251,191,36{% else %}239,68,68{% endif %},0.1); border:1px solid rgba({% if suelo.temp_18 >= 15 %}74,222,128{% elif suelo.temp_18 >= 10 %}251,191,36{% else %}239,68,68{% endif %},0.3); border-radius:6px; padding:3px 8px; font-size:0.62rem; color:{% if suelo.temp_18 >= 15 %}#4ade80{% elif suelo.temp_18 >= 10 %}#fbbf24{% else %}#ef4444{% endif %}; font-weight:700;">{% if suelo.temp_18 >= 15 %}ACTIVA{% elif suelo.temp_18 >= 10 %}REDUCIDA{% else %}BLOQUEADA{% endif %}</span>
+              </div>
+
+              <div style="background:rgba(15,23,42,0.8); border:1px solid #1e293b; border-radius:10px; padding:11px 14px; display:flex; align-items:center; gap:14px;">
+                <div style="flex-shrink:0; width:48px; text-align:center; border-right:1px solid #1e293b; padding-right:10px;">
+                  <div style="font-size:0.6rem; color:#64748b; font-weight:700;">54 cm</div>
+                  <div style="font-size:1.3rem; color:#94a3b8; font-weight:800; font-family:'JetBrains Mono',monospace;">{{ suelo.temp_54 }}°</div>
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:0.72rem; color:#e2e8f0; font-weight:600;">Profundo · Inercia Térmica</div>
+                  <div style="font-size:0.67rem; color:#64748b; margin-top:2px;">Reserva de agua capilar. Temperatura muy estable a lo largo del año.</div>
+                </div>
+                <span style="flex-shrink:0; background:rgba(148,163,184,0.1); border:1px solid rgba(148,163,184,0.2); border-radius:6px; padding:3px 8px; font-size:0.62rem; color:#94a3b8; font-weight:700;">RESERVA</span>
+              </div>
             </div>
+
             <table class="tech-table">
-                <thead>
-                    <tr><th>Cultivo</th><th>T. Suelo Mínima</th><th>Consecuencia</th></tr>
-                </thead>
+                <thead><tr><th>Cultivo</th><th>T. Mínima (6cm)</th><th>T. Óptima Absorción</th><th>Consecuencia</th></tr></thead>
                 <tbody>
-                    <tr><td>Maíz</td><td>< 12°C</td><td class="risk-crit">Coloración violácea (Déficit Fósforo)</td></tr>
-                    <tr><td>Soja</td><td>< 18°C</td><td class="risk-warn">Menor actividad de nódulos (Fijación N)</td></tr>
-                    <tr><td>Trigo</td><td>< 4°C</td><td class="risk-ok">Tolerante (Crecimiento lento)</td></tr>
+                    <tr><td>Maíz</td><td>12°C</td><td>20 – 25°C</td><td class="risk-crit">Hojas violetas — Bloqueo P</td></tr>
+                    <tr><td>Soja</td><td>18°C</td><td>22 – 28°C</td><td class="risk-warn">Nódulos inactivos — Sin fijación N</td></tr>
+                    <tr><td>Trigo / Cebada</td><td>4°C</td><td>12 – 18°C</td><td class="risk-ok">Tolerante — Crecimiento lento</td></tr>
+                    <tr><td>Girasol</td><td>10°C</td><td>18 – 22°C</td><td class="risk-warn">Retraso marcado de emergencia</td></tr>
                 </tbody>
             </table>
-            <div class="highlight-box">
-                TEMP SUELO ACTUAL: {{ raices.temp }}°C
-            </div>
         </div>
     </div>
 
@@ -1173,22 +1363,46 @@
         <div class="modal-content">
             <button class="btn-close" onclick="closeModal('modVPD')">×</button>
             <div class="pop-title">Déficit de Presión de Vapor (VPD)</div>
-            <div class="pop-text">
-                Mide la "sed" de la atmósfera. Es mucho más preciso que la humedad relativa para determinar si la planta cierra sus estomas.
+            <div class="pop-text">Mide la "sed" de la atmósfera: la presión que el aire ejerce para extraer agua de los tejidos vegetales. Es más preciso que la HR para predecir el cierre estomático y la detención de fotosíntesis.</div>
+
+            <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(51,65,85,0.5); border-radius:10px; padding:13px 16px; margin:16px 0; font-family:'JetBrains Mono',monospace;">
+                <div style="font-size:0.62rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:7px;">Fórmula Simplificada (Tetens)</div>
+                <div style="font-size:0.8rem; color:#e2e8f0; line-height:1.75;">VPD = <span style="color:#fbbf24;">SVP(T)</span> × (1 − HR / 100)<br>SVP(T) = 0.6108 × e<sup>(17.27 × T) / (T + 237.3)</sup> kPa<br><span style="color:#64748b; font-size:0.68rem;">T = temperatura bulbo seco (°C) · HR = humedad relativa (%)</span></div>
             </div>
+
+            <div style="display:flex; align-items:center; gap:14px; margin-bottom:20px; background:rgba(15,23,42,0.8); border:1px solid {{ estres.color }}44; border-left:4px solid {{ estres.color }}; border-radius:10px; padding:14px 16px;">
+                <div style="flex:1;">
+                    <div style="font-size:0.62rem; color:#64748b; text-transform:uppercase; font-weight:700;">Valor Actual</div>
+                    <div style="font-size:2.2rem; color:{{ estres.color }}; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1.1;">{{ estres.vpd }}</div>
+                    <div style="font-size:0.7rem; color:#94a3b8;">kPa</div>
+                </div>
+                <div style="flex:2;">
+                    <div style="font-size:0.75rem; color:{{ estres.color }}; font-weight:700; margin-bottom:5px;">{{ estres.estado|upper }}</div>
+                    <div style="background:#0f172a; border-radius:6px; height:8px; overflow:hidden;">
+                        <div style="height:100%; width:{% widthratio estres.vpd 3 100 %}%; background:{{ estres.color }}; border-radius:6px;"></div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.58rem; color:#475569; margin-top:3px;"><span>0</span><span>0.4</span><span>1.2</span><span>1.6</span><span>3 kPa</span></div>
+                </div>
+            </div>
+
             <table class="tech-table">
-                <thead>
-                    <tr><th>VPD (kPa)</th><th>Estado Planta</th><th>Fisiología</th></tr>
-                </thead>
+                <thead><tr><th>VPD (kPa)</th><th>Estado</th><th>Respuesta Estomática</th></tr></thead>
                 <tbody>
-                    <tr><td>< 0.4</td><td class="risk-warn">Pasiva</td><td>Transpiración casi nula. Riesgo Moho.</td></tr>
-                    <tr><td>0.4 - 1.2</td><td class="risk-ok">SALUDABLE</td><td>Máxima apertura estomática. Crecimiento.</td></tr>
-                    <tr><td>1.2 - 1.6</td><td class="risk-warn">Alerta</td><td>Comienza regulación estomática.</td></tr>
-                    <tr><td>> 1.6</td><td class="risk-crit">ESTRÉS</td><td>Cierre de estomas. Detención fotosíntesis.</td></tr>
+                    <tr><td>&lt; 0.4</td><td class="risk-warn">Pasiva / Moho</td><td>Transpiración nula. Ambiente saturado. Riesgo Botrytis y mohos foliares.</td></tr>
+                    <tr><td>0.4 – 0.8</td><td class="risk-ok">ÓPTIMO</td><td>Máxima apertura estomática. Intercambio gaseoso pleno y crecimiento sostenido.</td></tr>
+                    <tr><td>0.8 – 1.2</td><td class="risk-ok">SALUDABLE</td><td>Transpiración activa. Planta bien hidratada. Fotosíntesis eficiente.</td></tr>
+                    <tr><td>1.2 – 1.6</td><td class="risk-warn">Alerta</td><td>Regulación estomática. Reducción del 20–35% en fijación de CO₂.</td></tr>
+                    <tr><td>&gt; 1.6</td><td class="risk-crit">ESTRÉS HÍDRICO</td><td>Cierre de estomas. Detención fotosíntesis. Rollado del limbo foliar visible.</td></tr>
                 </tbody>
             </table>
-             <div class="highlight-box" style="border-left-color: {{ estres.color }};">
-                VALOR ACTUAL: {{ estres.vpd }} kPa ({{ estres.estado }})
+
+            <div style="margin-top:16px; background:rgba(15,23,42,0.8); border:1px solid rgba(51,65,85,0.4); border-radius:10px; padding:12px 16px;">
+                <div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:7px;">Sensibilidad por Cultivo</div>
+                <div style="display:flex; flex-direction:column; gap:5px; font-size:0.75rem; color:#94a3b8; line-height:1.55;">
+                    <div><strong style="color:#fbbf24;">Soja:</strong> Muy sensible. VPD &gt;1.5 kPa en floración reduce rendimiento hasta 25% por aborto de flores.</div>
+                    <div><strong style="color:#4ade80;">Maíz:</strong> Sensible en floración y polinización. VPD &gt;2.0 kPa afecta cuajado de granos.</div>
+                    <div><strong style="color:#60a5fa;">Trigo:</strong> Moderado. Tolera VPD hasta 2.5 kPa en etapa vegetativa sin daño severo.</div>
+                </div>
             </div>
         </div>
     </div>
@@ -1196,14 +1410,53 @@
     <div id="modETo" class="modal-overlay">
         <div class="modal-content">
             <button class="btn-close" onclick="closeModal('modETo')">×</button>
-            <div class="pop-title">Evapotranspiración (Penman-Monteith)</div>
-            <div class="pop-text">
-                Cálculo combinado de radiación + temperatura + viento + humedad para determinar la demanda de agua de un cultivo de referencia (Pasto).
-                <br><strong>Fórmula de Riego:</strong> ETo x Kc (Coeficiente cultivo).
+            <div class="pop-title">Evapotranspiración (ETo) y Necesidades de Riego</div>
+            <div class="pop-text">El método FAO-56 Penman-Monteith combina radiación, temperatura, viento y humedad para calcular la demanda hídrica de referencia (pasto corto 12 cm). La demanda real de cada cultivo se obtiene con <strong>ETc = ETo × Kc</strong>.</div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:16px 0;">
+              <div style="background:rgba(30,20,50,0.8); border:1px solid #4c1d95; border-radius:10px; padding:14px; text-align:center;">
+                <div style="font-size:0.6rem; color:#7c3aed; text-transform:uppercase; font-weight:700; margin-bottom:6px;">ETo Hoy</div>
+                <div style="font-size:2.2rem; color:#a78bfa; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ eto.hoy }}</div>
+                <div style="font-size:0.7rem; color:#94a3b8; margin-top:4px;">mm / día</div>
+              </div>
+              <div style="background:rgba(30,20,50,0.8); border:1px solid #4c1d95; border-radius:10px; padding:14px; text-align:center;">
+                <div style="font-size:0.6rem; color:#7c3aed; text-transform:uppercase; font-weight:700; margin-bottom:6px;">Proyección 7 días</div>
+                <div style="font-size:2.2rem; color:#c4b5fd; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1;">{{ eto.proyeccion }}</div>
+                <div style="font-size:0.7rem; color:#94a3b8; margin-top:4px;">mm acumulados</div>
+              </div>
             </div>
-             <div class="highlight-box" style="background: rgba(167, 139, 250, 0.1); border-left-color: #a78bfa;">
-                PÉRDIDA HOY: {{ eto.hoy }} mm <br>
-                PROYECCIÓN SEMANAL: {{ eto.proyeccion }} mm
+
+            <div style="color:#fff; font-family:'JetBrains Mono',monospace; font-weight:bold; margin:20px 0 10px; border-left:4px solid #a78bfa; padding-left:10px;">COEFICIENTES Kc Y DEMANDA REAL</div>
+            <table class="tech-table">
+                <thead><tr><th>Cultivo</th><th>Kc Inicial</th><th>Kc Medio (pico)</th><th>ETc hoy (pico)</th></tr></thead>
+                <tbody>
+                    <tr><td>Maíz</td><td>0.30</td><td>1.20</td><td style="color:#a78bfa; font-weight:bold;">{{ eto.hoy }} × 1.20 mm</td></tr>
+                    <tr><td>Soja</td><td>0.40</td><td>1.15</td><td style="color:#a78bfa; font-weight:bold;">{{ eto.hoy }} × 1.15 mm</td></tr>
+                    <tr><td>Trigo</td><td>0.30</td><td>1.15</td><td style="color:#a78bfa; font-weight:bold;">{{ eto.hoy }} × 1.15 mm</td></tr>
+                    <tr><td>Girasol</td><td>0.35</td><td>1.10</td><td style="color:#a78bfa; font-weight:bold;">{{ eto.hoy }} × 1.10 mm</td></tr>
+                    <tr><td>Pasturas</td><td>0.40</td><td>1.05</td><td style="color:#a78bfa; font-weight:bold;">{{ eto.hoy }} × 1.05 mm</td></tr>
+                </tbody>
+            </table>
+
+            <div style="color:#fff; font-family:'JetBrains Mono',monospace; font-weight:bold; margin:20px 0 10px; border-left:4px solid #a78bfa; padding-left:10px;">BALANCE DIARIO PROYECTADO (14 DÍAS)</div>
+            <div style="max-height:185px; overflow-y:auto; border:1px solid #1e293b; border-radius:10px;">
+              <table class="tech-table" style="margin:0;">
+                <thead><tr><th>Fecha</th><th>Lluvia</th><th>ETo</th><th>Saldo</th></tr></thead>
+                <tbody>
+                    {% for dia in tabla_balance %}
+                    <tr>
+                        <td>{{ dia.fecha }}</td>
+                        <td style="color:#60a5fa;">{{ dia.lluvia }} mm</td>
+                        <td style="color:#a78bfa;">{{ dia.eto }} mm</td>
+                        <td style="font-weight:bold; color:{{ dia.color }};">{% if dia.diff > 0 %}+{% endif %}{{ dia.diff }} mm</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="highlight-box" style="background:rgba(167,139,250,0.08); border-left-color:#a78bfa; margin-top:16px;">
+                <div><strong>Ejemplo de cálculo:</strong> Si ETo = {{ eto.hoy }} mm/día y el cultivo está en etapa media (Kc ≈ 1.15) → <strong style="color:#a78bfa;">ETc ≈ {{ eto.hoy }} × 1.15 mm/día</strong> de demanda hídrica real. Ese es el volumen a reponer por riego si no llueve.</div>
             </div>
         </div>
     </div>
@@ -1254,6 +1507,9 @@
         const dataLluvia = {{ grafico_agro.lluvia|safe }};
         const dataEto = {{ grafico_agro.eto|safe }};
 
+        // Balance neto calculado: lluvia - ETo
+        const dataBalance = dataLluvia.map((v, i) => parseFloat((v - (dataEto[i] || 0)).toFixed(1)));
+
         // Intentar leer traducciones (si fallan, usa español por defecto)
         let txtLluvia = "Lluvia (Ingreso)";
         let txtEto = "Evapotranspiración (Demanda)";
@@ -1287,7 +1543,26 @@
             yAxis: { 
                 title: { text: txtAxis, style: { color: '#94a3b8' } }, 
                 gridLineColor: '#334155',
-                labels: { style: { color: '#e2e8f0' } }
+                labels: { style: { color: '#e2e8f0' } },
+                plotLines: [{
+                    value: 0,
+                    color: '#64748b',
+                    width: 1.5,
+                    dashStyle: 'Dash',
+                    zIndex: 3,
+                    label: { text: 'Balance 0', style: { color: '#64748b', fontSize: '10px' }, align: 'right', x: -4 }
+                }],
+                plotBands: [{
+                    from: 0,
+                    to: 999,
+                    color: 'rgba(74,222,128,0.04)',
+                    label: { text: 'Superávit', style: { color: '#4ade80', fontSize: '9px' }, align: 'right', x: -6, y: 14 }
+                }, {
+                    from: -999,
+                    to: 0,
+                    color: 'rgba(239,68,68,0.04)',
+                    label: { text: 'Déficit', style: { color: '#ef4444', fontSize: '9px' }, align: 'right', x: -6, y: -6 }
+                }]
             },
             legend: { itemStyle: { color: '#e2e8f0' } },
             tooltip: { shared: true, backgroundColor: '#1e293b', style: { color: '#fff' }, borderColor: '#4ade80' },
@@ -1304,6 +1579,17 @@
                 color: '#facc15',
                 lineWidth: 3,
                 marker: { fillColor: '#1e293b', lineWidth: 2, lineColor: '#facc15' }
+            }, {
+                name: 'Balance Neto',
+                type: 'areaspline',
+                data: dataBalance,
+                color: '#4ade80',
+                negativeColor: '#ef4444',
+                fillOpacity: 0.18,
+                lineWidth: 2,
+                marker: { enabled: false },
+                zIndex: 2,
+                tooltip: { valueSuffix: ' mm' }
             }],
             credits: { enabled: false }
         });
@@ -1391,6 +1677,266 @@ Generado por TuClima Pro - www.tuclima.com
     }
 </script>
 
+<!-- ═══════════════════════════════════════════════════
+     TUCLIMA PRO PANEL · Agro Intelligence
+═══════════════════════════════════════════════════ -->
+<div style="margin-bottom:20px; font-family:'Segoe UI',system-ui,-apple-system,sans-serif;">
+
+  {% if alerta_banner.activo %}<div id="tc-alert-banner" style="background:{{ alerta_banner.color }}; border:1px solid {{ alerta_banner.borde }}; border-radius:12px; padding:11px 16px; margin-bottom:14px; display:flex; align-items:flex-start; gap:10px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ alerta_banner.texto }}" stroke-width="2.5" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span style="flex:1; font-size:0.82rem; font-weight:600; color:{{ alerta_banner.texto }}; line-height:1.45; font-family:'Segoe UI',system-ui,sans-serif;">{{ alerta_banner.mensaje }}</span><button onclick="document.getElementById('tc-alert-banner').style.display='none'" style="background:none; border:none; color:{{ alerta_banner.texto }}; opacity:0.65; cursor:pointer; font-size:1.2rem; line-height:1; padding:0; flex-shrink:0;">&times;</button></div>{% endif %}
+
+  <!-- ── 1. SEMÁFORO DE RIESGO AGRONÓMICO ── -->
+  <div style="background:linear-gradient(135deg,#0f172a,#1e293b); border:1px solid rgba(51,65,85,0.4); border-radius:16px; padding:16px 20px; margin-bottom:12px;">
+    <div style="font-size:0.66rem; letter-spacing:0.12em; color:#475569; font-weight:700; margin-bottom:12px; text-transform:uppercase; display:flex; align-items:center; gap:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><rect x="6" y="1" width="12" height="22" rx="3" fill="#1e293b" stroke="#475569" stroke-width="1.5"/><circle cx="12" cy="7" r="3" fill="#ef4444"/><circle cx="12" cy="12" r="3" fill="#facc15"/><circle cx="12" cy="17" r="3" fill="#4ade80"/></svg> Semáforo de Riesgo Operacional</div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {{ pulverizacion.color }}33; border-left:3px solid {{ pulverizacion.color }}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Pulverización</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{{ pulverizacion.color }}; box-shadow:0 0 7px {{ pulverizacion.color }}90; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{{ pulverizacion.color }}; font-size:0.82rem;">{{ pulverizacion.estado }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">Δ T: {{ pulverizacion.delta_t }}</div>
+      </div>
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {{ estres.color }}33; border-left:3px solid {{ estres.color }}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Estrés VPD</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{{ estres.color }}; box-shadow:0 0 7px {{ estres.color }}90; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{{ estres.color }}; font-size:0.82rem;">{{ estres.estado }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">{{ estres.vpd }} kPa</div>
+      </div>
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {{ balance.color_diff }}33; border-left:3px solid {{ balance.color_diff }}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Balance Hídrico</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{{ balance.color_diff }}; box-shadow:0 0 7px {{ balance.color_diff }}90; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{{ balance.color_diff }}; font-size:0.82rem;">{% if balance.diff >= 0 %}SUPERÁVIT{% else %}DÉFICIT{% endif %}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">Neto: {% if balance.diff > 0 %}+{% endif %}{{ balance.diff }} mm</div>
+      </div>
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid #fbbf2433; border-left:3px solid #fbbf24; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Crecimiento GDD</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:#fbbf24; box-shadow:0 0 7px #fbbf2490; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:#fbbf24; font-size:0.82rem;">{{ gdd.estado|upper }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">{{ gdd.valor }} G-Día</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 2. BOTONES DE ACCIÓN RÁPIDA ── -->
+  <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+    <button onclick="enviarAccionRapida('Generá un reporte PDF con los parámetros agronómicos actuales: Delta T, VPD, balance hídrico y pronóstico extendido. Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(30,58,95,0.8); border:1px solid rgba(59,130,246,0.4); color:#93c5fd; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#1d4ed8';this.style.color='#fff'" onmouseout="this.style.background='rgba(30,58,95,0.8)';this.style.color='#93c5fd'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Generar PDF</button>
+    <button onclick="enviarAccionRapida('Generá un Excel con el balance hídrico diario, ETo y pronóstico de lluvia de los próximos 14 días. Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(20,83,45,0.8); border:1px solid rgba(74,222,128,0.4); color:#86efac; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#16a34a';this.style.color='#fff'" onmouseout="this.style.background='rgba(20,83,45,0.8)';this.style.color='#86efac'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg> Generar Excel</button>
+    <button onclick="enviarAccionRapida('¿Cuáles son las condiciones y recomendaciones agrícolas para hoy basándote en los datos actuales? Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(59,27,107,0.8); border:1px solid rgba(167,139,250,0.4); color:#c4b5fd; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#7c3aed';this.style.color='#fff'" onmouseout="this.style.background='rgba(59,27,107,0.8)';this.style.color='#c4b5fd'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><path d="M17 8C8 10 5.9 16.17 3.82 19.04c-.82 1.1.6 2.5 1.58 1.39C7 18 7.5 17 12 17c5 0 10-3 10-9-4.5 0-8.17 1.62-12 5 2-4 2.5-7.5 7-8z"/></svg> Análisis Rápido</button>
+  </div>
+
+  <!-- ── 3. TIMELINE PRÓXIMAS 24H ── -->
+  <div style="background:linear-gradient(135deg,#0f172a,#1e293b); border:1px solid rgba(51,65,85,0.4); border-radius:16px; padding:16px 20px; overflow:hidden;">
+    <div style="font-size:0.66rem; letter-spacing:0.12em; color:#475569; font-weight:700; margin-bottom:12px; text-transform:uppercase; display:flex; align-items:center; gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Tendencia Próximas 24h</div>
+    <div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; scrollbar-width:thin; scrollbar-color:rgba(51,65,85,0.5) transparent;">
+      {% for h in tira_24h %}
+      <div style="flex-shrink:0; background:{% if forloop.first %}rgba(15,23,42,0.95){% else %}rgba(15,23,42,0.7){% endif %}; border:1px solid {% if forloop.first %}rgba(99,102,241,0.5){% else %}rgba(51,65,85,0.3){% endif %}; border-radius:10px; padding:10px 11px; text-align:center; min-width:72px;">
+        <div style="font-size:0.6rem; color:{% if forloop.first %}#818cf8{% else %}#64748b{% endif %}; font-weight:700; margin-bottom:5px; white-space:nowrap;">{{ h.hora }}</div>
+        <div style="display:flex; justify-content:center; align-items:center; height:22px; margin-bottom:4px;">{% if h.code <= 1 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></svg>{% elif h.code == 2 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="15" cy="9" r="4" stroke="#fbbf24"/><path d="M9 19H5a3 3 0 0 1 0-6h.26A6 6 0 0 1 18 14" stroke="#94a3b8"/></svg>{% elif h.code == 3 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>{% elif h.code <= 49 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><line x1="3" y1="8" x2="21" y2="8"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="5" y1="16" x2="19" y2="16"/></svg>{% elif h.code <= 69 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="12" y1="17" x2="12" y2="19"/><line x1="16" y1="19" x2="16" y2="21"/></svg>{% elif h.code <= 79 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="8" y1="19" x2="6" y2="17"/><line x1="8" y1="19" x2="10" y2="17"/><line x1="16" y1="19" x2="16" y2="21"/><line x1="16" y1="19" x2="14" y2="17"/><line x1="16" y1="19" x2="18" y2="17"/></svg>{% elif h.code <= 82 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="12" y1="17" x2="12" y2="19"/><line x1="16" y1="19" x2="16" y2="21"/></svg>{% else %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.9" stroke="#ef4444"/><polyline points="13 11 9 17 15 17 11 23" stroke="#facc15"/></svg>{% endif %}</div>
+        <div style="font-size:0.82rem; font-weight:700; color:#f1f5f9;">{{ h.temp }}°</div>
+        <div style="font-size:0.65rem; color:{% if h.lluvia > 60 %}#60a5fa{% elif h.lluvia > 30 %}#facc15{% else %}#475569{% endif %}; margin-top:2px;">{{ h.lluvia }}%</div>
+      </div>
+      {% empty %}<div style="color:#475569; font-size:0.8rem; padding:10px;">Sin datos</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── 4. CALCULADORA DE PULVERIZACIÓN ── -->
+  <details style="background:linear-gradient(135deg,#0f172a,#1e293b); border:1px solid rgba(51,65,85,0.4); border-radius:16px; margin-top:12px; overflow:hidden;">
+    <summary style="padding:14px 20px; cursor:pointer; color:#94a3b8; font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; list-style:none; display:flex; align-items:center; gap:9px; font-family:'Segoe UI',system-ui,sans-serif; user-select:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 10h8M8 14h5M8 6h8"/></svg>Calculadora de Pulverización<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div style="padding:14px 20px 18px; border-top:1px solid rgba(51,65,85,0.3);">
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; margin-bottom:14px;">
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">CULTIVO</div><select id="tc-cultivo" style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; font-family:inherit;"><option value="soja">Soja</option><option value="maiz">Maíz</option><option value="trigo">Trigo</option><option value="girasol">Girasol</option><option value="pasturas">Pasturas</option></select></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">DOSIS (L/ha)</div><input type="number" id="tc-dosis" value="2" min="0.1" step="0.1" style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">AGUA (L/ha)</div><input type="number" id="tc-agua" value="100" min="50" step="10" style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">BOQUILLA</div><select id="tc-boquilla" style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; font-family:inherit;"><option value="abanico">Abanico plano</option><option value="doble">Doble abanico</option><option value="cono">Cono hueco</option></select></div>
+      </div>
+      <button onclick="tcPulvCalc()" style="background:rgba(74,222,128,0.12); border:1px solid rgba(74,222,128,0.4); color:#4ade80; padding:9px 20px; border-radius:9px; cursor:pointer; font-size:0.82rem; font-weight:700; font-family:inherit;">Calcular condición</button>
+      <div id="tcCalcPulvRes" style="margin-top:12px;"></div>
+    </div>
+  </details>
+
+  <!-- ── 5. OJO BIÓNICO — VISIÓN IA ── -->
+  <div id="tc-dz-agro" style="margin-top:14px; border:2px dashed rgba(74,222,128,0.3); border-radius:16px; padding:28px 20px; text-align:center; cursor:pointer; transition:border-color 0.25s,background 0.25s; background:rgba(15,23,42,0.6);"
+    ondragover="event.preventDefault();this.style.borderColor='#4ade80';this.style.background='rgba(74,222,128,0.07)';"
+    ondragleave="this.style.borderColor='rgba(74,222,128,0.3)';this.style.background='rgba(15,23,42,0.6)';"
+    ondrop="tcDzDrop_agro(event)"
+    onclick="var l=document.getElementById('tc-dz-loading-agro');if(!l||l.style.display==='none')document.getElementById('tc-vision-inp-agro').click()">
+    <input type="file" id="tc-vision-inp-agro" accept="image/*" style="display:none;" onchange="tcDzFile_agro(this)">
+    <div id="tc-dz-idle-agro">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 10px;display:block;opacity:0.7;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <p style="margin:0 0 4px;font-size:0.88rem;font-weight:700;color:#4ade80;letter-spacing:0.04em;">OJO BIÓNICO</p>
+      <p style="margin:0;font-size:0.76rem;color:#94a3b8;line-height:1.5;">Arrastrá aquí la foto de tu cultivo<br>o hacé clic para explorar</p>
+    </div>
+    <div id="tc-dz-loading-agro" style="display:none;">
+      <p style="margin:0 0 12px;font-size:0.82rem;color:#4ade80;animation:tcDzPulse 1.4s ease-in-out infinite;">Analizando imagen con IA…</p>
+      <div style="height:6px;border-radius:3px;background:rgba(74,222,128,0.15);overflow:hidden;"><div style="height:100%;width:0;background:#4ade80;border-radius:3px;animation:tcDzBar 2.2s ease-in-out infinite;"></div></div>
+    </div>
+    <div id="tc-dz-result-agro" style="display:none;text-align:left;"></div>
+  </div>
+  <style>
+  @keyframes tcDzPulse{0%,100%{opacity:0.4}50%{opacity:1}}
+  @keyframes tcDzBar{0%{width:0}60%{width:70%}100%{width:100%}}
+  </style>
+  <script>
+  function tcDzDrop_agro(e){e.preventDefault();var dz=document.getElementById('tc-dz-agro');dz.style.borderColor='rgba(74,222,128,0.3)';dz.style.background='rgba(15,23,42,0.6)';var f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))tcDzSend_agro(f);}
+  function tcDzFile_agro(inp){if(inp.files[0])tcDzSend_agro(inp.files[0]);}
+  function tcDzSend_agro(file){
+    document.getElementById('tc-dz-idle-agro').style.display='none';
+    document.getElementById('tc-dz-loading-agro').style.display='block';
+    document.getElementById('tc-dz-result-agro').style.display='none';
+    var fd=new FormData();
+    fd.append('chatInput','Analizá esta imagen de mi cultivo y decime el estado fitosanitario, posibles plagas o enfermedades que observás.');
+    fd.append('sessionId',sessionId);
+    fd.append('userId',djangoUserId);
+    fd.append('sector','agro');
+    fd.append('data00',file);
+    fetch(urlN8N,{method:'POST',body:fd})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var txt=(d.output||d.text||JSON.stringify(d)).replace(/</g,'&lt;').replace(/\n/g,'<br>');
+        var res=document.getElementById('tc-dz-result-agro');
+        res.innerHTML='<div style="font-size:0.8rem;color:#e2e8f0;line-height:1.65;padding:4px 0 8px;">'+txt+'</div><button onclick="tcDzReset_agro()" style="background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.4);color:#4ade80;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.75rem;font-family:inherit;">Nueva imagen</button>';
+        document.getElementById('tc-dz-loading-agro').style.display='none';
+        res.style.display='block';
+      })
+      .catch(function(){document.getElementById('tc-dz-loading-agro').style.display='none';document.getElementById('tc-dz-idle-agro').style.display='block';});
+  }
+  function tcDzReset_agro(){document.getElementById('tc-dz-idle-agro').style.display='block';document.getElementById('tc-dz-result-agro').style.display='none';document.getElementById('tc-vision-inp-agro').value='';}
+  </script>
+
+  <!-- ── 6. VENTANA SEGURA ── -->
+  <details style="background:linear-gradient(135deg,#0f172a,#1e293b); border:1px solid rgba(51,65,85,0.4); border-radius:16px; margin-top:12px; overflow:hidden;">
+    <summary style="padding:14px 20px; cursor:pointer; color:#94a3b8; font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; list-style:none; display:flex; align-items:center; gap:9px; font-family:'Segoe UI',system-ui,sans-serif; user-select:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v6M15 3v6"/></svg>Ventana Segura de Trabajo<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div style="padding:14px 20px 18px; border-top:1px solid rgba(51,65,85,0.3);">
+      <p style="font-size:0.72rem; color:#64748b; margin:0 0 12px; line-height:1.5;">Encontrá las próximas N horas consecutivas donde las condiciones cumplen tus umbrales para pulverizar.</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; margin-bottom:14px;">
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">DURACIÓN (h)</div><input type="number" id="tc-vs-dur-agro" value="3" min="1" max="8" style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">LLUVIA MÁX (%)</div><input type="number" id="tc-vs-lluvia-agro" value="20" min="0" max="80" step="5" style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">VIENTO MÁX (km/h)</div><input type="number" id="tc-vs-viento-agro" value="15" min="1" max="40" style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+      </div>
+      <button onclick="tcVsScan_agro()" style="background:rgba(74,222,128,0.12); border:1px solid rgba(74,222,128,0.4); color:#4ade80; padding:9px 20px; border-radius:9px; cursor:pointer; font-size:0.82rem; font-weight:700; font-family:inherit;">Buscar ventana</button>
+      <div id="tcVsRes-agro" style="margin-top:12px;"></div>
+    </div>
+  </details>
+  <script>
+  {% localize off %}var _tc_h24_agro=[{% for h in tira_24h %}{"hora":"{{ h.hora }}","lluvia":{{ h.lluvia }},"viento":{{ h.viento }},"temp":{{ h.temp }}}{% if not forloop.last %},{% endif %}{% endfor %}];{% endlocalize %}
+  function tcVsScan_agro(){
+    var dur=parseInt(document.getElementById('tc-vs-dur-agro').value)||3;
+    var mxL=parseInt(document.getElementById('tc-vs-lluvia-agro').value)||20;
+    var mxV=parseFloat(document.getElementById('tc-vs-viento-agro').value)||15;
+    var d=_tc_h24_agro,best=null,bestS=Infinity;
+    for(var i=0;i<=d.length-dur;i++){var sl=d.slice(i,i+dur);var ok=sl.every(function(h){return h.lluvia<=mxL&&h.viento<=mxV;});if(ok){var sc=sl.reduce(function(a,h){return a+h.lluvia+h.viento;},0);if(sc<bestS){bestS=sc;best=sl;}}}
+    var el=document.getElementById('tcVsRes-agro');
+    if(!best){el.innerHTML='<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:12px 14px;font-size:0.8rem;color:#ef4444;">Sin ventana de '+dur+'h que cumpla los criterios en las próximas 24h.</div>';return;}
+    var mL=Math.max.apply(null,best.map(function(h){return h.lluvia;}));
+    var mV=Math.max.apply(null,best.map(function(h){return h.viento;}));
+    var mT=Math.min.apply(null,best.map(function(h){return h.temp;}));
+    el.innerHTML='<div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.3);border-radius:10px;padding:12px 14px;"><div style="font-size:0.72rem;color:#4ade80;font-weight:700;letter-spacing:0.05em;margin-bottom:6px;">VENTANA ÓPTIMA</div><div style="font-size:0.88rem;font-weight:800;color:#f1f5f9;margin-bottom:8px;">'+best[0].hora+' → '+best[best.length-1].hora+'</div><div style="display:flex;flex-wrap:wrap;gap:7px;"><span style="background:#0f172a;border:1px solid #334155;border-radius:7px;padding:4px 10px;font-size:0.72rem;color:#94a3b8;">Lluvia máx: <strong style="color:#60a5fa;">'+mL+'%</strong></span><span style="background:#0f172a;border:1px solid #334155;border-radius:7px;padding:4px 10px;font-size:0.72rem;color:#94a3b8;">Viento máx: <strong style="color:#4ade80;">'+mV+' km/h</strong></span><span style="background:#0f172a;border:1px solid #334155;border-radius:7px;padding:4px 10px;font-size:0.72rem;color:#94a3b8;">Temp mín: <strong style="color:#fbbf24;">'+mT+'°C</strong></span></div></div>';
+  }
+  </script>
+
+  <script>
+  {% localize off %}var _tc_dt={{ pulverizacion.delta_t|floatformat:1 }}, _tc_vt={{ pulverizacion.viento|floatformat:1 }};{% endlocalize %}
+  function tcPulvCalc(){
+    var dosis=parseFloat(document.getElementById('tc-dosis').value)||2;
+    var agua=parseFloat(document.getElementById('tc-agua').value)||100;
+    var boquilla=document.getElementById('tc-boquilla').value;
+    var conc=(dosis/agua*100).toFixed(2);
+    var ver='',col='',bg='',msg='';
+    if(_tc_dt>10||_tc_vt>20){ver='NO APTO';col='#ef4444';bg='rgba(239,68,68,0.1)';msg='Delta T o viento fuera de rango. Riesgo de deriva y evaporación. Postergar la labor.';}
+    else if(_tc_dt>=8||_tc_vt>15){ver='CONDICIONAL';col='#fb923c';bg='rgba(251,146,60,0.1)';msg='Condiciones marginales. Reducir presión de trabajo y supervisar deriva continuamente.';}
+    else if(_tc_dt>=2&&_tc_dt<=8&&_tc_vt<=15){ver='ÓPTIMO';col='#4ade80';bg='rgba(74,222,128,0.1)';msg='Condiciones ideales. Delta T y viento dentro del rango agronómico recomendado.';}
+    else{ver='RIESGO INV.';col='#facc15';bg='rgba(251,191,36,0.1)';msg='Delta T muy bajo. Riesgo de inversión térmica y deriva nocturna. Esperar condiciones diurnas.';}
+    var bq=boquilla==='abanico'?'Amplio ángulo, baja presión (2-3 bar)':boquilla==='doble'?'Doble pulso, cobertura total (3-4 bar)':'Cono hueco, alta penetración (4-5 bar)';
+    document.getElementById('tcCalcPulvRes').innerHTML='<div style="background:'+bg+'; border:1px solid '+col+'33; border-radius:10px; padding:12px 14px;"><div style="margin-bottom:7px;"><span style="background:'+col+'22; color:'+col+'; font-size:0.72rem; font-weight:800; padding:3px 10px; border-radius:20px; letter-spacing:0.06em;">'+ver+'</span></div><p style="margin:0 0 8px; font-size:0.8rem; color:#e2e8f0; line-height:1.5;">'+msg+'</p><div style="display:flex; flex-wrap:wrap; gap:7px;"><span style="background:#0f172a; border:1px solid #334155; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">Concentración: <strong style="color:#e2e8f0;">'+conc+'%</strong></span><span style="background:#0f172a; border:1px solid #334155; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">ΔT: <strong style="color:'+col+';">'+_tc_dt+'°C</strong></span><span style="background:#0f172a; border:1px solid #334155; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">Boquilla: <strong style="color:#e2e8f0;">'+bq+'</strong></span></div></div>';
+  }
+  </script>
+
+  <!-- ── 7. MONITOR 24H Chart.js ── -->
+  <script>
+  (function() {
+    var raw = (typeof _tc_h24_agro !== 'undefined') ? _tc_h24_agro : [];
+    if (!raw.length) return;
+    var horas   = raw.map(function(h){ return h.hora; });
+    var temps   = raw.map(function(h){ return h.temp; });
+    var lluvias = raw.map(function(h){ return h.lluvia; });
+    var vientos = raw.map(function(h){ return h.viento; });
+    var ctx = document.getElementById('agro-chart-24h');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: horas,
+        datasets: [{
+          label: 'Temp (°C)',
+          data: temps,
+          type: 'line',
+          borderColor: '#facc15',
+          backgroundColor: 'rgba(250,204,21,0.08)',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.4,
+          fill: true,
+          yAxisID: 'yTemp',
+          order: 1
+        }, {
+          label: 'Lluvia (%)',
+          data: lluvias,
+          backgroundColor: 'rgba(59,130,246,0.55)',
+          borderColor: 'rgba(59,130,246,0.85)',
+          borderWidth: 1,
+          borderRadius: 2,
+          yAxisID: 'yLluvia',
+          order: 2
+        }, {
+          label: 'Viento (km/h)',
+          data: vientos,
+          type: 'line',
+          borderColor: 'rgba(74,222,128,0.7)',
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          tension: 0.35,
+          yAxisID: 'yTemp',
+          order: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 12, padding: 12 } },
+          tooltip: { backgroundColor: 'rgba(15,23,42,0.92)', titleColor: '#e2e8f0', bodyColor: '#94a3b8', borderColor: 'rgba(74,222,128,0.3)', borderWidth: 1 }
+        },
+        scales: {
+          x: { ticks: { color: '#475569', font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }, grid: { color: 'rgba(51,65,85,0.3)' } },
+          yTemp: { position: 'left', ticks: { color: '#facc15', font: { size: 9 } }, grid: { color: 'rgba(51,65,85,0.25)' }, title: { display: true, text: '°C / km/h', color: '#475569', font: { size: 9 } } },
+          yLluvia: { position: 'right', min: 0, max: 100, ticks: { color: '#3b82f6', font: { size: 9 } }, grid: { display: false }, title: { display: true, text: 'Lluvia %', color: '#475569', font: { size: 9 } } }
+        }
+      }
+    });
+  })();
+  </script>
+
+</div>
+<script>
+function enviarAccionRapida(txt) {
+    var inp = document.getElementById('user-input');
+    if (inp) { inp.value = txt; if(typeof enviarMensaje === 'function') enviarMensaje(); }
+}
+</script>
 <div class="chat-container">
     <div class="chat-header">
         <h3>
@@ -1405,14 +1951,26 @@ Generado por TuClima Pro - www.tuclima.com
     </div>
     
     <div class="chat-messages" id="chat-box">
-        <div class="message bot-msg welcome-msg">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline; margin-right:6px; vertical-align:top; margin-top:2px; color: #6366f1;">
+        <div class="message bot-msg welcome-msg" style="display:flex; align-items:center; gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" style="flex-shrink:0;">
                 <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
                 <path d="M12 17h.01"/>
                 <circle cx="12" cy="12" r="10"/>
             </svg>
-            ¡Hola! Soy tu asistente meteorológico, ¿en qué puedo ayudarte?
+            <span>¡Hola! Soy tu asistente meteorológico, ¿en qué puedo ayudarte?</span>
         </div>
+    </div>
+
+    <!-- Banner: límite diario de TuClima IA -->
+    <div id="tokens-limite-banner" style="display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:28px 24px; background:linear-gradient(135deg,rgba(15,23,42,0.98),rgba(30,41,59,0.98)); border-top:1px solid rgba(239,68,68,0.25);">
+        <div style="width:52px;height:52px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.8"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
+        </div>
+        <div style="text-align:center;">
+            <p style="margin:0 0 4px; color:#f1f5f9; font-weight:600; font-size:1rem; font-family:'Segoe UI',system-ui,sans-serif;">Límite diario de TuClima IA</p>
+            <p style="margin:0; color:#94a3b8; font-size:0.85rem; font-family:'Segoe UI',system-ui,sans-serif;">Alcanzaste el uso máximo de hoy. La IA se recarga a medianoche.<br>Próxima recarga en <strong id="tokens-countdown" style="color:#e2e8f0;">—</strong></p>
+        </div>
+        <a href="/mi-cuenta/" style="background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.3);padding:9px 22px;border-radius:8px;font-size:0.85rem;text-decoration:none;font-family:'Segoe UI',system-ui,sans-serif;" onmouseover="this.style.background='rgba(99,102,241,0.25)'" onmouseout="this.style.background='rgba(99,102,241,0.15)'">Recargar tokens →</a>
     </div>
 
     <div class="chat-input-container" style="display: flex; align-items: center; gap: 12px; padding: 20px 24px; background: rgba(15, 23, 42, 0.8); border-top: 1px solid rgba(51, 65, 85, 0.2); backdrop-filter: blur(20px);">
@@ -1474,8 +2032,10 @@ Generado por TuClima Pro - www.tuclima.com
     // --- CONFIGURACIÓN AGRO INTELLIGENCE PRO ---
 
 const urlN8N = "https://n8n-production-2651.up.railway.app/webhook/chat"; // Webhook principal ChatBot TuClima
-let sessionId = localStorage.getItem("chatSessionId") || generateUUID();
-localStorage.setItem("chatSessionId", sessionId);
+const djangoUserId = "{{ user.username|escapejs }}"; // Usuario autenticado de Django
+const _tcStorageKey = djangoUserId ? `chatSessionId_${djangoUserId}` : "chatSessionId";
+let sessionId = localStorage.getItem(_tcStorageKey) || (djangoUserId ? `${djangoUserId}_${generateUUID().slice(0,8)}` : generateUUID());
+localStorage.setItem(_tcStorageKey, sessionId);
 
 // ==========================================
 // FUNCIONES DE PROCESAMIENTO MARKDOWN
@@ -1483,6 +2043,14 @@ localStorage.setItem("chatSessionId", sessionId);
 
 function processMarkdown(text) {
     if (!text) return text;
+    
+    // 0. Proteger etiquetas <a> ya presentes para no corromper URLs con markdown
+    const htmlLinks = [];
+    text = text.replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, (match) => {
+        const idx = htmlLinks.length;
+        htmlLinks.push(match);
+        return '\x00LINK_' + idx + '\x00';
+    });
     
     // Procesar elementos markdown en orden (importante el orden)
     
@@ -1519,6 +2087,11 @@ function processMarkdown(text) {
     // 8. Limpiar <br> fantasma pegados a elementos de bloque
     text = text.replace(/<\/(h[1-3]|ul|ol|li)><br>/g, '</$1>');
     text = text.replace(/<br><(h[1-3]|ul|ol|li)>/g, '<$1>');
+    
+    // 9. Restaurar etiquetas <a> originales
+    htmlLinks.forEach((link, idx) => {
+        text = text.replace('\x00LINK_' + idx + '\x00', link);
+    });
     
     return text;
 }
@@ -1888,7 +2461,44 @@ document.getElementById("file-input").addEventListener("change", function() {
 });
 
 // 2. ENVÍO DE MENSAJES Y ARCHIVOS
+// --- VERIFICACIÓN DE TOKENS ANTES DE CADA MENSAJE ---
+async function verificarTokens() {
+    try {
+        const r = await fetch('/api/tokens/saldo/', { credentials: 'include' });
+        if (!r.ok) return true;
+        const data = await r.json();
+        const costoChat = (data.costos && data.costos.CHAT_N8N) || 3000;
+        if (data.tokens_disponibles < costoChat) {
+            mostrarLimiteIA();
+            return false;
+        }
+        return true;
+    } catch (e) { return true; }
+}
+
+function mostrarLimiteIA() {
+    const banner = document.getElementById('tokens-limite-banner');
+    const inputArea = document.querySelector('.chat-input-container');
+    if (banner) banner.style.display = 'flex';
+    if (inputArea) inputArea.style.display = 'none';
+    function actualizarCountdown() {
+        const el = document.getElementById('tokens-countdown');
+        if (!el) return;
+        const ahora = new Date();
+        const manana = new Date(ahora);
+        manana.setHours(24, 0, 0, 0);
+        const diff = manana - ahora;
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        el.textContent = h + 'h ' + m + 'min';
+    }
+    actualizarCountdown();
+    setInterval(actualizarCountdown, 60000);
+}
+
 async function enviarMensaje() {
+    // Verificar tokens disponibles antes de enviar
+    if (!(await verificarTokens())) return;
 
     const input = document.getElementById("user-input");
     const fileInput = document.getElementById("file-input");
@@ -1952,6 +2562,8 @@ async function enviarMensaje() {
         const formData = new FormData();
         formData.append("chatInput", texto);
         formData.append("sessionId", sessionId);
+        formData.append("userId", djangoUserId);
+        formData.append("sector", "agro");
         if (archivo) {
             formData.append("data00", archivo); 
         }
@@ -2043,7 +2655,11 @@ function toggleChart(forceShow = false) {
 
 // 2. FUNCIÓN UNIVERSAL DE EXTRACCIÓN
 function extractChartData(aiResponse) {
-    const texto_bruto = aiResponse.output || aiResponse.texto_limpio || "";
+    const fullOutput = aiResponse.output || aiResponse.texto_limpio || "";
+    // Parsear solo el bloque [MOSTRAR_GRAFICO] para evitar que el texto visible
+    // (ej: "Visibilidad: 8.8 km") contamine los datos del gráfico
+    const _graficoMatch = fullOutput.match(/\[MOSTRAR_GRAFICO\]([\s\S]*)$/i);
+    const texto_bruto = _graficoMatch ? _graficoMatch[1] : fullOutput;
 
     function pescarTexto(campo) {
         const stopWords = "cultivo|region|temperatura_suelo|temperatura_maxima|temperatura_minima|temperatura|humedad_relativa|precipitacion|evapotranspiracion|horas_sol|fase_lunar|" +
@@ -2078,6 +2694,8 @@ function extractChartData(aiResponse) {
         aeropuerto_origen: pescarTexto("aeropuerto_origen"), aeropuerto_destino: pescarTexto("aeropuerto_destino"), altitud_vuelo: parseValue(pescarTexto("altitud_vuelo"), true), temperatura_altitud: parseValue(pescarTexto("temperatura_altitud"), true), corrientes_viento: parseValue(pescarTexto("corrientes_viento"), true), visibilidad_km: parseValue(pescarTexto("visibilidad_km"), true), condiciones_atmosfericas: pescarTexto("condiciones_atmosfericas"),
         // Energía
         tipo_energia: pescarTexto("tipo_energia"), ubicacion: pescarTexto("ubicacion"), radiacion_solar: parseValue(pescarTexto("radiacion_solar"), true), velocidad_viento: parseValue(pescarTexto("velocidad_viento"), true), temperatura_ambiente: parseValue(pescarTexto("temperatura_ambiente"), true), eficiencia_estimada: parseValue(pescarTexto("eficiencia_estimada"), true), produccion_kwh: parseValue(pescarTexto("produccion_kwh"), true),
+        // Calculados IA (GDD, DeltaT, VPD, Presión, etc.)
+        gdd: parseValue(pescarTexto("gdd"), true), delta_t: parseValue(pescarTexto("delta_t"), true), vpd: parseValue(pescarTexto("vpd"), true), temperatura_aire: parseValue(pescarTexto("temperatura_aire"), true), presion_atmosferica: parseValue(pescarTexto("presion_atmosferica"), true), periodo_ola: parseValue(pescarTexto("periodo_ola"), true), nubosidad: parseValue(pescarTexto("nubosidad"), true), potencia_solar: parseValue(pescarTexto("potencia_solar"), true), potencia_eolica: parseValue(pescarTexto("potencia_eolica"), true), co2_evitado: parseValue(pescarTexto("co2_evitado"), true),
         // Universales
         etiquetas: parseValue(pescarTexto("etiquetas") || pescarTexto("labels"), false) || ['Actual'], type: pescarTexto("chart_type") || 'line'
     };
@@ -2121,6 +2739,17 @@ function createSampleChart(chartData = null) {
         { key: 'temperatura_ambiente', label: 'Temp. Ambiente (°C)', color: '#10b981' },
         { key: 'eficiencia_estimada', label: 'Eficiencia (%)', color: '#14b8a6' },
         { key: 'produccion_kwh', label: 'Producción (kWh)', color: '#84cc16' },
+        // Calculados por IA
+        { key: 'gdd', label: 'GDD (grados-día)', color: '#22c55e' },
+        { key: 'delta_t', label: 'Delta T (°C)', color: '#f97316' },
+        { key: 'vpd', label: 'VPD (kPa)', color: '#e11d48' },
+        { key: 'temperatura_aire', label: 'Temp. Aire (°C)', color: '#fde047' },
+        { key: 'presion_atmosferica', label: 'Presión (hPa)', color: '#a3a3a3' },
+        { key: 'periodo_ola', label: 'Período Ola (s)', color: '#93c5fd' },
+        { key: 'nubosidad', label: 'Nubosidad (oktas)', color: '#cbd5e1' },
+        { key: 'potencia_solar', label: 'Potencia Solar (W)', color: '#facc15' },
+        { key: 'potencia_eolica', label: 'Potencia Eólica (W)', color: '#7dd3fc' },
+        { key: 'co2_evitado', label: 'CO₂ Evitado (kg)', color: '#4ade80' },
         // Universal (Dirección Viento)
         { key: 'viento_direccion', label: 'Dir. Viento (°)', color: '#a855f7' },
         { key: 'direccion_viento', label: 'Dir. Viento (°)', color: '#a855f7' }
@@ -2252,36 +2881,6 @@ function createSampleChart(chartData = null) {
 // ==========================================
 // INICIALIZACIÓN DEL CHAT CON MARKDOWN
 // ==========================================
-
-// Procesar mensaje inicial cuando carga la página
-document.addEventListener('DOMContentLoaded', function() {
-    // Buscar el mensaje inicial del bot y procesarlo con markdown
-    const initialMessage = document.querySelector('.chat-messages .welcome-msg');
-    if (initialMessage) {
-        // Extraer el contenido del mensaje (sin el SVG)
-        const svg = initialMessage.querySelector('svg');
-        const textContent = initialMessage.textContent || initialMessage.innerText;
-        
-        // Procesar el texto con markdown
-        const processedText = processMarkdown(textContent);
-        
-        // Restructurar el mensaje con el nuevo formato
-        initialMessage.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
-                 style="display:inline; margin-right:4px; vertical-align:top; margin-top:1px; color: #6366f1; flex-shrink: 0;">
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                <path d="M12 17h.01"/>
-                <circle cx="12" cy="12" r="10"/>
-            </svg>
-            <div style="flex: 1;">${processedText}</div>
-        `;
-        
-        // Aplicar estilo flex al mensaje
-        initialMessage.style.display = 'flex';
-        initialMessage.style.alignItems = 'flex-start';
-        initialMessage.style.gap = '4px';
-    }
-});
 </script>
 
 </body>
