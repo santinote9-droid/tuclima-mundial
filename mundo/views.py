@@ -45,27 +45,39 @@ logger = logging.getLogger(__name__)
 # CACHÉ DE API OPEN-METEO
 # TTL = 20 minutos. maxsize = 256 combinaciones lat/lon distintas.
 # Thread-safe con Lock para entornos multi-worker (Gunicorn).
+# _meteo_error_cache: cachea errores 60 segundos para no re-hammear en rate-limit.
 # ============================================================
 _meteo_cache: TTLCache = TTLCache(maxsize=256, ttl=1200)
+_meteo_error_cache: TTLCache = TTLCache(maxsize=256, ttl=60)
 _meteo_lock = threading.Lock()
+
+_METEO_HEADERS = {
+    'User-Agent': 'TuClimaMundial/1.0 (proyectoclima@gmail.com)'
+}
 
 
 def _get_meteo(url: str, timeout: int = 6) -> dict:
     """
     Realiza un GET a la API de Open-Meteo con caché de 20 minutos.
-    La URL completa (incluye lat/lon y parámetros) actúa como clave.
-    No cachea respuestas de error para permitir reintentos.
+    - Respuestas válidas: cacheadas 20 minutos.
+    - Respuestas de error (rate-limit, etc): cacheadas 60 segundos
+      para no seguir gastando cuota cuando ya estamos bloqueados.
+    - Incluye User-Agent para evitar throttling anónimo.
     """
     with _meteo_lock:
         if url in _meteo_cache:
             return _meteo_cache[url]
+        if url in _meteo_error_cache:
+            return _meteo_error_cache[url]
 
-    data = requests.get(url, timeout=timeout).json()
+    data = requests.get(url, timeout=timeout, headers=_METEO_HEADERS).json()
 
-    # Solo cachear respuestas válidas (con al menos 'current' o 'hourly')
-    if not data.get('error') and ('current' in data or 'hourly' in data):
-        with _meteo_lock:
+    with _meteo_lock:
+        if not data.get('error') and ('current' in data or 'hourly' in data):
             _meteo_cache[url] = data
+        else:
+            # Cachear el error 60 s para no re-hammear la API
+            _meteo_error_cache[url] = data
 
     return data
 
@@ -508,11 +520,11 @@ def home(request):
             except:
                 contexto['papers'] = []
 
-            # Anomalía - Solo si tenemos ubicación válida
+            # Anomalía - Solo si tenemos ubicación válida (cacheada vía _get_meteo)
             try:
                 fr = hora_local_dt.replace(year=2024).strftime('%Y-%m-%d')
                 uh = f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={lon}&start_date={fr}&end_date={fr}&hourly=temperature_2m&timezone=auto"
-                rh = requests.get(uh, timeout=1).json()
+                rh = _get_meteo(uh, timeout=4)
                 if 'hourly' in rh:
                     ta = rh['hourly']['temperature_2m'][hora_local_dt.hour]
                     if ta: contexto['delta_temp'] = round(actual['temperature_2m'] - ta, 1)
@@ -712,12 +724,12 @@ def clima_data_api(request):
                 'desc': descifrar_desc(daily['weather_code'][i])
             })
 
-        # Anomalía de temperatura
+        # Anomalía de temperatura (cacheada vía _get_meteo)
         delta_temp = 0
         try:
             fr = hora_local_dt.replace(year=2024).strftime('%Y-%m-%d')
             uh = f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={lon}&start_date={fr}&end_date={fr}&hourly=temperature_2m&timezone=auto"
-            rh = requests.get(uh, timeout=1).json()
+            rh = _get_meteo(uh, timeout=4)
             if 'hourly' in rh:
                 ta = rh['hourly']['temperature_2m'][hora_local_dt.hour]
                 if ta:
