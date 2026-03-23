@@ -1291,7 +1291,7 @@
                 if (coord) coord.innerHTML = `<span class="notranslate">${Number(data.lat).toFixed(6)}, ${Number(data.lon).toFixed(6)}</span>`;
 
                 const temp = document.querySelector('.dato-grande');
-                if (temp) temp.textContent = `${Math.round(data.temp)}°`;
+                if (temp) temp.textContent = `${Number(data.temp).toFixed(1)}°C`;
 
                 const icono = document.querySelector('.icono-principal');
                 if (icono) icono.src = data.icono;

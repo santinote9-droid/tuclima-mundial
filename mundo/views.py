@@ -2290,7 +2290,7 @@ def ls_webhook(request):
         from .models import HistorialTokens
         ya_procesado = HistorialTokens.objects.filter(
             usuario=user,
-            tipo='RECARGA',
+            tipo='BONO',
             descripcion__icontains=paquete['nombre'],
             fecha__date=timezone.now().date(),
         ).exists()
