@@ -1326,6 +1326,9 @@
                     window.chartInstance.update();
                 }
 
+                // Detalles y Precauciones
+                actualizarDetalles(data);
+
                 // Actualizar links de sectores (sidebar + bottom nav)
                 document.querySelectorAll('.sidebar-pro-link, .bnav-pro-link').forEach(a => {
                     const url = new URL(a.href, location.origin);
@@ -1343,28 +1346,108 @@
         function actualizarCarruselHorario(tira) {
             const contenedor = document.getElementById('carruselHoras');
             if (!contenedor) return;
-            contenedor.innerHTML = '';
+            const partes = [];
             tira.forEach(h => {
-                let html = '';
                 if (h.tipo === 'evento') {
-                    html = `<div class="item-hora evento-solar">
+                    partes.push(`<div class="item-hora evento-solar">
                         <span style="color:#fff;font-weight:bold;font-size:1em;">${h.hora}</span>
                         <img src="${h.icono}" class="icono-hora">
                         <span style="color:#ffcc00;font-weight:bold;font-size:0.8em;margin-top:5px;">${h.evento_titulo}</span>
-                    </div>`;
+                    </div>`);
                 } else {
                     const ahoraLabel = h.es_actual ? '<div style="font-size:0.7em;color:#00d2ff;font-weight:bold;margin-top:8px;">AHORA</div>' : '';
                     const claseExtra = h.es_actual ? 'hora-destacada' : '';
-                    html = `<div class="item-hora ${claseExtra}">
+                    partes.push(`<div class="item-hora ${claseExtra}">
                         <span style="color:#ccc;font-size:0.9em;">${h.hora}</span>
                         <img src="${h.icono}" class="icono-hora">
-                        <span style="color:#ffcc00;font-weight:bold;font-size:1.1em;">${h.temp}°</span>
-                        <span style="font-size:0.8em;color:#4ecdc4;margin-top:4px;">💧${h.lluvia}%</span>
+                        <span style="color:#ffcc00;font-weight:bold;font-size:1.1em;">${Number(h.temp).toFixed(1)}°</span>
+                        <span style="font-size:0.8em;color:#4ecdc4;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:4px;"><svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.69l5.74 5.82a7 7 0 0 1 0 9.88l-5.74 5.81l-5.74-5.81a7 7 0 0 1 0-9.88Z"/></svg>${h.lluvia}%</span>
                         ${ahoraLabel}
-                    </div>`;
+                    </div>`);
                 }
-                contenedor.innerHTML += html;
             });
+            contenedor.innerHTML = partes.join('');
+            // Auto-scroll a la hora actual
+            const destacado = contenedor.querySelector('.hora-destacada');
+            if (destacado) {
+                contenedor.scrollLeft = destacado.offsetLeft - contenedor.offsetWidth / 2 + destacado.offsetWidth / 2;
+            }
+        }
+
+        // Actualiza la sección Detalles y Precauciones tras AJAX
+        function actualizarDetalles(data) {
+            // UV
+            const cardUV = document.getElementById('card-uv');
+            if (cardUV) {
+                const uv = data.uv_index || 0;
+                const uvColor = uv > 7 ? '#ff4757' : uv > 4 ? '#ffa502' : '#2ed573';
+                let uvNivel, uvSvg;
+                if (uv > 10) { uvNivel = 'Extremo'; uvSvg = `<polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>`; }
+                else if (uv > 7) { uvNivel = 'Muy Alto'; uvSvg = `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>`; }
+                else if (uv > 5) { uvNivel = 'Alto'; uvSvg = `<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>`; }
+                else if (uv > 2) { uvNivel = 'Moderado'; uvSvg = `<circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line>`; }
+                else { uvNivel = 'Bajo'; uvSvg = `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>`; }
+                cardUV.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                        <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/clear-day.svg" style="width:30px;height:30px;">
+                        <div style="color:#ccc;font-size:0.9em;">ÍNDICE UV MÁXIMO</div>
+                    </div>
+                    <div style="font-size:2.5em;font-weight:bold;color:${uvColor};">${uv}</div>
+                    <div style="font-size:0.8em;color:#ddd;display:flex;align-items:center;gap:6px;">
+                        ${uvNivel} <svg style="width:16px;height:16px;color:${uvColor};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${uvSvg}</svg>
+                    </div>
+                    <div style="width:100%;height:5px;background:#333;margin-top:10px;border-radius:5px;">
+                        <div style="width:${Math.min(uv * 10, 100)}%;height:100%;background:linear-gradient(90deg,#2ed573,#ffa502,#ff4757);border-radius:5px;"></div>
+                    </div>`;
+            }
+            // Nubes
+            const tn = document.getElementById('val-tipo-nube');
+            if (tn) tn.textContent = data.tipo_nube || '';
+            // Visibilidad y Presión
+            const vis = document.getElementById('val-visibilidad');
+            if (vis) vis.textContent = `${data.visibilidad} km`;
+            const pres = document.getElementById('val-presion');
+            if (pres) pres.textContent = `${data.presion} hPa`;
+            // Alerta
+            const cardAlerta = document.getElementById('card-alerta');
+            if (cardAlerta) {
+                const c = data.alerta_color || '#a4b0be';
+                const tipo = data.alerta_tipo || 'normal';
+                const icons = {
+                    tormenta: `<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>`,
+                    nieve:    `<line x1="12" y1="2" x2="12" y2="22"></line><line x1="20.66" y1="7" x2="3.34" y2="17"></line><line x1="20.66" y1="17" x2="3.34" y2="7"></line>`,
+                    lluvia:   `<line x1="16" y1="13" x2="16" y2="21"></line><line x1="8" y1="13" x2="8" y2="21"></line><line x1="12" y1="15" x2="12" y2="23"></line><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>`,
+                    niebla:   `<path d="M5 12h14"></path><path d="M4 18h16"></path><path d="M6 6h12"></path>`,
+                    calor:    `<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/><path d="M12 2v2"/><path d="M12 14v.01"/>`,
+                };
+                const icon = icons[tipo] || `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>`;
+                cardAlerta.style.border = `2px solid ${c}`;
+                cardAlerta.style.boxShadow = `0 0 20px ${c}40`;
+                cardAlerta.innerHTML = `
+                    <div style="color:${c};margin-bottom:15px;"><svg style="width:60px;height:60px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></div>
+                    <div style="color:${c};font-weight:800;font-size:0.85em;text-transform:uppercase;margin-bottom:8px;letter-spacing:1px;">PRECAUCIÓN SUGERIDA</div>
+                    <div style="color:#fff;font-weight:600;font-size:1em;line-height:1.4;">${data.alerta_texto || ''}</div>`;
+            }
+            // Anomalía
+            const cardAnom = document.getElementById('card-anomalia');
+            if (cardAnom) {
+                const dt = data.delta_temp || 0;
+                let anomBody;
+                if (dt > 1.5) {
+                    anomBody = `<div style="display:flex;align-items:center;gap:8px;"><svg style="width:32px;height:32px;color:#ff4757;filter:drop-shadow(0 0 8px rgba(255,71,87,0.5));" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg><div style="font-size:2.2em;font-weight:800;color:#ff4757;">+${dt}°C</div></div><div style="font-size:0.9em;color:#ff4757;font-weight:600;margin-top:5px;">Sobre el promedio histórico.</div>`;
+                } else if (dt < -1.5) {
+                    anomBody = `<div style="display:flex;align-items:center;gap:8px;"><svg style="width:32px;height:32px;color:#38bdf8;filter:drop-shadow(0 0 8px rgba(56,189,248,0.5));" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg><div style="font-size:2.2em;font-weight:800;color:#38bdf8;">${dt}°C</div></div><div style="font-size:0.9em;color:#38bdf8;font-weight:600;margin-top:5px;">Bajo el promedio histórico.</div>`;
+                } else {
+                    anomBody = `<div style="display:flex;align-items:center;gap:8px;"><svg style="width:32px;height:32px;color:#2ed573;filter:drop-shadow(0 0 8px rgba(46,213,115,0.5));" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg><div style="font-size:2.2em;font-weight:800;color:#2ed573;">${dt}°C</div></div><div style="font-size:0.9em;color:#2ed573;font-weight:600;margin-top:5px;">Dentro del rango normal.</div>`;
+                }
+                cardAnom.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:15px;">
+                        <svg style="width:24px;height:24px;color:#cbd5e1;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/><path d="M12 2v2"/><path d="M12 14v.01"/><path d="M20 10h2"/><path d="M20 14h2"/><path d="M2 10h2"/><path d="M2 14h2"/></svg>
+                        <div style="color:#ccc;font-size:0.8em;font-weight:800;letter-spacing:1px;text-transform:uppercase;">ANOMALÍA CLIMÁTICA</div>
+                    </div>
+                    ${anomBody}
+                    <div style="font-size:0.7em;color:#64748b;margin-top:15px;border-top:1px solid rgba(255,255,255,0.05);padding-top:8px;">Comparativa: Promedio de los ultimos 3 años.</div>`;
+            }
         }
 
         // Renderiza las tarjetas del pronóstico semanal con los datos recibidos por AJAX
@@ -1599,7 +1682,7 @@
     
     <div class="detalle-grid" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 0 20px; max-width: 1200px; margin: 0 auto;">
         
-        <div style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; width: 250px; text-align: left;">
+        <div id="card-uv" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; width: 250px; text-align: left;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/clear-day.svg" style="width: 30px; height: 30px;">
                 <div style="color: #ccc; font-size: 0.9em;">ÍNDICE UV MÁXIMO</div>
@@ -1632,7 +1715,7 @@
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/cloudy.svg" style="width: 30px; height: 30px;">
                 <div style="color: #ccc; font-size: 0.9em;">FORMACIÓN DE NUBES</div>
             </div>
-            <div style="font-size: 1.2em; font-weight: bold; color: #fff; margin-bottom: 5px;">{{ tipo_nube }}</div>
+            <div id="val-tipo-nube" style="font-size: 1.2em; font-weight: bold; color: #fff; margin-bottom: 5px;">{{ tipo_nube }}</div>
             <div style="font-size: 0.8em; color: #aaa;">Observación Satelital</div>
             <div style="margin-top: 10px; text-align: right;">
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/overcast.svg" style="width: 55px; height: 55px; opacity: 0.8;">
@@ -1644,16 +1727,16 @@
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/fog.svg" style="width: 25px; height: 25px;">
                 <div style="color: #ccc; font-size: 0.9em;">VISIBILIDAD</div>
             </div>
-            <div style="font-size: 1.5em; font-weight: bold; color: #fff;">{{ visibilidad }} km</div>
+            <div id="val-visibilidad" style="font-size: 1.5em; font-weight: bold; color: #fff;">{{ visibilidad }} km</div>
             <hr style="border-color: #444; margin: 10px 0;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/hurricane.svg" style="width: 25px; height: 25px;">
                 <div style="color: #ccc; font-size: 0.9em;">PRESIÓN</div>
             </div>
-            <div style="font-size: 1.5em; font-weight: bold; color: #00d2ff;">{{ presion }} hPa</div>
+            <div id="val-presion" style="font-size: 1.5em; font-weight: bold; color: #00d2ff;">{{ presion }} hPa</div>
         </div>
 
-        <div style="background: rgba(0,0,0,0.4); border: 2px solid {{ alerta_color }}; padding: 25px 20px; border-radius: 20px; width: 250px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 0 20px {{ alerta_color }}40;">
+        <div id="card-alerta" style="background: rgba(0,0,0,0.4); border: 2px solid {{ alerta_color }}; padding: 25px 20px; border-radius: 20px; width: 250px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 0 20px {{ alerta_color }}40;">
     
     <div style="color: {{ alerta_color }}; margin-bottom: 15px;">
         
@@ -1687,7 +1770,7 @@
     </div>
 </div>
 
-<div style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; width: 250px; text-align: left; position: relative; overflow: hidden;">
+<div id="card-anomalia" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; width: 250px; text-align: left; position: relative; overflow: hidden;">
     
     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
         <svg style="width: 24px; height: 24px; color: #cbd5e1;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/><path d="M12 2v2"/><path d="M12 14v.01"/><path d="M20 10h2"/><path d="M20 14h2"/><path d="M2 10h2"/><path d="M2 14h2"/></svg>
