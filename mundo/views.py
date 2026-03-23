@@ -61,7 +61,7 @@ def _get_meteo(url: str, timeout: int = 6) -> dict:
     - Errores de rate-limit: cacheados 60 s para no seguir gastando cuota.
     - 100 usuarios pidiendo el mismo lugar = 1 sola llamada a la API.
     """
-    cache_key = 'meteo_' + str(hash(url))
+    cache_key = 'meteo_' + hashlib.md5(url.encode()).hexdigest()
     cached_data = django_cache.get(cache_key)
     if cached_data is not None:
         return cached_data
