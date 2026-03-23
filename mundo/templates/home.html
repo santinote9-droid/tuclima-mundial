@@ -7,8 +7,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-wg-notranslate>TuClima</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdn.weglot.com" crossorigin>
+    <link rel="dns-prefetch" href="//openmeteo.com">
     <style>
         /* FONDO: div fijo detras del contenido.
            Siempre cubre el viewport exacto. Funciona en iOS Safari. */
@@ -305,8 +306,42 @@
         .bnav-naval   { color: #60a5fa !important; opacity: 0.65; }
         .bnav-aereo   { color: #cbd5e1 !important; opacity: 0.65; }
         .bnav-energia { color: #fbbf24 !important; opacity: 0.65; }
+        .bnav-cuenta  { color: #a5b4fc !important; opacity: 0.65; }
         .bnav-agro:active, .bnav-naval:active,
-        .bnav-aereo:active, .bnav-energia:active { opacity: 1; }
+        .bnav-aereo:active, .bnav-energia:active,
+        .bnav-cuenta:active { opacity: 1; }
+
+        /* Botón flotante Mi Cuenta (escritorio + móvil) */
+        #btn-mi-cuenta {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(165,180,252,0.45);
+            border-radius: 10px;
+            padding: 9px 15px;
+            color: #a5b4fc;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            transition: background 0.2s, border-color 0.2s;
+        }
+        #btn-mi-cuenta:hover {
+            background: rgba(99,102,241,0.25);
+            border-color: rgba(165,180,252,0.75);
+        }
+        #btn-mi-cuenta svg { width: 16px; height: 16px; stroke-width: 2; flex-shrink: 0; }
+        /* En móvil pequeño: solo icono */
+        @media (max-width: 480px) {
+            #btn-mi-cuenta .btn-cuenta-label { display: none; }
+            #btn-mi-cuenta { padding: 9px 12px; }
+        }
 
         /* ============================================================
            RESPONSIVE — Desktop se mantiene intacto.
@@ -646,6 +681,13 @@
     body { top: 0px !important; }
     #google_translate_element { display: none !important; }
 </style>
+
+{% if user.is_authenticated %}
+<a href="/mi-cuenta/" id="btn-mi-cuenta" title="Mi Cuenta">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span class="btn-cuenta-label">{{ user.username }}</span>
+</a>
+{% endif %}
 
 <div style="position: fixed; top: 20px; left: 20px; z-index: 10000; display: flex; align-items: center; gap: 15px;">
         
@@ -1441,7 +1483,7 @@
         <h2 style="color: #00d2ff; margin-top: -10px; margin-bottom: 20px;">{{ descripcion }}</h2>
         <div style="margin-bottom: 20px;">
             <div class="etiqueta" style="margin-bottom: 5px;">TEMPERATURA ACTUAL</div>
-            <div class="dato-grande" data-wg-notranslate style="line-height: 1;">{{ temp }}°C</div>
+            <div class="dato-grande" data-wg-notranslate style="line-height: 1;">{{ temp|floatformat:1 }}°C</div>
         </div>
         
         <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; margin: 20px 0; display: flex; justify-content: space-around; align-items: center; border: 1px solid rgba(255,255,255,0.1); gap: 15px;">
@@ -1954,6 +1996,7 @@
         setInterval(cargarNoticias, 30 * 60 * 1000);
     </script>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script>
         // datos_json puede venir vacío en cold start — defensivo
         const datosSemana = (function() { try { return JSON.parse('{{ datos_json|escapejs }}'); } catch(e) { return {}; } })();
@@ -2571,6 +2614,12 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
             <span>Energía</span>
         </a>
+        {% if user.is_authenticated %}
+        <a href="/mi-cuenta/" class="bnav-item bnav-cuenta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>Cuenta</span>
+        </a>
+        {% endif %}
     </div>
 </nav>
 </body>

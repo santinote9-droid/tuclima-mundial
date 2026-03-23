@@ -1765,7 +1765,7 @@ Generado por TuClima Pro - www.tuclima.com
         <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">AGUA (L/ha)</div><input type="number" id="tc-agua" value="100" min="50" step="10" style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
         <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">BOQUILLA</div><select id="tc-boquilla" style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; font-family:inherit;"><option value="abanico">Abanico plano</option><option value="doble">Doble abanico</option><option value="cono">Cono hueco</option></select></div>
       </div>
-      <button onclick="tcPulvCalc()" style="background:rgba(74,222,128,0.12); border:1px solid rgba(74,222,128,0.4); color:#4ade80; padding:9px 20px; border-radius:9px; cursor:pointer; font-size:0.82rem; font-weight:700; font-family:inherit;">Calcular condición</button>
+      <button type="button" onclick="tcPulvCalc()" style="background:rgba(74,222,128,0.12); border:1px solid rgba(74,222,128,0.4); color:#4ade80; padding:9px 20px; border-radius:9px; cursor:pointer; font-size:0.82rem; font-weight:700; font-family:inherit;">Calcular condición</button>
       <div id="tcCalcPulvRes" style="margin-top:12px;"></div>
     </div>
   </details>
@@ -1851,7 +1851,7 @@ Generado por TuClima Pro - www.tuclima.com
   </script>
 
   <script>
-  {% localize off %}var _tc_dt={{ pulverizacion.delta_t|floatformat:1 }}, _tc_vt={{ pulverizacion.viento|floatformat:1 }};{% endlocalize %}
+  var _tc_dt={{ pulverizacion.delta_t|default:0|stringformat:".1f" }}, _tc_vt={{ pulverizacion.viento|default:0|stringformat:".1f" }};
   function tcPulvCalc(){
     var dosis=parseFloat(document.getElementById('tc-dosis').value)||2;
     var agua=parseFloat(document.getElementById('tc-agua').value)||100;

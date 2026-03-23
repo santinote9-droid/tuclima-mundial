@@ -1936,7 +1936,7 @@
   </script>
 
   <script>
-  {% localize off %}var _tc_ola={{ mar.altura|floatformat:2 }}, _tc_vkt={{ viento.kt|floatformat:1 }}, _tc_bft={{ viento.beaufort }};{% endlocalize %}
+  var _tc_ola={{ mar.altura|default:0|stringformat:".2f" }}, _tc_vkt={{ viento.kt|default:0|stringformat:".1f" }}, _tc_bft={{ viento.beaufort|default:0 }};
   function tcNavCalc(){
     var dist=parseFloat(document.getElementById('tc-dist').value)||50;
     var vel=parseFloat(document.getElementById('tc-vel').value)||8;

@@ -1614,7 +1614,7 @@
   </script>
 
   <script>
-  {% localize off %}var _tc_cat='{{ categoria.codigo }}', _tc_cape={{ radar.cape }}, _tc_wkt={{ viento.kt }}, _tc_raf={{ viento.rafagas }};{% endlocalize %}
+  var _tc_cat='{{ categoria.codigo|default:"VFR" }}', _tc_cape={{ radar.cape|default:0 }}, _tc_wkt={{ viento.kt|default:0 }}, _tc_raf={{ viento.rafagas|default:0 }};
   function tcAeroCalc(){
     var op=document.getElementById('tc-op').value;
     var aut=parseFloat(document.getElementById('tc-aut').value)||3;

@@ -1736,7 +1736,7 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
   </script>
 
   <script>
-  {% localize off %}var _tc_rad={{ solar.rad }}, _tc_wms={{ eolica.ms|floatformat:1 }};{% endlocalize %}
+  var _tc_rad={{ solar.rad|default:0 }}, _tc_wms={{ eolica.ms|default:0|stringformat:".1f" }};
   function tcEnCalc(){
     var m2=parseFloat(document.getElementById('tc-m2').value)||20;
     var turb=parseFloat(document.getElementById('tc-turb').value)||3;
