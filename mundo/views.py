@@ -2139,30 +2139,77 @@ def paypal_retorno(request):
 # ==========================================
 
 @login_required
+@login_required
 def ls_checkout(request):
-    """Redirige al checkout de Lemon Squeezy para un plan de tokens."""
+    """Crea una sesión de checkout en Lemon Squeezy via API y redirige a ella."""
     paquete_id = request.GET.get('paquete', '')
     paquete    = _PAQUETES_MAP.get(paquete_id)
 
     if not paquete or not paquete.get('ls_variant_id'):
         return redirect('recargar_tokens')
 
-    store_slug = settings.LEMONSQUEEZY_STORE_SLUG
+    api_key   = getattr(settings, 'LEMONSQUEEZY_API_KEY', '')
+    store_id  = getattr(settings, 'LEMONSQUEEZY_STORE_ID', '')
+    site      = settings.SITE_URL.rstrip('/')
+    variant_id = paquete['ls_variant_id']
+
+    # Si la API key está configurada, crear checkout dinámico vía API (recomendado)
+    if api_key and store_id:
+        try:
+            import urllib.request as _req
+            import json as _json
+            payload = _json.dumps({
+                "data": {
+                    "type": "checkouts",
+                    "attributes": {
+                        "checkout_data": {
+                            "custom": {
+                                "user_id": str(request.user.id),
+                                "paquete_id": paquete_id,
+                            }
+                        },
+                        "product_options": {
+                            "redirect_url": f"{site}/ls-retorno/?paquete_id={paquete_id}",
+                        },
+                    },
+                    "relationships": {
+                        "store":   {"data": {"type": "stores",   "id": str(store_id)}},
+                        "variant": {"data": {"type": "variants", "id": str(variant_id)}},
+                    },
+                }
+            }).encode('utf-8')
+            req = _req.Request(
+                'https://api.lemonsqueezy.com/v1/checkouts',
+                data=payload,
+                headers={
+                    'Authorization': f'Bearer {api_key}',
+                    'Accept': 'application/vnd.api+json',
+                    'Content-Type': 'application/vnd.api+json',
+                },
+                method='POST',
+            )
+            with _req.urlopen(req, timeout=8) as resp:
+                body = _json.loads(resp.read().decode('utf-8'))
+            checkout_url = body['data']['attributes']['url']
+            return redirect(checkout_url)
+        except Exception as e:
+            logger.error(f'[LS_CHECKOUT] Error creando checkout vía API: {e}')
+            # Fallback al método de URL directa si la API falla
+
+    # Fallback: URL directa con el checkout link UUID del dashboard
+    # (funciona con UUIDs del tipo cc680385-... configurados en ls_variant_id)
+    store_slug = getattr(settings, 'LEMONSQUEEZY_STORE_SLUG', '')
     if not store_slug:
-        logger.warning('[LS_CHECKOUT] LEMONSQUEEZY_STORE_SLUG no configurado — redirigiendo a página de pago')
+        logger.warning('[LS_CHECKOUT] Sin API key ni store slug configurados')
         return redirect(f'/activar-plan/?paquete={paquete_id}')
 
-    variant_id = paquete['ls_variant_id']
-    site       = settings.SITE_URL.rstrip('/')
-
-    from urllib.parse import quote
-    redirect_url = quote(f"{site}/ls-retorno/?paquete_id={paquete_id}", safe='')
-    checkout_url = (
-        f"https://{store_slug}.lemonsqueezy.com/buy/{variant_id}"
-        f"?checkout[custom][user_id]={request.user.id}"
-        f"&checkout[custom][paquete_id]={paquete_id}"
-        f"&checkout[redirect_url]={redirect_url}"
-    )
+    from urllib.parse import urlencode
+    params = urlencode({
+        'checkout[custom][user_id]':   request.user.id,
+        'checkout[custom][paquete_id]': paquete_id,
+        'checkout[redirect_url]':      f'{site}/ls-retorno/?paquete_id={paquete_id}',
+    })
+    checkout_url = f"https://{store_slug}.lemonsqueezy.com/checkout/buy/{variant_id}?{params}"
     return redirect(checkout_url)
 
 

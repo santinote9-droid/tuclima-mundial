@@ -222,10 +222,14 @@ PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', '')
 
 # ============================================================
 # LEMON SQUEEZY
-# LEMONSQUEEZY_STORE_SLUG=tuclima  (el slug de tu tienda en LS)
-# LEMONSQUEEZY_WEBHOOK_SECRET=whsec_...
+# LEMONSQUEEZY_STORE_SLUG: slug de la tienda (ej: "tuclima-mundial")
+# LEMONSQUEEZY_STORE_ID:   ID numérico de la tienda (lo ves en LS → Settings → Store)
+# LEMONSQUEEZY_API_KEY:    API key de LS (https://app.lemonsqueezy.com/settings/api)
+# LEMONSQUEEZY_WEBHOOK_SECRET: whsec_... (LS → Settings → Webhooks)
 # ============================================================
 LEMONSQUEEZY_STORE_SLUG       = os.getenv('LEMONSQUEEZY_STORE_SLUG', '')
+LEMONSQUEEZY_STORE_ID         = os.getenv('LEMONSQUEEZY_STORE_ID', '')
+LEMONSQUEEZY_API_KEY          = os.getenv('LEMONSQUEEZY_API_KEY', '')
 LEMONSQUEEZY_WEBHOOK_SECRET   = os.getenv('LEMONSQUEEZY_WEBHOOK_SECRET', '')
 
 # ============================================================
