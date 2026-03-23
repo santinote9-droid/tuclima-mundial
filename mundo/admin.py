@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import PerfilUsuario, ReporteUsuario, FeedbackIA
+from .models import PerfilUsuario, ReporteUsuario, FeedbackIA, UbicacionGuardada, ReporteProgramado, ApiKeyPersonal
 
 
 @admin.register(PerfilUsuario)
@@ -76,3 +76,31 @@ class FeedbackIAAdmin(admin.ModelAdmin):
         count = queryset.update(revisado=False)
         self.message_user(request, f'{count} feedback(s) marcado(s) como no revisado(s).')
     marcar_como_no_revisado.short_description = 'Marcar seleccionados como no revisados'
+
+
+# ── Nuevos modelos ──────────────────────────────────────────────────────────
+
+@admin.register(UbicacionGuardada)
+class UbicacionGuardadaAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'nombre', 'lat', 'lon', 'sector', 'es_principal', 'creada')
+    list_filter = ('sector', 'es_principal')
+    search_fields = ('usuario__username', 'nombre')
+    ordering = ('-creada',)
+
+
+@admin.register(ReporteProgramado)
+class ReporteProgramadoAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'sector', 'frecuencia', 'hora_envio', 'activo', 'ultimo_envio', 'creado')
+    list_filter = ('sector', 'frecuencia', 'activo')
+    search_fields = ('usuario__username', 'email_destino')
+    ordering = ('-creado',)
+    list_editable = ('activo',)
+
+
+@admin.register(ApiKeyPersonal)
+class ApiKeyPersonalAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'nombre', 'activa', 'creada', 'ultimo_uso')
+    list_filter = ('activa',)
+    search_fields = ('usuario__username', 'nombre')
+    ordering = ('-creada',)
+    readonly_fields = ('clave', 'creada', 'ultimo_uso')

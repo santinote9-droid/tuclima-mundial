@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Anomalías | TuClima</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0f172a;
+            color: #f1f5f9;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            padding: 32px 20px;
+        }
+        .container { max-width: 860px; margin: 0 auto; }
+        h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+        .subtitle { color: #64748b; font-size: 0.88rem; margin-bottom: 28px; }
+
+        .filtros {
+            display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px;
+        }
+        .filtro-btn {
+            padding: 7px 16px; border-radius: 20px; border: 1px solid #334155;
+            background: transparent; color: #94a3b8; cursor: pointer;
+            font-size: 0.83rem; font-weight: 600; text-decoration: none;
+            transition: all 0.2s;
+        }
+        .filtro-btn:hover, .filtro-btn.activo {
+            background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.5); color: #a5b4fc;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid #1e293b;
+            border-radius: 14px;
+            padding: 22px 24px;
+            margin-bottom: 14px;
+        }
+        .card-header-row {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .sector-badge {
+            display: inline-block; padding: 3px 10px; border-radius: 12px;
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .sector-AGRO    { background: rgba(34,197,94,0.12); color: #4ade80; }
+        .sector-NAVAL   { background: rgba(59,130,246,0.12); color: #60a5fa; }
+        .sector-AEREO   { background: rgba(139,92,246,0.12); color: #a78bfa; }
+        .sector-ENERGIA { background: rgba(245,158,11,0.12); color: #fbbf24; }
+
+        .fecha { font-size: 0.78rem; color: #64748b; }
+        .ubicacion { font-size: 0.83rem; color: #94a3b8; margin-bottom: 8px; }
+        .analisis {
+            font-size: 0.85rem; color: #cbd5e1; line-height: 1.6;
+            background: rgba(0,0,0,0.2); border-radius: 8px; padding: 12px 14px;
+            white-space: pre-wrap; word-break: break-word;
+            max-height: 160px; overflow-y: auto;
+        }
+        .valores { display: flex; gap: 20px; margin-top: 10px; font-size: 0.82rem; }
+        .valor-item { color: #64748b; }
+        .valor-item span { color: #f1f5f9; font-weight: 600; }
+
+        .vacio {
+            text-align: center; padding: 60px 20px; color: #475569;
+        }
+        .vacio i { font-size: 2.5rem; margin-bottom: 12px; display: block; color: #334155; }
+
+        .back-link { margin-top: 24px; text-align: center; }
+        .back-link a { color: #3b82f6; text-decoration: none; font-size: 0.88rem; font-weight: 600; }
+        .back-link a:hover { text-decoration: underline; }
+
+        .info-bar {
+            background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.15);
+            border-radius: 10px; padding: 10px 16px; margin-bottom: 20px;
+            font-size: 0.82rem; color: #818cf8; display: flex; align-items: center; gap: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1><i class="fas fa-chart-line" style="color:#fbbf24; margin-right:10px;"></i>Historial de Anomalías</h1>
+    <p class="subtitle">Datos sectoriales procesados en los últimos <strong>{{ dias }}</strong> días</p>
+
+    <div class="info-bar">
+        <i class="fas fa-info-circle"></i>
+        Mostrando hasta 50 registros más recientes. Para más análisis contactá soporte.
+    </div>
+
+    <!-- Filtros por sector -->
+    <div class="filtros">
+        <a href="?sector=" class="filtro-btn {% if not sector_filtro %}activo{% endif %}">
+            Todos
+        </a>
+        {% for s in sectores %}
+        <a href="?sector={{ s }}" class="filtro-btn {% if sector_filtro == s %}activo{% endif %}">
+            {% if s == 'AGRO' %}🌱{% elif s == 'NAVAL' %}⚓{% elif s == 'AEREO' %}✈️{% elif s == 'ENERGIA' %}⚡{% endif %}
+            {{ s|capfirst }}
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if registros %}
+        {% for reg in registros %}
+        <div class="card">
+            <div class="card-header-row">
+                <div>
+                    <span class="sector-badge sector-{{ reg.sector }}">{{ reg.sector }}</span>
+                </div>
+                <span class="fecha">{{ reg.fecha_registro|date:"d/m/Y H:i" }}</span>
+            </div>
+            <div class="ubicacion"><i class="fas fa-map-marker-alt"></i> {{ reg.ubicacion }}</div>
+            <div class="analisis">{{ reg.analisis_ia }}</div>
+            <div class="valores">
+                <div class="valor-item">Valor principal: <span>{{ reg.valor_principal|floatformat:2 }}</span></div>
+                {% if reg.valor_secundario is not None %}
+                <div class="valor-item">Secundario: <span>{{ reg.valor_secundario|floatformat:2 }}</span></div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="vacio">
+            <i class="fas fa-chart-bar"></i>
+            <div>No hay datos sectoriales registrados en los últimos {{ dias }} días.</div>
+            {% if sector_filtro %}
+            <div style="margin-top:8px; font-size:0.82rem;">
+                <a href="?sector=" style="color:#3b82f6;">Ver todos los sectores</a>
+            </div>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <div class="back-link">
+        <a href="/mi-cuenta/"><i class="fas fa-arrow-left"></i> Volver a mi cuenta</a>
+    </div>
+
+</div>
+</body>
+</html>

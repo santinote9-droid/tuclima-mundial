@@ -531,3 +531,96 @@ class HistorialTokens(models.Model):
     def __str__(self):
         signo = '+' if self.cantidad > 0 else ''
         return f"{self.usuario.username} | {signo}{self.cantidad} ({self.tipo}) | saldo: {self.tokens_restantes}"
+
+
+# ==========================================
+# NUEVAS FUNCIONALIDADES (multi-ubicación, reportes, api key)
+# ==========================================
+
+class UbicacionGuardada(models.Model):
+    """
+    Permite guardar múltiples ubicaciones geográficas por usuario.
+    Límite según plan: Starter=1, Plus=5, Pro IA=10, Power=ilimitado.
+    """
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ubicaciones')
+    nombre = models.CharField(max_length=100)
+    lat = models.FloatField()
+    lon = models.FloatField()
+    sector = models.CharField(max_length=10, blank=True,
+                              help_text="Sector preferido para esta ubicación: agro/naval/aereo/energia")
+    es_principal = models.BooleanField(default=False)
+    creada = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Ubicación guardada"
+        verbose_name_plural = "Ubicaciones guardadas"
+        ordering = ['-es_principal', '-creada']
+
+    def __str__(self):
+        return f"{self.usuario.username} — {self.nombre} ({self.lat:.3f}, {self.lon:.3f})"
+
+    @staticmethod
+    def limite_para_plan(nivel):
+        """Retorna el número máximo de ubicaciones para cada nivel de plan."""
+        return {'starter': 1, 'plus': 5, 'pro_ia': 10, 'power': None}.get(nivel, 0)
+
+
+class ReporteProgramado(models.Model):
+    """
+    Define un reporte automático periódico por email para un sector determinado.
+    Requiere plan Pro IA o Power.
+    """
+    FRECUENCIAS = [
+        ('diario', 'Diario'),
+        ('semanal', 'Semanal'),
+        ('mensual', 'Mensual'),
+    ]
+    SECTORES = [
+        ('agro', 'Agropecuario'),
+        ('naval', 'Naval'),
+        ('aereo', 'Aéreo'),
+        ('energia', 'Energía'),
+    ]
+
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reportes_programados')
+    sector = models.CharField(max_length=10, choices=SECTORES)
+    frecuencia = models.CharField(max_length=10, choices=FRECUENCIAS, default='diario')
+    hora_envio = models.PositiveSmallIntegerField(default=8,
+                                                  help_text="Hora UTC (0–23) en la que se envía el reporte")
+    email_destino = models.EmailField(blank=True,
+                                      help_text="Dejar vacío para usar el email de la cuenta")
+    activo = models.BooleanField(default=True)
+    ultimo_envio = models.DateTimeField(null=True, blank=True)
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Reporte programado"
+        verbose_name_plural = "Reportes programados"
+        ordering = ['-creado']
+
+    def __str__(self):
+        return f"{self.usuario.username} — {self.get_sector_display()} {self.get_frecuencia_display()}"
+
+    def email_efectivo(self):
+        """Email que recibirá el reporte (propio o personalizado)."""
+        return self.email_destino or self.usuario.email
+
+
+class ApiKeyPersonal(models.Model):
+    """
+    API key de acceso personal para que usuarios Plus+ puedan integrar
+    sus datos en herramientas externas (Power BI, scripts, etc.).
+    """
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='api_key')
+    clave = models.CharField(max_length=64, unique=True)
+    nombre = models.CharField(max_length=60, default='Mi API Key')
+    activa = models.BooleanField(default=True)
+    creada = models.DateTimeField(auto_now_add=True)
+    ultimo_uso = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "API key personal"
+        verbose_name_plural = "API keys personales"
+
+    def __str__(self):
+        return f"{self.usuario.username} — {self.nombre} ({'activa' if self.activa else 'inactiva'})"

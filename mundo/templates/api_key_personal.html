@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Key Personal | TuClima</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0f172a; color: #f1f5f9;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh; padding: 32px 20px;
+            display: flex; justify-content: center; align-items: flex-start;
+        }
+        .container { max-width: 560px; width: 100%; }
+        h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
+        .subtitle { color: #64748b; font-size: 0.88rem; margin-bottom: 28px; }
+
+        .card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 20px;
+        }
+
+        .key-display {
+            display: flex; align-items: center; gap: 10px;
+            background: #0d1b2e; border: 1px solid #334155;
+            border-radius: 10px; padding: 12px 16px; margin: 18px 0;
+        }
+        .key-text {
+            font-family: 'Courier New', monospace; font-size: 0.82rem;
+            color: #22d3ee; word-break: break-all; flex: 1;
+            letter-spacing: 0.04em;
+        }
+        .btn-copy {
+            background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25);
+            border-radius: 8px; padding: 7px 12px; color: #22d3ee;
+            cursor: pointer; font-size: 0.82rem; white-space: nowrap; flex-shrink: 0;
+        }
+        .btn-copy:hover { background: rgba(6,182,212,0.2); }
+
+        .status-active   { display: inline-flex; align-items: center; gap: 7px; background: rgba(34,197,94,0.12); border: 1px solid #16a34a; color: #4ade80; padding: 5px 14px; border-radius: 16px; font-size: 0.82rem; font-weight: 600; }
+        .status-inactive { display: inline-flex; align-items: center; gap: 7px; background: rgba(100,116,139,0.12); border: 1px solid #475569; color: #94a3b8; padding: 5px 14px; border-radius: 16px; font-size: 0.82rem; font-weight: 600; }
+
+        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e293b; font-size: 0.88rem; }
+        .info-row:last-child { border-bottom: none; }
+        .label { color: #64748b; }
+        .value { font-weight: 600; }
+
+        .btn-action {
+            width: 100%; padding: 12px; border-radius: 10px; border: none;
+            font-size: 0.9rem; font-weight: 700; cursor: pointer; margin-top: 10px; transition: opacity 0.2s;
+        }
+        .btn-gen  { background: linear-gradient(135deg,#0891b2,#0e7490); color: #fff; }
+        .btn-rev  { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25) !important; color: #f87171; border: none; }
+        .btn-action:hover { opacity: 0.85; }
+
+        .notice {
+            background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+            padding: 12px 16px; font-size: 0.8rem; color: #94a3b8;
+            display: flex; gap: 10px; align-items: flex-start; margin-top: 16px;
+        }
+        .notice i { color: #3b82f6; flex-shrink: 0; margin-top: 2px; }
+
+        .back-link { text-align: center; margin-top: 10px; }
+        .back-link a { color: #3b82f6; text-decoration: none; font-size: 0.88rem; font-weight: 600; }
+        .back-link a:hover { text-decoration: underline; }
+
+        .copied-msg { color: #4ade80; font-size: 0.78rem; margin-top: 4px; display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1><i class="fas fa-key" style="color:#22d3ee; margin-right:10px;"></i>API Key Personal</h1>
+    <p class="subtitle">Integrá TuClima en tus propios sistemas y dashboards</p>
+
+    <div class="card">
+
+        {% if api_key.activa %}
+        <!-- Clave activa -->
+        <div style="margin-bottom:18px;">
+            <span class="status-active"><i class="fas fa-circle" style="font-size:.55rem;"></i> Activa</span>
+        </div>
+
+        <div class="info-row">
+            <span class="label">Nombre</span>
+            <span class="value">{{ api_key.nombre }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Creada</span>
+            <span class="value">{{ api_key.creada|date:"d/m/Y" }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Último uso</span>
+            <span class="value">{% if api_key.ultimo_uso %}{{ api_key.ultimo_uso|date:"d/m/Y H:i" }}{% else %}—{% endif %}</span>
+        </div>
+
+        <div style="margin-top:18px; font-size:0.82rem; color:#64748b; margin-bottom:6px;">Tu clave:</div>
+        <div class="key-display">
+            <span class="key-text" id="api-key-val">{{ api_key.clave }}</span>
+            <button class="btn-copy" onclick="copiarClave()"><i class="fas fa-copy"></i> Copiar</button>
+        </div>
+        <div class="copied-msg" id="copied-msg"><i class="fas fa-check"></i> ¡Copiado!</div>
+
+        <div class="notice">
+            <i class="fas fa-shield-alt"></i>
+            <span>Tratá tu API key como una contraseña. No la compartas públicamente. Si creés que fue comprometida, regenerala inmediatamente.</span>
+        </div>
+
+        <form method="POST" style="margin-top:16px;">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="generar">
+            <button type="submit" class="btn-action btn-gen" onclick="return confirm('¿Regenerar la clave? La clave anterior dejará de funcionar.')">
+                <i class="fas fa-sync-alt"></i> Regenerar clave
+            </button>
+        </form>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="revocar">
+            <button type="submit" class="btn-action btn-rev" onclick="return confirm('¿Revocar la clave? Dejarás de tener acceso a la API.')">
+                <i class="fas fa-ban"></i> Revocar clave
+            </button>
+        </form>
+
+        {% else %}
+        <!-- Sin clave activa -->
+        <div style="text-align:center; padding:20px 0;">
+            <span class="status-inactive"><i class="fas fa-circle" style="font-size:.55rem;"></i> Sin clave activa</span>
+            <p style="margin-top:18px; color:#64748b; font-size:0.88rem; line-height:1.6;">
+                Generá tu primera API key para integrar TuClima con Power BI, scripts de Python y otros sistemas.
+            </p>
+        </div>
+        <form method="POST" style="margin-top:8px;">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="generar">
+            <button type="submit" class="btn-action btn-gen">
+                <i class="fas fa-plus-circle"></i> Generar API key
+            </button>
+        </form>
+        {% endif %}
+
+    </div>
+
+    <!-- Uso de la API -->
+    <div class="card">
+        <div style="font-size:0.95rem; font-weight:700; margin-bottom:14px; color:#94a3b8;">Cómo usar la API</div>
+        <div style="font-size:0.82rem; color:#64748b; line-height:1.8;">
+            <div style="margin-bottom:8px;">Enviá el header <code style="background:#1e293b; padding:2px 7px; border-radius:4px; color:#22d3ee;">Authorization: Bearer TU_API_KEY</code> en cada petición.</div>
+            <div>Endpoints disponibles próximamente — consultá la documentación en el sitio.</div>
+        </div>
+    </div>
+
+    <div class="back-link">
+        <a href="/mi-cuenta/"><i class="fas fa-arrow-left"></i> Volver a mi cuenta</a>
+    </div>
+
+</div>
+
+<script>
+function copiarClave() {
+    const val = document.getElementById('api-key-val').textContent;
+    navigator.clipboard.writeText(val).then(() => {
+        const msg = document.getElementById('copied-msg');
+        msg.style.display = 'block';
+        setTimeout(() => { msg.style.display = 'none'; }, 2500);
+    });
+}
+</script>
+
+</body>
+</html>

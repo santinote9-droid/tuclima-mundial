@@ -402,6 +402,166 @@
         <a href="/" class="btn-link">&larr; Volver al inicio</a>
     </div>
 
+    <!-- ── Mis Ubicaciones ── -->
+    <div class="card" style="margin-top:20px;">
+        <div class="card-header">
+            <div class="icon" style="background:rgba(16,185,129,0.1); color:#34d399;">
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <div>
+                <h2>Mis Ubicaciones</h2>
+                <div class="subtitle">Guardá puntos geográficos para acceso rápido</div>
+            </div>
+        </div>
+
+        {% if ubicaciones %}
+        <div id="lista-ubicaciones" style="margin-bottom:18px;">
+            {% for ub in ubicaciones %}
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #1e293b; font-size:0.88rem;" id="ub-row-{{ ub.id }}">
+                <div>
+                    <span style="font-weight:600; color:#f1f5f9;">{{ ub.nombre }}</span>
+                    {% if ub.es_principal %}<span style="background:rgba(99,102,241,0.15); color:#a5b4fc; font-size:0.72rem; border-radius:6px; padding:2px 7px; margin-left:8px;">Principal</span>{% endif %}
+                    <div style="color:#64748b; font-size:0.78rem; margin-top:2px;">{{ ub.lat|floatformat:3 }}, {{ ub.lon|floatformat:3 }}{% if ub.sector %} · {{ ub.sector }}{% endif %}</div>
+                </div>
+                <button onclick="eliminarUbicacion({{ ub.id }})" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); border-radius:8px; padding:6px 12px; color:#f87171; cursor:pointer; font-size:0.8rem;">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if limite_ubicaciones != None %}
+        <div style="font-size:0.78rem; color:#64748b; margin-bottom:14px;">
+            {{ ubicaciones.count }} / {{ limite_ubicaciones }} ubicación(es) usada(s)
+        </div>
+        {% endif %}
+
+        {% if limite_ubicaciones == None or ubicaciones.count < limite_ubicaciones %}
+        <div id="form-nueva-ubicacion">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                <input id="ub-nombre" type="text" placeholder="Nombre (ej: Campo La Pampa)" maxlength="100"
+                       style="background:#1e293b; border:1px solid #334155; border-radius:8px; padding:9px 12px; color:#f1f5f9; font-size:0.88rem; outline:none;">
+                <input id="ub-sector" type="text" placeholder="Sector (agro/naval/aereo/energia)"
+                       style="background:#1e293b; border:1px solid #334155; border-radius:8px; padding:9px 12px; color:#f1f5f9; font-size:0.88rem; outline:none;">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+                <input id="ub-lat" type="number" step="any" placeholder="Latitud (ej: -34.6)" min="-90" max="90"
+                       style="background:#1e293b; border:1px solid #334155; border-radius:8px; padding:9px 12px; color:#f1f5f9; font-size:0.88rem; outline:none;">
+                <input id="ub-lon" type="number" step="any" placeholder="Longitud (ej: -58.4)" min="-180" max="180"
+                       style="background:#1e293b; border:1px solid #334155; border-radius:8px; padding:9px 12px; color:#f1f5f9; font-size:0.88rem; outline:none;">
+            </div>
+            <div id="ub-error" style="color:#f87171; font-size:0.82rem; margin-bottom:8px; display:none;"></div>
+            <button onclick="guardarUbicacion()"
+                    style="width:100%; padding:12px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.3); border-radius:10px; color:#34d399; font-weight:700; cursor:pointer; font-size:0.9rem;">
+                <i class="fas fa-plus-circle"></i> Agregar ubicación
+            </button>
+        </div>
+        {% else %}
+        <div class="notice">
+            <i class="fas fa-lock"></i>
+            <span>Alcanzaste el límite de tu plan ({{ limite_ubicaciones }} ubicaciones). <a href="/pricing/" class="btn-link">Mejorar plan</a></span>
+        </div>
+        {% endif %}
+
+        {% if plan_nivel == 'free' %}
+        <div style="text-align:center; padding:20px 0;">
+            <div style="color:#64748b; font-size:0.88rem; margin-bottom:14px;">Requiere al menos el plan Starter</div>
+            <a href="/pricing/" style="background:linear-gradient(135deg,#3b82f6,#6366f1); color:#fff; padding:10px 22px; border-radius:10px; text-decoration:none; font-weight:600; font-size:0.88rem;">Mejorar plan</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ── Historial de Anomalías ── -->
+    {% if dias_historial > 0 %}
+    <div class="card" style="margin-top:20px;">
+        <div class="card-header">
+            <div class="icon" style="background:rgba(245,158,11,0.1); color:#fbbf24;">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div>
+                <h2>Historial de Anomalías</h2>
+                <div class="subtitle">Últimos {{ dias_historial }} días de datos sectoriales</div>
+            </div>
+        </div>
+        <p style="color:#94a3b8; font-size:0.88rem; margin-bottom:18px; line-height:1.6;">
+            Visualizá y comparás los datos climáticos que se procesaron en tus sectores. El sistema detecta automáticamente patrones y valores atípicos.
+        </p>
+        <a href="/historial-anomalias/"
+           style="display:block; text-align:center; padding:12px; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.25); border-radius:10px; color:#fbbf24; text-decoration:none; font-weight:700; font-size:0.9rem;">
+            <i class="fas fa-chart-bar"></i> Ver historial de anomalías
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- ── Reportes Programados ── -->
+    <div class="card" style="margin-top:20px;">
+        <div class="card-header">
+            <div class="icon" style="background:rgba(139,92,246,0.1); color:#a78bfa;">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div>
+                <h2>Reportes Automáticos</h2>
+                <div class="subtitle">Recibí reportes climáticos periódicos por email</div>
+            </div>
+        </div>
+
+        {% if puede_reportes %}
+        <p style="color:#94a3b8; font-size:0.88rem; margin-bottom:16px; line-height:1.6;">
+            Configurá envíos automáticos de análisis IA para tu sector favorito.
+        </p>
+        <a href="/mis-reportes/"
+           style="display:block; text-align:center; padding:12px; background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.25); border-radius:10px; color:#a78bfa; text-decoration:none; font-weight:700; font-size:0.9rem;">
+            <i class="fas fa-cog"></i> Gestionar reportes programados
+        </a>
+        {% else %}
+        <div style="text-align:center; padding:20px 0;">
+            <div style="font-size:2rem; margin-bottom:10px;">📅</div>
+            <div style="color:#64748b; font-size:0.88rem; margin-bottom:14px; line-height:1.5;">
+                Reportes automáticos disponibles desde el plan <strong style="color:#a78bfa;">Pro IA</strong>.<br>
+                Tu plan actual: <strong style="color:#94a3b8; text-transform:capitalize;">{{ plan_nivel }}</strong>
+            </div>
+            <a href="/pricing/" style="background:linear-gradient(135deg,#7c3aed,#4f46e5); color:#fff; padding:10px 22px; border-radius:10px; text-decoration:none; font-weight:600; font-size:0.88rem;">
+                <i class="fas fa-arrow-up"></i> Mejorar plan
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ── API Key Personal ── -->
+    <div class="card" style="margin-top:20px;">
+        <div class="card-header">
+            <div class="icon" style="background:rgba(6,182,212,0.1); color:#22d3ee;">
+                <i class="fas fa-key"></i>
+            </div>
+            <div>
+                <h2>API Key Personal</h2>
+                <div class="subtitle">Integrá tus datos en herramientas externas</div>
+            </div>
+        </div>
+
+        {% if puede_api_key %}
+        <p style="color:#94a3b8; font-size:0.88rem; margin-bottom:16px; line-height:1.6;">
+            Usá tu API key para conectar TuClima a Power BI, scripts o dashboards propios.
+        </p>
+        <a href="/mi-api-key/"
+           style="display:block; text-align:center; padding:12px; background:rgba(6,182,212,0.08); border:1px solid rgba(6,182,212,0.25); border-radius:10px; color:#22d3ee; text-decoration:none; font-weight:700; font-size:0.9rem;">
+            <i class="fas fa-key"></i> {% if api_key_obj and api_key_obj.activa %}Ver / gestionar API key{% else %}Generar API key{% endif %}
+        </a>
+        {% else %}
+        <div style="text-align:center; padding:20px 0;">
+            <div style="font-size:2rem; margin-bottom:10px;">🔑</div>
+            <div style="color:#64748b; font-size:0.88rem; margin-bottom:14px; line-height:1.5;">
+                API key personal disponible desde el plan <strong style="color:#22d3ee;">Plus</strong>.<br>
+                Tu plan actual: <strong style="color:#94a3b8; text-transform:capitalize;">{{ plan_nivel }}</strong>
+            </div>
+            <a href="/pricing/" style="background:linear-gradient(135deg,#0891b2,#0e7490); color:#fff; padding:10px 22px; border-radius:10px; text-decoration:none; font-weight:600; font-size:0.88rem;">
+                <i class="fas fa-arrow-up"></i> Mejorar plan
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
 </div>
 
 <script>
@@ -501,6 +661,51 @@ async function detectarUbicacion() {
         },
         { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
     );
+}
+
+// ── Multi-ubicación ──────────────────────────────
+function getCsrfToken() {
+    return document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('csrftoken='))?.split('=')[1] || '';
+}
+
+async function guardarUbicacion() {
+    const nombre = document.getElementById('ub-nombre').value.trim();
+    const lat    = parseFloat(document.getElementById('ub-lat').value);
+    const lon    = parseFloat(document.getElementById('ub-lon').value);
+    const sector = document.getElementById('ub-sector').value.trim().toLowerCase();
+    const errEl  = document.getElementById('ub-error');
+
+    errEl.style.display = 'none';
+    if (!nombre) { errEl.textContent = 'El nombre es obligatorio.'; errEl.style.display = 'block'; return; }
+    if (isNaN(lat) || isNaN(lon)) { errEl.textContent = 'Ingresá latitud y longitud válidas.'; errEl.style.display = 'block'; return; }
+
+    try {
+        const resp = await fetch('/api/ubicaciones/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+            body: JSON.stringify({ nombre, lat, lon, sector })
+        });
+        const data = await resp.json();
+        if (!resp.ok) { errEl.textContent = data.error || 'Error al guardar.'; errEl.style.display = 'block'; return; }
+        location.reload();
+    } catch(e) {
+        errEl.textContent = 'Error de red. Reintentá.'; errEl.style.display = 'block';
+    }
+}
+
+async function eliminarUbicacion(pk) {
+    if (!confirm('¿Eliminar esta ubicación?')) return;
+    try {
+        const resp = await fetch(`/api/ubicaciones/${pk}/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCsrfToken(), 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: '_method=DELETE'
+        });
+        if (resp.ok) {
+            const row = document.getElementById(`ub-row-${pk}`);
+            if (row) row.remove();
+        }
+    } catch(e) {}
 }
 </script>
 

@@ -19,7 +19,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
 from django.utils import timezone
 from datetime import datetime, timedelta
-from .models import PerfilUsuario, DatoSectorial
+import uuid
+from .models import PerfilUsuario, DatoSectorial, UbicacionGuardada, ReporteProgramado, ApiKeyPersonal
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -3902,9 +3903,227 @@ def devorador_api(request):
             {'error': 'No se pudo conectar al servicio de análisis. Reintente en unos minutos.'},
             status=503
         )
-    except Exception as e:
-        logger.error(f'[DEVORADOR] Error inesperado: {e}')
-        return JsonResponse({'error': 'Error interno del servidor.'}, status=500)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MULTI-UBICACIÓN
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+def api_ubicaciones(request):
+    """
+    GET  → lista de ubicaciones guardadas del usuario (JSON)
+    POST → crea una nueva ubicación (JSON) si no superó el límite del plan
+    """
+    perfil = getattr(request.user, 'perfil', None)
+    nivel = perfil.plan_nivel if perfil else 'free'
+    limite = UbicacionGuardada.limite_para_plan(nivel)
+
+    if request.method == 'GET':
+        qs = UbicacionGuardada.objects.filter(usuario=request.user).values(
+            'id', 'nombre', 'lat', 'lon', 'sector', 'es_principal', 'creada'
+        )
+        return JsonResponse({
+            'ubicaciones': list(qs),
+            'limite': limite,
+            'total': qs.count(),
+        })
+
+    if request.method == 'POST':
+        try:
+            datos = json.loads(request.body)
+        except (json.JSONDecodeError, TypeError):
+            datos = request.POST
+
+        nombre = str(datos.get('nombre', '')).strip()[:100]
+        try:
+            lat = float(datos.get('lat', 0))
+            lon = float(datos.get('lon', 0))
+        except (ValueError, TypeError):
+            return JsonResponse({'error': 'Coordenadas inválidas.'}, status=400)
+
+        if not nombre:
+            return JsonResponse({'error': 'El nombre es obligatorio.'}, status=400)
+        if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
+            return JsonResponse({'error': 'Coordenadas fuera de rango.'}, status=400)
+
+        actual = UbicacionGuardada.objects.filter(usuario=request.user).count()
+        if limite is not None and actual >= limite:
+            return JsonResponse(
+                {'error': f'Tu plan permite hasta {limite} ubicación(es). Mejora tu plan para agregar más.'},
+                status=403
+            )
+
+        sector = str(datos.get('sector', '')).strip()[:10].lower()
+        es_primera = (actual == 0)
+        ub = UbicacionGuardada.objects.create(
+            usuario=request.user,
+            nombre=nombre,
+            lat=lat,
+            lon=lon,
+            sector=sector,
+            es_principal=es_primera,
+        )
+        return JsonResponse({'id': ub.id, 'nombre': ub.nombre, 'lat': ub.lat, 'lon': ub.lon,
+                             'sector': ub.sector, 'es_principal': ub.es_principal}, status=201)
+
+    return JsonResponse({'error': 'Método no permitido.'}, status=405)
+
+
+@login_required
+def api_ubicacion_delete(request, pk):
+    """Elimina una ubicación guardada del usuario autenticado."""
+    if request.method not in ('POST', 'DELETE'):
+        return JsonResponse({'error': 'Método no permitido.'}, status=405)
+    try:
+        ub = UbicacionGuardada.objects.get(pk=pk, usuario=request.user)
+    except UbicacionGuardada.DoesNotExist:
+        return JsonResponse({'error': 'No encontrada.'}, status=404)
+
+    ub.delete()
+    return JsonResponse({'ok': True})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# REPORTES PROGRAMADOS
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+def reportes_programados(request):
+    """
+    GET  → página con lista de reportes programados
+    POST → crea o elimina un reporte (campo 'accion': 'crear' | 'eliminar')
+    """
+    perfil = getattr(request.user, 'perfil', None)
+    if not perfil or perfil.plan_nivel not in ('pro_ia', 'power'):
+        return render(request, 'sector_bloqueado.html', {
+            'mensaje': 'Los reportes programados están disponibles a partir del plan Pro IA.',
+            'plan_requerido': 'pro_ia',
+        })
+
+    if request.method == 'POST':
+        accion = request.POST.get('accion', 'crear')
+
+        if accion == 'eliminar':
+            pk = request.POST.get('pk', '')
+            try:
+                rep = ReporteProgramado.objects.get(pk=pk, usuario=request.user)
+                rep.delete()
+            except ReporteProgramado.DoesNotExist:
+                pass
+            return redirect('reportes_programados')
+
+        sector = request.POST.get('sector', '')[:10].lower()
+        frecuencia = request.POST.get('frecuencia', 'diario')
+        try:
+            hora_envio = int(request.POST.get('hora_envio', 8))
+            hora_envio = max(0, min(23, hora_envio))
+        except (ValueError, TypeError):
+            hora_envio = 8
+        email_destino = request.POST.get('email_destino', '').strip()[:254]
+
+        sectores_validos = [s[0] for s in ReporteProgramado.SECTORES]
+        frecuencias_validas = [f[0] for f in ReporteProgramado.FRECUENCIAS]
+        if sector not in sectores_validos or frecuencia not in frecuencias_validas:
+            return redirect('reportes_programados')
+
+        # Máximo 5 reportes activos por usuario
+        if ReporteProgramado.objects.filter(usuario=request.user, activo=True).count() >= 5:
+            return render(request, 'reportes_programados.html', {
+                'reportes': ReporteProgramado.objects.filter(usuario=request.user),
+                'error': 'Máximo 5 reportes activos permitidos.',
+            })
+
+        ReporteProgramado.objects.create(
+            usuario=request.user,
+            sector=sector,
+            frecuencia=frecuencia,
+            hora_envio=hora_envio,
+            email_destino=email_destino,
+        )
+        return redirect('reportes_programados')
+
+    reportes = ReporteProgramado.objects.filter(usuario=request.user)
+    return render(request, 'reportes_programados.html', {'reportes': reportes})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# API KEY PERSONAL
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+def api_key_personal(request):
+    """
+    Gestiona la API key personal del usuario.
+    Plan requerido: Plus+
+    POST 'accion=generar'  → genera (o regenera) la clave
+    POST 'accion=revocar'  → desactiva la clave
+    """
+    perfil = getattr(request.user, 'perfil', None)
+    if not perfil or perfil.plan_nivel not in ('plus', 'pro_ia', 'power'):
+        return render(request, 'sector_bloqueado.html', {
+            'mensaje': 'La API key personal está disponible a partir del plan Plus.',
+            'plan_requerido': 'plus',
+        })
+
+    api_key, _ = ApiKeyPersonal.objects.get_or_create(
+        usuario=request.user,
+        defaults={'clave': uuid.uuid4().hex + uuid.uuid4().hex, 'activa': False},
+    )
+
+    if request.method == 'POST':
+        accion = request.POST.get('accion', '')
+        if accion == 'generar':
+            api_key.clave = uuid.uuid4().hex + uuid.uuid4().hex
+            api_key.activa = True
+            api_key.save(update_fields=['clave', 'activa'])
+        elif accion == 'revocar':
+            api_key.activa = False
+            api_key.save(update_fields=['activa'])
+        return redirect('api_key_personal')
+
+    return render(request, 'api_key_personal.html', {'api_key': api_key})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HISTORIAL DE ANOMALÍAS
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+def historial_anomalias(request):
+    """
+    Muestra datos sectoriales históricos vinculados al usuario.
+    El rango de días disponible depende del plan (dias_historial).
+    """
+    perfil = getattr(request.user, 'perfil', None)
+    dias = perfil.dias_historial if perfil else 0
+    if dias == 0:
+        return render(request, 'sector_bloqueado.html', {
+            'mensaje': 'El historial de anomalías requiere al menos el plan Starter.',
+            'plan_requerido': 'starter',
+        })
+
+    sector_filtro = request.GET.get('sector', '').upper()
+    sectores_validos = {'NAVAL', 'ENERGIA', 'AEREO', 'AGRO'}
+
+    desde = timezone.now() - timedelta(days=dias)
+    qs = DatoSectorial.objects.filter(
+        usuario_carga=request.user,
+        fecha_registro__gte=desde,
+    ).order_by('-fecha_registro')
+
+    if sector_filtro in sectores_validos:
+        qs = qs.filter(sector=sector_filtro)
+
+    # Paginación simple: últimos 50 registros
+    registros = list(qs[:50])
+
+    return render(request, 'historial_anomalias.html', {
+        'registros': registros,
+        'dias': dias,
+        'sector_filtro': sector_filtro,
+        'sectores': ['AGRO', 'NAVAL', 'AEREO', 'ENERGIA'],
+    })
 
 
 @login_required
@@ -4312,6 +4531,17 @@ def mi_cuenta(request):
                  .filter(usuario=request.user)
                  .order_by('-fecha')[:20])
 
+    # Multi-ubicación
+    ubicaciones = UbicacionGuardada.objects.filter(usuario=request.user)
+    nivel = perfil.plan_nivel
+    limite_ubicaciones = UbicacionGuardada.limite_para_plan(nivel)
+
+    # API Key
+    try:
+        api_key_obj = request.user.api_key
+    except ApiKeyPersonal.DoesNotExist:
+        api_key_obj = None
+
     return render(request, 'mi_cuenta.html', {
         'perfil': perfil,
         'plan_nivel': perfil.plan_nivel,
@@ -4328,6 +4558,12 @@ def mi_cuenta(request):
             ('energia', 'Energía', '\u26a1'),
         ],
         'horas_alerta': list(range(5, 21)),
+        'ubicaciones': ubicaciones,
+        'limite_ubicaciones': limite_ubicaciones,
+        'api_key_obj': api_key_obj,
+        'dias_historial': perfil.dias_historial,
+        'puede_api_key': nivel in ('plus', 'pro_ia', 'power'),
+        'puede_reportes': nivel in ('pro_ia', 'power'),
     })
 
 

@@ -105,6 +105,19 @@ urlpatterns = [
     # Devorador de Reportes — Procesamiento Documental con IA
     path('devorador/', views.devorador_vista, name='devorador'),
     path('api/devorador/', views.devorador_api, name='devorador_api'),
+
+    # Multi-ubicación
+    path('api/ubicaciones/', views.api_ubicaciones, name='api_ubicaciones'),
+    path('api/ubicaciones/<int:pk>/', views.api_ubicacion_delete, name='api_ubicacion_delete'),
+
+    # Reportes programados
+    path('mis-reportes/', views.reportes_programados, name='reportes_programados'),
+
+    # API Key personal
+    path('mi-api-key/', views.api_key_personal, name='api_key_personal'),
+
+    # Historial de anomalías
+    path('historial-anomalias/', views.historial_anomalias, name='historial_anomalias'),
 ]
 
 

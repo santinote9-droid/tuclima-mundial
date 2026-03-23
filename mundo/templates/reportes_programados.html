@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes Programados | TuClima</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0f172a; color: #f1f5f9;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh; padding: 32px 20px;
+        }
+        .container { max-width: 640px; margin: 0 auto; }
+        h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
+        .subtitle { color: #64748b; font-size: 0.88rem; margin-bottom: 28px; }
+
+        .card {
+            background: rgba(255,255,255,0.03); border: 1px solid #1e293b;
+            border-radius: 16px; padding: 26px; margin-bottom: 20px;
+        }
+        .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 18px; color: #a78bfa; }
+
+        .reporte-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 0; border-bottom: 1px solid #1e293b; gap: 12px;
+        }
+        .reporte-row:last-child { border-bottom: none; }
+        .reporte-info { flex: 1; }
+        .reporte-sector { font-weight: 700; font-size: 0.9rem; }
+        .reporte-meta { color: #64748b; font-size: 0.78rem; margin-top: 3px; }
+        .activo-badge { background: rgba(34,197,94,0.12); color: #4ade80; padding: 3px 9px; border-radius: 10px; font-size: 0.72rem; font-weight: 700; }
+        .inactivo-badge { background: rgba(100,116,139,0.12); color: #94a3b8; padding: 3px 9px; border-radius: 10px; font-size: 0.72rem; font-weight: 700; }
+
+        label { display: block; color: #94a3b8; font-size: 0.82rem; margin-bottom: 6px; margin-top: 14px; }
+        input[type=text], input[type=email], input[type=number], select {
+            width: 100%; background: #1e293b; border: 1px solid #334155;
+            border-radius: 8px; padding: 9px 12px; color: #f1f5f9; font-size: 0.9rem; outline: none;
+        }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .btn-submit {
+            width: 100%; padding: 13px; border: none; border-radius: 12px;
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            color: #fff; font-size: 0.95rem; font-weight: 700;
+            cursor: pointer; margin-top: 20px; transition: opacity 0.2s;
+        }
+        .btn-submit:hover { opacity: 0.88; }
+        .btn-delete {
+            background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25);
+            border-radius: 8px; padding: 7px 13px; color: #f87171;
+            cursor: pointer; font-size: 0.82rem; white-space: nowrap;
+        }
+        .error-msg { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; padding: 10px 14px; color: #f87171; font-size: 0.85rem; margin-bottom: 16px; }
+        .vacio { text-align: center; padding: 28px; color: #475569; font-size: 0.88rem; }
+        .back-link { text-align: center; margin-top: 10px; }
+        .back-link a { color: #3b82f6; text-decoration: none; font-size: 0.88rem; font-weight: 600; }
+        .back-link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1><i class="fas fa-clock" style="color:#a78bfa; margin-right:10px;"></i>Reportes Automáticos</h1>
+    <p class="subtitle">Enviá análisis climáticos IA a tu email en forma periódica</p>
+
+    {% if error %}
+    <div class="error-msg"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+    {% endif %}
+
+    <!-- Lista de reportes existentes -->
+    <div class="card">
+        <div class="card-title"><i class="fas fa-list"></i> Mis reportes activos</div>
+        {% if reportes %}
+            {% for rep in reportes %}
+            <div class="reporte-row">
+                <div class="reporte-info">
+                    <div class="reporte-sector">
+                        {% if rep.sector == 'agro' %}🌱{% elif rep.sector == 'naval' %}⚓{% elif rep.sector == 'aereo' %}✈️{% elif rep.sector == 'energia' %}⚡{% endif %}
+                        {{ rep.get_sector_display }} — {{ rep.get_frecuencia_display }}
+                    </div>
+                    <div class="reporte-meta">
+                        📧 {{ rep.email_efectivo }} &nbsp;·&nbsp; 🕐 {{ rep.hora_envio }}:00 UTC
+                        {% if rep.ultimo_envio %}&nbsp;·&nbsp; Último envío: {{ rep.ultimo_envio|date:"d/m H:i" }}{% endif %}
+                    </div>
+                </div>
+                <span class="{% if rep.activo %}activo-badge{% else %}inactivo-badge{% endif %}">
+                    {% if rep.activo %}ACTIVO{% else %}PAUSADO{% endif %}
+                </span>
+                <form method="POST" onsubmit="return confirm('¿Eliminar este reporte?')">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="eliminar">
+                    <input type="hidden" name="pk" value="{{ rep.id }}">
+                    <button type="submit" class="btn-delete"><i class="fas fa-trash-alt"></i></button>
+                </form>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="vacio"><i class="fas fa-inbox" style="font-size:1.8rem; display:block; margin-bottom:8px; color:#334155;"></i>Todavía no tenés reportes programados.</div>
+        {% endif %}
+    </div>
+
+    <!-- Formulario nuevo reporte -->
+    <div class="card">
+        <div class="card-title"><i class="fas fa-plus-circle"></i> Agregar reporte</div>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="crear">
+
+            <div class="grid-2">
+                <div>
+                    <label>Sector</label>
+                    <select name="sector">
+                        <option value="agro">🌱 Agropecuario</option>
+                        <option value="naval">⚓ Naval</option>
+                        <option value="aereo">✈️ Aéreo</option>
+                        <option value="energia">⚡ Energía</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Frecuencia</label>
+                    <select name="frecuencia">
+                        <option value="diario">Diario</option>
+                        <option value="semanal">Semanal</option>
+                        <option value="mensual">Mensual</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div>
+                    <label>Hora de envío (UTC 0–23)</label>
+                    <input type="number" name="hora_envio" min="0" max="23" value="8">
+                </div>
+                <div>
+                    <label>Email destino (opcional)</label>
+                    <input type="email" name="email_destino" placeholder="Dejar vacío = tu email">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <i class="fas fa-plus"></i> Programar reporte
+            </button>
+        </form>
+    </div>
+
+    <div class="back-link">
+        <a href="/mi-cuenta/"><i class="fas fa-arrow-left"></i> Volver a mi cuenta</a>
+    </div>
+
+</div>
+</body>
+</html>
