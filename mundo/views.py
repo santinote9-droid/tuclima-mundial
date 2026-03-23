@@ -2194,32 +2194,41 @@ def ls_checkout(request):
             return redirect(checkout_url)
         except Exception as e:
             logger.error(f'[LS_CHECKOUT] Error creando checkout vía API: {e}')
-            # Fallback al método de URL directa si la API falla
+            # Rompemos el silencio para ver qué le pasa a la API
+            from django.http import HttpResponse
+            return HttpResponse(f"<h2>Error en la API de Lemon Squeezy:</h2> <p>{e}</p>")
 
-    # Fallback: URL directa con el checkout link UUID del dashboard
-    # (funciona con UUIDs del tipo cc680385-... configurados en ls_variant_id)
+    # Fallback: URL directa limpia (sin custom params en URL — causan errores JS en LS)
     store_slug = getattr(settings, 'LEMONSQUEEZY_STORE_SLUG', '')
     if not store_slug:
         logger.warning('[LS_CHECKOUT] Sin API key ni store slug configurados')
         return redirect(f'/activar-plan/?paquete={paquete_id}')
 
-    from urllib.parse import urlencode
-    params = urlencode({
-        'checkout[custom][user_id]':   request.user.id,
-        'checkout[custom][paquete_id]': paquete_id,
-        'checkout[redirect_url]':      f'{site}/ls-retorno/?paquete_id={paquete_id}',
-    })
-    checkout_url = f"https://{store_slug}.lemonsqueezy.com/checkout/buy/{variant_id}?{params}"
+    # Guardar el paquete en sesión para recuperarlo cuando LS nos devuelva el usuario
+    request.session['ls_paquete_id_pendiente'] = paquete_id
+    request.session['ls_user_id_pendiente']    = request.user.id
+    request.session.modified = True
+
+    checkout_url = f"https://{store_slug}.lemonsqueezy.com/checkout/buy/{variant_id}"
     return redirect(checkout_url)
 
 
 @login_required
 def ls_retorno(request):
     """Página de retorno desde Lemon Squeezy. El webhook activa el plan en segundos."""
+    # Intentar obtener el paquete del query param (viene del redirect_url de la API)
     paquete_id = request.GET.get('paquete_id', '')
-    paquete    = _PAQUETES_MAP.get(paquete_id)
+
+    # Si no está en la URL, intentar recuperarlo de la sesión (fallback sin API)
+    if not paquete_id:
+        paquete_id = request.session.pop('ls_paquete_id_pendiente', '')
+    else:
+        request.session.pop('ls_paquete_id_pendiente', None)
+    request.session.pop('ls_user_id_pendiente', None)
+
+    paquete = _PAQUETES_MAP.get(paquete_id)
     return render(request, 'pago_exitoso_tokens.html', {
-        'paquete':           paquete,
+        'paquete':            paquete,
         'tokens_disponibles': request.user.perfil.tokens_disponibles,
     })
 
