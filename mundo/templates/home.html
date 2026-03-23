@@ -1177,15 +1177,14 @@
                 const desc = document.querySelector('h2[style*="color: #00d2ff"]');
                 if (desc) desc.textContent = data.descripcion;
 
-                const meta = document.querySelectorAll('.main-container div[style*="background: rgba(255,255,255,0.1)"] div');
-                if (meta.length >= 3) {
-                    const sensDiv = meta[0].querySelectorAll('div');
-                    if (sensDiv.length >= 2) sensDiv[1].textContent = `${Math.round(data.sensacion)}°`;
-                    const humDiv = meta[1].querySelectorAll('div');
-                    if (humDiv.length >= 2) humDiv[1].textContent = `${data.humedad}%`;
-                    const lluDiv = meta[2].querySelectorAll('div');
-                    if (lluDiv.length >= 2) lluDiv[1].textContent = `${data.lluvia_hoy}mm`;
-                }
+                // Datos meteorológicos — ahora con IDs directos
+                const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+                set('val-sensacion', `${Math.round(data.sensacion)}°`);
+                set('val-humedad',   `${data.humedad}%`);
+                set('val-lluvia',    `${data.lluvia_hoy}mm`);
+                set('val-sunrise',   data.sunrise || '--:--');
+                set('val-sunset',    data.sunset  || '--:--');
+                set('val-viento',    data.viento  ?? '--');
 
                 // Carrusel horario
                 if (data.tira_horas) actualizarCarruselHorario(data.tira_horas);
@@ -1196,22 +1195,18 @@
                 // Actualizar datosSemana global para que cambiarDia funcione
                 if (data.datos_json && typeof data.datos_json === 'object') {
                     window.datosSemana = data.datos_json;
-                    if (typeof datosSemana !== 'undefined') {
-                        // sobrescribir la variable local del segundo script
-                        Object.assign(datosSemana, data.datos_json);
-                    }
                 }
 
                 // Gráfico
                 if (window.chartInstance && data.horas_grafico && data.temps_grafico) {
-                    chartInstance.data.labels = data.horas_grafico;
-                    chartInstance.data.datasets[0].data = data.temps_grafico;
-                    chartInstance.update();
+                    window.chartInstance.data.labels = data.horas_grafico;
+                    window.chartInstance.data.datasets[0].data = data.temps_grafico;
+                    window.chartInstance.update();
                 }
 
-                // Inputs de coordenadas
-                if (document.getElementById('latInput')) document.getElementById('latInput').value = Number(data.lat).toFixed(6);
-                if (document.getElementById('lonInput')) document.getElementById('lonInput').value = Number(data.lon).toFixed(6);
+                // Inputs de coordenadas (ocultar el contenedor para no distraer)
+                const contCoord = document.getElementById('contenedorCoordenadas');
+                if (contCoord) contCoord.style.display = 'none';
 
                 // Actualizar links de sectores
                 document.querySelectorAll('.sidebar-pro-link').forEach(a => {
@@ -1223,10 +1218,6 @@
 
             } catch (err) {
                 console.error('❌ Error en actualizarInterfaz:', err);
-                // Fallback: recargar la página con las coordenadas del servidor
-                if (data && data.lat && data.lon) {
-                    window.location.href = `/?lat=${data.lat}&lon=${data.lon}`;
-                }
             }
         }
 
@@ -1381,19 +1372,19 @@
             <div style="text-align: center; flex: 1;">
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/thermometer.svg" style="width: 35px; height: 35px; margin-bottom: 5px;">
                 <div style="font-size: 0.7em; color: #ddd;">SENSACIÓN</div>
-                <div style="font-weight: bold; font-size: 1.2em; color: #ffcc00;">{{ sensacion }}°</div>
+                <div id="val-sensacion" style="font-weight: bold; font-size: 1.2em; color: #ffcc00;">{{ sensacion }}°</div>
             </div>
             <div style="width: 2px; height: 50px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.3), transparent); border-radius: 1px;"></div>
             <div style="text-align: center; flex: 1;">
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/humidity.svg" style="width: 35px; height: 35px; margin-bottom: 5px;">
                 <div style="font-size: 0.7em; color: #ddd;">HUMEDAD</div>
-                <div style="font-weight: bold; font-size: 1.2em; color: #00d2ff;">{{ humedad }}%</div>
+                <div id="val-humedad" style="font-weight: bold; font-size: 1.2em; color: #00d2ff;">{{ humedad }}%</div>
             </div>
             <div style="width: 2px; height: 50px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.3), transparent); border-radius: 1px;"></div>
             <div style="text-align: center; flex: 1;">
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/raindrops.svg" style="width: 35px; height: 35px; margin-bottom: 5px;">
                 <div style="font-size: 0.7em; color: #ddd;">LLUVIA</div>
-                <div style="font-weight: bold; font-size: 1.2em; color: #fff;">{{ lluvia_hoy }}mm</div>
+                <div id="val-lluvia" style="font-weight: bold; font-size: 1.2em; color: #fff;">{{ lluvia_hoy }}mm</div>
             </div>
         </div>
 
@@ -1401,12 +1392,12 @@
             <div style="text-align: center;">
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunrise.svg" style="width: 55px; height: 55px; margin-bottom: 8px;">
                 <div style="font-size: 0.85em; color: #ddd;">AMANECER</div>
-                <div style="font-weight: bold; color: #ffcc00; font-size: 1.1em;">{{ sunrise }}</div>
+                <div id="val-sunrise" style="font-weight: bold; color: #ffcc00; font-size: 1.1em;">{{ sunrise }}</div>
             </div>
             <div style="text-align: center;">
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunset.svg" style="width: 55px; height: 55px; margin-bottom: 8px;">
                 <div style="font-size: 0.85em; color: #ddd;">ATARDECER</div>
-                <div style="font-weight: bold; color: #ff6b6b; font-size: 1.1em;">{{ sunset }}</div>
+                <div id="val-sunset" style="font-weight: bold; color: #ff6b6b; font-size: 1.1em;">{{ sunset }}</div>
             </div>
         </div>
 
@@ -1414,7 +1405,7 @@
     
     <div style="font-size: 1.5em; display: flex; align-items: center; justify-content: center; gap: 10px;">
         <svg style="width:28px; height:28px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
-        {{ viento }} km/h
+        <span id="val-viento">{{ viento }}</span> km/h
     </div>
     
     <p class="coord">Lat: {{ lat }} | Lon: {{ lon }}</p>
@@ -1894,7 +1885,7 @@
         let tempsIniciales = {{ temps_grafico|default:"[]"|safe }};
         
         const ctx = document.getElementById('graficoHoras');
-        let chartInstance = new Chart(ctx, {
+        window.chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labelsIniciales, 
@@ -1964,9 +1955,9 @@
                     contenedor.innerHTML += htmlHora;
                 });
 
-                chartInstance.data.labels = nuevosLabels;
-                chartInstance.data.datasets[0].data = nuevasTemps;
-                chartInstance.update();
+                window.chartInstance.data.labels = nuevosLabels;
+                window.chartInstance.data.datasets[0].data = nuevasTemps;
+                window.chartInstance.update();
             }
         }
     </script>
