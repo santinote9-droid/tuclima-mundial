@@ -1821,7 +1821,11 @@
   <!-- ── 2. BOTONES DE ACCIÓN RÁPIDA ── -->
   <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
     <button onclick="enviarAccionRapida('Generá un reporte PDF náutico con estado del mar, viento, visibilidad y estimación de temperatura del agua actual. Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(12,26,46,0.9); border:1px solid rgba(59,130,246,0.4); color:#93c5fd; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#1d4ed8';this.style.color='#fff'" onmouseout="this.style.background='rgba(12,26,46,0.9)';this.style.color='#93c5fd'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Generar PDF</button>
+    {% if puede_excel %}
     <button onclick="enviarAccionRapida('Generá un Excel con la evolución horaria del oleaje y el viento para las próximas 24 horas. Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(12,26,46,0.9); border:1px solid rgba(74,222,128,0.4); color:#86efac; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#16a34a';this.style.color='#fff'" onmouseout="this.style.background='rgba(12,26,46,0.9)';this.style.color='#86efac'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg> Generar Excel</button>
+    {% else %}
+    <a href="/pricing/" style="display:flex; align-items:center; gap:7px; background:rgba(15,23,42,0.6); border:1px solid rgba(51,65,85,0.5); color:#64748b; padding:9px 16px; border-radius:10px; cursor:not-allowed; font-size:0.83rem; font-weight:600; font-family:inherit; text-decoration:none;" title="Disponible desde plan Plus — Actualizá tu plan"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Excel — Plan Plus+</a>
+    {% endif %}
     <button onclick="enviarAccionRapida('¿Cuáles son las condiciones náuticas actuales y la recomendación de operación para hoy? Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(12,26,46,0.9); border:1px solid rgba(167,139,250,0.4); color:#c4b5fd; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#1e40af';this.style.color='#fff'" onmouseout="this.style.background='rgba(12,26,46,0.9)';this.style.color='#c4b5fd'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></svg> Parte de Puerto</button>
   </div>
 
@@ -1992,6 +1996,7 @@ function enviarAccionRapida(txt) {
     <div class="chat-input-container" style="display: flex; align-items: center; gap: 12px; padding: 20px 24px; background: rgba(15, 23, 42, 0.8); border-top: 1px solid rgba(51, 65, 85, 0.2); backdrop-filter: blur(20px);">
     
     <input type="file" id="file-input" style="display: none;" accept="image/*,.pdf,.csv,.xlsx">
+    {% if puede_devorador %}
     <button type="button" onclick="document.getElementById('file-input').click()" style="background: rgba(51, 65, 85, 0.6); border: 1px solid rgba(71, 85, 105, 0.3); cursor: pointer; padding: 10px; color: #cbd5e1; transition: all 0.3s ease; border-radius: 10px; backdrop-filter: blur(10px);" onmouseover="this.style.color='#f1f5f9'; this.style.background='rgba(71, 85, 105, 0.8)'" onmouseout="this.style.color='#cbd5e1'; this.style.background='rgba(51, 65, 85, 0.6)'" title="Subir archivo">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -1999,6 +2004,13 @@ function enviarAccionRapida(txt) {
             <line x1="12" y1="1" x2="12" y2="13"/>
         </svg>
     </button>
+    {% else %}
+    <a href="/pricing/" style="display:inline-flex; background: rgba(30,41,59,0.6); border: 1px solid rgba(51,65,85,0.4); cursor: not-allowed; padding: 10px; color: #475569; border-radius: 10px; text-decoration:none;" title="Subir archivos — disponible desde plan Pro IA">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+    </a>
+    {% endif %}
 
     <!-- Botón Gráficos -->
     <button type="button" onclick="toggleChart()" style="background: rgba(51, 65, 85, 0.6); border: 1px solid rgba(71, 85, 105, 0.3); cursor: pointer; padding: 10px; color: #cbd5e1; transition: all 0.3s ease; border-radius: 10px; backdrop-filter: blur(10px);" onmouseover="this.style.color='#fbbf24'; this.style.background='rgba(71, 85, 105, 0.8)'" onmouseout="this.style.color='#cbd5e1'; this.style.background='rgba(51, 65, 85, 0.6)'" title="Mostrar/Ocultar Gráfico">

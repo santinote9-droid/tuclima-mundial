@@ -74,7 +74,83 @@ class PerfilUsuario(models.Model):
         help_text='Ciudad o localidad, ej: Buenos Aires',
     )
 
+    # --- Restricción sectorial (plan Starter) ---
+    sector_elegido = models.CharField(
+        max_length=10, default='', blank=True,
+        verbose_name='Sector elegido (Starter)',
+        help_text='Para plan Starter: sector al que tiene acceso. Vacío = puede elegir.',
+    )
+
     # El @property debe estar alineado con 'user' y 'fecha...'
+    @property
+    def plan_nivel(self):
+        """Calcula el nivel del plan según tokens_diarios_limite y suscripción activa."""
+        if self.user.is_staff or self.user.is_superuser:
+            return 'power'
+        if not self.suscripcion_activa:
+            # Puede tener plan de tokens sin suscripción clásica
+            pass
+        t = self.tokens_diarios_limite or 0
+        if t >= 300_000:
+            return 'power'
+        if t >= 150_000:
+            return 'pro_ia'
+        if t >= 75_000:
+            return 'plus'
+        if t >= 42_000:
+            return 'starter'
+        return 'free'
+
+    @property
+    def puede_excel(self):
+        """Plus+ puede exportar Excel."""
+        return self.plan_nivel in ('plus', 'pro_ia', 'power')
+
+    @property
+    def puede_devorador(self):
+        """Plus+ pueden subir archivos y usar el Devorador de Reportes."""
+        return self.plan_nivel in ('plus', 'pro_ia', 'power')
+
+    @property
+    def puede_alertas_proactivas(self):
+        """Solo Pro IA y Power pueden tener alertas proactivas."""
+        return self.plan_nivel in ('pro_ia', 'power')
+
+    @property
+    def puede_memoria_persistente(self):
+        """Plus+ tiene memoria IA persistente entre sesiones."""
+        return self.plan_nivel in ('plus', 'pro_ia', 'power')
+
+    @property
+    def dias_historial(self):
+        """Días de historial BigQuery según plan."""
+        nivel = self.plan_nivel
+        if nivel == 'starter':
+            return 7
+        if nivel == 'plus':
+            return 30
+        if nivel == 'pro_ia':
+            return 90
+        if nivel == 'power':
+            return 365
+        return 0
+
+    def tiene_acceso_sector(self, sector):
+        """
+        Verifica si el usuario puede acceder a un sector.
+        Starter: solo el sector_elegido (o cualquiera si aún no eligió).
+        Plus+: todos los sectores.
+        """
+        if self.user.is_staff or self.user.is_superuser:
+            return True
+        if self.plan_nivel in ('plus', 'pro_ia', 'power'):
+            return True
+        if self.plan_nivel == 'starter':
+            if not self.sector_elegido:
+                return True  # Todavía no eligió: puede acceder y elegirá ahora
+            return self.sector_elegido.lower() == sector.lower()
+        return False
+
     @property
     def suscripcion_activa(self):
         if not self.fecha_vencimiento:

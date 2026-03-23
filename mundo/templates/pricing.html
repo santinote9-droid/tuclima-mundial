@@ -164,7 +164,7 @@
         <strong style="color:#fff;"> {{ user.username }}</strong>
         <span style="margin:0 8px;color:#334155;">|</span>
         <a href="/mi-cuenta/" style="color:#a5b4fc;text-decoration:none;font-weight:600;margin-right:10px;"><i class="fas fa-user-circle"></i> Mi cuenta</a>
-        <a href="/logout/" style="color:#ef4444;text-decoration:none;font-weight:600;">Salir <i class="fas fa-sign-out-alt"></i></a>
+        <a href="/" style="color:#64748b;text-decoration:none;font-weight:600;">← Inicio</a>
     {% else %}
         <a href="/login/" style="color:#3b82f6;text-decoration:none;font-weight:bold;background:rgba(15,23,42,.8);padding:8px 16px;border-radius:20px;border:1px solid #3b82f6;">Ingresar</a>
     {% endif %}
@@ -365,6 +365,200 @@
         Todos los planes incluyen <b>acceso completo a los 4 modos Pro</b> y <b>IA Gemini</b>.<br>
         La <b>Memoria IA por modo</b> guarda el contexto de tus conversaciones — configurable en Mi Cuenta.<br>
         ¿Dudas? <a href="mailto:climapro00@gmail.com">climapro00@gmail.com</a>
+    </div>
+
+    <!-- ── Tabla comparativa de funcionalidades ── -->
+    <div style="margin-top:68px;" id="comparativa">
+        <div style="text-align:center;margin-bottom:32px;">
+            <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <div style="width:40px;height:40px;border-radius:11px;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-table-list" style="color:#818cf8;"></i>
+                </div>
+                <h2 style="font-size:1.7rem;font-weight:800;background:linear-gradient(90deg,#818cf8,#c084fc);-webkit-background-clip:text;color:transparent;margin:0;">Comparativa de funcionalidades</h2>
+            </div>
+            <p style="color:#64748b;font-size:.9rem;">Todo lo que incluye cada plan, de un vistazo</p>
+        </div>
+
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+        <table style="width:100%;border-collapse:collapse;min-width:580px;font-size:.85rem;">
+            <thead>
+                <tr>
+                    <th style="text-align:left;padding:14px 18px;color:#475569;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid #1e293b;">Funcionalidad</th>
+                    <th style="text-align:center;padding:14px 12px;border-bottom:1px solid #1e293b;white-space:nowrap;">
+                        <div style="display:inline-flex;align-items:center;gap:6px;">
+                            <i class="fas fa-bolt" style="color:#f59e0b;font-size:.9rem;"></i>
+                            <span style="color:#f59e0b;font-weight:800;">Starter</span>
+                        </div>
+                        <div style="color:#475569;font-size:.68rem;margin-top:2px;">$20/mes</div>
+                    </th>
+                    <th style="text-align:center;padding:14px 12px;border-bottom:1px solid #334155;background:rgba(99,102,241,.06);white-space:nowrap;">
+                        <div style="display:inline-flex;align-items:center;gap:6px;">
+                            <i class="fas fa-rocket" style="color:#3b82f6;font-size:.9rem;"></i>
+                            <span style="color:#3b82f6;font-weight:800;">Plus</span>
+                        </div>
+                        <div style="color:#475569;font-size:.68rem;margin-top:2px;">$35/mes</div>
+                        <div style="background:rgba(99,102,241,.2);color:#a5b4fc;font-size:.6rem;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:4px;display:inline-block;">Más popular</div>
+                    </th>
+                    <th style="text-align:center;padding:14px 12px;border-bottom:1px solid #1e293b;white-space:nowrap;">
+                        <div style="display:inline-flex;align-items:center;gap:6px;">
+                            <i class="fas fa-gem" style="color:#a855f7;font-size:.9rem;"></i>
+                            <span style="color:#a855f7;font-weight:800;">Pro IA</span>
+                        </div>
+                        <div style="color:#475569;font-size:.68rem;margin-top:2px;">$75/mes</div>
+                    </th>
+                    <th style="text-align:center;padding:14px 12px;border-bottom:1px solid #1e293b;white-space:nowrap;">
+                        <div style="display:inline-flex;align-items:center;gap:6px;">
+                            <i class="fas fa-star" style="color:#eab308;font-size:.9rem;"></i>
+                            <span style="color:#eab308;font-weight:800;">Power</span>
+                        </div>
+                        <div style="color:#475569;font-size:.68rem;margin-top:2px;">$150/mes</div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="comp-tbody">
+                <!-- Tokens -->
+                <tr style="background:rgba(255,255,255,.02);">
+                    <td style="padding:13px 18px;color:#94a3b8;border-bottom:1px solid #1e293b;">
+                        <i class="fas fa-microchip" style="color:#818cf8;margin-right:8px;width:16px;"></i>
+                        Tokens IA / día
+                    </td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;color:#f59e0b;font-weight:700;">42,000</td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #334155;background:rgba(99,102,241,.04);color:#3b82f6;font-weight:700;">75,000</td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;color:#a855f7;font-weight:700;">150,000</td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;color:#eab308;font-weight:700;">300,000</td>
+                </tr>
+                <!-- Sectores -->
+                <tr>
+                    <td style="padding:13px 18px;color:#94a3b8;border-bottom:1px solid #1e293b;">
+                        <i class="fas fa-globe" style="color:#34d399;margin-right:8px;width:16px;"></i>
+                        Sectores disponibles
+                    </td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;">
+                        <span style="color:#94a3b8;font-size:.82rem;">1 sector<br><span style="color:#475569;font-size:.72rem;">(a elección)</span></span>
+                    </td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #334155;background:rgba(99,102,241,.04);">
+                        <span style="color:#4ade80;font-weight:700;">Todos 4</span>
+                    </td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;">
+                        <span style="color:#4ade80;font-weight:700;">Todos 4</span>
+                    </td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;">
+                        <span style="color:#4ade80;font-weight:700;">Todos 4</span>
+                    </td>
+                </tr>
+                <!-- Historial -->
+                <tr style="background:rgba(255,255,255,.02);">
+                    <td style="padding:13px 18px;color:#94a3b8;border-bottom:1px solid #1e293b;">
+                        <i class="fas fa-clock-rotate-left" style="color:#60a5fa;margin-right:8px;width:16px;"></i>
+                        Historial de consultas
+                    </td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;color:#94a3b8;">7 días</td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #334155;background:rgba(99,102,241,.04);color:#3b82f6;font-weight:600;">30 días</td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;color:#a855f7;font-weight:600;">90 días</td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;color:#eab308;font-weight:700;">365 días</td>
+                </tr>
+                <!-- Memoria persistente -->
+                <tr>
+                    <td style="padding:13px 18px;color:#94a3b8;border-bottom:1px solid #1e293b;">
+                        <i class="fas fa-brain" style="color:#f59e0b;margin-right:8px;width:16px;"></i>
+                        Memoria IA persistente
+                    </td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-xmark" style="color:#ef4444;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #334155;background:rgba(99,102,241,.04);"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                </tr>
+                <!-- Exportar Excel -->
+                <tr style="background:rgba(255,255,255,.02);">
+                    <td style="padding:13px 18px;color:#94a3b8;border-bottom:1px solid #1e293b;">
+                        <i class="fas fa-file-excel" style="color:#22c55e;margin-right:8px;width:16px;"></i>
+                        Exportar a Excel
+                    </td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-xmark" style="color:#ef4444;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #334155;background:rgba(99,102,241,.04);"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                </tr>
+                <!-- Subir archivos (Devorador) -->
+                <tr>
+                    <td style="padding:13px 18px;color:#94a3b8;border-bottom:1px solid #1e293b;">
+                        <i class="fas fa-file-upload" style="color:#a855f7;margin-right:8px;width:16px;"></i>
+                        Subir archivos (CSV/Excel/JSON)
+                    </td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-xmark" style="color:#ef4444;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #334155;background:rgba(99,102,241,.04);"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                </tr>
+                <!-- Alertas proactivas -->
+                <tr style="background:rgba(255,255,255,.02);">
+                    <td style="padding:13px 18px;color:#94a3b8;border-bottom:1px solid #1e293b;">
+                        <i class="fas fa-bell" style="color:#f97316;margin-right:8px;width:16px;"></i>
+                        Alertas proactivas
+                    </td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-xmark" style="color:#ef4444;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #334155;background:rgba(99,102,241,.04);"><i class="fas fa-xmark" style="color:#ef4444;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                </tr>
+                <!-- Comparador científico -->
+                <tr>
+                    <td style="padding:13px 18px;color:#94a3b8;border-bottom:1px solid #1e293b;">
+                        <i class="fas fa-chart-line" style="color:#60a5fa;margin-right:8px;width:16px;"></i>
+                        Comparador científico
+                    </td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #334155;background:rgba(99,102,241,.04);"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                </tr>
+                <!-- Laboratorio 3D -->
+                <tr style="background:rgba(255,255,255,.02);">
+                    <td style="padding:13px 18px;color:#94a3b8;border-bottom:1px solid #1e293b;">
+                        <i class="fas fa-cube" style="color:#34d399;margin-right:8px;width:16px;"></i>
+                        Laboratorio 3D
+                    </td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #334155;background:rgba(99,102,241,.04);"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;"><i class="fas fa-check" style="color:#4ade80;"></i></td>
+                </tr>
+                <!-- Soporte -->
+                <tr>
+                    <td style="padding:13px 18px;color:#94a3b8;border-bottom:none;">
+                        <i class="fas fa-headset" style="color:#818cf8;margin-right:8px;width:16px;"></i>
+                        Soporte
+                    </td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:none;color:#64748b;font-size:.8rem;">Email</td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:none;background:rgba(99,102,241,.04);color:#94a3b8;font-size:.8rem;">Email prioritario</td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:none;color:#a5b4fc;font-size:.8rem;font-weight:600;">Email + chat</td>
+                    <td style="text-align:center;padding:13px 12px;border-bottom:none;color:#eab308;font-size:.8rem;font-weight:700;">Dedicado</td>
+                </tr>
+            </tbody>
+        </table>
+        </div>
+
+        <!-- CTA row debajo de la tabla -->
+        <div style="display:grid;grid-template-columns:1fr repeat(4,1fr);gap:8px;margin-top:20px;min-width:580px;" class="comp-cta-grid">
+            <div></div>
+            <div style="text-align:center;padding:6px 4px;">
+                <a href="/activar-plan/?paquete=starter_1m" class="tok-btn" style="background:linear-gradient(135deg,#f59e0b,#fb923c);box-shadow:0 4px 14px rgba(245,158,11,.3);font-size:.78rem;padding:10px 8px;">Activar <i class="fas fa-arrow-right btn-arrow"></i></a>
+            </div>
+            <div style="text-align:center;padding:6px 4px;">
+                <a href="/activar-plan/?paquete=plus_1m" class="tok-btn" style="background:linear-gradient(135deg,#3b82f6,#818cf8);box-shadow:0 4px 14px rgba(59,130,246,.3);font-size:.78rem;padding:10px 8px;">Activar <i class="fas fa-arrow-right btn-arrow"></i></a>
+            </div>
+            <div style="text-align:center;padding:6px 4px;">
+                <a href="/activar-plan/?paquete=pro_ia_1m" class="tok-btn" style="background:linear-gradient(135deg,#a855f7,#ec4899);box-shadow:0 4px 14px rgba(168,85,247,.3);font-size:.78rem;padding:10px 8px;">Activar <i class="fas fa-arrow-right btn-arrow"></i></a>
+            </div>
+            <div style="text-align:center;padding:6px 4px;">
+                <a href="/activar-plan/?paquete=power_1m" class="tok-btn" style="background:linear-gradient(135deg,#eab308,#f59e0b);box-shadow:0 4px 14px rgba(234,179,8,.3);font-size:.78rem;padding:10px 8px;">Activar <i class="fas fa-arrow-right btn-arrow"></i></a>
+            </div>
+        </div>
+        <style>
+        @media(max-width:640px){
+            .comp-cta-grid { display:none; }
+        }
+        </style>
     </div>
 
 </div><!-- /page-w -->

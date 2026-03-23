@@ -217,6 +217,7 @@
 
         {% if guardado %}<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:8px 14px;color:#34d399;font-size:.83rem;margin-bottom:14px;"><i class="fas fa-check-circle"></i> Preferencias guardadas</div>{% endif %}
 
+        {% if puede_alertas %}
         <form method="POST">
             {% csrf_token %}
             <input type="hidden" name="accion" value="alertas">
@@ -293,6 +294,20 @@
                 <i class="fas fa-bell"></i> Guardar alertas
             </button>
         </form>
+        {% else %}
+        <!-- Alertas bloqueadas: requiere plan Pro IA o Power -->
+        <div style="text-align:center; padding:28px 16px;">
+            <div style="font-size:2.4rem; margin-bottom:12px;">🔔</div>
+            <div style="color:#f1f5f9; font-weight:700; font-size:1.05rem; margin-bottom:8px;">Alertas Proactivas</div>
+            <div style="color:#64748b; font-size:0.88rem; margin-bottom:20px; max-width:320px; margin-left:auto; margin-right:auto; line-height:1.6;">
+                Recibí reportes climáticos diarios por email con análisis IA para tu sector. Disponible desde el plan <strong style="color:#a78bfa;">Pro IA</strong>.
+            </div>
+            <a href="/pricing/" style="display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg,#7c3aed,#4f46e5); color:#fff; padding:10px 22px; border-radius:10px; text-decoration:none; font-weight:600; font-size:0.9rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                <i class="fas fa-arrow-up"></i> Mejorar plan
+            </a>
+            <div style="margin-top:14px; color:#475569; font-size:0.78rem;">Tu plan actual: <strong style="color:#94a3b8; text-transform:capitalize;">{{ plan_nivel }}</strong></div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- ── Tokens IA ── -->

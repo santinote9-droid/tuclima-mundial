@@ -838,10 +838,23 @@ def agro(request):
     # 1. Seguridad y Suscripción
     if not request.user.is_authenticated:
         return redirect('login')
-    
-    # Asumiendo que tienes un sistema de perfiles, si no, comenta estas 2 lineas
+
     if hasattr(request.user, 'perfil') and not request.user.perfil.suscripcion_activa:
         return redirect('pricing')
+
+    # 1b. Control de acceso sectorial (plan Starter = 1 sector)
+    if hasattr(request.user, 'perfil'):
+        perfil = request.user.perfil
+        if not perfil.tiene_acceso_sector('agro'):
+            return render(request, 'sector_bloqueado.html', {
+                'sector_bloqueado': 'Agro',
+                'sector_actual': perfil.sector_elegido,
+                'plan_nivel': perfil.plan_nivel,
+            })
+        # Si es Starter y aún no eligió sector, registrarlo
+        if perfil.plan_nivel == 'starter' and not perfil.sector_elegido:
+            perfil.sector_elegido = 'agro'
+            perfil.save(update_fields=['sector_elegido'])
 
     # 2. Obtener Coordenadas (con valores por defecto seguros)
     try:
@@ -1095,6 +1108,12 @@ def agro(request):
             'lat': lat, 'lon': lon
         }
 
+    # Permisos de plan
+    _perfil = getattr(request.user, 'perfil', None)
+    contexto['plan_nivel'] = _perfil.plan_nivel if _perfil else 'free'
+    contexto['puede_excel'] = _perfil.puede_excel if _perfil else False
+    contexto['puede_devorador'] = _perfil.puede_devorador if _perfil else False
+
     return render(request, 'agro.html', contexto)
     
 
@@ -1104,14 +1123,26 @@ def agro(request):
 # 2. VISTA: MODO NAVAL (Náutica / Mar)
 # ==========================================
 def naval(request):
-    
 
     # 1. SEGURIDAD Y SUSCRIPCIÓN
     if not request.user.is_authenticated:
         return redirect('login')
-    
+
     if hasattr(request.user, 'perfil') and not request.user.perfil.suscripcion_activa:
         return redirect('pricing')
+
+    # 1b. Control de acceso sectorial (plan Starter = 1 sector)
+    if hasattr(request.user, 'perfil'):
+        perfil = request.user.perfil
+        if not perfil.tiene_acceso_sector('naval'):
+            return render(request, 'sector_bloqueado.html', {
+                'sector_bloqueado': 'Naval',
+                'sector_actual': perfil.sector_elegido,
+                'plan_nivel': perfil.plan_nivel,
+            })
+        if perfil.plan_nivel == 'starter' and not perfil.sector_elegido:
+            perfil.sector_elegido = 'naval'
+            perfil.save(update_fields=['sector_elegido'])
 
     # 2. GESTIÓN DE COORDENADAS (PRIORIDAD USUARIO)
     # Intentamos obtener lo que manda el dashboard/mapa
@@ -1370,6 +1401,12 @@ def naval(request):
             'grafico_naval': {'fechas': '[]', 'olas': '[]', 'viento': '[]'}
         }
 
+    # Permisos de plan
+    _perfil = getattr(request.user, 'perfil', None)
+    contexto['plan_nivel'] = _perfil.plan_nivel if _perfil else 'free'
+    contexto['puede_excel'] = _perfil.puede_excel if _perfil else False
+    contexto['puede_devorador'] = _perfil.puede_devorador if _perfil else False
+
     return render(request, 'naval.html', contexto)
 
 # ==========================================
@@ -1378,9 +1415,22 @@ def aereo(request):
     # 1. SEGURIDAD
     if not request.user.is_authenticated:
         return redirect('login')
-    
+
     if hasattr(request.user, 'perfil') and not request.user.perfil.suscripcion_activa:
         return redirect('pricing')
+
+    # 1b. Control de acceso sectorial (plan Starter = 1 sector)
+    if hasattr(request.user, 'perfil'):
+        perfil = request.user.perfil
+        if not perfil.tiene_acceso_sector('aereo'):
+            return render(request, 'sector_bloqueado.html', {
+                'sector_bloqueado': 'Aéreo',
+                'sector_actual': perfil.sector_elegido,
+                'plan_nivel': perfil.plan_nivel,
+            })
+        if perfil.plan_nivel == 'starter' and not perfil.sector_elegido:
+            perfil.sector_elegido = 'aereo'
+            perfil.save(update_fields=['sector_elegido'])
 
     # 2. COORDENADAS
     lat_raw = request.GET.get('lat', '-34.60')
@@ -1556,18 +1606,37 @@ def aereo(request):
         # En caso de fallo, mostramos esto para debug
         contexto = {'error': 'Error de Datos'}
 
+    # Permisos de plan
+    _perfil = getattr(request.user, 'perfil', None)
+    contexto['plan_nivel'] = _perfil.plan_nivel if _perfil else 'free'
+    contexto['puede_excel'] = _perfil.puede_excel if _perfil else False
+    contexto['puede_devorador'] = _perfil.puede_devorador if _perfil else False
+
     return render(request, 'aereo.html', contexto)
 
 
 # --- VISTA ENERGÍA (ENERGY OPS) ---
 def energia(request):
-    
+
     # 1. SEGURIDAD
     if not request.user.is_authenticated:
         return redirect('login')
-    
+
     if hasattr(request.user, 'perfil') and not request.user.perfil.suscripcion_activa:
         return redirect('pricing')
+
+    # 1b. Control de acceso sectorial (plan Starter = 1 sector)
+    if hasattr(request.user, 'perfil'):
+        perfil = request.user.perfil
+        if not perfil.tiene_acceso_sector('energia'):
+            return render(request, 'sector_bloqueado.html', {
+                'sector_bloqueado': 'Energía',
+                'sector_actual': perfil.sector_elegido,
+                'plan_nivel': perfil.plan_nivel,
+            })
+        if perfil.plan_nivel == 'starter' and not perfil.sector_elegido:
+            perfil.sector_elegido = 'energia'
+            perfil.save(update_fields=['sector_elegido'])
 
     # 2. COORDENADAS
     lat_raw = request.GET.get('lat', '-34.60')
@@ -1739,6 +1808,12 @@ def energia(request):
     except Exception as e:
         print(f"Error Energia: {e}")
         contexto = {'error': 'Sin datos'}
+
+    # Permisos de plan
+    _perfil = getattr(request.user, 'perfil', None)
+    contexto['plan_nivel'] = _perfil.plan_nivel if _perfil else 'free'
+    contexto['puede_excel'] = _perfil.puede_excel if _perfil else False
+    contexto['puede_devorador'] = _perfil.puede_devorador if _perfil else False
 
     return render(request, 'energia.html', contexto)
 
@@ -2073,6 +2148,10 @@ def ls_checkout(request):
         return redirect('recargar_tokens')
 
     store_slug = settings.LEMONSQUEEZY_STORE_SLUG
+    if not store_slug:
+        logger.warning('[LS_CHECKOUT] LEMONSQUEEZY_STORE_SLUG no configurado — redirigiendo a página de pago')
+        return redirect(f'/activar-plan/?paquete={paquete_id}')
+
     variant_id = paquete['ls_variant_id']
     site       = settings.SITE_URL.rstrip('/')
 
@@ -2793,6 +2872,16 @@ def procesar_archivo_sectorial(request):
     Vista principal para procesar archivos y detectar sector automáticamente
     """
     try:
+        # --- Verificar permisos de plan ---
+        if request.user.is_authenticated:
+            perfil = request.user.perfil
+            if not perfil.puede_devorador:
+                return JsonResponse({
+                    'error': 'plan_insuficiente',
+                    'mensaje': 'La subida de archivos está disponible desde el plan Plus. Actualizá tu plan en /pricing/.',
+                    'plan_nivel': perfil.plan_nivel,
+                }, status=403)
+
         # --- Verificar tokens disponibles ---
         from .models import COSTO_TOKENS
         if request.user.is_authenticated:
@@ -3619,8 +3708,16 @@ def panel_feedback(request):
 @login_required
 def devorador_vista(request):
     """Renderiza la página del Devorador de Reportes."""
+    if not request.user.is_authenticated:
+        return redirect('login')
     if hasattr(request.user, 'perfil') and not request.user.perfil.suscripcion_activa:
         return redirect('pricing')
+    if hasattr(request.user, 'perfil') and not request.user.perfil.puede_devorador:
+        return render(request, 'sector_bloqueado.html', {
+            'sector_bloqueado': 'Devorador de Reportes',
+            'motivo': 'Esta función está disponible desde el plan <strong>Plus</strong> o superior.',
+            'plan_nivel': request.user.perfil.plan_nivel,
+        })
     return render(request, 'devorador_reporte.html')
 
 
@@ -3633,6 +3730,13 @@ def devorador_api(request):
     """
     if hasattr(request.user, 'perfil') and not request.user.perfil.suscripcion_activa:
         return JsonResponse({'error': 'Suscripción PRO requerida para usar el Devorador de Reportes.'}, status=403)
+
+    # Gate por plan: solo pro_ia y power pueden usar el Devorador
+    if hasattr(request.user, 'perfil') and not request.user.perfil.puede_devorador:
+        return JsonResponse(
+            {'error': 'El Devorador de Reportes está disponible desde el plan Pro IA. Actualizá tu plan en /pricing/.'},
+            status=403
+        )
 
     # Verificar tokens disponibles
     from .models import COSTO_TOKENS
@@ -4107,15 +4211,17 @@ def mi_cuenta(request):
     if request.method == 'POST':
         accion = request.POST.get('accion', 'preferencias')
         if accion == 'alertas':
-            perfil.alertas_activas = request.POST.get('alertas_activas') == 'on'
-            sectores = request.POST.getlist('alertas_sectores')
-            perfil.alertas_sectores = ','.join(s for s in sectores if s in ('agro', 'naval', 'aereo', 'energia'))
-            try:
-                perfil.hora_alerta = max(0, min(23, int(request.POST.get('hora_alerta', 7))))
-            except (ValueError, TypeError):
-                perfil.hora_alerta = 7
-            perfil.ubicacion_nombre = request.POST.get('ubicacion_nombre', '').strip()[:100]
-            perfil.save(update_fields=['alertas_activas', 'alertas_sectores', 'hora_alerta', 'ubicacion_nombre'])
+            # Solo pro_ia y power pueden activar alertas
+            if perfil.puede_alertas_proactivas:
+                perfil.alertas_activas = request.POST.get('alertas_activas') == 'on'
+                sectores = request.POST.getlist('alertas_sectores')
+                perfil.alertas_sectores = ','.join(s for s in sectores if s in ('agro', 'naval', 'aereo', 'energia'))
+                try:
+                    perfil.hora_alerta = max(0, min(23, int(request.POST.get('hora_alerta', 7))))
+                except (ValueError, TypeError):
+                    perfil.hora_alerta = 7
+                perfil.ubicacion_nombre = request.POST.get('ubicacion_nombre', '').strip()[:100]
+                perfil.save(update_fields=['alertas_activas', 'alertas_sectores', 'hora_alerta', 'ubicacion_nombre'])
         else:
             nuevo_valor = request.POST.get('renovacion_automatica') == 'on'
             perfil.renovacion_automatica = nuevo_valor
@@ -4139,6 +4245,8 @@ def mi_cuenta(request):
 
     return render(request, 'mi_cuenta.html', {
         'perfil': perfil,
+        'plan_nivel': perfil.plan_nivel,
+        'puede_alertas': perfil.puede_alertas_proactivas,
         'plan_tokens': plan_tokens,
         'tokens_disponibles': perfil.tokens_disponibles,
         'costos': COSTO_TOKENS,
