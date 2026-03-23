@@ -1284,10 +1284,6 @@
                     window.chartInstance.update();
                 }
 
-                // Inputs de coordenadas (ocultar el contenedor para no distraer)
-                const contCoord = document.getElementById('contenedorCoordenadas');
-                if (contCoord) contCoord.style.display = 'none';
-
                 // Actualizar links de sectores (sidebar + bottom nav)
                 document.querySelectorAll('.sidebar-pro-link, .bnav-pro-link').forEach(a => {
                     const url = new URL(a.href, location.origin);
