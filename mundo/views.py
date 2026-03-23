@@ -2153,6 +2153,22 @@ def ls_checkout(request):
     site      = settings.SITE_URL.rstrip('/')
     variant_id = paquete['ls_variant_id']
 
+    # Si no hay store_id configurado (o es incorrecto), auto-detectarlo desde la API
+    if api_key and not store_id:
+        try:
+            import urllib.request as _req2
+            import json as _json2
+            req2 = _req2.Request(
+                'https://api.lemonsqueezy.com/v1/stores',
+                headers={'Authorization': f'Bearer {api_key}', 'Accept': 'application/vnd.api+json'},
+            )
+            with _req2.urlopen(req2, timeout=8) as r2:
+                stores_body = _json2.loads(r2.read().decode('utf-8'))
+            store_id = stores_body['data'][0]['id']
+            logger.info(f'[LS_CHECKOUT] Store ID auto-detectado: {store_id}')
+        except Exception as e2:
+            logger.error(f'[LS_CHECKOUT] Error obteniendo stores: {e2}')
+
     # Si la API key está configurada, crear checkout dinámico vía API (recomendado)
     if api_key and store_id:
         try:
@@ -2194,23 +2210,20 @@ def ls_checkout(request):
             return redirect(checkout_url)
         except Exception as e:
             logger.error(f'[LS_CHECKOUT] Error creando checkout vía API: {e}')
-            # Rompemos el silencio para ver qué le pasa a la API
             from django.http import HttpResponse
-            return HttpResponse(f"<h2>Error en la API de Lemon Squeezy:</h2> <p>{e}</p>")
-
-    # Fallback: URL directa limpia (sin custom params en URL — causan errores JS en LS)
-    store_slug = getattr(settings, 'LEMONSQUEEZY_STORE_SLUG', '')
-    if not store_slug:
-        logger.warning('[LS_CHECKOUT] Sin API key ni store slug configurados')
-        return redirect(f'/activar-plan/?paquete={paquete_id}')
-
-    # Guardar el paquete en sesión para recuperarlo cuando LS nos devuelva el usuario
-    request.session['ls_paquete_id_pendiente'] = paquete_id
-    request.session['ls_user_id_pendiente']    = request.user.id
-    request.session.modified = True
-
-    checkout_url = f"https://{store_slug}.lemonsqueezy.com/checkout/buy/{variant_id}"
-    return redirect(checkout_url)
+            import urllib.error as _uerr
+            detalle = str(e)
+            if isinstance(e, _uerr.HTTPError):
+                try:
+                    detalle = e.read().decode('utf-8')
+                except Exception:
+                    pass
+            return HttpResponse(
+                f"<h2>Error en la API de Lemon Squeezy:</h2>"
+                f"<p><b>store_id usado:</b> {store_id}</p>"
+                f"<p><b>variant_id usado:</b> {variant_id}</p>"
+                f"<pre>{detalle}</pre>"
+            )
 
 
 @login_required
