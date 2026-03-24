@@ -212,7 +212,7 @@
         .max { color: #ff6b6b; font-weight: bold; } .min { color: #4ecdc4; font-weight: bold; }
         
         /* Noticias */
-        .contenedor-noticias { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; }
+        .contenedor-noticias { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; }
         .tarjeta-noticia { background: rgba(30, 30, 30, 0.9); border-radius: 15px; width: 300px; overflow: hidden; text-align: left; transition: transform 0.3s; }
         .tarjeta-noticia:hover { transform: translateY(-5px); }
         .foto-noticia { width: 100%; height: 160px; object-fit: cover; }
@@ -388,6 +388,41 @@
                 padding: 15px !important;
                 gap: 15px !important;
             }
+
+            /* ── Carrusel horario tablet: ítems más amplios, scroll táctil ── */
+            .seccion-horas {
+                padding: 20px 14px !important;
+                border-radius: 16px !important;
+                max-width: 100% !important;
+            }
+            .carrusel-horas {
+                padding: 14px 12px !important;
+                gap: 10px !important;
+                scrollbar-width: thin !important;
+            }
+            .carrusel-horas::-webkit-scrollbar { height: 5px !important; }
+            .item-hora {
+                min-width: 78px !important;
+                padding: 12px 8px !important;
+                border-radius: 16px !important;
+            }
+            .icono-hora { width: 42px !important; height: 42px !important; }
+
+            /* ── Títulos de sección: centrar en tablet ── */
+            .main-container h2 {
+                text-align: center !important;
+                margin-left: 0 !important;
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+                justify-content: center !important;
+            }
+
+            /* ── Footer: 2 columnas en tablet (769-900px) ── */
+            .footer-content {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 28px !important;
+                padding: 0 18px !important;
+            }
         }
 
         /* ---- MÓVIL (≤ 600px) ---- */
@@ -452,16 +487,27 @@
             }
             .icono-chico { width: 38px !important; height: 38px !important; }
 
-            /* Carrusel horario */
+            /* ── Carrusel horario móvil: scroll sin barra, ítems touch-friendly ── */
+            .seccion-horas {
+                padding: 14px 10px !important;
+                border-radius: 14px !important;
+            }
             .carrusel-horas {
-                gap: 6px !important;
-                padding: 10px 6px !important;
+                gap: 8px !important;
+                padding: 12px 10px !important;
+                scrollbar-width: none !important;
+                -webkit-overflow-scrolling: touch;
+            }
+            .carrusel-horas::-webkit-scrollbar {
+                display: none !important;
+                height: 0 !important;
             }
             .item-hora {
-                min-width: 58px !important;
-                padding: 7px 4px !important;
+                min-width: 70px !important;
+                padding: 10px 5px !important;
+                border-radius: 14px !important;
             }
-            .icono-hora { width: 32px !important; height: 32px !important; }
+            .icono-hora { width: 36px !important; height: 36px !important; }
 
             /* Detalles: 2 columnas en móvil */
             .detalle-grid {
@@ -498,15 +544,46 @@
                 padding: 8px !important;
                 gap: 12px !important;
             }
-            .tarjeta-noticia-mejorada { min-height: unset !important; }
+            .tarjeta-noticia-mejorada { min-height: unset !important; height: auto !important; }
+
+            /* ── Noticias: reducir imagen en móvil ── */
+            .foto-noticia-mejorada { height: 130px !important; }
+
+            /* ── Paper cards: eliminar altura fija del resumen ── */
+            .paper-card p {
+                height: auto !important;
+                max-height: 80px !important;
+            }
+
+            /* ── Títulos de sección: centrar en móvil ── */
+            .main-container h2 {
+                text-align: center !important;
+                margin-left: 0 !important;
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+                justify-content: center !important;
+                font-size: 1.1em !important;
+            }
 
             /* Footer: centrar todo */
             .footer-bottom {
                 flex-direction: column !important;
                 text-align: center !important;
+                gap: 10px !important;
             }
             .legal-links {
+                flex-direction: row !important;
+                flex-wrap: wrap !important;
                 justify-content: center !important;
+                gap: 12px !important;
+            }
+            .site-footer {
+                padding: 36px 0 20px 0 !important;
+            }
+
+            /* Separadores: menos margen en móvil */
+            .main-container hr {
+                margin: 24px 0 !important;
             }
 
             /* Gráfico: limitar altura en móvil */
@@ -1637,7 +1714,7 @@
 
     <br>
 
-    <div style="width: 100%; max-width: 1000px; margin: 0 auto; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); padding: 30px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.5);">
+    <div class="seccion-horas" style="width: 100%; max-width: 1000px; margin: 0 auto; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); padding: 30px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.5);">
         <h3 id="tituloHoras" style="color: #00d2ff; margin-bottom: 20px; text-align: center; font-size: 1.3em;">Pronóstico por Horas (HOY)</h3>
         
         <div class="carrusel-horas" id="carruselHoras">
@@ -2491,19 +2568,22 @@
     @media (max-width: 768px) {
         .footer-content {
             grid-template-columns: 1fr;
-            gap: 30px;
+            gap: 28px;
             padding: 0 15px;
         }
 
         .footer-bottom { 
             flex-direction: column; 
             text-align: center;
-            padding: 25px 15px 0 15px;
+            padding: 20px 15px 0 15px;
+            gap: 10px;
         }
 
         .legal-links { 
-            flex-direction: column;
-            gap: 10px;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
         }
     }
 </style>
