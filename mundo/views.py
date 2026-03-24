@@ -57,26 +57,9 @@ _METEO_HEADERS = {
 
 def _get_meteo(url: str, timeout: int = 6) -> dict:
     """
-    GET a Open-Meteo con caché persistente en base de datos.
-    - Respuestas válidas: cacheadas 30 min (settings.CACHES TIMEOUT).
-    - Errores de rate-limit: cacheados 60 s para no seguir gastando cuota.
-    - 100 usuarios pidiendo el mismo lugar = 1 sola llamada a la API.
+    GET a Open-Meteo sin caché — datos siempre frescos de la API.
     """
-    cache_key = 'meteo_' + hashlib.md5(url.encode()).hexdigest()
-    cached_data = django_cache.get(cache_key)
-    if cached_data is not None:
-        return cached_data
-
-    data = requests.get(url, timeout=timeout, headers=_METEO_HEADERS).json()
-
-    if not data.get('error') and ('current' in data or 'hourly' in data):
-        # Respuesta válida: guardar 30 minutos (usa el TIMEOUT de settings)
-        django_cache.set(cache_key, data)
-    else:
-        # Error de API (rate-limit, fuera de rango, etc): guardar solo 60 segundos
-        django_cache.set(cache_key, data, timeout=60)
-
-    return data
+    return requests.get(url, timeout=timeout, headers=_METEO_HEADERS).json()
 
 
 # ============================================================
@@ -433,15 +416,17 @@ def home(request):
             contexto['alerta_color'] = alerta_color
             contexto['alerta_tipo'] = alerta_tipo
 
-            # Resto de variables
-            contexto['temp'] = actual['temperature_2m']
-            contexto['sensacion'] = actual['apparent_temperature']
-            contexto['humedad'] = actual['relative_humidity_2m']
-            contexto['viento'] = actual['wind_speed_10m']
-            contexto['presion'] = actual['surface_pressure']
-            contexto['visibilidad'] = vis_km
-            contexto['uv_index'] = uv
-            contexto['lluvia_hoy'] = actual['precipitation']
+            # Resto de variables — todo redondeado a 1 decimal
+            def r1(v): return round(float(v or 0), 1)
+            def r1s(v): v2 = r1(v); return 0.0 if v2 == 0 else v2  # evita -0.0
+            contexto['temp']        = r1(actual['temperature_2m'])
+            contexto['sensacion']   = r1s(actual['apparent_temperature'])
+            contexto['humedad']     = r1(actual['relative_humidity_2m'])
+            contexto['viento']      = r1(actual['wind_speed_10m'])
+            contexto['presion']     = r1(actual['surface_pressure'])
+            contexto['visibilidad'] = r1(vis_km)
+            contexto['uv_index']    = uv
+            contexto['lluvia_hoy']  = r1(actual['precipitation'])
             
             contexto['icono'] = obtener_icono_url(code, actual['is_day'])
             contexto['fondo'] = obtener_fondo(code, actual['is_day'])
@@ -501,7 +486,7 @@ def home(request):
                 nom = "HOY" if i == 0 else dias[dt.weekday()]
                 lista_pronostico.append({
                     'nombre_dia': nom, 'fecha_corta': dt.strftime('%d/%m'), 'fecha_full': daily['time'][i],
-                    'max': daily['temperature_2m_max'][i], 'min': daily['temperature_2m_min'][i],
+                    'max': r1(daily['temperature_2m_max'][i]), 'min': r1(daily['temperature_2m_min'][i]),
                     'icono': obtener_icono_url(daily['weather_code'][i], 1), 'desc': descifrar_desc(daily['weather_code'][i])
                 })
             contexto['pronostico'] = lista_pronostico
@@ -585,7 +570,10 @@ def clima_data_api(request):
     
     nombre_ciudad = "Ubicación Desconocida"
     pais = ""
-    
+
+    def r1(v): return round(float(v or 0), 1)
+    def r1s(v): v2 = r1(v); return 0.0 if v2 == 0 else v2
+
     try:
         # Búsqueda por ciudad
         if busqueda:
@@ -715,8 +703,8 @@ def clima_data_api(request):
                 'nombre_dia': nom,
                 'fecha_corta': dt.strftime('%d/%m'),
                 'fecha_full': daily['time'][i],
-                'max': daily['temperature_2m_max'][i],
-                'min': daily['temperature_2m_min'][i],
+                'max': r1(daily['temperature_2m_max'][i]),
+                'min': r1(daily['temperature_2m_min'][i]),
                 'icono': obtener_icono_url(daily['weather_code'][i], 1),
                 'desc': descifrar_desc(daily['weather_code'][i])
             })
@@ -747,14 +735,14 @@ def clima_data_api(request):
             'pais': pais,
             'lat': lat,
             'lon': lon,
-            'temp': actual['temperature_2m'],
-            'sensacion': actual['apparent_temperature'],
-            'humedad': actual['relative_humidity_2m'],
-            'viento': actual['wind_speed_10m'],
-            'presion': actual['surface_pressure'],
-            'visibilidad': vis_km,
+            'temp':        r1(actual['temperature_2m']),
+            'sensacion':   r1s(actual['apparent_temperature']),
+            'humedad':     r1(actual['relative_humidity_2m']),
+            'viento':      r1(actual['wind_speed_10m']),
+            'presion':     r1(actual['surface_pressure']),
+            'visibilidad': r1(vis_km),
             'uv_index': uv,
-            'lluvia_hoy': actual['precipitation'],
+            'lluvia_hoy':  r1(actual['precipitation']),
             'icono': obtener_icono_url(code, actual['is_day']),
             'fondo': obtener_fondo(code, actual['is_day']),
             'fondo_url': settings.STATIC_URL + obtener_fondo(code, actual['is_day']),

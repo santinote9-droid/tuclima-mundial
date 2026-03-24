@@ -1406,12 +1406,13 @@
 
                 // Datos meteorológicos — ahora con IDs directos
                 const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-                set('val-sensacion', `${Math.round(data.sensacion)}°`);
-                set('val-humedad',   `${data.humedad}%`);
-                set('val-lluvia',    `${data.lluvia_hoy}mm`);
+                const _s = Number(data.sensacion);
+                set('val-sensacion', `${(_s === 0 ? 0 : _s).toFixed(1)}°`);
+                set('val-humedad',   `${Number(data.humedad).toFixed(1)}%`);
+                set('val-lluvia',    `${Number(data.lluvia_hoy).toFixed(1)}mm`);
                 set('val-sunrise',   data.sunrise || '--:--');
                 set('val-sunset',    data.sunset  || '--:--');
-                set('val-viento',    data.viento  ?? '--');
+                set('val-viento',    data.viento != null ? Number(data.viento).toFixed(1) : '--');
 
                 // Carrusel horario
                 if (data.tira_horas) actualizarCarruselHorario(data.tira_horas);
@@ -1510,9 +1511,9 @@
             if (tn) tn.textContent = data.tipo_nube || '';
             // Visibilidad y Presión
             const vis = document.getElementById('val-visibilidad');
-            if (vis) vis.textContent = `${data.visibilidad} km`;
+            if (vis) vis.textContent = `${Number(data.visibilidad).toFixed(1)} km`;
             const pres = document.getElementById('val-presion');
-            if (pres) pres.textContent = `${data.presion} hPa`;
+            if (pres) pres.textContent = `${Number(data.presion).toFixed(1)} hPa`;
             // Alerta
             const cardAlerta = document.getElementById('card-alerta');
             if (cardAlerta) {
@@ -1684,7 +1685,7 @@
             <div style="text-align: center; flex: 1;">
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/thermometer.svg" style="width: 35px; height: 35px; margin-bottom: 5px;">
                 <div style="font-size: 0.7em; color: #ddd;">SENSACIÓN</div>
-                <div id="val-sensacion" style="font-weight: bold; font-size: 1.2em; color: #ffcc00;">{{ sensacion }}°</div>
+                <div id="val-sensacion" style="font-weight: bold; font-size: 1.2em; color: #ffcc00;">{{ sensacion|floatformat:1 }}°</div>
             </div>
             <div style="width: 2px; height: 50px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.3), transparent); border-radius: 1px;"></div>
             <div style="text-align: center; flex: 1;">
@@ -1696,7 +1697,7 @@
             <div style="text-align: center; flex: 1;">
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/raindrops.svg" style="width: 35px; height: 35px; margin-bottom: 5px;">
                 <div style="font-size: 0.7em; color: #ddd;">LLUVIA</div>
-                <div id="val-lluvia" style="font-weight: bold; font-size: 1.2em; color: #fff;">{{ lluvia_hoy }}mm</div>
+                <div id="val-lluvia" style="font-weight: bold; font-size: 1.2em; color: #fff;">{{ lluvia_hoy|floatformat:1 }}mm</div>
             </div>
         </div>
 
@@ -1717,7 +1718,7 @@
     
     <div style="font-size: 1.5em; display: flex; align-items: center; justify-content: center; gap: 10px;">
         <svg style="width:28px; height:28px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
-        <span id="val-viento">{{ viento }}</span> km/h
+        <span id="val-viento">{{ viento|floatformat:1 }}</span> km/h
     </div>
     
     <p class="coord">Lat: {{ lat }} | Lon: {{ lon }}</p>
@@ -1838,13 +1839,13 @@
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/fog.svg" style="width: 25px; height: 25px;">
                 <div style="color: #ccc; font-size: 0.9em;">VISIBILIDAD</div>
             </div>
-            <div id="val-visibilidad" style="font-size: 1.5em; font-weight: bold; color: #fff;">{{ visibilidad }} km</div>
+            <div id="val-visibilidad" style="font-size: 1.5em; font-weight: bold; color: #fff;">{{ visibilidad|floatformat:1 }} km</div>
             <hr style="border-color: #444; margin: 10px 0;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
                 <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/hurricane.svg" style="width: 25px; height: 25px;">
                 <div style="color: #ccc; font-size: 0.9em;">PRESIÓN</div>
             </div>
-            <div id="val-presion" style="font-size: 1.5em; font-weight: bold; color: #00d2ff;">{{ presion }} hPa</div>
+            <div id="val-presion" style="font-size: 1.5em; font-weight: bold; color: #00d2ff;">{{ presion|floatformat:1 }} hPa</div>
         </div>
 
         <div id="card-alerta" style="background: rgba(0,0,0,0.4); border: 2px solid {{ alerta_color }}; padding: 25px 20px; border-radius: 20px; width: 250px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 0 20px {{ alerta_color }}40;">
