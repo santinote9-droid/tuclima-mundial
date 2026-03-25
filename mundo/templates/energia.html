@@ -605,11 +605,15 @@
             .phys-box, .rec-box { padding: 14px; font-size: 0.85em; }
             /* iOS: evitar zoom automático en inputs */
             .chat-input-area input[type="text"] { font-size: 16px !important; }
-            /* Chat: altura compacta en móvil */
-            .chat-container { height: 360px !important; }
-            .chat-input-area button { padding: 10px 16px !important; font-size: 12px !important; }
-            /* Gráfico del chat: responsivo */
-            #climatChart { max-width: 100% !important; height: auto !important; }
+            /* Chat: altura compacta y bien encuadrado en móvil */
+            .chat-container { height: 360px !important; border-radius: 8px !important; }
+            .chat-input-container { padding: 10px 10px !important; gap: 6px !important; overflow: hidden !important; }
+            #file-preview { display: none !important; }
+            .chat-input-area button { padding: 10px 12px !important; font-size: 12px !important; }
+            /* Chart container del chat: sin desbordamiento */
+            #chart-container { margin: 0 !important; border-radius: 0 !important; }
+            #chart-container canvas, #climatChart { max-width: 100% !important; height: auto !important; }
+            #chart-tabs { padding: 10px 10px 0 !important; }
             /* Smart Meter: apilar gráfico y panel de datos */
             #smart-meter-row { flex-direction: column !important; gap: 16px !important; }
             #smart-panel-datos { width: 100% !important; border-left: none !important; border-top: 1px solid #1e293b; padding-left: 0 !important; padding-top: 16px !important; height: auto !important; flex-direction: row !important; flex-wrap: wrap; justify-content: space-around; gap: 16px; text-align: center; }
@@ -1516,10 +1520,10 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
     // ==========================================
     // DATOS DESDE DJANGO
     // ==========================================
-    const globalLabels = {{ grafico.labels|safe }};
-    const globalSolar = {{ grafico.solar|safe }};
-    const globalViento = {{ grafico.viento|safe }};
-    const globalH2 = {{ grafico.h2|safe }};
+    const globalLabels = {{ grafico.labels|default:"[]"|safe }};
+    const globalSolar = {{ grafico.solar|default:"[]"|safe }};
+    const globalViento = {{ grafico.viento|default:"[]"|safe }};
+    const globalH2 = {{ grafico.h2|default:"[]"|safe }};
     let chartInstance = null;
     let modalChartInstance = null;
 

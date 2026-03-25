@@ -456,11 +456,15 @@
             .info-grid { grid-template-columns: 1fr !important; }
             /* iOS: evitar zoom automático en inputs */
             .chat-input-area input[type="text"] { font-size: 16px !important; }
-            /* Chat: altura compacta en móvil */
-            .chat-container { height: 360px !important; }
-            .chat-input-area button { padding: 10px 16px !important; font-size: 12px !important; }
-            /* Gráfico del chat: responsivo */
-            #climatChart { max-width: 100% !important; height: auto !important; }
+            /* Chat: altura compacta y bien encuadrado en móvil */
+            .chat-container { height: 360px !important; border-radius: 8px !important; }
+            .chat-input-container { padding: 10px 10px !important; gap: 6px !important; overflow: hidden !important; }
+            #file-preview { display: none !important; }
+            .chat-input-area button { padding: 10px 12px !important; font-size: 12px !important; }
+            /* Chart container del chat: sin desbordamiento */
+            #chart-container { margin: 0 !important; border-radius: 0 !important; }
+            #chart-container canvas, #climatChart { max-width: 100% !important; height: auto !important; }
+            #chart-tabs { padding: 10px 10px 0 !important; }
             /* Scroll interno del modal en iOS */
             .modal-content { -webkit-overflow-scrolling: touch; }
         }
@@ -1374,20 +1378,20 @@
             const labels = getLabels();
             const ctx = document.getElementById('aereoChart').getContext('2d');
             
-            const chartLabels = {{ grafico_aereo.labels|safe }};
+            const chartLabels = {{ grafico_aereo.labels|default:"[]"|safe }};
             
             // NUBES (Capas)
-            const c_total = {{ grafico_aereo.nubes_total|safe }};
-            const c_low   = {{ grafico_aereo.nubes_low|safe }};
-            const c_mid   = {{ grafico_aereo.nubes_mid|safe }};
-            const c_high  = {{ grafico_aereo.nubes_high|safe }};
+            const c_total = {{ grafico_aereo.nubes_total|default:"[]"|safe }};
+            const c_low   = {{ grafico_aereo.nubes_low|default:"[]"|safe }};
+            const c_mid   = {{ grafico_aereo.nubes_mid|default:"[]"|safe }};
+            const c_high  = {{ grafico_aereo.nubes_high|default:"[]"|safe }};
             
             // VIENTOS
-            const rawSFC   = {{ grafico_aereo.v_sfc|safe }};
-            const raw2000  = {{ grafico_aereo.v_2000|safe }};
-            const raw5000  = {{ grafico_aereo.v_5000|safe }};
-            const raw10000 = {{ grafico_aereo.v_10000|safe }};
-            const raw30000 = {{ grafico_aereo.v_30000|safe }};
+            const rawSFC   = {{ grafico_aereo.v_sfc|default:"[]"|safe }};
+            const raw2000  = {{ grafico_aereo.v_2000|default:"[]"|safe }};
+            const raw5000  = {{ grafico_aereo.v_5000|default:"[]"|safe }};
+            const raw10000 = {{ grafico_aereo.v_10000|default:"[]"|safe }};
+            const raw30000 = {{ grafico_aereo.v_30000|default:"[]"|safe }};
 
             // Mapeo Nudos
             windDataLevels = {
