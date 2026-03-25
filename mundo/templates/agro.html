@@ -475,7 +475,7 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     
     <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/dark-unica.js"></script>
+    <script src="https://code.highcharts.com/themes/dark-unica.js"></script>
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/modules/export-data.js"></script>
 
@@ -1587,6 +1587,11 @@
     // 2. DIBUJAR GRÁFICO (Con protección anti-errores)
     // ------------------------------------------
     function renderChart() {
+        // Guarda: Highcharts debe estar disponible
+        if (typeof Highcharts === 'undefined') {
+            setTimeout(renderChart, 500);
+            return;
+        }
         // Datos básicos (protegidos)
         const labels = {{ grafico_agro.fechas|default:"[]"|safe }};
         const dataLluvia = {{ grafico_agro.lluvia|default:"[]"|safe }};

@@ -452,7 +452,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/dark-unica.js"></script>
+    <script src="https://code.highcharts.com/themes/dark-unica.js"></script>
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/modules/export-data.js"></script>
     <script src="https://code.highcharts.com/modules/accessibility.js"></script>
@@ -1773,14 +1773,21 @@
 
         // 3. INICIALIZACIÓN Y SINCRONIZACIÓN
         document.addEventListener("DOMContentLoaded", function() {
-            renderNavalChart(); // Dibujar primera vez
-            renderNavalChart7d(); // Pronóstico 7 días
-
-            // Si Weglot está presente, redibujar al cambiar idioma
-            if (typeof Weglot !== 'undefined') {
-                Weglot.on('initialized', function(){ renderNavalChart(); renderNavalChart7d(); });
-                Weglot.on('languageChanged', function(){ renderNavalChart(); renderNavalChart7d(); });
+            // Guarda: si Highcharts no cargó (CDN bloqueado/lento) reintentar hasta 3s
+            function initCharts() {
+                if (typeof Highcharts === 'undefined') {
+                    console.warn('Highcharts no listo, reintentando...');
+                    setTimeout(initCharts, 500);
+                    return;
+                }
+                renderNavalChart();
+                renderNavalChart7d();
+                if (typeof Weglot !== 'undefined') {
+                    Weglot.on('initialized', function(){ renderNavalChart(); renderNavalChart7d(); });
+                    Weglot.on('languageChanged', function(){ renderNavalChart(); renderNavalChart7d(); });
+                }
             }
+            initCharts();
         });
 
         // 4. GRÁFICO 7 DÍAS
