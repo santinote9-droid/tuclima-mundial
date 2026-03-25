@@ -456,6 +456,13 @@
             .info-grid { grid-template-columns: 1fr !important; }
             /* iOS: evitar zoom automático en inputs */
             .chat-input-area input[type="text"] { font-size: 16px !important; }
+            /* Chat: altura compacta en móvil */
+            .chat-container { height: 360px !important; }
+            .chat-input-area button { padding: 10px 16px !important; font-size: 12px !important; }
+            /* Gráfico del chat: responsivo */
+            #climatChart { max-width: 100% !important; height: auto !important; }
+            /* Scroll interno del modal en iOS */
+            .modal-content { -webkit-overflow-scrolling: touch; }
         }
 
         /* ---- MÓVIL PEQUEÑO (≤ 420px) ---- */
@@ -463,6 +470,8 @@
             .p-main { font-size: 2em !important; }
             .header-left .brand { font-size: 1.05rem; }
             .chart-wrapper { height: 220px !important; }
+            .chat-container { height: 310px !important; }
+            .chat-input-area button { padding: 10px 12px !important; font-size: 11px !important; }
         }
     </style>
 

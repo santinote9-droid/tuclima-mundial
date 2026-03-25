@@ -605,6 +605,16 @@
             .phys-box, .rec-box { padding: 14px; font-size: 0.85em; }
             /* iOS: evitar zoom automático en inputs */
             .chat-input-area input[type="text"] { font-size: 16px !important; }
+            /* Chat: altura compacta en móvil */
+            .chat-container { height: 360px !important; }
+            .chat-input-area button { padding: 10px 16px !important; font-size: 12px !important; }
+            /* Gráfico del chat: responsivo */
+            #climatChart { max-width: 100% !important; height: auto !important; }
+            /* Smart Meter: apilar gráfico y panel de datos */
+            #smart-meter-row { flex-direction: column !important; gap: 16px !important; }
+            #smart-panel-datos { width: 100% !important; border-left: none !important; border-top: 1px solid #1e293b; padding-left: 0 !important; padding-top: 16px !important; height: auto !important; flex-direction: row !important; flex-wrap: wrap; justify-content: space-around; gap: 16px; text-align: center; }
+            /* Scroll interno del modal en iOS */
+            .modal-content { -webkit-overflow-scrolling: touch; }
         }
 
         /* ---- MÓVIL PEQUEÑO (≤ 420px) ---- */
@@ -612,6 +622,8 @@
             .val-big { font-size: 1.7em !important; }
             .titulo-seccion { font-size: 0.85em; }
             .grid-energy { gap: 8px; }
+            .chat-container { height: 310px !important; }
+            .chat-input-area button { padding: 10px 12px !important; font-size: 11px !important; }
         }
     </style>
 
@@ -743,11 +755,11 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
             </div>
         </div>
 
-        <div style="display: flex; gap: 30px; align-items: center; flex-wrap:wrap;">
+        <div id="smart-meter-row" style="display: flex; gap: 30px; align-items: center; flex-wrap:wrap;">
             <div style="flex: 1; position: relative; height: 320px; min-width: 300px;">
                 <canvas id="miGraficoEnergia"></canvas>
             </div>
-            <div style="width: 240px; text-align: right; border-left: 1px solid #1e293b; padding-left: 30px; display: flex; flex-direction: column; justify-content: center; height: 280px;">
+            <div id="smart-panel-datos" style="width: 240px; text-align: right; border-left: 1px solid #1e293b; padding-left: 30px; display: flex; flex-direction: column; justify-content: center; height: 280px;">
                 <div style="margin-bottom: 30px;">
                     <div style="font-size: 3.8em; line-height: 1; color: #fff;" class="digital" id="valTotalKW">{{ smart_meter.total_kw }}</div>
                     <div style="color: #64748b; font-weight: 700; letter-spacing: 1px; font-size: 0.75em; margin-top: 10px; text-transform: uppercase;">POTENCIA INSTANTÁNEA (kW)</div>

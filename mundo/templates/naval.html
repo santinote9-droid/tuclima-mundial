@@ -872,6 +872,16 @@
             .calc-result { font-size: 2rem; }
             /* iOS: evitar zoom automático en inputs */
             .chat-input-area input[type="text"] { font-size: 16px !important; }
+            /* Chat: altura compacta en móvil */
+            .chat-container { height: 360px !important; }
+            .chat-input-area button { padding: 10px 16px !important; font-size: 12px !important; }
+            /* Gráfico del chat: responsivo */
+            #climatChart { max-width: 100% !important; height: auto !important; }
+            /* Highcharts: reducir altura en pantalla pequeña */
+            #navalChart { height: 250px !important; }
+            #navalChart7d { height: 200px !important; }
+            /* Scroll interno del modal en iOS */
+            .modal-box { -webkit-overflow-scrolling: touch; }
         }
 
         /* ---- MÓVIL PEQUEÑO (≤ 420px) ---- */
@@ -879,6 +889,9 @@
             .brand-text { font-size: 1.1rem; }
             .value-primary { font-size: 1.9rem !important; }
             .badge-version { display: none; }
+            .chat-container { height: 310px !important; }
+            #navalChart { height: 200px !important; }
+            #navalChart7d { height: 170px !important; }
         }
 
     </style>
