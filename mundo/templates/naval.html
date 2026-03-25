@@ -873,8 +873,8 @@
             .calc-result { font-size: 2rem; }
             /* iOS: evitar zoom automático en inputs */
             .chat-input-area input[type="text"] { font-size: 16px !important; }
-            /* Chat: altura compacta y bien encuadrado en móvil */
-            .chat-container { height: 360px !important; border-radius: 8px !important; }
+            /* Chat: altura cómoda y bien encuadrado en móvil */
+            .chat-container { height: 460px !important; border-radius: 8px !important; }
             .chat-input-container { padding: 10px 10px !important; gap: 6px !important; overflow: hidden !important; }
             #file-preview { display: none !important; }
             .chat-input-area button { padding: 10px 12px !important; font-size: 12px !important; }
@@ -882,9 +882,8 @@
             #chart-container { margin: 0 !important; border-radius: 0 !important; }
             #chart-container canvas, #climatChart { max-width: 100% !important; height: auto !important; }
             #chart-tabs { padding: 10px 10px 0 !important; }
-            /* Highcharts: reducir altura en pantalla pequeña */
-            #navalChart { height: 250px !important; }
-            #navalChart7d { height: 200px !important; }
+            /* Highcharts: quitar override CSS que conflicta con analysis-panel overflow:hidden */
+            /* Los heights se ajustan directamente en el HTML */
             /* Scroll interno del modal en iOS */
             .modal-box { -webkit-overflow-scrolling: touch; }
             /* Modal overlay: padding lateral y scroll vertical */
@@ -899,9 +898,7 @@
             .brand-text { font-size: 1.1rem; }
             .value-primary { font-size: 1.9rem !important; }
             .badge-version { display: none; }
-            .chat-container { height: 310px !important; }
-            #navalChart { height: 200px !important; }
-            #navalChart7d { height: 170px !important; }
+            .chat-container { height: 380px !important; }
         }
 
     </style>
@@ -1120,7 +1117,7 @@
                 TENDENCIA 24 HORAS (OLAS VS VIENTO)
             </div>
             
-            <div id="navalChart" style="width:100%; height:450px;"></div>
+            <div id="navalChart" style="width:100%; height:300px;"></div>
         
         </div>
     </div>
@@ -1132,7 +1129,7 @@
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><path d="M3 3v18h18"/><polyline points="7 16 12 10 15 14 20 8"/></svg>
                 PRONÓSTICO NAVAL · 7 DÍAS (MÁXIMOS DIARIOS)
             </div>
-            <div id="navalChart7d" style="width:100%; height:300px;"></div>
+            <div id="navalChart7d" style="width:100%; height:220px;"></div>
         </div>
     </div>
 

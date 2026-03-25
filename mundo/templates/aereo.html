@@ -448,16 +448,28 @@
             .panel-title { font-size: 0.9rem; letter-spacing: 1px; }
             .alt-selector { overflow-x: auto; -webkit-overflow-scrolling: touch; }
             .btn-alt { padding: 6px 10px; font-size: 0.8em; white-space: nowrap; }
-            /* Modales */
-            .modal-content { padding: 20px 14px; width: 97%; max-height: 93vh; border-radius: 14px; }
+            /* Modal: usar border-box para que padding no desborde */
+            .modal-content { 
+                padding: 16px !important;
+                width: calc(100vw - 24px) !important;
+                max-width: none !important;
+                box-sizing: border-box !important;
+                max-height: 93vh;
+                border-radius: 14px;
+                overflow-x: hidden !important;
+            }
             .btn-close { top: 14px; right: 14px; font-size: 2rem; }
-            .data-table th, .data-table td { padding: 12px 10px; font-size: 0.82em; }
+            .data-table th, .data-table td { padding: 8px 6px; font-size: 0.8em; }
+            /* Grid dentro del modal: 1 columna */
+            .tech-data-grid { grid-template-columns: 1fr !important; }
+            /* Tablas anchas: scroll horizontal */
+            .modal-content table { display: block; overflow-x: auto; width: 100%; }
             .calc-grid { grid-template-columns: 1fr !important; gap: 12px; }
             .info-grid { grid-template-columns: 1fr !important; }
             /* iOS: evitar zoom automático en inputs */
             .chat-input-area input[type="text"] { font-size: 16px !important; }
-            /* Chat: altura compacta y bien encuadrado en móvil */
-            .chat-container { height: 360px !important; border-radius: 8px !important; }
+            /* Chat: altura cómoda y bien encuadrado en móvil */
+            .chat-container { height: 460px !important; border-radius: 8px !important; }
             .chat-input-container { padding: 10px 10px !important; gap: 6px !important; overflow: hidden !important; }
             #file-preview { display: none !important; }
             .chat-input-area button { padding: 10px 12px !important; font-size: 12px !important; }
@@ -479,7 +491,7 @@
             .p-main { font-size: 2em !important; }
             .header-left .brand { font-size: 1.05rem; }
             .chart-wrapper { height: 220px !important; }
-            .chat-container { height: 310px !important; }
+            .chat-container { height: 380px !important; }
             .chat-input-area button { padding: 10px 12px !important; font-size: 11px !important; }
         }
     </style>

@@ -760,14 +760,27 @@
             }
             .forecast-scroll::-webkit-scrollbar { display: none; }
             .day-card { min-width: 115px; padding: 12px 8px; }
-            .modal-content { padding: 20px 14px; width: 96%; max-height: 92vh; border-radius: 12px; }
+            /* Modal: usar border-box para que padding no desborde */
+            .modal-content { 
+                padding: 16px !important;
+                width: calc(100vw - 24px) !important;
+                max-width: none !important;
+                box-sizing: border-box !important;
+                max-height: 92vh;
+                border-radius: 12px;
+                overflow-x: hidden !important;
+            }
             .btn-close { top: 14px; right: 16px; font-size: 1.8em; }
             .pop-title { font-size: 1.2em; gap: 10px; }
-            .tech-table th, .tech-table td { padding: 10px; font-size: 0.82em; }
+            .tech-table th, .tech-table td { padding: 8px 6px; font-size: 0.78em; }
+            /* Grid dentro del modal: 1 columna */
+            .tech-data-grid { grid-template-columns: 1fr !important; }
+            /* Tablas anchas: scroll horizontal */
+            .modal-content table { display: block; overflow-x: auto; width: 100%; }
             /* iOS: evitar zoom automático en inputs */
             .chat-input-area input[type="text"] { font-size: 16px !important; }
-            /* Chat: altura compacta y bien encuadrado en móvil */
-            .chat-container { height: 360px !important; border-radius: 8px !important; }
+            /* Chat: altura cómoda y bien encuadrado en móvil */
+            .chat-container { height: 460px !important; border-radius: 8px !important; }
             .chat-input-container { padding: 10px 10px !important; gap: 6px !important; overflow: hidden !important; }
             #file-preview { display: none !important; }
             .chat-input-area button { padding: 10px 12px !important; font-size: 12px !important; }
@@ -793,7 +806,7 @@
             .val-big { font-size: 1.9em !important; }
             .brand-title { font-size: 1em; }
             .card { padding: 13px 11px !important; }
-            .chat-container { height: 310px !important; }
+            .chat-container { height: 380px !important; }
             #container-agro { height: 200px !important; }
         }
 
