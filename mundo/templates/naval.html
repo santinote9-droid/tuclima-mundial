@@ -834,6 +834,53 @@
         body.cabin-mode .val-big { text-shadow:0 0 16px currentColor; }
         #tc-btn-cabina.tc-cabina-on { border-color:#facc15 !important; color:#facc15 !important; background:rgba(250,204,21,0.12) !important; }
 
+        /* ============================================================
+           RESPONSIVE NAVAL.HTML
+           Desktop intacto. Breakpoints: 900px (tablet) | 600px (móvil) | 420px (pequeño)
+        ============================================================ */
+
+        /* ---- TABLET (≤ 900px) ---- */
+        @media (max-width: 900px) {
+            .dashboard-grid { padding: 20px 15px; gap: 20px; }
+            .instrument-card { padding: 20px; min-height: 200px; }
+            .value-primary { font-size: 2.8rem; }
+            .visibility-strip { padding: 18px 20px; margin: 0 auto 25px auto; }
+            .modal-box { padding: 30px 25px; }
+        }
+
+        /* ---- MÓVIL (≤ 600px) ---- */
+        @media (max-width: 600px) {
+            .nav-header { flex-wrap: wrap; padding: 10px 15px; gap: 8px; }
+            .brand-container { flex: 1 1 auto; }
+            .brand-text { font-size: 1.3rem; }
+            /* Ocultar coordenadas en móvil — liberar espacio */
+            .coords-display { display: none !important; }
+            .ops-controls { gap: 8px; }
+            .btn-action, .btn-calc, .btn-logout { padding: 8px 12px; font-size: 0.8rem; }
+            .dashboard-grid { padding: 12px 10px; gap: 10px; }
+            .instrument-card { padding: 16px 14px !important; min-height: 170px; }
+            .value-primary { font-size: 2.2rem !important; }
+            .value-secondary { font-size: 0.95rem; }
+            .visibility-strip { flex-wrap: wrap; padding: 14px; gap: 12px; margin: 0 10px 20px; }
+            .analysis-deck { padding: 0 10px; gap: 15px; margin-bottom: 30px; }
+            .modal-box { padding: 20px 14px; width: 96%; max-height: 92vh; border-radius: 14px; }
+            .btn-close-modal { top: 16px; right: 18px; font-size: 2rem; }
+            .modal-title { font-size: 1.4rem; gap: 12px; }
+            .modal-text { font-size: 0.95rem; margin-bottom: 18px; }
+            .tech-table th, .tech-table td { padding: 12px 10px; font-size: 0.85em; }
+            .calc-grid { grid-template-columns: 1fr !important; }
+            .calc-result { font-size: 2rem; }
+            /* iOS: evitar zoom automático en inputs */
+            .chat-input-area input[type="text"] { font-size: 16px !important; }
+        }
+
+        /* ---- MÓVIL PEQUEÑO (≤ 420px) ---- */
+        @media (max-width: 420px) {
+            .brand-text { font-size: 1.1rem; }
+            .value-primary { font-size: 1.9rem !important; }
+            .badge-version { display: none; }
+        }
+
     </style>
 
 <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>

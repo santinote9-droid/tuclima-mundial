@@ -398,6 +398,72 @@
         body.cabin-mode th, body.cabin-mode td { background:#0d0d0d !important; color:#fff !important; border-color:#444 !important; }
         body.cabin-mode .val-big { text-shadow:0 0 16px currentColor; }
         #tc-btn-cabina.tc-cabina-on { border-color:#facc15 !important; color:#facc15 !important; background:rgba(250,204,21,0.12) !important; }
+
+        /* ============================================================
+           RESPONSIVE AEREO.HTML
+           Desktop intacto. Breakpoints: 900px (tablet) | 700px (móvil) | 420px (pequeño)
+           Nota: .grid-cockpit ya tiene media queries 1200/700 incorporadas
+        ============================================================ */
+
+        /* ---- TABLET (≤ 900px) ---- */
+        @media (max-width: 900px) {
+            body { padding: 12px; }
+            .cockpit-header { padding: 12px 20px; gap: 12px; margin-bottom: 18px; }
+            .grid-cockpit { gap: 18px; margin-bottom: 35px; }
+            .panel { padding: 20px; min-height: 190px; }
+            .p-main { font-size: 2.8em; }
+            .chart-wrapper { height: 350px; }
+            .modal-content { padding: 35px; max-height: 94vh; }
+        }
+
+        /* ---- MÓVIL (≤ 700px) ---- */
+        @media (max-width: 700px) {
+            body { padding: 8px; }
+            /* Header cockpit: grid 3col → flex column centrado */
+            .cockpit-header {
+                display: flex; flex-direction: column; align-items: center;
+                text-align: center; padding: 12px 14px; gap: 10px;
+                margin-bottom: 14px; border-radius: 0 0 12px 12px;
+            }
+            .header-left { order: 1; }
+            .header-left .brand { font-size: 1.2rem; justify-content: center; }
+            .header-left .coords { text-align: center; font-size: 0.75em; }
+            .header-center { order: 2; }
+            .btn-calc-main { padding: 9px 18px; font-size: 0.85em; }
+            .header-right { order: 3; align-items: center; }
+            .zulu-box { font-size: 1.2em; }
+            .user-box { justify-content: center; flex-wrap: wrap; gap: 8px; }
+            /* METAR: scroll horizontal táctil */
+            .metar-strip { font-size: 0.85rem; padding: 10px 14px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
+            /* Grid y paneles */
+            .grid-cockpit { gap: 12px; margin-bottom: 25px; }
+            .panel { padding: 16px 14px !important; min-height: 160px; }
+            .p-main { font-size: 2.4em !important; margin: 4px 0 12px 0; }
+            .p-head { font-size: 0.78em; margin-bottom: 10px; }
+            .lbl { font-size: 0.65em; }
+            .val { font-size: 0.95em; }
+            /* Gráfico */
+            .chart-wrapper { height: 260px !important; padding: 14px; }
+            .panel-header-large { padding: 12px 16px; gap: 10px; flex-wrap: wrap; }
+            .panel-title { font-size: 0.9rem; letter-spacing: 1px; }
+            .alt-selector { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .btn-alt { padding: 6px 10px; font-size: 0.8em; white-space: nowrap; }
+            /* Modales */
+            .modal-content { padding: 20px 14px; width: 97%; max-height: 93vh; border-radius: 14px; }
+            .btn-close { top: 14px; right: 14px; font-size: 2rem; }
+            .data-table th, .data-table td { padding: 12px 10px; font-size: 0.82em; }
+            .calc-grid { grid-template-columns: 1fr !important; gap: 12px; }
+            .info-grid { grid-template-columns: 1fr !important; }
+            /* iOS: evitar zoom automático en inputs */
+            .chat-input-area input[type="text"] { font-size: 16px !important; }
+        }
+
+        /* ---- MÓVIL PEQUEÑO (≤ 420px) ---- */
+        @media (max-width: 420px) {
+            .p-main { font-size: 2em !important; }
+            .header-left .brand { font-size: 1.05rem; }
+            .chart-wrapper { height: 220px !important; }
+        }
     </style>
 
     <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>

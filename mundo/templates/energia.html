@@ -559,6 +559,60 @@
         body.cabin-mode th, body.cabin-mode td { background:#0d0d0d !important; color:#fff !important; border-color:#444 !important; }
         body.cabin-mode .val-big { text-shadow:0 0 16px currentColor; }
         #tc-btn-cabina.tc-cabina-on { border-color:#facc15 !important; color:#facc15 !important; background:rgba(250,204,21,0.12) !important; }
+
+        /* ============================================================
+           RESPONSIVE ENERGIA.HTML
+           Desktop intacto. Breakpoints: 900px (tablet) | 600px (móvil) | 420px (pequeño)
+        ============================================================ */
+
+        /* ---- TABLET (≤ 900px) ---- */
+        @media (max-width: 900px) {
+            .main-container { padding: 20px 12px; }
+            .header-eng { padding: 12px 20px; gap: 12px; }
+            .titulo-seccion { font-size: 1em; }
+            .grid-energy { gap: 14px; }
+            .instrumento { min-height: 170px; }
+            .inst-body { padding: 18px 16px; }
+            .modal-content { max-height: 94vh; }
+        }
+
+        /* ---- MÓVIL (≤ 600px) ---- */
+        @media (max-width: 600px) {
+            /* Header: apilar y simplificar */
+            .header-eng { flex-wrap: wrap; padding: 10px 12px; gap: 8px; justify-content: space-between; }
+            .titulo-seccion { flex: 1 1 auto; font-size: 0.95em; letter-spacing: 1px; }
+            /* Ocultar coordenadas lat/lon en móvil */
+            .header-eng .digital { display: none !important; }
+            #tc-btn-cabina { padding: 6px 10px !important; font-size: 0.7em; }
+            .btn-exit { padding: 6px 10px; font-size: 0.75em; }
+            /* Contenedor */
+            .main-container { padding: 12px 10px; }
+            /* Grid: forzar 1 columna en móvil */
+            .grid-energy { gap: 10px; grid-template-columns: 1fr !important; }
+            /* Instrumentos */
+            .instrumento { min-height: 150px; }
+            .inst-body { padding: 14px 12px !important; }
+            .val-big { font-size: 2em !important; }
+            .val-sub { font-size: 0.7em; }
+            .inst-head { padding: 12px 14px; }
+            .inst-head h3 { font-size: 0.7em; }
+            /* Modales */
+            .modal-content { width: 97%; max-height: 93vh; border-radius: 12px; }
+            .modal-header { padding: 14px 16px; }
+            .modal-header h2 { font-size: 1em; gap: 8px; }
+            .modal-body { padding: 16px 14px; }
+            .tech-data-grid { grid-template-columns: 1fr !important; }
+            .phys-box, .rec-box { padding: 14px; font-size: 0.85em; }
+            /* iOS: evitar zoom automático en inputs */
+            .chat-input-area input[type="text"] { font-size: 16px !important; }
+        }
+
+        /* ---- MÓVIL PEQUEÑO (≤ 420px) ---- */
+        @media (max-width: 420px) {
+            .val-big { font-size: 1.7em !important; }
+            .titulo-seccion { font-size: 0.85em; }
+            .grid-energy { gap: 8px; }
+        }
     </style>
 
 <div class="header-eng">

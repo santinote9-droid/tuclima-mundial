@@ -25,11 +25,11 @@
         .plan-badge .price .amount { font-size: 1.6rem; font-weight: 900; }
         .plan-badge .price small { display: block; color: #64748b; font-size: .72rem; }
         .section-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #475569; margin-bottom: 8px; }
-        .ls-card { background: linear-gradient(135deg, #1e1040 0%, #2d1b69 100%); border: 2px solid #7c3aed; border-radius: 20px; padding: 28px 24px; margin-bottom: 14px; box-shadow: 0 8px 32px rgba(124,58,237,.25); }
-        .ls-card .ls-title { display: flex; align-items: center; gap: 10px; font-size: 1rem; font-weight: 700; color: #c4b5fd; margin-bottom: 6px; }
-        .ls-card .ls-subtitle { color: #7c6fac; font-size: .8rem; margin-bottom: 22px; padding-left: 34px; }
-        .btn-ls { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 16px 24px; background: linear-gradient(135deg, #7c3aed, #a855f7); color: #fff; text-decoration: none; border-radius: 14px; font-weight: 800; font-size: 1.05rem; box-shadow: 0 6px 24px rgba(124,58,237,.45); transition: transform .15s, box-shadow .2s; }
-        .btn-ls:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(124,58,237,.55); }
+        .ls-card { background: linear-gradient(135deg, #0c1a3a 0%, #0f2356 100%); border: 1.5px solid #1e40af; border-radius: 20px; padding: 28px 24px; margin-bottom: 14px; box-shadow: 0 8px 32px rgba(30,64,175,.2); }
+        .ls-card .ls-title { display: flex; align-items: center; gap: 10px; font-size: 1rem; font-weight: 700; color: #93c5fd; margin-bottom: 6px; }
+        .ls-card .ls-subtitle { color: #4e6fa3; font-size: .8rem; margin-bottom: 22px; padding-left: 34px; }
+        .btn-ls { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 15px 24px; background: #1d4ed8; color: #fff; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 1rem; letter-spacing: .02em; box-shadow: 0 4px 18px rgba(29,78,216,.4); transition: background .18s, transform .15s, box-shadow .2s; border: none; }
+        .btn-ls:hover { background: #1e40af; transform: translateY(-2px); box-shadow: 0 8px 26px rgba(29,78,216,.5); }
         .ls-trust { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
         .ls-trust span { display: inline-flex; align-items: center; gap: 5px; color: #7c6fac; font-size: .74rem; }
         .badge-paypal { background: #003087; color: #fff !important; padding: 2px 9px; border-radius: 5px; font-size: .7rem; font-weight: 700; }
@@ -95,15 +95,15 @@
         <div class="ls-subtitle">Activacion automatica &middot; Procesado por Lemon Squeezy</div>
 
         <a href="/ls-checkout/?paquete={{ paquete_id }}" class="btn-ls">
-            <i class="fas fa-lock"></i>
-            Pagar ${{ precio_usd }} USD de forma segura
+            <i class="fas fa-lock" style="font-size:.9rem;opacity:.85;"></i>
+            Suscribirse — ${{ precio_usd }} USD
         </a>
 
         <div class="ls-trust">
             <span class="badge-visa">VISA</span>
             <span class="badge-mc">Mastercard</span>
             <span class="badge-paypal">PayPal</span>
-            <span><i class="fas fa-shield-halved"></i> Pago encriptado</span>
+            <span style="color:#3b6ea8;"><i class="fas fa-shield-halved"></i> Pago encriptado</span>
         </div>
     </div>
     {% endif %}

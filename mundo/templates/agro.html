@@ -725,6 +725,56 @@
         body.cabin-mode .val-big { text-shadow:0 0 16px currentColor; }
         #tc-btn-cabina.tc-cabina-on { border-color:#facc15 !important; color:#facc15 !important; background:rgba(250,204,21,0.12) !important; }
 
+        /* ============================================================
+           RESPONSIVE AGRO.HTML
+           Desktop intacto. Breakpoints: 900px (tablet) | 600px (móvil) | 420px (pequeño)
+        ============================================================ */
+
+        /* ---- TABLET (≤ 900px) ---- */
+        @media (max-width: 900px) {
+            .dashboard-container { padding: 20px 15px; }
+            .header-eng { padding: 12px 20px; }
+            .brand-title { font-size: 1.25em; }
+            .agro-grid { gap: 16px; margin-bottom: 25px; }
+            .modal-content { padding: 28px 24px; max-height: 94vh; }
+            .forecast-scroll { -webkit-overflow-scrolling: touch; }
+        }
+
+        /* ---- MÓVIL (≤ 600px) ---- */
+        @media (max-width: 600px) {
+            .header-eng { flex-wrap: wrap; padding: 10px 14px; gap: 8px; }
+            .brand-box { flex: 1 1 auto; }
+            .brand-title { font-size: 1.1em; letter-spacing: -0.5px; }
+            .badge-pro { font-size: 0.6em; padding: 2px 5px; }
+            .dashboard-container { padding: 12px 10px; }
+            .agro-grid { grid-template-columns: 1fr !important; gap: 10px; margin-bottom: 18px; }
+            .card { padding: 16px 14px !important; min-height: 160px; }
+            .val-big { font-size: 2.2em !important; }
+            .analysis-btn { padding: 14px; font-size: 0.85em; margin: 20px 0; }
+            .forecast-section { padding: 16px 14px; }
+            .fs-title { font-size: 1em; margin-bottom: 15px; }
+            .forecast-scroll {
+                gap: 10px; padding-bottom: 8px;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .forecast-scroll::-webkit-scrollbar { display: none; }
+            .day-card { min-width: 115px; padding: 12px 8px; }
+            .modal-content { padding: 20px 14px; width: 96%; max-height: 92vh; border-radius: 12px; }
+            .btn-close { top: 14px; right: 16px; font-size: 1.8em; }
+            .pop-title { font-size: 1.2em; gap: 10px; }
+            .tech-table th, .tech-table td { padding: 10px; font-size: 0.82em; }
+            /* iOS: evitar zoom automático en inputs */
+            .chat-input-area input[type="text"] { font-size: 16px !important; }
+        }
+
+        /* ---- MÓVIL PEQUEÑO (≤ 420px) ---- */
+        @media (max-width: 420px) {
+            .val-big { font-size: 1.9em !important; }
+            .brand-title { font-size: 1em; }
+            .card { padding: 13px 11px !important; }
+        }
+
     </style>
 
 <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
