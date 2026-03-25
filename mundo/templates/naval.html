@@ -855,8 +855,9 @@
             .brand-text { font-size: 1.3rem; }
             /* Ocultar coordenadas en móvil — liberar espacio */
             .coords-display { display: none !important; }
-            .ops-controls { gap: 8px; }
-            .btn-action, .btn-calc, .btn-logout { padding: 8px 12px; font-size: 0.8rem; }
+            /* Botones header: envolver en vez de salir de pantalla */
+            .ops-controls { gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: 100%; }
+            .btn-action, .btn-calc, .btn-logout { padding: 7px 10px; font-size: 0.75rem; }
             .dashboard-grid { padding: 12px 10px; gap: 10px; }
             .instrument-card { padding: 16px 14px !important; min-height: 170px; }
             .value-primary { font-size: 2.2rem !important; }
@@ -886,6 +887,11 @@
             #navalChart7d { height: 200px !important; }
             /* Scroll interno del modal en iOS */
             .modal-box { -webkit-overflow-scrolling: touch; }
+            /* Modal overlay: padding lateral y scroll vertical */
+            .modal-overlay { padding: 12px; overflow-y: auto; }
+            /* Botones icono del chat: más compactos */
+            .chat-input-container button[type="button"] { padding: 6px !important; }
+            .chat-input-container a[href] { padding: 6px !important; }
         }
 
         /* ---- MÓVIL PEQUEÑO (≤ 420px) ---- */
