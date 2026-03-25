@@ -153,6 +153,9 @@ class PerfilUsuario(models.Model):
 
     @property
     def suscripcion_activa(self):
+        # Superusuarios y staff siempre tienen suscripción activa
+        if self.user.is_staff or self.user.is_superuser:
+            return True
         if not self.fecha_vencimiento:
             return False
         # Comparamos si la fecha de vencimiento es mayor a "ahora"
