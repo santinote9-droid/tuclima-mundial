@@ -2130,42 +2130,49 @@ def paypal_retorno(request):
 @login_required
 def ls_checkout(request):
     """Crea una sesión de checkout en Lemon Squeezy via API y redirige a ella."""
+    from django.http import HttpResponse
+    import urllib.request as _req
+    import urllib.error as _uerr
+    import json as _json
+
     paquete_id = request.GET.get('paquete', '')
     paquete    = _PAQUETES_MAP.get(paquete_id)
 
     if not paquete or not paquete.get('ls_variant_id'):
         return redirect('recargar_tokens')
 
-    api_key   = getattr(settings, 'LEMONSQUEEZY_API_KEY', '')
-    store_id  = getattr(settings, 'LEMONSQUEEZY_STORE_ID', '')
-    site      = settings.SITE_URL.rstrip('/')
+    api_key    = getattr(settings, 'LEMONSQUEEZY_API_KEY', '').strip()
+    store_id   = getattr(settings, 'LEMONSQUEEZY_STORE_ID', '').strip()
+    store_slug = getattr(settings, 'LEMONSQUEEZY_STORE_SLUG', '').strip()
+    site       = settings.SITE_URL.rstrip('/')
     variant_id = paquete['ls_variant_id']
 
-    # Si no hay store_id configurado, auto-detectarlo desde la API (con reintentos)
-    if api_key and not store_id:
-        import urllib.request as _req2
-        import json as _json2
-        for _intento in range(3):
-            try:
-                req2 = _req2.Request(
-                    'https://api.lemonsqueezy.com/v1/stores',
-                    headers={'Authorization': f'Bearer {api_key}', 'Accept': 'application/vnd.api+json'},
-                )
-                with _req2.urlopen(req2, timeout=15) as r2:
-                    stores_body = _json2.loads(r2.read().decode('utf-8'))
-                stores_data = stores_body.get('data', [])
-                if stores_data:
-                    store_id = stores_data[0]['id']
-                    logger.info(f'[LS_CHECKOUT] Store ID auto-detectado: {store_id}')
-                    break
-            except Exception as e2:
-                logger.error(f'[LS_CHECKOUT] Error obteniendo stores (intento {_intento+1}/3): {e2}')
+    logger.info(
+        f'[LS_CHECKOUT] paquete={paquete_id} variant={variant_id} '
+        f'api_key={"OK" if api_key else "FALTA"} '
+        f'store_id={"OK" if store_id else "FALTA"} '
+        f'store_slug={"OK" if store_slug else "FALTA"}'
+    )
 
-    # Si la API key está configurada, crear checkout dinámico vía API (recomendado)
+    # Si no hay store_id, auto-detectarlo desde la API
+    if api_key and not store_id:
+        try:
+            req2 = _req.Request(
+                'https://api.lemonsqueezy.com/v1/stores',
+                headers={'Authorization': f'Bearer {api_key}', 'Accept': 'application/vnd.api+json'},
+            )
+            with _req.urlopen(req2, timeout=15) as r2:
+                stores_body = _json.loads(r2.read().decode('utf-8'))
+            stores_data = stores_body.get('data', [])
+            if stores_data:
+                store_id = str(stores_data[0]['id'])
+                logger.info(f'[LS_CHECKOUT] Store ID auto-detectado: {store_id}')
+        except Exception as e2:
+            logger.error(f'[LS_CHECKOUT] Error auto-detectando store: {e2}')
+
+    # Ruta principal: crear checkout vía API
     if api_key and store_id:
         try:
-            import urllib.request as _req
-            import json as _json
             payload = _json.dumps({
                 "data": {
                     "type": "checkouts",
@@ -2186,7 +2193,7 @@ def ls_checkout(request):
                     },
                 }
             }).encode('utf-8')
-            req = _req.Request(
+            req_api = _req.Request(
                 'https://api.lemonsqueezy.com/v1/checkouts',
                 data=payload,
                 headers={
@@ -2196,36 +2203,44 @@ def ls_checkout(request):
                 },
                 method='POST',
             )
-            with _req.urlopen(req, timeout=8) as resp:
+            with _req.urlopen(req_api, timeout=15) as resp:
                 body = _json.loads(resp.read().decode('utf-8'))
             checkout_url = body['data']['attributes']['url']
+            logger.info(f'[LS_CHECKOUT] Checkout creado OK: {checkout_url[:60]}...')
             return redirect(checkout_url)
-        except Exception as e:
-            logger.error(f'[LS_CHECKOUT] Error creando checkout vía API: {e}')
-            from django.http import HttpResponse
-            import urllib.error as _uerr
-            detalle = str(e)
-            if isinstance(e, _uerr.HTTPError):
-                try:
-                    detalle = e.read().decode('utf-8')
-                except Exception:
-                    pass
+
+        except _uerr.HTTPError as e:
+            try:
+                detalle = e.read().decode('utf-8')
+            except Exception:
+                detalle = str(e)
+            logger.error(f'[LS_CHECKOUT] HTTPError API: {e.code} {detalle}')
             return HttpResponse(
-                f"<h2>Error en la API de Lemon Squeezy:</h2>"
-                f"<p><b>store_id usado:</b> {store_id}</p>"
-                f"<p><b>variant_id usado:</b> {variant_id}</p>"
+                f"<h2>Error en la API de Lemon Squeezy (HTTP {e.code})</h2>"
+                f"<p><b>store_id:</b> {store_id} | <b>variant_id:</b> {variant_id}</p>"
                 f"<pre>{detalle}</pre>"
+                f"<p><a href='/pricing/'>Volver a pricing</a></p>"
+            )
+        except Exception as e:
+            logger.error(f'[LS_CHECKOUT] Error general API: {e}')
+            return HttpResponse(
+                f"<h2>Error conectando con Lemon Squeezy</h2>"
+                f"<p>{e}</p>"
+                f"<p><a href='/pricing/'>Volver a pricing</a></p>"
             )
 
-    # Fallback: URL estática con store_slug + variant_id (cuando no hay API key o auto-detect falló)
-    store_slug = getattr(settings, 'LEMONSQUEEZY_STORE_SLUG', '')
-    if store_slug and variant_id:
-        url = f'https://{store_slug}.lemonsqueezy.com/checkout/buy/{variant_id}'
-        url += f'?checkout[custom][user_id]={request.user.id}&checkout[custom][paquete_id]={paquete_id}'
-        return redirect(url)
-
-    logger.error(f'[LS_CHECKOUT] Sin API key ni store_slug configurados. paquete={paquete_id}')
-    return redirect('pricing')
+    # Diagnóstico si faltan variables de entorno
+    logger.error(f'[LS_CHECKOUT] Variables faltantes — api_key={bool(api_key)} store_id={bool(store_id)}')
+    return HttpResponse(
+        f"<h2>Configuración incompleta de Lemon Squeezy</h2>"
+        f"<ul>"
+        f"<li>LEMONSQUEEZY_API_KEY: {'✅ configurada' if api_key else '❌ FALTA'}</li>"
+        f"<li>LEMONSQUEEZY_STORE_ID: {'✅ ' + store_id if store_id else '❌ FALTA'}</li>"
+        f"<li>LEMONSQUEEZY_STORE_SLUG: {'✅ ' + store_slug if store_slug else '❌ FALTA'}</li>"
+        f"</ul>"
+        f"<p>Configurá estas variables en Render → Environment.</p>"
+        f"<p><a href='/pricing/'>Volver a pricing</a></p>"
+    )
 
 
 @login_required
