@@ -1,12 +1,10 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Naval Command | TuClima</title>
+{% extends 'base.html' %}
 
-    <style>
+{% block title %}Naval Command | TuClima{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
         /* Animación de espera para la IA - Estilo minimalista */
         .chat-typing {
             color: #94a3b8;
@@ -902,22 +900,10 @@
         }
 
     </style>
+{% endblock %}
 
-<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
-    <script>
-        Weglot.initialize({
-            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
-            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
-            auto_switch: true            // Detecta idioma automático
-        });
-    </script>
-</head>
-<body>
-
-    <div id="google_translate_element" style="display:none;"></div>
-    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
-    <header class="nav-header">
+{% block content %}
+<header class="nav-header">
         <div class="brand-container">
             <div class="brand-logo">
                 <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
@@ -1107,7 +1093,6 @@
             VER TABLA DE ALCANCE >
         </div>
     </div>
-
 
    <div style="max-width: 1720px; margin: 0 auto 40px auto; display: block;">
         <div class="analysis-panel" style="background: rgba(15, 23, 42, 0.85); border: 1px solid #1e3a8a; border-radius: 16px; overflow: hidden;">
@@ -1572,7 +1557,6 @@
             </div>
         </div>
     </div>
-
 
         <script>
         // 1. TRADUCTOR AUTOMÁTICO
@@ -3012,6 +2996,4 @@ function createSampleChart(chartData = null) {
     drawChart(variablesDisponibles[0]);
 }
 </script>
-
-</body>
-</html>
+{% endblock %}

@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>¡Pago Confirmado! | TuClima</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
+{% extends 'base.html' %}
+
+{% block title %}¡Pago Confirmado! | TuClima{% endblock %}
+
+{% block extra_head %}
+<style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             background: #0f172a;
@@ -134,9 +132,25 @@
             margin-top: 20px;
         }
         .mail-note a { color: #3b82f6; text-decoration: none; }
+
+        /* ── Responsive ──────────────────────────────────── */
+        @media (max-width: 600px) {
+            body { padding: 16px; }
+            h1   { font-size: 1.8rem; }
+            .subtitle { font-size: 0.95rem; margin-bottom: 24px; }
+            .check-circle { width: 88px; height: 88px; font-size: 2.8rem; margin-bottom: 20px; }
+            .data-card { padding: 20px 18px; }
+            .data-label { font-size: 0.82rem; }
+            .data-value { font-size: 0.88rem; }
+        }
+        @media (max-width: 380px) {
+            h1 { font-size: 1.45rem; }
+            .data-card { padding: 16px 12px; }
+        }
     </style>
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
 <div class="container">
 
     <div class="check-circle">
@@ -178,5 +192,4 @@
     <p class="mail-note">Se envió un email de confirmación a tu correo. Si no lo ves, revisá spam.<br>¿Problemas? <a href="mailto:climapro00@gmail.com">climapro00@gmail.com</a></p>
 
 </div>
-</body>
-</html>
+{% endblock %}

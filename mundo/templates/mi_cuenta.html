@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Cuenta | TuClima</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
+{% extends 'base.html' %}
+
+{% block title %}Mi Cuenta | TuClima{% endblock %}
+
+{% block extra_head %}
+<style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             background: #0f172a;
@@ -107,9 +105,9 @@
         }
         .notice i { color: #3b82f6; flex-shrink: 0; margin-top: 2px; }
     </style>
-</head>
-<body>
+{% endblock %}
 
+{% block content %}
 <div class="container">
 
     {% if guardado %}
@@ -708,6 +706,4 @@ async function eliminarUbicacion(pk) {
     } catch(e) {}
 }
 </script>
-
-</body>
-</html>
+{% endblock %}

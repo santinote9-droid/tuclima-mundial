@@ -1,10 +1,9 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title class="notranslate">Investigación & Papers | TuClima</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+{% extends 'base.html' %}
+
+{% block title %}Investigación & Papers | TuClima{% endblock %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #0f172a; color: #e2e8f0; margin: 0; }
         
@@ -38,20 +37,10 @@
         .card-footer { margin-top: 20px; font-size: 0.85em; color: #64748b; display: flex; items-center; gap: 5px; }
 
     </style>
+{% endblock %}
 
-<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
-    <script>
-        Weglot.initialize({
-            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
-            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
-            auto_switch: true            // Detecta idioma automático
-        });
-    </script>
-
-</head>
-<body>
-
-    <div class="header notranslate">
+{% block content %}
+<div class="header notranslate">
         <a href="/" class="brand">Tu<span>Clima</span> | LAB</a>
         <a href="/" style="color: #cbd5e1; text-decoration: none; font-size: 0.9em; border: 1px solid #475569; padding: 8px 15px; border-radius: 20px;">⬅ Volver</a>
     </div>
@@ -149,6 +138,4 @@
         </div>
 
     </div>
-
-</body>
-</html>
+{% endblock %}

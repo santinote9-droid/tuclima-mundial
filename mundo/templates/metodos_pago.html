@@ -1,12 +1,9 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elegir Forma de Pago</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
+{% extends 'base.html' %}
+
+{% block title %}Elegir Forma de Pago{% endblock %}
+
+{% block extra_head %}
+<style>
         body { background: #0f172a; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
         .box { text-align: center; max-width: 900px; width: 100%; }
         h2 { margin-bottom: 40px; font-size: 2.2rem; }
@@ -47,60 +44,27 @@
         .btn-bank { background: #10b981; color: white; }
         .btn-bank:hover { background: #059669; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
 
-    </style>
-
-<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
-    <script>
-        Weglot.initialize({
-            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
-            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
-            auto_switch: true            // Detecta idioma automático
-        });
-    </script>
-
-</head>
-<body>
-
-<div id="google_translate_element" style="display:none;"></div>
-
-<script type="text/javascript">
-    function googleTranslateElementInit() {
-        new google.translate.TranslateElement({
-            pageLanguage: 'es', 
-            includedLanguages: 'en,fr,it,pt,de', // Idiomas permitidos
-            autoDisplay: false
-        }, 'google_translate_element');
-    }
-</script>
-<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
-<script type="text/javascript">
-    window.addEventListener('load', function() {
-        // A. Detectamos el idioma del navegador del usuario (ej: 'en-US' o 'pt-BR')
-        var idiomaUsuario = navigator.language || navigator.userLanguage; 
-        idiomaUsuario = idiomaUsuario.split('-')[0]; // Nos quedamos solo con las dos letras ('en', 'pt', etc.)
-
-        // B. Si el usuario NO habla español, activamos la traducción
-        if (idiomaUsuario !== 'es') {
-            
-            // Esperamos un segundo a que Google cargue en el fondo
-            setTimeout(function() {
-                var select = document.querySelector('select.goog-te-combo');
-                if (select) {
-                    select.value = idiomaUsuario; // Seleccionamos su idioma
-                    select.dispatchEvent(new Event('change')); // ¡Clic virtual!
-                }
-            }, 1000); // 1000ms = 1 segundo de espera
+        /* ── Responsive ──────────────────────────────────── */
+        @media (max-width: 700px) {
+            body  { align-items: flex-start; padding: 24px 14px 40px; }
+            .box  { padding-top: 8px; }
+            h2    { font-size: 1.5rem; margin-bottom: 24px; }
+            /* grid a 1 columna */
+            .grid { grid-template-columns: 1fr; gap: 16px; }
+            .option { padding: 28px 20px; }
+            .fa-paypal, .fa-university { font-size: 3rem; }
+            h3    { font-size: 1.2rem; }
+            /* user-bar fijo: no sobrepone el contenido */
+            .user-bar { position: static; text-align: right; padding: 4px 0 16px; }
         }
-    });
-</script>
+        @media (max-width: 400px) {
+            .option { padding: 22px 14px; }
+            h2     { font-size: 1.25rem; }
+        }
+    </style>
+{% endblock %}
 
-<style>
-    .goog-te-banner-frame { display: none !important; }
-    body { top: 0px !important; }
-    #google_translate_element { display: none !important; }
-</style>
-    
+{% block content %}
 <div style="position: absolute; top: 20px; right: 20px; z-index: 1000; font-family: sans-serif;">
         {% if user.is_authenticated %}
             <span style="color: #94a3b8;">Hola,</span> 
@@ -173,5 +137,4 @@
         &nbsp;&nbsp;|&nbsp;&nbsp;
         <a href="/mi-cuenta/" style="color:#3b82f6; text-decoration:none; font-weight:bold;"><i class="fas fa-user-circle"></i> Mi Cuenta</a>
     </div>
-</body>
-</html>
+{% endblock %}

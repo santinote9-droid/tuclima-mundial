@@ -1,11 +1,9 @@
-﻿<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Activar Plan — {{ paquete.nombre }}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
+{% extends 'base.html' %}
+
+{% block title %}Activar Plan — {{ paquete.nombre }}{% endblock %}
+
+{% block extra_head %}
+<style>
         *, *::before, *::after { box-sizing: border-box; }
         body {
             background: #0f172a; color: #fff;
@@ -60,9 +58,28 @@
         .btn-confirm:hover { transform: translateY(-2px); box-shadow: 0 7px 22px rgba(22,163,74,.4); }
         .cancel-link { display: block; text-align: center; color: #475569; text-decoration: none; font-size: .82rem; margin-top: 20px; }
         .cancel-link:hover { color: #94a3b8; }
+
+        /* ── Responsive ──────────────────────────────────── */
+        @media (max-width: 520px) {
+            body { padding: 20px 12px; }
+            /* Plan badge: apila ícono + info + precio */
+            .plan-badge { flex-wrap: wrap; gap: 10px; }
+            .plan-badge .price { width: 100%; text-align: left; }
+            .plan-badge .price .amount { font-size: 1.35rem; }
+            /* Carta LS */
+            .ls-card { padding: 20px 16px; }
+            .btn-ls   { padding: 13px 16px; font-size: 0.9rem; }
+            /* Badges de confianza */
+            .ls-trust { gap: 7px; }
+        }
+        @media (max-width: 380px) {
+            .plan-badge { padding: 12px 14px; }
+            .plan-badge .icon-wrap { width: 40px; height: 40px; font-size: 1.1rem; }
+        }
     </style>
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
 <div class="container">
 
     <a href="/pricing/#tokens" class="back-link">
@@ -182,5 +199,4 @@ function copyText(text, btn) {
     });
 }
 </script>
-</body>
-</html>
+{% endblock %}

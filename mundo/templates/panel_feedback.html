@@ -1,10 +1,9 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Feedback IA | TuClima</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+{% extends 'base.html' %}
+
+{% block title %}Panel de Feedback IA | TuClima{% endblock %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -255,9 +254,9 @@
             opacity: 0.3;
         }
     </style>
-</head>
-<body>
+{% endblock %}
 
+{% block content %}
 <div class="header">
     <div>
         <h1>📊 Panel de Feedback IA</h1>
@@ -404,6 +403,4 @@ function toggleRevisado(feedbackId) {
     });
 }
 </script>
-
-</body>
-</html>
+{% endblock %}

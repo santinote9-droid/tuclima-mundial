@@ -1,15 +1,11 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<link rel="icon" type="image/jpeg" href="{% static 'img/logo.jpg' %}">
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-wg-notranslate>TuClima</title>
+{% block title %}TuClima{% endblock %}
+
+{% block extra_head %}
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="preconnect" href="https://cdn.weglot.com" crossorigin>
-    <link rel="dns-prefetch" href="//openmeteo.com">
+<link rel="dns-prefetch" href="//openmeteo.com">
     <style>
         /* FONDO: div fijo detras del contenido.
            Siempre cubre el viewport exacto. Funciona en iOS Safari. */
@@ -89,7 +85,14 @@
             background: rgba(15, 23, 42, 0.2);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
+            /* Touch scroll nativo */
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            scroll-snap-type: x proximity;
+            touch-action: pan-x;
+            cursor: grab;
         }
+        .carrusel-horas:active { cursor: grabbing; }
         
         .carrusel-horas::-webkit-scrollbar { 
             height: 10px; 
@@ -124,6 +127,7 @@
             border-radius: 18px; 
             transition: all 0.3s ease;
             flex-shrink: 0;
+            scroll-snap-align: center;
         }
         
         .icono-hora { width: 48px; height: 48px; margin: 8px 0; }
@@ -161,7 +165,14 @@
             border-radius: 20px;
             scrollbar-width: thin;
             scrollbar-color: rgba(56, 189, 248, 0.6) rgba(15, 23, 42, 0.4);
+            /* Touch scroll nativo */
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            scroll-snap-type: x proximity;
+            touch-action: pan-x;
+            cursor: grab;
         }
+        .contenedor-dias:active { cursor: grabbing; }
         
         .contenedor-dias::-webkit-scrollbar {
             height: 10px;
@@ -205,8 +216,41 @@
             flex-shrink: 0;
             overflow: hidden;
             text-align: center;
+            scroll-snap-align: center;
         }
         .tarjeta-dia:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-8px); border-color: #ffcc00; box-shadow: 0 8px 25px rgba(255, 204, 0, 0.3); }
+
+        /* ── Wrappers para flechas de navegación ─────────────── */
+        .carrusel-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .carrusel-arrow {
+            display: none;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 20;
+            background: rgba(10, 20, 40, 0.85);
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            color: #38bdf8;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, border-color 0.2s;
+            backdrop-filter: blur(8px);
+            padding: 0;
+            line-height: 1;
+        }
+        .carrusel-arrow:hover {
+            background: rgba(56, 189, 248, 0.2);
+            border-color: #38bdf8;
+        }
+        .carrusel-arrow.left  { left:  -4px; }
+        .carrusel-arrow.right { right: -4px; }
         .dia-activo { border: 2px solid #ffcc00; background: rgba(255, 204, 0, 0.15); box-shadow: 0 0 20px rgba(255, 204, 0, 0.4); transform: scale(1.08); }
         .icono-chico { width: 60px; height: 60px; margin: 10px 0; }
         .max { color: #ff6b6b; font-weight: bold; } .min { color: #4ecdc4; font-weight: bold; }
@@ -398,9 +442,14 @@
             .carrusel-horas {
                 padding: 14px 12px !important;
                 gap: 10px !important;
-                scrollbar-width: thin !important;
+                scrollbar-width: none !important;
             }
-            .carrusel-horas::-webkit-scrollbar { height: 5px !important; }
+            .carrusel-horas::-webkit-scrollbar { display: none !important; height: 0 !important; }
+            .contenedor-dias {
+                scrollbar-width: none !important;
+            }
+            .contenedor-dias::-webkit-scrollbar { display: none !important; height: 0 !important; }
+            .carrusel-arrow { display: flex !important; }
             .item-hora {
                 min-width: 78px !important;
                 padding: 12px 8px !important;
@@ -523,6 +572,7 @@
                 border-radius: 14px !important;
             }
             .icono-hora { width: 36px !important; height: 36px !important; }
+            .carrusel-arrow { display: flex !important; }
 
             /* Detalles: 2 columnas en móvil */
             .detalle-grid {
@@ -619,9 +669,9 @@
 <!-- Weglot se inicializa una sola vez, al final del body -->
 
 <meta name="google" content="notranslate">
-</head>
+{% endblock %}
 
-<body>
+{% block content %}
 <!-- Fondo fijo: cubre siempre el viewport, funciona en todos los navegadores -->
 <div id="bg-layer"></div>
 <div id="bg-overlay"></div>
@@ -718,61 +768,6 @@
     @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 </style>
 {% endif %}
-
-
-<div id="google_translate_element" style="display:none;"></div>
-
-<script type="text/javascript">
-    function googleTranslateElementInit() {
-        try {
-            new google.translate.TranslateElement({
-                pageLanguage: 'es', 
-                includedLanguages: 'en,fr,it,pt,de', // Idiomas permitidos
-                autoDisplay: false
-            }, 'google_translate_element');
-        } catch (error) {
-            console.log('Google Translate no disponible:', error.message);
-        }
-    }
-    
-    // Cargar Google Translate con manejo de errores
-    (function() {
-        const script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-        script.onerror = function() {
-            console.log('Google Translate bloqueado o no disponible');
-        };
-        document.head.appendChild(script);
-    })();
-</script>
-
-<script type="text/javascript">
-    window.addEventListener('load', function() {
-        // A. Detectamos el idioma del navegador del usuario (ej: 'en-US' o 'pt-BR')
-        var idiomaUsuario = navigator.language || navigator.userLanguage; 
-        idiomaUsuario = idiomaUsuario.split('-')[0]; // Nos quedamos solo con las dos letras ('en', 'pt', etc.)
-
-        // B. Si el usuario NO habla español, activamos la traducción
-        if (idiomaUsuario !== 'es') {
-            
-            // Esperamos un segundo a que Google cargue en el fondo
-            setTimeout(function() {
-                var select = document.querySelector('select.goog-te-combo');
-                if (select) {
-                    select.value = idiomaUsuario; // Seleccionamos su idioma
-                    select.dispatchEvent(new Event('change')); // ¡Clic virtual!
-                }
-            }, 1000); // 1000ms = 1 segundo de espera
-        }
-    });
-</script>
-
-<style>
-    .goog-te-banner-frame { display: none !important; }
-    body { top: 0px !important; }
-    #google_translate_element { display: none !important; }
-</style>
 
 {% if user.is_authenticated %}
 <a href="/mi-cuenta/" id="btn-mi-cuenta" title="Mi Cuenta">
@@ -1061,8 +1056,6 @@
 </style>
 
 </div>
-
-
 
 </div> 
 
@@ -1731,6 +1724,10 @@
     Calendario de Pronóstico
 </h2>
 
+<div class="carrusel-wrapper" id="wrapperDias" style="max-width: 1900px; margin: 0 auto;">
+<button class="carrusel-arrow left" onclick="scrollCarrusel('listaDias', -300)" aria-label="Anterior">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+</button>
 <div class="contenedor-dias" id="listaDias" style="margin: 0 auto; display: flex; justify-content: center; align-items: center;">
     {% for dia in pronostico %}
     <div class="tarjeta-dia {% if forloop.first %}dia-activo{% endif %}" 
@@ -1746,12 +1743,20 @@
     </div>
     {% endfor %}
 </div>
+<button class="carrusel-arrow right" onclick="scrollCarrusel('listaDias', 300)" aria-label="Siguiente">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+</button>
+</div>{# /wrapperDias #}
 
     <br>
 
     <div class="seccion-horas" style="width: 100%; max-width: 1000px; margin: 0 auto; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); padding: 30px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.5);">
         <h3 id="tituloHoras" style="color: #00d2ff; margin-bottom: 20px; text-align: center; font-size: 1.3em;">Pronóstico por Horas (HOY)</h3>
         
+        <div class="carrusel-wrapper" id="wrapperHoras">
+        <button class="carrusel-arrow left" onclick="scrollCarrusel('carruselHoras', -220)" aria-label="Anterior">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
         <div class="carrusel-horas" id="carruselHoras">
             {% for h in tira_horas %}
             {% if h.tipo == 'evento' %}
@@ -1780,6 +1785,10 @@
             {% endif %}
             {% endfor %}
         </div>
+        <button class="carrusel-arrow right" onclick="scrollCarrusel('carruselHoras', 220)" aria-label="Siguiente">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        </div>{# /carrusel-wrapper #}
         <canvas id="graficoHoras" style="margin-top: 20px;"></canvas>
     </div>
 
@@ -2760,15 +2769,6 @@
     </div>
     </footer>
 
-<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
-    <script>
-        Weglot.initialize({
-            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU CLAVE REAL
-            hide_switcher: true,  // Ocultamos el botón feo original
-            auto_switch: false    // Lo ponemos en manual para probar
-        });
-    </script> 
-    
     <script>
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -2820,5 +2820,52 @@
         {% endif %}
     </div>
 </nav>
-</body>
-</html>
+
+<script>
+// ── Carruseles: scroll con flechas ──────────────────────────
+function scrollCarrusel(id, px) {
+    var el = document.getElementById(id);
+    if (el) el.scrollBy({ left: px, behavior: 'smooth' });
+}
+
+// ── Drag-to-scroll (mouse) ───────────────────────────────────
+function initDragScroll(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var down = false, startX = 0, sl = 0;
+    el.addEventListener('mousedown', function(e) {
+        down = true; startX = e.pageX - el.offsetLeft; sl = el.scrollLeft;
+        el.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+    document.addEventListener('mouseup',   function() { down = false; if(el) el.style.cursor = 'grab'; });
+    document.addEventListener('mousemove', function(e) {
+        if (!down) return;
+        var x = e.pageX - el.offsetLeft;
+        el.scrollLeft = sl - (x - startX) * 1.4;
+    });
+}
+initDragScroll('carruselHoras');
+initDragScroll('listaDias');
+
+// ── Mostrar/ocultar flechas según si hay scroll disponible ──
+function actualizarFlechas(wrapperId, scrollId) {
+    var el = document.getElementById(scrollId);
+    var wr = document.getElementById(wrapperId);
+    if (!el || !wr || window.innerWidth > 900) return;
+    var left  = wr.querySelector('.carrusel-arrow.left');
+    var right = wr.querySelector('.carrusel-arrow.right');
+    if (left)  left.style.opacity  = el.scrollLeft > 10 ? '1' : '0.3';
+    if (right) right.style.opacity = el.scrollLeft < el.scrollWidth - el.clientWidth - 10 ? '1' : '0.3';
+}
+function bindFlechas(wid, sid) {
+    var el = document.getElementById(sid);
+    if (el) {
+        el.addEventListener('scroll', function() { actualizarFlechas(wid, sid); });
+        actualizarFlechas(wid, sid);
+    }
+}
+bindFlechas('wrapperHoras', 'carruselHoras');
+bindFlechas('wrapperDias',  'listaDias');
+</script>
+{% endblock %}

@@ -1,10 +1,9 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 | Señal Perdida</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
+{% extends 'base.html' %}
+
+{% block title %}404 | Señal Perdida{% endblock %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
     <style>
         body {
             background-color: #000000;
@@ -71,20 +70,10 @@
         @keyframes radar-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     </style>
+{% endblock %}
 
-<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
-    <script>
-        Weglot.initialize({
-            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
-            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
-            auto_switch: true            // Detecta idioma automático
-        });
-    </script>
-
-</head>
-<body>
-
-    <div class="radar-container">
+{% block content %}
+<div class="radar-container">
         <div class="radar-scan"></div>
         <div class="error-dot"></div>
     </div>
@@ -98,6 +87,4 @@
     </p>
 
     <a href="/" class="btn-home">VOLVER AL INICIO</a>
-
-</body>
-</html>
+{% endblock %}

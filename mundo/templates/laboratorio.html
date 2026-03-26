@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laboratorio 3D | TuClima</title>
+{% extends 'base.html' %}
 
-    <!-- Three.js r134: última versión con build UMD global (window.THREE) -->
+{% block title %}Laboratorio 3D | TuClima{% endblock %}
+
+{% block extra_head %}
+<!-- Three.js r134: última versión con build UMD global (window.THREE) -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.min.js"></script>
     <!-- Globe.gl 2.26: compatible con Three.js r134 -->
     <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.26.2/dist/globe.gl.min.js"></script>
@@ -665,10 +663,10 @@
         }
         .sb-section-body.collapsed { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; }
     </style>
-</head>
-<body>
+{% endblock %}
 
-    <!-- Pantalla de carga -->
+{% block content %}
+<!-- Pantalla de carga -->
     <div id="loader">
         <div class="loader-ring"></div>
         <p>Cargando texturas del planeta…</p>
@@ -1514,5 +1512,4 @@
         world.height(window.innerHeight);
     });
     </script>
-</body>
-</html>
+{% endblock %}

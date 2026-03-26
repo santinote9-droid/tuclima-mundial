@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/jpeg" href="{% static 'img/logo.jpg' %}">
+    <title>{% block title %}TuClima{% endblock %}</title>
+
+    {# ── Font Awesome ────────────────────────────────────────── #}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    {# ── Weglot (traductor automático) ───────────────────────── #}
+    <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+    <script>
+        Weglot.initialize({
+            api_key: 'wg_169c193b22e7a117be85a2f56113ab415',
+            hide_switcher: true,
+            auto_switch: true
+        });
+    </script>
+
+    {# ── Estilos / scripts adicionales por página ────────────── #}
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    {# ── Google Translate (oculto, activa por JS) ────────────── #}
+    <div id="google_translate_element" style="display:none;"></div>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'es',
+                includedLanguages: 'en,fr,it,pt,de',
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+        window.addEventListener('load', function () {
+            var idiomaUsuario = (navigator.language || navigator.userLanguage).split('-')[0];
+            if (idiomaUsuario !== 'es') {
+                setTimeout(function () {
+                    var select = document.querySelector('select.goog-te-combo');
+                    if (select) {
+                        select.value = idiomaUsuario;
+                        select.dispatchEvent(new Event('change'));
+                    }
+                }, 1000);
+            }
+        });
+    </script>
+    <style>
+        .goog-te-banner-frame { display: none !important; }
+        body { top: 0px !important; }
+        #google_translate_element { display: none !important; }
+    </style>
+
+    {# ── Contenido principal de cada página ──────────────────── #}
+    {% block content %}{% endblock %}
+
+    {# ── Scripts adicionales por página ─────────────────────── #}
+    {% block extra_scripts %}{% endblock %}
+
+</body>
+</html>

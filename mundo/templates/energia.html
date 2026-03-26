@@ -1,12 +1,10 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title class="notranslate">Energía Intelligence | TuClima</title>
+{% extends 'base.html' %}
 
-    <style>
+{% block title %}Energía Intelligence | TuClima{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
         /* Animación de espera para la IA - Estilo minimalista */
         .chat-typing {
             color: #94a3b8;
@@ -454,18 +452,10 @@
         .digital { font-family: 'JetBrains Mono', monospace; }
         /* Additional styles... */
     </style>
-    
-    <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
-    <script>
-        Weglot.initialize({
-            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
-            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
-            auto_switch: true            // Detecta idioma automático
-        });
-    </script>
-</head>
-<body>
-    <title class="notranslate">TuClima PRO | ENERGY OPS</title>
+{% endblock %}
+
+{% block content %}
+<title class="notranslate">TuClima PRO | ENERGY OPS</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -2511,6 +2501,4 @@ function createSampleChart(chartData = null) {
     drawChart(variablesDisponibles[0]);
 }
 </script>
-
-</body>
-</html>
+{% endblock %}

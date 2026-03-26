@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Key Personal | TuClima</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
+{% extends 'base.html' %}
+
+{% block title %}API Key Personal | TuClima{% endblock %}
+
+{% block extra_head %}
+<style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             background: #0f172a; color: #f1f5f9;
@@ -71,8 +69,9 @@
 
         .copied-msg { color: #4ade80; font-size: 0.78rem; margin-top: 4px; display: none; }
     </style>
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
 <div class="container">
 
     <h1><i class="fas fa-key" style="color:#22d3ee; margin-right:10px;"></i>API Key Personal</h1>
@@ -170,6 +169,4 @@ function copiarClave() {
     });
 }
 </script>
-
-</body>
-</html>
+{% endblock %}

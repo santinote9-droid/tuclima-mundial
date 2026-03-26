@@ -1,10 +1,9 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>500 | Tormenta en el Servidor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;600&display=swap" rel="stylesheet">
+{% extends 'base.html' %}
+
+{% block title %}500 | Tormenta en el Servidor{% endblock %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         /* FONDO ESPACIAL AZUL (Igual que el 404) */
         body {
@@ -92,20 +91,10 @@
             96% { opacity: 1; } 
         }
     </style>
+{% endblock %}
 
-<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
-    <script>
-        Weglot.initialize({
-            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
-            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
-            auto_switch: true            // Detecta idioma automático
-        });
-    </script>
-
-</head>
-<body>
-
-    <div class="weather-icon-container">
+{% block content %}
+<div class="weather-icon-container">
         <svg class="cloud" width="100" height="80" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.5,19c-3.037,0-5.5-2.463-5.5-5.5c0-1.053,0.297-2.035,0.812-2.87C12.449,10.22,12.085,10,11.5,10 C8.463,10,6,12.463,6,15.5S8.463,21,11.5,21h6c2.485,0,4.5-2.015,4.5-4.5S19.985,12,17.5,12c-0.18,0-0.355,0.015-0.526,0.04 C17.297,12.635,17.5,13.297,17.5,14C17.5,16.761,15.261,19,12.5,19H17.5z M6.5,11C6.5,11,6.5,11,6.5,11C6.5,11,6.5,11,6.5,11 C6.5,11,6.5,11,6.5,11z"/>
             <path d="M19.35,10.04C18.67,6.59,15.64,4,12,4C9.11,4,6.6,5.64,5.35,8.04C2.34,8.36,0,10.91,0,14c0,3.31,2.69,6,6,6h11.5 c0.373,0,0.737-0.027,1.092-0.076C18.156,19.358,17.75,18.73,17.5,18h-6c-2.481,0-4.5-2.019-4.5-4.5s2.019-4.5,4.5-4.5 c0.569,0,1.108,0.106,1.606,0.294C13.593,8.441,14.475,8,15.5,8c2.481,0,4.5,2.019,4.5,4.5c0,0.59-0.116,1.151-0.323,1.666 C21.61,13.435,23,12.01,23,10.5C23,10.342,22.992,10.188,22.977,10.035C22.067,10.012,21.144,10.013,20.21,10.04z" opacity="0.5"/>
@@ -130,6 +119,4 @@
     </p>
 
     <a href="/" class="btn-home">REINICIAR SISTEMAS</a>
-
-</body>
-</html>
+{% endblock %}

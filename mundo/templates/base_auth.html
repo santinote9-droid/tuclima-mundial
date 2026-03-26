@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+    <style>
+        /* ── Layout centrado dark ──────────────────────────────── */
+        body {
+            background-color: #0f172a;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 80%);
+        }
+
+        /* ── Contenedor y tarjeta ──────────────────────────────── */
+        .auth-container {
+            width: 100%;
+            max-width: {% block card_maxwidth %}420px{% endblock %};
+            padding: 20px;
+        }
+        .auth-card {
+            background: #1e293b;
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid #334155;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            animation: fadeIn 0.4s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Brand / logo ──────────────────────────────────────── */
+        .auth-brand {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 30px;
+            letter-spacing: -1px;
+        }
+        .auth-brand span { color: #3b82f6; }
+
+        /* ── Subtítulo ─────────────────────────────────────────── */
+        .auth-subtitle {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            color: #94a3b8;
+            font-weight: normal;
+        }
+
+        /* ── Formulario ────────────────────────────────────────── */
+        form { display: flex; flex-direction: column; gap: 18px; }
+
+        label {
+            color: #cbd5e1;
+            font-size: 0.9em;
+            margin-bottom: 4px;
+            display: block;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
+            width: 100%;
+            padding: 14px 15px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: {% block input_focus_color %}#22c55e{% endblock %};
+            box-shadow: 0 0 10px {% block input_focus_glow %}rgba(34,197,94,0.2){% endblock %};
+        }
+
+        /* Textos de ayuda de Django */
+        .helptext { display: block; font-size: 0.75em; color: #64748b; margin-top: 4px; }
+        ul { padding-left: 20px; color: #64748b; font-size: 0.8em; margin: 5px 0; }
+
+        /* ── Botón principal ───────────────────────────────────── */
+        .btn-auth {
+            width: 100%;
+            padding: 15px;
+            background: {% block btn_bg %}#22c55e{% endblock %};
+            color: {% block btn_color %}#000{% endblock %};
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 8px;
+        }
+        .btn-auth:hover {
+            background: {% block btn_hover %}#16a34a{% endblock %};
+            box-shadow: {% block btn_glow %}0 0 20px rgba(34,197,94,0.4){% endblock %};
+        }
+
+        /* ── Link inferior ─────────────────────────────────────── */
+        .auth-footer-link {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.9em;
+            color: #94a3b8;
+        }
+        .auth-footer-link a {
+            color: {% block link_color %}#22c55e{% endblock %};
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        /* ── Mensajes de error / alerta ────────────────────────── */
+        .auth-alert {
+            background: rgba(239,68,68,0.12);
+            border: 1px solid rgba(239,68,68,0.35);
+            color: #fca5a5;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+
+        /* ── Responsive ────────────────────────────────────────── */
+        @media (max-width: 480px) {
+            .auth-container { padding: 12px; }
+            .auth-card { padding: 24px 18px; border-radius: 14px; }
+            .auth-brand { font-size: 1.5rem; margin-bottom: 20px; }
+            input[type="text"],
+            input[type="password"],
+            input[type="email"] { font-size: 16px !important; padding: 13px; }
+            .btn-auth { padding: 13px; font-size: 0.95rem; }
+            .auth-subtitle { font-size: 1rem; }
+        }
+    </style>
+
+    {% block auth_extra_head %}{% endblock %}
+{% endblock %}
+
+
+{% block content %}
+    <div class="auth-container">
+        <div class="auth-card">
+
+            {# ── Logo/Brand ──────────────────────────────────── #}
+            <div class="auth-brand notranslate">
+                <i class="fas fa-cloud"></i>
+                <span class="notranslate" translate="no">{% block brand_name %}TuClima{% endblock %}</span>
+            </div>
+
+            {# ── Subtítulo ───────────────────────────────────── #}
+            <h2 class="auth-subtitle">{% block auth_subtitle %}Bienvenido{% endblock %}</h2>
+
+            {# ── Mensajes de error de Django ─────────────────── #}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="auth-alert">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            {# ── Contenido del formulario ────────────────────── #}
+            {% block card_content %}{% endblock %}
+
+            {# ── Link de pie de tarjeta ──────────────────────── #}
+            {% block auth_footer %}{% endblock %}
+
+        </div>
+    </div>
+{% endblock %}

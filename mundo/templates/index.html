@@ -1,14 +1,13 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TuClima Chat IA</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+{% extends 'base.html' %}
 
-    <div class="chat-container">
+{% block title %}TuClima Chat IA{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="style.css">
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
         <div class="chat-header">
             <h3>☁️ TuClima IA</h3>
             <span class="status-dot"></span>
@@ -25,5 +24,4 @@
     </div>
 
     <script src="script.js"></script>
-</body>
-</html>
+{% endblock %}

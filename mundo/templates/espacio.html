@@ -1,11 +1,10 @@
+{% extends 'base.html' %}
 {% load mathfilters %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor Espacial | TuClima</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{% block title %}Monitor Espacial | TuClima{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;600&display=swap" rel="stylesheet">
     
     <style>
@@ -110,20 +109,10 @@
             .visual-grid { grid-template-columns: 1fr; }
         }
     </style>
+{% endblock %}
 
-<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
-    <script>
-        Weglot.initialize({
-            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
-            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
-            auto_switch: true            // Detecta idioma automático
-        });
-    </script>
-
-</head>
-<body>
-
-    <div class="header-space">
+{% block content %}
+<div class="header-space">
         <div>
             <div style="font-size: 0.8em; color: #38bdf8; margin-bottom: 5px; font-family: 'Roboto Mono';">
                 <span class="live-dot"></span>ENLACE SATELITAL ACTIVO: NOAA / NASA
@@ -392,7 +381,6 @@
         </div>
     </div>
 
-
     <script>
         // --- CONFIGURACIÓN DEL GRÁFICO CHART.JS ---
         const ctx = document.getElementById('kpChart').getContext('2d');
@@ -480,6 +468,4 @@
             imageLink.click();
         }
     </script>
-
-</body>
-</html>
+{% endblock %}

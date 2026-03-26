@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verificando Pago...</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
+{% extends 'base.html' %}
+
+{% block title %}Verificando Pago...{% endblock %}
+
+{% block extra_head %}
+<style>
         body {
             background-color: #0f172a;
             color: #fff;
@@ -65,60 +63,23 @@
         .btn-home:hover { border-color: #fff; background: #334155; }
 
         .contact-link { color: #f59e0b; font-weight: bold; text-decoration: none; }
-    </style>
 
-<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
-    <script>
-        Weglot.initialize({
-            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
-            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
-            auto_switch: true            // Detecta idioma automático
-        });
-    </script>
-
-</head>
-<body>
-<div id="google_translate_element" style="display:none;"></div>
-
-<script type="text/javascript">
-    function googleTranslateElementInit() {
-        new google.translate.TranslateElement({
-            pageLanguage: 'es', 
-            includedLanguages: 'en,fr,it,pt,de', // Idiomas permitidos
-            autoDisplay: false
-        }, 'google_translate_element');
-    }
-</script>
-<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
-<script type="text/javascript">
-    window.addEventListener('load', function() {
-        // A. Detectamos el idioma del navegador del usuario (ej: 'en-US' o 'pt-BR')
-        var idiomaUsuario = navigator.language || navigator.userLanguage; 
-        idiomaUsuario = idiomaUsuario.split('-')[0]; // Nos quedamos solo con las dos letras ('en', 'pt', etc.)
-
-        // B. Si el usuario NO habla español, activamos la traducción
-        if (idiomaUsuario !== 'es') {
-            
-            // Esperamos un segundo a que Google cargue en el fondo
-            setTimeout(function() {
-                var select = document.querySelector('select.goog-te-combo');
-                if (select) {
-                    select.value = idiomaUsuario; // Seleccionamos su idioma
-                    select.dispatchEvent(new Event('change')); // ¡Clic virtual!
-                }
-            }, 1000); // 1000ms = 1 segundo de espera
+        /* ── Responsive ──────────────────────────────────── */
+        @media (max-width: 640px) {
+            body  { padding: 16px; }
+            .card { padding: 32px 20px; }
+            h1    { font-size: 1.9rem; }
+            p     { font-size: 1rem; }
         }
-    });
-</script>
+        @media (max-width: 400px) {
+            h1 { font-size: 1.5rem; }
+            .icon-box { font-size: 3.5rem; margin-bottom: 20px; }
+        }
+    </style>
+{% endblock %}
 
-<style>
-    .goog-te-banner-frame { display: none !important; }
-    body { top: 0px !important; }
-    #google_translate_element { display: none !important; }
-</style>
-
-    <div class="container">
+{% block content %}
+<div class="container">
         <div class="card">
             <div class="icon-box">
                 <i class="fas fa-clock"></i>
@@ -149,6 +110,4 @@
             <a href="/" class="btn-home">Volver al Inicio (Modo Gratuito)</a>
         </div>
     </div>
-
-</body>
-</html>
+{% endblock %}

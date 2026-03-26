@@ -1,10 +1,9 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TuClima | Comparador de Modelos</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% extends 'base.html' %}
+
+{% block title %}TuClima | Comparador de Modelos{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         body {
@@ -58,20 +57,10 @@
         .anim-float { animation: float 3s ease-in-out infinite; }
         .anim-rain { animation: rain-drop 1.5s infinite; }
     </style>
+{% endblock %}
 
-<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
-    <script>
-        Weglot.initialize({
-            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
-            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
-            auto_switch: true            // Detecta idioma automático
-        });
-    </script>
-
-</head>
-<body>
-
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
         <div>
             <h5 style="color: #64748b; margin: 0; text-transform: uppercase; letter-spacing: 2px;">War Room Analítica</h5>
             <h1 style="margin: 0; font-size: 2.5em; display: flex; align-items: center; gap: 15px;">
@@ -223,6 +212,4 @@
 
         initChart('temp');
     </script>
-
-</body>
-</html>
+{% endblock %}

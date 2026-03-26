@@ -1,12 +1,10 @@
+{% extends 'base.html' %}
 {% load static l10n %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title class="notranslate">Agro Intelligence | TuClima</title>
-    
+
+{% block title %}Agro Intelligence | TuClima{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
         /* Animación de espera para la IA - Estilo minimalista */
         .chat-typing {
@@ -471,14 +469,12 @@
     }
 </style>
 
-
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/themes/dark-unica.js"></script>
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/modules/export-data.js"></script>
-
 
     <style>
         /* ================================================= */
@@ -811,22 +807,10 @@
         }
 
     </style>
+{% endblock %}
 
-<script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
-    <script>
-        Weglot.initialize({
-            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', // <--- TU LLAVE REAL
-            hide_switcher: true,         // Oculta el botón estándar (usaremos el nuestro)
-            auto_switch: true            // Detecta idioma automático
-        });
-    </script>
-</head>
-<body>
-
-    <div id="google_translate_element" style="display:none;"></div>
-    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
-    <header class="header-eng">
+{% block content %}
+<header class="header-eng">
         <div class="brand-box">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5a4 4 0 0 1 5.66 0"/><path d="M10 10a2 2 0 0 1 2.83 0"/></svg>
             <div class="brand-title">AGRO <span>INTELLIGENCE</span></div>
@@ -1054,7 +1038,6 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>
             ABRIR ANÁLISIS DE BALANCE HÍDRICO (GRÁFICO)
         </div>
-
 
         <section class="forecast-section">
             <div class="fs-title">PRONÓSTICO EXTENDIDO DE CULTIVO (14 DÍAS)</div>
@@ -3054,6 +3037,4 @@ function createSampleChart(chartData = null) {
 // INICIALIZACIÓN DEL CHAT CON MARKDOWN
 // ==========================================
 </script>
-
-</body>
-</html>
+{% endblock %}

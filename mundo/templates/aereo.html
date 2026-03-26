@@ -1,11 +1,10 @@
-﻿<!DOCTYPE html>
-<html lang="es">
-<head>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flight Deck | TuClima</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+{% extends 'base.html' %}
+
+{% block title %}Flight Deck | TuClima{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     
     <style>
         /* ========================================================= */
@@ -495,30 +494,10 @@
             .chat-input-area button { padding: 10px 12px !important; font-size: 11px !important; }
         }
     </style>
+{% endblock %}
 
-    <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
-    <script>
-        Weglot.initialize({
-            api_key: 'wg_169c193b22e7a117be85a2f56113ab415', 
-            hide_switcher: true,         
-            auto_switch: true            
-        });
-    </script>
-</head>
-<body>
-
-    <div id="google_translate_element" style="display:none;"></div>
-    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-    <script>
-        function googleTranslateElementInit() { new google.translate.TranslateElement({ pageLanguage: 'es', includedLanguages: 'en,fr,it,pt,de', autoDisplay: false }, 'google_translate_element'); }
-        window.addEventListener('load', function() {
-            var lang = (navigator.language || navigator.userLanguage).split('-')[0];
-            if (lang !== 'es') { setTimeout(function() { var s = document.querySelector('select.goog-te-combo'); if(s){s.value=lang;s.dispatchEvent(new Event('change'));}}, 1000); }
-        });
-    </script>
-    <style>.goog-te-banner-frame{display:none!important}body{top:0!important}</style>
-
-    <div class="cockpit-header">
+{% block content %}
+<div class="cockpit-header">
         
         <div class="header-left">
             <div class="brand">
@@ -2813,6 +2792,4 @@ function createSampleChart(chartData = null) {
 // INICIALIZACIÓN DEL CHAT CON MARKDOWN
 // ==========================================
 </script>
-
-</body>
-</html>
+{% endblock %}
