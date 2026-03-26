@@ -2141,21 +2141,25 @@ def ls_checkout(request):
     site      = settings.SITE_URL.rstrip('/')
     variant_id = paquete['ls_variant_id']
 
-    # Si no hay store_id configurado (o es incorrecto), auto-detectarlo desde la API
+    # Si no hay store_id configurado, auto-detectarlo desde la API (con reintentos)
     if api_key and not store_id:
-        try:
-            import urllib.request as _req2
-            import json as _json2
-            req2 = _req2.Request(
-                'https://api.lemonsqueezy.com/v1/stores',
-                headers={'Authorization': f'Bearer {api_key}', 'Accept': 'application/vnd.api+json'},
-            )
-            with _req2.urlopen(req2, timeout=8) as r2:
-                stores_body = _json2.loads(r2.read().decode('utf-8'))
-            store_id = stores_body['data'][0]['id']
-            logger.info(f'[LS_CHECKOUT] Store ID auto-detectado: {store_id}')
-        except Exception as e2:
-            logger.error(f'[LS_CHECKOUT] Error obteniendo stores: {e2}')
+        import urllib.request as _req2
+        import json as _json2
+        for _intento in range(3):
+            try:
+                req2 = _req2.Request(
+                    'https://api.lemonsqueezy.com/v1/stores',
+                    headers={'Authorization': f'Bearer {api_key}', 'Accept': 'application/vnd.api+json'},
+                )
+                with _req2.urlopen(req2, timeout=15) as r2:
+                    stores_body = _json2.loads(r2.read().decode('utf-8'))
+                stores_data = stores_body.get('data', [])
+                if stores_data:
+                    store_id = stores_data[0]['id']
+                    logger.info(f'[LS_CHECKOUT] Store ID auto-detectado: {store_id}')
+                    break
+            except Exception as e2:
+                logger.error(f'[LS_CHECKOUT] Error obteniendo stores (intento {_intento+1}/3): {e2}')
 
     # Si la API key está configurada, crear checkout dinámico vía API (recomendado)
     if api_key and store_id:
