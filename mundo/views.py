@@ -2128,7 +2128,6 @@ def paypal_retorno(request):
 # ==========================================
 
 @login_required
-@login_required
 def ls_checkout(request):
     """Crea una sesión de checkout en Lemon Squeezy via API y redirige a ella."""
     paquete_id = request.GET.get('paquete', '')
@@ -2213,6 +2212,16 @@ def ls_checkout(request):
                 f"<p><b>variant_id usado:</b> {variant_id}</p>"
                 f"<pre>{detalle}</pre>"
             )
+
+    # Fallback: URL estática con store_slug + variant_id (cuando no hay API key o auto-detect falló)
+    store_slug = getattr(settings, 'LEMONSQUEEZY_STORE_SLUG', '')
+    if store_slug and variant_id:
+        url = f'https://{store_slug}.lemonsqueezy.com/checkout/buy/{variant_id}'
+        url += f'?checkout[custom][user_id]={request.user.id}&checkout[custom][paquete_id]={paquete_id}'
+        return redirect(url)
+
+    logger.error(f'[LS_CHECKOUT] Sin API key ni store_slug configurados. paquete={paquete_id}')
+    return redirect('pricing')
 
 
 @login_required

@@ -381,7 +381,7 @@
         </div>
 
         <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-        <table style="width:100%;border-collapse:collapse;min-width:580px;font-size:.85rem;">
+        <table style="width:100%;border-collapse:collapse;min-width:580px;font-size:.85rem;" class="comp-table">
             <thead>
                 <tr>
                     <th style="text-align:left;padding:14px 18px;color:#475569;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid #1e293b;">Funcionalidad</th>
@@ -515,10 +515,9 @@
                 </tr>
             </tbody>
         </table>
-        </div>
 
-        <!-- CTA row debajo de la tabla -->
-        <div style="display:grid;grid-template-columns:1fr repeat(4,1fr);gap:8px;margin-top:20px;min-width:580px;" class="comp-cta-grid">
+        <!-- CTA row debajo de la tabla — dentro del mismo contenedor scroll para alinearse con columnas -->
+        <div style="display:grid;grid-template-columns:1fr repeat(4,1fr);gap:8px;margin-top:12px;min-width:580px;padding-bottom:4px;" class="comp-cta-grid">
             <div></div>
             <div style="text-align:center;padding:6px 4px;">
                 <a href="/activar-plan/?paquete=starter_1m" class="tok-btn" style="background:linear-gradient(135deg,#f59e0b,#fb923c);box-shadow:0 4px 14px rgba(245,158,11,.3);font-size:.78rem;padding:10px 8px;">Activar <i class="fas fa-arrow-right btn-arrow"></i></a>
@@ -533,6 +532,7 @@
                 <a href="/activar-plan/?paquete=power_1m" class="tok-btn" style="background:linear-gradient(135deg,#eab308,#f59e0b);box-shadow:0 4px 14px rgba(234,179,8,.3);font-size:.78rem;padding:10px 8px;">Activar <i class="fas fa-arrow-right btn-arrow"></i></a>
             </div>
         </div>
+        </div><!-- /overflow-x:auto -->
         <style>
         @media(max-width:640px){
             .comp-cta-grid { display:none; }
