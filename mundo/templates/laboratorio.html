@@ -662,6 +662,27 @@
             line-height: 1.75;
         }
         .sb-section-body.collapsed { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; }
+
+        /* ── Responsive móvil ─────────────────────────────── */
+        @media (max-width: 520px) {
+            /* Barra de controles: expandir al ancho de pantalla */
+            #controls-bar {
+                min-width: unset;
+                width: calc(100vw - 32px);
+                left: 16px;
+                transform: none;
+                padding: 10px 14px;
+                bottom: 10px;
+            }
+            .ctrl-btn { padding: 6px 10px; font-size: 0.75em; }
+            /* Ocultar paneles laterales (accesibles por el sidebar) */
+            #status-panel, #atm-panel, #events-panel, #legend { display: none; }
+            /* HUD y botón volver más compactos */
+            #hud { top: 16px; left: 16px; }
+            #hud h1 { font-size: 1.1em; }
+            #hud p { font-size: 0.72em; }
+            #btn-back { top: 16px; right: 16px; padding: 8px 12px; font-size: 0.76em; }
+        }
     </style>
 {% endblock %}
 
