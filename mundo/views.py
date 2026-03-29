@@ -308,6 +308,16 @@ def obtener_barrio_exacto(lat, lon):
         return None, None
     return None, None
 
+# ── Vistas de error personalizadas ──────────────────────────────────────────
+def error_403(request, exception=None):
+    return render(request, '403.html', status=403)
+
+def error_404(request, exception=None):
+    return render(request, '404.html', status=404)
+
+def error_500(request):
+    return render(request, '500.html', status=500)
+
 # --- VISTA HOME (PÚBLICA) ---
 def home(request):
     # Configuración Default - Sin ubicación predeterminada para carga instantánea

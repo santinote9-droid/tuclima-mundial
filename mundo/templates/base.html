@@ -4,8 +4,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    {# ── SEO básico ──────────────────────────────────────────── #}
+    <meta name="description" content="{% block meta_description %}TuClima — Pronóstico del tiempo profesional con múltiples modelos meteorológicos, análisis sectorial (agro, naval, aéreo, energía) y laboratorio 3D interactivo.{% endblock %}">
+    <meta name="robots" content="index, follow">
+
+    {# ── Open Graph (WhatsApp, Facebook, LinkedIn) ───────────── #}
+    <meta property="og:type"        content="website">
+    <meta property="og:site_name"   content="TuClima">
+    <meta property="og:title"       content="{% block og_title %}TuClima — Meteorología Profesional{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Pronósticos multimodelo, análisis sectorial y globo 3D interactivo. Clima en tiempo real para profesionales.{% endblock %}">
+    <meta property="og:image"       content="https://tuclima-mundial.onrender.com{% static 'img/logo.jpg' %}">
+    <meta property="og:url"         content="https://tuclima-mundial.onrender.com/">
+
+    {# ── Twitter Card ────────────────────────────────────────── #}
+    <meta name="twitter:card"        content="summary_large_image">
+    <meta name="twitter:title"       content="{% block twitter_title %}TuClima — Meteorología Profesional{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Pronósticos multimodelo y análisis climático sectorial en tiempo real.{% endblock %}">
+    <meta name="twitter:image"       content="https://tuclima-mundial.onrender.com{% static 'img/logo.jpg' %}">
+
+    {# ── Favicon ─────────────────────────────────────────────── #}
     <link rel="icon" type="image/jpeg" href="{% static 'img/logo.jpg' %}">
     <title>{% block title %}TuClima{% endblock %}</title>
+
+    {# ── Preconnect CDNs (velocidad de carga) ────────────────── #}
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.weglot.com">
+    <link rel="preconnect" href="https://translate.googleapis.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
 
     {# ── Font Awesome ────────────────────────────────────────── #}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">

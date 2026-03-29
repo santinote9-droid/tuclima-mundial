@@ -3,6 +3,11 @@ from django.urls import path, include
 from mundo import views  # Importamos las vistas
 from mundo.views import home, comparador_modelos, api_papers
 
+# Manejadores de error personalizados
+handler403 = 'mundo.views.error_403'
+handler404 = 'mundo.views.error_404'
+handler500 = 'mundo.views.error_500'
+
 
 
 urlpatterns = [

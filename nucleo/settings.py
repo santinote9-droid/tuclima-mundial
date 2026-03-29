@@ -29,13 +29,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = [
-    'localhost', 
-    '127.0.0.1', 
+    'localhost',
+    '127.0.0.1',
     'tuclima-mundial.onrender.com',
-    '*'  # Solo para desarrollo
 ]
 
 
@@ -188,6 +187,57 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000'
 ]
+
+# ============================================================
+# SEGURIDAD HTTPS — solo activo en producción (DEBUG=False)
+# ============================================================
+if not DEBUG:
+    SECURE_SSL_REDIRECT          = True
+    SECURE_PROXY_SSL_HEADER      = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE        = True
+    CSRF_COOKIE_SECURE           = True
+    SECURE_HSTS_SECONDS          = 31536000  # 1 año
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD          = True
+    SECURE_CONTENT_TYPE_NOSNIFF  = True
+    SECURE_BROWSER_XSS_FILTER    = True
+
+# ============================================================
+# LOGGING — errores van a stdout con timestamp estructurado
+# ============================================================
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name}: {message}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'mundo': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}
 
 # ============================================================
 # EMAIL (SMTP) — configura estas variables en tu .env
