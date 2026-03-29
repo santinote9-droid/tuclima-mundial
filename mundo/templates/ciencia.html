@@ -36,6 +36,17 @@
         .card p { color: #94a3b8; font-size: 0.9em; flex-grow: 1; line-height: 1.5; }
         .card-footer { margin-top: 20px; font-size: 0.85em; color: #64748b; display: flex; items-center; gap: 5px; }
 
+        @media (max-width: 640px) {
+            .header { padding: 14px 16px; }
+            .search-box { padding: 24px 16px; }
+            .search-box form { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+            .search-input { width: 100%; margin: 0; }
+            .search-btn { width: 100%; margin-left: 0; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 24px 12px; }
+            .section-title { flex-direction: column; align-items: flex-start; gap: 6px; }
+        }
     </style>
 {% endblock %}
 

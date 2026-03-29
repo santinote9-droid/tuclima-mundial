@@ -104,6 +104,12 @@
             display: flex; gap: 10px; align-items: flex-start;
         }
         .notice i { color: #3b82f6; flex-shrink: 0; margin-top: 2px; }
+
+        @media (max-width: 520px) {
+            body { padding: 20px 12px; }
+            .card { padding: 20px 16px; }
+            .grid-2col { grid-template-columns: 1fr !important; }
+        }
     </style>
 {% endblock %}
 
@@ -251,7 +257,7 @@
                 {% endfor %}
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px;" class="grid-2col">
                 <div>
                     <label style="display:block; color:#94a3b8; font-size:0.82rem; margin-bottom:6px;">📍 Ciudad / Localidad</label>
                     <div style="display:flex; gap:6px; align-items:center;">
@@ -437,13 +443,13 @@
 
         {% if limite_ubicaciones == None or ubicaciones.count < limite_ubicaciones %}
         <div id="form-nueva-ubicacion">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;" class="grid-2col">
                 <input id="ub-nombre" type="text" placeholder="Nombre (ej: Campo La Pampa)" maxlength="100"
                        style="background:#1e293b; border:1px solid #334155; border-radius:8px; padding:9px 12px; color:#f1f5f9; font-size:0.88rem; outline:none;">
                 <input id="ub-sector" type="text" placeholder="Sector (agro/naval/aereo/energia)"
                        style="background:#1e293b; border:1px solid #334155; border-radius:8px; padding:9px 12px; color:#f1f5f9; font-size:0.88rem; outline:none;">
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;" class="grid-2col">
                 <input id="ub-lat" type="number" step="any" placeholder="Latitud (ej: -34.6)" min="-90" max="90"
                        style="background:#1e293b; border:1px solid #334155; border-radius:8px; padding:9px 12px; color:#f1f5f9; font-size:0.88rem; outline:none;">
                 <input id="ub-lon" type="number" step="any" placeholder="Longitud (ej: -58.4)" min="-180" max="180"

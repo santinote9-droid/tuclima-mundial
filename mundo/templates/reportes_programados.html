@@ -55,6 +55,14 @@
         .back-link { text-align: center; margin-top: 10px; }
         .back-link a { color: #3b82f6; text-decoration: none; font-size: 0.88rem; font-weight: 600; }
         .back-link a:hover { text-decoration: underline; }
+
+        @media (max-width: 520px) {
+            .container { padding: 0; }
+            .card { padding: 18px 14px; }
+            .grid-2 { grid-template-columns: 1fr; }
+            .reporte-row { flex-wrap: wrap; gap: 8px; }
+            .reporte-meta { font-size: 0.72rem; }
+        }
     </style>
 {% endblock %}
 

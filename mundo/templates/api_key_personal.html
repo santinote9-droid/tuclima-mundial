@@ -68,6 +68,13 @@
         .back-link a:hover { text-decoration: underline; }
 
         .copied-msg { color: #4ade80; font-size: 0.78rem; margin-top: 4px; display: none; }
+
+        @media (max-width: 480px) {
+            body { padding: 20px 12px; }
+            .card { padding: 18px 14px; }
+            .key-display { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .btn-copy { width: 100%; text-align: center; }
+        }
     </style>
 {% endblock %}
 

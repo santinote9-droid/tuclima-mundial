@@ -91,6 +91,13 @@
         
         /* Ocultar viñetas feas de errores/ayuda */
         ul.errorlist { color: #ef4444; list-style: none; padding: 0; }
+
+        @media (max-width: 480px) {
+            body { align-items: flex-start; padding-top: 30px; }
+            .container { padding: 12px; }
+            .card { padding: 24px 18px; border-radius: 14px; }
+            .brand { font-size: 1.4rem; margin-bottom: 20px; }
+        }
     </style>
 {% endblock %}
 
