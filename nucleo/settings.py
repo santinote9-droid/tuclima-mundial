@@ -192,7 +192,9 @@ CSRF_TRUSTED_ORIGINS = [
 # SEGURIDAD HTTPS — solo activo en producción (DEBUG=False)
 # ============================================================
 if not DEBUG:
-    SECURE_SSL_REDIRECT          = True
+    # Render ya redirige HTTP→HTTPS a nivel de plataforma.
+    # SECURE_SSL_REDIRECT=True causaba un bucle 301 infinito.
+    SECURE_SSL_REDIRECT          = False
     SECURE_PROXY_SSL_HEADER      = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE        = True
     CSRF_COOKIE_SECURE           = True
