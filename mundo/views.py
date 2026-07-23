@@ -1207,12 +1207,18 @@ def estadisticas_agro(request):
 
         # 4. TEST DE HIPÓTESIS
         test_hipotesis = None
+        test_hipotesis_motivo = None
         if poisson:
             test_hipotesis = estadistica_utils.test_bondad_ajuste_poisson(
                 poisson['observado'], poisson['teorico']
             )
-            test_hipotesis['h0'] = 'El número de horas de lluvia por bloque de 6h sigue una distribución de Poisson.'
-            test_hipotesis['h1'] = 'El número de horas de lluvia por bloque de 6h NO sigue una distribución de Poisson.'
+            if test_hipotesis:
+                test_hipotesis['h0'] = 'El número de horas de lluvia por bloque de 6h sigue una distribución de Poisson.'
+                test_hipotesis['h1'] = 'El número de horas de lluvia por bloque de 6h NO sigue una distribución de Poisson.'
+            else:
+                test_hipotesis_motivo = estadistica_utils.motivo_test_no_disponible(
+                    conteos_por_periodo, 'lluvia (precipitación > 0.1 mm)'
+                )
 
         return JsonResponse({
             'ok': True,
@@ -1225,6 +1231,7 @@ def estadisticas_agro(request):
             'poisson': poisson,
             'poisson_evento_desc': 'Hora con lluvia: precipitación > 0.1 mm (conteo por bloques de 6h).',
             'test_hipotesis': test_hipotesis,
+            'test_hipotesis_motivo': test_hipotesis_motivo,
             'muestra_n': len([v for v in valores if v is not None]),
             'generado_en': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
         })
@@ -1614,12 +1621,18 @@ def estadisticas_naval(request):
 
         # 4. TEST DE HIPÓTESIS
         test_hipotesis = None
+        test_hipotesis_motivo = None
         if poisson:
             test_hipotesis = estadistica_utils.test_bondad_ajuste_poisson(
                 poisson['observado'], poisson['teorico']
             )
-            test_hipotesis['h0'] = 'El número de horas de riesgo náutico por bloque de 6h sigue una distribución de Poisson.'
-            test_hipotesis['h1'] = 'El número de horas de riesgo náutico por bloque de 6h NO sigue una distribución de Poisson.'
+            if test_hipotesis:
+                test_hipotesis['h0'] = 'El número de horas de riesgo náutico por bloque de 6h sigue una distribución de Poisson.'
+                test_hipotesis['h1'] = 'El número de horas de riesgo náutico por bloque de 6h NO sigue una distribución de Poisson.'
+            else:
+                test_hipotesis_motivo = estadistica_utils.motivo_test_no_disponible(
+                    conteos_por_periodo, 'riesgo náutico (oleaje ≥ 1.5 m o viento ≥ 15 kt)'
+                )
 
         return JsonResponse({
             'ok': True,
@@ -1632,6 +1645,7 @@ def estadisticas_naval(request):
             'poisson': poisson,
             'poisson_evento_desc': 'Hora con riesgo náutico: oleaje ≥ 1.5 m (precaución) o viento ≥ 15 kt (conteo por bloques de 6h).',
             'test_hipotesis': test_hipotesis,
+            'test_hipotesis_motivo': test_hipotesis_motivo,
             'muestra_n': len([v for v in valores if v is not None]),
             'generado_en': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
         })
@@ -1926,10 +1940,15 @@ def estadisticas_aereo(request):
 
         # 4. TEST DE HIPÓTESIS — ¿el conteo de eventos por bloque de 6h sigue Poisson?
         test_hipotesis = None
+        test_hipotesis_motivo = None
         if poisson:
             test_hipotesis = estadistica_utils.test_bondad_ajuste_poisson(
                 poisson['observado'], poisson['teorico']
             )
+            if not test_hipotesis:
+                test_hipotesis_motivo = estadistica_utils.motivo_test_no_disponible(
+                    conteos_por_periodo, 'riesgo aeronáutico (CAPE > 300 J/kg o ráfagas > 25 kt)'
+                )
 
         return JsonResponse({
             'ok': True,
@@ -1942,6 +1961,7 @@ def estadisticas_aereo(request):
             'poisson': poisson,
             'poisson_evento_desc': 'Hora con riesgo aeronáutico: CAPE > 300 J/kg (inestabilidad convectiva) o ráfagas > 25 kt (conteo por bloques de 6h).',
             'test_hipotesis': test_hipotesis,
+            'test_hipotesis_motivo': test_hipotesis_motivo,
             'muestra_n': len([v for v in valores if v is not None]),
             'generado_en': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
         })
@@ -2227,12 +2247,18 @@ def estadisticas_energia(request):
 
         # 4. TEST DE HIPÓTESIS
         test_hipotesis = None
+        test_hipotesis_motivo = None
         if poisson:
             test_hipotesis = estadistica_utils.test_bondad_ajuste_poisson(
                 poisson['observado'], poisson['teorico']
             )
-            test_hipotesis['h0'] = 'El número de horas sin viento aprovechable por bloque de 6h sigue una distribución de Poisson.'
-            test_hipotesis['h1'] = 'El número de horas sin viento aprovechable por bloque de 6h NO sigue una distribución de Poisson.'
+            if test_hipotesis:
+                test_hipotesis['h0'] = 'El número de horas sin viento aprovechable por bloque de 6h sigue una distribución de Poisson.'
+                test_hipotesis['h1'] = 'El número de horas sin viento aprovechable por bloque de 6h NO sigue una distribución de Poisson.'
+            else:
+                test_hipotesis_motivo = estadistica_utils.motivo_test_no_disponible(
+                    conteos_por_periodo, 'ausencia de viento aprovechable (< 3 m/s)'
+                )
 
         return JsonResponse({
             'ok': True,
@@ -2245,6 +2271,7 @@ def estadisticas_energia(request):
             'poisson': poisson,
             'poisson_evento_desc': 'Hora sin viento aprovechable: velocidad < 3 m/s (por debajo del cut-in de la turbina; conteo por bloques de 6h).',
             'test_hipotesis': test_hipotesis,
+            'test_hipotesis_motivo': test_hipotesis_motivo,
             'muestra_n': len([v for v in valores if v is not None]),
             'generado_en': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
         })

@@ -242,6 +242,33 @@ def test_bondad_ajuste_poisson(observado, teorico, alfa=0.05):
     }
 
 
+def motivo_test_no_disponible(conteos_por_periodo, evento_desc=""):
+    """
+    Cuando el test de bondad de ajuste no puede calcularse (menos de 2
+    categorías tras aplicar la regla de Cochran), explica POR QUÉ en
+    lenguaje claro, en vez de un mensaje técnico genérico.
+
+    Distingue el caso "el evento no ocurrió nunca en la muestra" (0
+    variabilidad, el test no aplica conceptualmente) del caso "el evento
+    ocurrió pero muy pocas veces" (variabilidad insuficiente para un
+    test Chi-cuadrado válido).
+    """
+    total_periodos = len(conteos_por_periodo)
+    total_eventos = sum(conteos_por_periodo)
+    desc = f' de "{evento_desc}"' if evento_desc else ''
+    if total_eventos == 0:
+        return (
+            f'No se registró ningún evento{desc} en los {total_periodos} períodos de este '
+            'pronóstico: al no haber variabilidad en los datos, el test de bondad de ajuste '
+            'no es aplicable (no hay nada que contrastar contra Poisson).'
+        )
+    return (
+        f'Los eventos{desc} fueron demasiado infrecuentes en este período (solo {total_eventos} '
+        f'en {total_periodos} períodos) para formar las categorías mínimas que exige un test '
+        'Chi-cuadrado válido. Esto es una limitación de la muestra, no un error de cálculo.'
+    )
+
+
 # ------------------------------------------------------------------
 # AGRUPAR SERIE HORARIA POR DÍA (usa el array `time` de Open-Meteo)
 # ------------------------------------------------------------------

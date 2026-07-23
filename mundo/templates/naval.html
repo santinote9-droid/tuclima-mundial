@@ -2219,7 +2219,11 @@
       var el = document.getElementById('stats-naval-hip-resultado');
       if (!el) return;
       var t = data.test_hipotesis;
-      if (!t) { el.innerHTML = '<div style="color:#94a3b8; font-size:0.8rem;">No hay suficientes categorías para calcular el test con este período de datos.</div>'; return; }
+      if (!t) {
+        var motivo = data.test_hipotesis_motivo || 'No hay suficientes categorías para calcular el test con este período de datos.';
+        el.innerHTML = '<div style="color:#94a3b8; font-size:0.8rem; line-height:1.5; background:rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.2); border-radius:10px; padding:14px 16px;">' + motivo + '</div>';
+        return;
+      }
       var col = t.rechaza_h0 ? '#f87171' : '#4ade80';
       var bg = t.rechaza_h0 ? 'rgba(239,68,68,0.08)' : 'rgba(74,222,128,0.08)';
       var iconoVeredicto = t.rechaza_h0
