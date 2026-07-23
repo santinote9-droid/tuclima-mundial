@@ -4,6 +4,7 @@
 
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot"></script>
 <style>
         /* Animación de espera para la IA - Estilo minimalista */
         .chat-typing {
@@ -1868,6 +1869,334 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
       }
     });
   })();
+  </script>
+
+  <!-- ── ESTADÍSTICA CLIMÁTICA (Poisson · Boxplot · Frecuencias · Test de Hipótesis) ── -->
+  <div id="stats-energia" style="background:linear-gradient(135deg,#0f172a,#111827); border:1px solid rgba(34,211,238,0.35); border-radius:16px; margin-top:12px; overflow:hidden;">
+    <div style="padding:16px 20px 12px; border-bottom:1px solid rgba(34,211,238,0.2); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; align-items:center; gap:9px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-6 4 4 5-8"/></svg>
+        <span style="color:#67e8f9; font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; font-family:'Segoe UI',system-ui,sans-serif;">Estadística Climática</span>
+        <span style="background:rgba(34,211,238,0.12); color:#67e8f9; font-size:0.62rem; font-weight:700; padding:2px 8px; border-radius:20px; letter-spacing:0.05em;">TIEMPO REAL · API</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <select id="stats-energia-variable" style="background:#0f172a; border:1px solid #164e63; border-radius:8px; color:#e2e8f0; padding:6px 10px; font-size:0.76rem; font-family:inherit;">
+          <option value="radiacion">Radiación Solar (W/m²)</option>
+          <option value="viento">Viento (m/s)</option>
+          <option value="temperatura">Temperatura (°C)</option>
+          <option value="presion">Presión (hPa)</option>
+        </select>
+        <button onclick="statsEnergiaCargar()" id="stats-energia-btn" style="display:inline-flex; align-items:center; gap:6px; background:rgba(34,211,238,0.12); border:1px solid rgba(34,211,238,0.4); color:#67e8f9; padding:6px 14px; border-radius:8px; cursor:pointer; font-size:0.76rem; font-weight:700; font-family:inherit;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Actualizar
+        </button>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:6px; padding:12px 20px 0; overflow-x:auto;">
+      <button class="stats-energia-tab" data-tab="boxplot" onclick="statsEnergiaTab('boxplot')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid rgba(34,211,238,0.35); border-bottom:none; background:rgba(34,211,238,0.14); color:#67e8f9; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Boxplot por Día</button>
+      <button class="stats-energia-tab" data-tab="frecuencias" onclick="statsEnergiaTab('frecuencias')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Frecuencias Relativas</button>
+      <button class="stats-energia-tab" data-tab="poisson" onclick="statsEnergiaTab('poisson')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Distribución Poisson</button>
+      <button class="stats-energia-tab" data-tab="hipotesis" onclick="statsEnergiaTab('hipotesis')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Test de Hipótesis</button>
+      <button class="stats-energia-tab" data-tab="historico" onclick="statsEnergiaTab('historico')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Histórico Real</button>
+    </div>
+
+    <div style="padding:16px 20px 20px; border-top:1px solid rgba(34,211,238,0.15);">
+      <div id="stats-energia-loading" style="display:none; color:#67e8f9; font-size:0.78rem; text-align:center; padding:30px 0;">Calculando estadísticas sobre el pronóstico horario…</div>
+      <div id="stats-energia-error" style="display:none; color:#f87171; font-size:0.78rem; text-align:center; padding:30px 0;"></div>
+
+      <div id="stats-energia-pane-boxplot" class="stats-energia-pane">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 10px; line-height:1.5;">Distribución horaria de la variable elegida para cada uno de los próximos días del pronóstico. La caja muestra el rango intercuartílico (Q1–Q3), la línea central la mediana, y los puntos los valores atípicos (outliers).</p>
+        <div style="position:relative; height:260px;"><canvas id="stats-energia-chart-boxplot"></canvas></div>
+      </div>
+
+      <div id="stats-energia-pane-frecuencias" class="stats-energia-pane" style="display:none;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 10px; line-height:1.5;">Frecuencia relativa (%) de todas las horas del pronóstico agrupadas en intervalos. Muestra qué tan probable es cada rango de valores en los próximos días.</p>
+        <div style="position:relative; height:260px;"><canvas id="stats-energia-chart-frecuencias"></canvas></div>
+      </div>
+
+      <div id="stats-energia-pane-poisson" class="stats-energia-pane" style="display:none;">
+        <p id="stats-energia-poisson-desc" style="font-size:0.72rem; color:#94a3b8; margin:0 0 10px; line-height:1.5;"></p>
+        <div style="position:relative; height:260px;"><canvas id="stats-energia-chart-poisson"></canvas></div>
+      </div>
+
+      <div id="stats-energia-pane-hipotesis" class="stats-energia-pane" style="display:none;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 12px; line-height:1.5;">Test de bondad de ajuste Chi-cuadrado (χ²): ¿el conteo diario de horas sin viento aprovechable es compatible con un proceso de Poisson?</p>
+        <div id="stats-energia-hip-resultado"></div>
+      </div>
+
+      <div id="stats-energia-pane-historico" class="stats-energia-pane" style="display:none;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 12px; line-height:1.5;">Comparación en tiempo real: el valor de ahora vs. el promedio real de días anteriores a esta misma hora, calculado sobre snapshots guardados automáticamente cada hora (n8n + BigQuery).</p>
+        <div id="stats-energia-historico-loading" style="color:#67e8f9; font-size:0.78rem; text-align:center; padding:20px 0;">Consultando histórico…</div>
+        <div id="stats-energia-historico-empty" style="display:none; color:#94a3b8; font-size:0.78rem; text-align:center; padding:20px 14px; background:rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.2); border-radius:10px;">Todavía no hay suficiente histórico acumulado para esta variable y ubicación. Los snapshots se guardan automáticamente cada hora — volvé a revisar en unos días.</div>
+        <div id="stats-energia-historico-contenido" style="display:none;">
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+            <div id="stats-energia-hist-hoy" style="flex:1; min-width:140px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"></div>
+            <div id="stats-energia-hist-prom" style="flex:1; min-width:140px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"></div>
+            <div id="stats-energia-hist-diff" style="flex:1; min-width:140px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"></div>
+          </div>
+          <div style="position:relative; height:220px;"><canvas id="stats-energia-chart-historico"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+  {% load l10n %}{% localize off %}
+  (function(){
+    var STATS_LAT = {{ lat|default:"-34.60" }};
+    var STATS_LON = {{ lon|default:"-58.38" }};
+
+    if (typeof ChartBoxPlot !== 'undefined' && typeof Chart !== 'undefined') {
+      Chart.register(ChartBoxPlot.BoxPlotController, ChartBoxPlot.BoxAndWiskers);
+    }
+
+    var statsEnergiaCharts = {};
+
+    window.statsEnergiaTab = function(tab) {
+      document.querySelectorAll('.stats-energia-tab').forEach(function(btn){
+        var active = btn.getAttribute('data-tab') === tab;
+        btn.style.background = active ? 'rgba(34,211,238,0.14)' : 'transparent';
+        btn.style.color = active ? '#67e8f9' : '#64748b';
+        btn.style.borderColor = active ? 'rgba(34,211,238,0.35)' : '#1e293b';
+      });
+      document.querySelectorAll('.stats-energia-pane').forEach(function(pane){ pane.style.display = 'none'; });
+      var target = document.getElementById('stats-energia-pane-' + tab);
+      if (target) target.style.display = 'block';
+    };
+
+    function statsEnergiaDestroy(id) {
+      if (statsEnergiaCharts[id]) { statsEnergiaCharts[id].destroy(); delete statsEnergiaCharts[id]; }
+    }
+
+    function statsEnergiaRenderBoxplot(data) {
+      var canvas = document.getElementById('stats-energia-chart-boxplot');
+      if (!canvas || !data.boxplot || !data.boxplot.length) return;
+      statsEnergiaDestroy('boxplot');
+      var labels = data.boxplot.map(function(g){ return g.label; });
+      var puntos = data.boxplot.map(function(g){
+        return { min: g.min, q1: g.q1, median: g.mediana, q3: g.q3, max: g.max, outliers: g.outliers || [] };
+      });
+      statsEnergiaCharts['boxplot'] = new Chart(canvas.getContext('2d'), {
+        type: 'boxplot',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: data.variable.label,
+            data: puntos,
+            backgroundColor: 'rgba(34,211,238,0.18)',
+            borderColor: '#22d3ee',
+            borderWidth: 1.5,
+            outlierColor: '#f87171',
+            itemRadius: 3
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: data.variable.label + ' — variabilidad diaria del pronóstico', color: '#e2e8f0', font: { size: 13 } }
+          },
+          scales: {
+            y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+            x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
+          }
+        }
+      });
+    }
+
+    function statsEnergiaRenderFrecuencias(data) {
+      var canvas = document.getElementById('stats-energia-chart-frecuencias');
+      if (!canvas || !data.frecuencias || !data.frecuencias.length) return;
+      statsEnergiaDestroy('frecuencias');
+      var labels = data.frecuencias.map(function(b){ return b.rango; });
+      var valores = data.frecuencias.map(function(b){ return b.frecuencia_relativa; });
+      statsEnergiaCharts['frecuencias'] = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Frecuencia relativa (%)',
+            data: valores,
+            backgroundColor: 'rgba(34,211,238,0.5)',
+            borderColor: '#22d3ee',
+            borderWidth: 1,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Frecuencia relativa — ' + data.variable.label, color: '#e2e8f0', font: { size: 13 } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#94a3b8', callback: function(v){ return v + '%'; } }, grid: { color: '#1e293b' } },
+            x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function statsEnergiaRenderPoisson(data) {
+      var descEl = document.getElementById('stats-energia-poisson-desc');
+      var canvas = document.getElementById('stats-energia-chart-poisson');
+      if (!data.poisson) {
+        if (descEl) descEl.innerText = 'No hay suficientes datos para ajustar una distribución de Poisson.';
+        return;
+      }
+      if (descEl) {
+        descEl.innerHTML = data.poisson_evento_desc + ' &nbsp;·&nbsp; λ (promedio de eventos/día) = <strong style="color:#67e8f9;">' + data.poisson.lambda + '</strong>';
+      }
+      if (!canvas) return;
+      statsEnergiaDestroy('poisson');
+      var labels = data.poisson.k.map(function(k){ return k + ' evento(s)'; });
+      statsEnergiaCharts['poisson'] = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Observado (bloques 6h)', data: data.poisson.observado, backgroundColor: 'rgba(34,211,238,0.55)', borderRadius: 4 },
+            { label: 'Teórico Poisson (λ=' + data.poisson.lambda + ')', data: data.poisson.teorico, backgroundColor: 'rgba(250,204,21,0.55)', borderRadius: 4 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#94a3b8' } },
+            title: { display: true, text: 'Bloques de 6h observados vs. Poisson teórico', color: '#e2e8f0', font: { size: 13 } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: '#1e293b' } },
+            x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function statsEnergiaRenderHipotesis(data) {
+      var el = document.getElementById('stats-energia-hip-resultado');
+      if (!el) return;
+      var t = data.test_hipotesis;
+      if (!t) { el.innerHTML = '<div style="color:#94a3b8; font-size:0.8rem;">No hay suficientes categorías para calcular el test con este período de datos.</div>'; return; }
+      var col = t.rechaza_h0 ? '#f87171' : '#4ade80';
+      var bg = t.rechaza_h0 ? 'rgba(239,68,68,0.08)' : 'rgba(74,222,128,0.08)';
+      var iconoVeredicto = t.rechaza_h0
+        ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" style="vertical-align:-2px; margin-right:5px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+        : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:5px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+      el.innerHTML =
+        '<div style="background:' + bg + '; border:1px solid ' + col + '33; border-radius:10px; padding:16px 18px;">' +
+          '<div style="font-size:0.68rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">H0</div>' +
+          '<div style="font-size:0.82rem; color:#e2e8f0; margin-bottom:10px;">' + t.h0 + '</div>' +
+          '<div style="font-size:0.68rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">H1</div>' +
+          '<div style="font-size:0.82rem; color:#e2e8f0; margin-bottom:14px;">' + t.h1 + '</div>' +
+          '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;">' +
+            '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">χ² = <strong style="color:#e2e8f0;">' + t.estadistico + '</strong></span>' +
+            '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">gl = <strong style="color:#e2e8f0;">' + t.grados_libertad + '</strong></span>' +
+            '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">p-valor = <strong style="color:#e2e8f0;">' + t.p_valor + '</strong></span>' +
+            '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">α = <strong style="color:#e2e8f0;">' + t.alfa + '</strong></span>' +
+          '</div>' +
+          '<div style="font-size:0.82rem; font-weight:700; color:' + col + '; display:flex; align-items:center;">' + iconoVeredicto + (t.rechaza_h0 ? 'SE RECHAZA H0' : 'NO SE RECHAZA H0') + '</div>' +
+          '<div style="font-size:0.78rem; color:#cbd5e1; margin-top:6px; line-height:1.5;">' + t.conclusion + '</div>' +
+        '</div>';
+    }
+
+    function statsEnergiaRenderHistorico(data) {
+      var loading = document.getElementById('stats-energia-historico-loading');
+      var empty = document.getElementById('stats-energia-historico-empty');
+      var contenido = document.getElementById('stats-energia-historico-contenido');
+      if (loading) loading.style.display = 'none';
+      if (!data || !data.ok || !data.hoy || data.hoy.valor == null || !data.promedio_historico || data.promedio_historico.valor == null) {
+        if (empty) { empty.style.display = 'block'; if (data && data.error) empty.innerText = data.error; }
+        if (contenido) contenido.style.display = 'none';
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+      if (contenido) contenido.style.display = 'block';
+
+      var variableSel = document.getElementById('stats-energia-variable');
+      var textoVar = variableSel ? variableSel.options[variableSel.selectedIndex].text : '';
+      var diff = data.diferencia_pct;
+      var diffColor = diff > 0 ? '#fb923c' : (diff < 0 ? '#60a5fa' : '#94a3b8');
+
+      document.getElementById('stats-energia-hist-hoy').innerHTML = '<div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Hoy (esta hora)</div><div style="font-size:1.3rem; font-weight:800; color:#e2e8f0;">' + data.hoy.valor + '</div>';
+      document.getElementById('stats-energia-hist-prom').innerHTML = '<div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Promedio (' + (data.promedio_historico.n_dias || 0) + ' días previos)</div><div style="font-size:1.3rem; font-weight:800; color:#e2e8f0;">' + data.promedio_historico.valor + '</div>';
+      document.getElementById('stats-energia-hist-diff').innerHTML = '<div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Diferencia vs. histórico</div><div style="font-size:1.3rem; font-weight:800; color:' + diffColor + ';">' + (diff > 0 ? '+' : '') + diff + '%</div>';
+
+      var canvas = document.getElementById('stats-energia-chart-historico');
+      if (!canvas || !data.serie_semanas || !data.serie_semanas.length) return;
+      statsEnergiaDestroy('historico');
+      var labels = data.serie_semanas.map(function(s){ return s.semana; });
+      var valores = data.serie_semanas.map(function(s){ return s.valor; });
+      statsEnergiaCharts['historico'] = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: { labels: labels, datasets: [{ label: textoVar, data: valores, backgroundColor: labels.map(function(l){ return l === 'Hoy' ? 'rgba(250,204,21,0.75)' : 'rgba(34,211,238,0.5)'; }), borderRadius: 4 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, title: { display: true, text: 'Evolución semanal — ' + textoVar, color: '#e2e8f0', font: { size: 13 } } },
+          scales: { y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } } }
+        }
+      });
+    }
+
+    window.statsEnergiaCargarHistorico = function() {
+      var variableSel = document.getElementById('stats-energia-variable');
+      var loading = document.getElementById('stats-energia-historico-loading');
+      var empty = document.getElementById('stats-energia-historico-empty');
+      var contenido = document.getElementById('stats-energia-historico-contenido');
+      if (!variableSel || !loading) return;
+      loading.style.display = 'block';
+      if (empty) empty.style.display = 'none';
+      if (contenido) contenido.style.display = 'none';
+
+      var url = '/api/estadisticas/energia/historico/?lat=' + STATS_LAT + '&lon=' + STATS_LON + '&variable=' + encodeURIComponent(variableSel.value);
+      fetch(url, { credentials: 'include' })
+        .then(function(r){ return r.json(); })
+        .then(statsEnergiaRenderHistorico)
+        .catch(function(){
+          loading.style.display = 'none';
+          if (empty) { empty.style.display = 'block'; empty.innerText = 'No se pudo conectar con el servicio de histórico.'; }
+        });
+    };
+
+    window.statsEnergiaCargar = function() {
+      var variableSel = document.getElementById('stats-energia-variable');
+      var loading = document.getElementById('stats-energia-loading');
+      var errorBox = document.getElementById('stats-energia-error');
+      var btn = document.getElementById('stats-energia-btn');
+      if (!variableSel || !loading || !errorBox) return;
+
+      loading.style.display = 'block';
+      errorBox.style.display = 'none';
+      if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+
+      var url = '/api/estadisticas/energia/?lat=' + STATS_LAT + '&lon=' + STATS_LON + '&variable=' + encodeURIComponent(variableSel.value);
+
+      fetch(url, { credentials: 'include' })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          loading.style.display = 'none';
+          if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+          if (!data.ok) { errorBox.innerText = data.error || 'Error al calcular estadísticas.'; errorBox.style.display = 'block'; return; }
+          statsEnergiaRenderBoxplot(data);
+          statsEnergiaRenderFrecuencias(data);
+          statsEnergiaRenderPoisson(data);
+          statsEnergiaRenderHipotesis(data);
+        })
+        .catch(function(){
+          loading.style.display = 'none';
+          if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+          errorBox.innerText = 'No se pudo conectar con el servidor de estadísticas.';
+          errorBox.style.display = 'block';
+        });
+      statsEnergiaCargarHistorico();
+    };
+
+    var variableSelect = document.getElementById('stats-energia-variable');
+    if (variableSelect) variableSelect.addEventListener('change', window.statsEnergiaCargar);
+
+    setTimeout(window.statsEnergiaCargar, 500);
+  })();
+  {% endlocalize %}
   </script>
 
 </div>

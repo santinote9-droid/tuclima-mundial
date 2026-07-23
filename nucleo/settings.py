@@ -289,3 +289,16 @@ LEMONSQUEEZY_WEBHOOK_SECRET   = os.getenv('LEMONSQUEEZY_WEBHOOK_SECRET', '')
 # N8N_ALERTAS_SECRET=tuclima-alertas-2026  (mismo valor en n8n y en esta variable)
 # ============================================================
 N8N_ALERTAS_SECRET = os.getenv('N8N_ALERTAS_SECRET', '')
+
+# ============================================================
+# HISTÓRICO CLIMÁTICO (n8n + BigQuery) — Fase 2 de "Estadística Climática"
+# N8N_SNAPSHOT_SECRET: mismo valor en n8n (Workflow A) y acá — protege el
+#   endpoint /api/n8n/ubicaciones/ que n8n consulta para saber qué lat/lon
+#   snapshotear cada hora.
+# N8N_HISTORICO_WEBHOOK_URL: URL del Webhook de n8n (Workflow B) que corre
+#   la consulta "hoy vs. promedio de semanas pasadas" contra BigQuery.
+# N8N_HISTORICO_SECRET: secreto que Django manda a ese webhook (saliente).
+# ============================================================
+N8N_SNAPSHOT_SECRET       = os.getenv('N8N_SNAPSHOT_SECRET', '')
+N8N_HISTORICO_WEBHOOK_URL = os.getenv('N8N_HISTORICO_WEBHOOK_URL', '')
+N8N_HISTORICO_SECRET      = os.getenv('N8N_HISTORICO_SECRET', '')

@@ -1,0 +1,118 @@
+{
+  "name": "Snapshot Histórico Clima (Fase 2 · Estadística)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 * * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [0, 300],
+      "id": "snap-001-schedule",
+      "name": "Trigger Cada Hora"
+    },
+    {
+      "parameters": {
+        "url": "https://tuclima-mundial.onrender.com/api/n8n/ubicaciones/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Snapshot-Secret",
+              "value": "REEMPLAZAR_CON_N8N_SNAPSHOT_SECRET"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [240, 300],
+      "id": "snap-002-get-ubicaciones",
+      "name": "Obtener Ubicaciones"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convierte { ubicaciones: [...] } en un item de n8n por cada ubicación a snapshotear\nconst data = $input.first().json;\nif (!data.ubicaciones || data.ubicaciones.length === 0) {\n  return [];\n}\nreturn data.ubicaciones.map(u => ({ json: u }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300],
+      "id": "snap-003-expand",
+      "name": "Expandir Ubicaciones"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Por cada ubicación: pide clima (Weather API) + oleaje (Marine API, solo aporta\n// dato si es punto costero — en tierra viene null y no rompe nada, igual que en\n// la vista Django \"naval\"), arma UNA fila por variable según el sector, y\n// descarta valores null/undefined para no ensuciar BigQuery.\nconst items = $input.all();\nconst resultados = [];\n\nfor (const item of items) {\n  const { lat, lon, sector, nombre } = item.json;\n\n  let clima = {};\n  try {\n    clima = await this.helpers.httpRequest({\n      method: 'GET',\n      url: 'https://api.open-meteo.com/v1/forecast',\n      qs: {\n        latitude: lat,\n        longitude: lon,\n        current: 'temperature_2m,precipitation,relative_humidity_2m,wind_speed_10m,wind_gusts_10m,cloud_cover,cape,shortwave_radiation,pressure_msl',\n        timezone: 'auto',\n      },\n      json: true,\n    });\n  } catch (e) { clima = { current: {} }; }\n\n  let marine = {};\n  try {\n    marine = await this.helpers.httpRequest({\n      method: 'GET',\n      url: 'https://marine-api.open-meteo.com/v1/marine',\n      qs: { latitude: lat, longitude: lon, current: 'wave_height,wave_period', timezone: 'auto' },\n      json: true,\n    });\n  } catch (e) { marine = { current: {} }; }\n\n  const c = clima.current || {};\n  const m = marine.current || {};\n  const timestamp = new Date().toISOString();\n\n  // Mismo criterio de variables/unidades que las vistas Django estadisticas_<sector>\n  const MAPA = {\n    agro: {\n      precipitacion: c.precipitation,\n      temperatura: c.temperature_2m,\n      humedad: c.relative_humidity_2m,\n      viento: c.wind_speed_10m,\n    },\n    naval: {\n      olas: m.wave_height,\n      periodo_ola: m.wave_period,\n      viento: c.wind_speed_10m != null ? +(c.wind_speed_10m * 0.539957).toFixed(2) : null,\n      temperatura: c.temperature_2m,\n    },\n    aereo: {\n      temperatura: c.temperature_2m,\n      viento: c.wind_speed_10m != null ? +(c.wind_speed_10m / 1.852).toFixed(2) : null,\n      rafagas: c.wind_gusts_10m != null ? +(c.wind_gusts_10m / 1.852).toFixed(2) : null,\n      nubosidad: c.cloud_cover,\n      cape: c.cape,\n    },\n    energia: {\n      radiacion: c.shortwave_radiation,\n      viento: c.wind_speed_10m != null ? +(c.wind_speed_10m / 3.6).toFixed(2) : null,\n      temperatura: c.temperature_2m,\n      presion: c.pressure_msl,\n    },\n  };\n\n  const variables = MAPA[sector] || {};\n  for (const [variable, valor] of Object.entries(variables)) {\n    if (valor === null || valor === undefined || Number.isNaN(valor)) continue;\n    resultados.push({\n      json: { timestamp, sector, lat, lon, nombre_ubicacion: nombre, variable, valor },\n    });\n  }\n}\n\nreturn resultados;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 300],
+      "id": "snap-004-fetch-clima",
+      "name": "Obtener Clima y Armar Filas"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": {
+          "__rl": true,
+          "value": "proyecto-bi-488218",
+          "mode": "list",
+          "cachedResultName": "proyecto-BI",
+          "cachedResultUrl": "https://console.cloud.google.com/bigquery?project=proyecto-bi-488218"
+        },
+        "sqlQuery": "INSERT INTO `proyecto-bi-488218.datos_clima.snapshots_historicos`\n(timestamp, sector, lat, lon, nombre_ubicacion, variable, valor)\nVALUES (\n  COALESCE(SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', @timestamp), CURRENT_TIMESTAMP()),\n  @sector,\n  SAFE_CAST(@lat AS FLOAT64),\n  SAFE_CAST(@lon AS FLOAT64),\n  @nombre_ubicacion,\n  @variable,\n  SAFE_CAST(@valor AS FLOAT64)\n);",
+        "options": {
+          "queryParameters": {
+            "namedParameters": [
+              { "name": "timestamp", "value": "={{ $json.timestamp }}" },
+              { "name": "sector", "value": "={{ $json.sector }}" },
+              { "name": "lat", "value": "={{ $json.lat }}" },
+              { "name": "lon", "value": "={{ $json.lon }}" },
+              { "name": "nombre_ubicacion", "value": "={{ $json.nombre_ubicacion }}" },
+              { "name": "variable", "value": "={{ $json.variable }}" },
+              { "name": "valor", "value": "={{ $json.valor }}" }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [960, 300],
+      "id": "snap-005-bigquery-insert",
+      "name": "Insertar Snapshot en BigQuery",
+      "credentials": {
+        "googleApi": {
+          "id": "Ewe5h1U44UTbd2Qs",
+          "name": "Google Service Account account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Trigger Cada Hora": {
+      "main": [[{ "node": "Obtener Ubicaciones", "type": "main", "index": 0 }]]
+    },
+    "Obtener Ubicaciones": {
+      "main": [[{ "node": "Expandir Ubicaciones", "type": "main", "index": 0 }]]
+    },
+    "Expandir Ubicaciones": {
+      "main": [[{ "node": "Obtener Clima y Armar Filas", "type": "main", "index": 0 }]]
+    },
+    "Obtener Clima y Armar Filas": {
+      "main": [[{ "node": "Insertar Snapshot en BigQuery", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "19ee95c84ac845adb5e56f055bd53b79a0e674016338a7de7b71fc1ecea83ccf"
+  }
+}

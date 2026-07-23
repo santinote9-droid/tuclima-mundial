@@ -21,6 +21,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 import uuid
 from .models import PerfilUsuario, DatoSectorial, UbicacionGuardada, ReporteProgramado, ApiKeyPersonal
+from . import estadistica_utils
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -55,11 +56,27 @@ _METEO_HEADERS = {
 }
 
 
-def _get_meteo(url: str, timeout: int = 6) -> dict:
+def _get_meteo(url: str, timeout: int = 6, reintentos: int = 1) -> dict:
     """
     GET a Open-Meteo sin caché — datos siempre frescos de la API.
+
+    Reintenta una vez ante errores transitorios de red/TLS (frecuentes en
+    entornos locales de Windows con el almacén de certificados desactualizado).
+    Esto no soluciona un problema de certificados persistente, pero evita que
+    un hipo puntual de conexión tire abajo toda la carga de la página.
     """
-    return requests.get(url, timeout=timeout, headers=_METEO_HEADERS).json()
+    ultimo_error = None
+    for intento in range(reintentos + 1):
+        try:
+            return requests.get(url, timeout=timeout, headers=_METEO_HEADERS).json()
+        except requests.exceptions.SSLError as e:
+            ultimo_error = e
+            logger.warning(f"Open-Meteo SSL error (intento {intento + 1}/{reintentos + 1}): {e}")
+        except requests.exceptions.RequestException as e:
+            ultimo_error = e
+            logger.warning(f"Open-Meteo request error (intento {intento + 1}/{reintentos + 1}): {e}")
+        time.sleep(0.4)
+    raise ultimo_error
 
 
 # ============================================================
@@ -101,7 +118,7 @@ def pedir_datos_seguro(url):
 # (Se mantienen igual que antes, las incluyo para que el código esté completo)
 
 def obtener_icono_url(codigo, es_dia=1):
-    base_url = "https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/"
+    base_url = "https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/"
     suffix = ".svg"
     if codigo == 0: return f"{base_url}{'clear-day' if es_dia else 'clear-night'}{suffix}"
     elif codigo in [1, 2, 3]: return f"{base_url}{'partly-cloudy-day' if es_dia else 'partly-cloudy-night'}{suffix}"
@@ -150,7 +167,7 @@ def analizar_detalles(codigo, uv_index, visibilidad):
     elif codigo >= 95: nube = "Cumulonimbus (Tormenta)"
 
     # Base de iconos
-    base_url = "https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/"
+    base_url = "https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/"
     alerta = "Disfruta el día"
     icono_alerta = f"{base_url}clear-day.svg"
     
@@ -334,7 +351,7 @@ def home(request):
         'tira_horas': [], 'datos_json': '{}', 'horas_grafico': [], 'temps_grafico': [],
         'pronostico': [], 'noticias': [], 'papers': [],
         'hora_local': datetime.now(), 'delta_temp': 0,
-        'icono': 'https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/not-available.svg',
+        'icono': 'https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/not-available.svg',
         'fondo': 'img/dia_radiante.jpg',
         'descripcion': 'Cargando...', 'tipo_nube': '', 'alerta_texto': '',
         'alerta_color': '#a4b0be', 'alerta_tipo': 'normal',
@@ -476,10 +493,10 @@ def home(request):
                 if f_clave in datos_por_dia:
                     if daily['sunrise'][i]:
                         sr = datetime.strptime(daily['sunrise'][i], '%Y-%m-%dT%H:%M')
-                        datos_por_dia[f_clave].append({'tipo': 'evento', 'hora': sr.strftime('%H:%M'), 'orden': sr.timestamp(), 'evento_titulo': 'Amanecer', 'icono': 'https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunrise.svg'})
+                        datos_por_dia[f_clave].append({'tipo': 'evento', 'hora': sr.strftime('%H:%M'), 'orden': sr.timestamp(), 'evento_titulo': 'Amanecer', 'icono': 'https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/sunrise.svg'})
                     if daily['sunset'][i]:
                         ss = datetime.strptime(daily['sunset'][i], '%Y-%m-%dT%H:%M')
-                        datos_por_dia[f_clave].append({'tipo': 'evento', 'hora': ss.strftime('%H:%M'), 'orden': ss.timestamp(), 'evento_titulo': 'Atardecer', 'icono': 'https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunset.svg'})
+                        datos_por_dia[f_clave].append({'tipo': 'evento', 'hora': ss.strftime('%H:%M'), 'orden': ss.timestamp(), 'evento_titulo': 'Atardecer', 'icono': 'https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/sunset.svg'})
                     datos_por_dia[f_clave].sort(key=lambda x: x['orden'])
 
             tira_hoy = datos_por_dia.get(fecha_hoy, [])
@@ -527,7 +544,7 @@ def home(request):
             contexto.update({
                 'temp': '--', 'sensacion': '--', 'humedad': '--', 'viento': '--', 'presion': '--', 
                 'visibilidad': '--', 'uv_index': '--', 'lluvia_hoy': '--',
-                'icono': 'https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/not-available.svg',
+                'icono': 'https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/not-available.svg',
                 'fondo': 'img/dia_radiante.jpg',
                 'descripcion': 'Esperando geolocalización...',
                 'tipo_nube': 'Detectando...',
@@ -688,7 +705,7 @@ def clima_data_api(request):
                         'hora': sr.strftime('%H:%M'),
                         'orden': sr.timestamp(),
                         'evento_titulo': 'Amanecer',
-                        'icono': 'https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunrise.svg'
+                        'icono': 'https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/sunrise.svg'
                     })
                 if daily['sunset'][i]:
                     ss = datetime.strptime(daily['sunset'][i], '%Y-%m-%dT%H:%M')
@@ -697,7 +714,7 @@ def clima_data_api(request):
                         'hora': ss.strftime('%H:%M'),
                         'orden': ss.timestamp(),
                         'evento_titulo': 'Atardecer',
-                        'icono': 'https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunset.svg'
+                        'icono': 'https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/sunset.svg'
                     })
                 datos_por_dia[f_clave].sort(key=lambda x: x['orden'])
 
@@ -1114,8 +1131,107 @@ def agro(request):
     contexto['puede_devorador'] = _perfil.puede_devorador if _perfil else False
 
     return render(request, 'agro.html', contexto)
-    
 
+
+# ============================================================
+# API ESTADÍSTICA · SECTOR AGRO
+# Pestaña "Estadística": Poisson, Boxplot, Frecuencias relativas
+# y test de hipótesis (bondad de ajuste Chi-cuadrado), calculados
+# en tiempo real sobre el pronóstico horario de Open-Meteo (14 días).
+# ============================================================
+def estadisticas_agro(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'ok': False, 'error': 'No autenticado'}, status=401)
+
+    perfil = getattr(request.user, 'perfil', None)
+    if perfil and not perfil.suscripcion_activa:
+        return JsonResponse({'ok': False, 'error': 'Suscripción inactiva'}, status=403)
+    if perfil and not perfil.tiene_acceso_sector('agro'):
+        return JsonResponse({'ok': False, 'error': 'Sin acceso al sector Agro'}, status=403)
+
+    lat_raw = request.GET.get('lat', '-34.60')
+    lon_raw = request.GET.get('lon', '-58.38')
+    variable = request.GET.get('variable', 'precipitacion')
+    try:
+        lat = float(str(lat_raw).replace(',', '.'))
+        lon = float(str(lon_raw).replace(',', '.'))
+    except ValueError:
+        lat, lon = -34.60, -58.38
+
+    VARIABLES = {
+        'precipitacion': {'campo': 'precipitation', 'label': 'Precipitación (mm)', 'unidad': 'mm', 'factor': 1},
+        'temperatura':   {'campo': 'temperature_2m', 'label': 'Temperatura (°C)', 'unidad': '°C', 'factor': 1},
+        'humedad':       {'campo': 'relative_humidity_2m', 'label': 'Humedad Relativa (%)', 'unidad': '%', 'factor': 1},
+        'viento':        {'campo': 'wind_speed_10m', 'label': 'Viento (km/h)', 'unidad': 'km/h', 'factor': 1},
+        'et0':           {'campo': 'et0_fao_evapotranspiration', 'label': 'Evapotranspiración ET0 (mm)', 'unidad': 'mm', 'factor': 1},
+    }
+    if variable not in VARIABLES:
+        variable = 'precipitacion'
+    cfg = VARIABLES[variable]
+
+    url = (
+        f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
+        "&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,et0_fao_evapotranspiration"
+        "&forecast_days=14&timezone=auto"
+    )
+
+    try:
+        data = _get_meteo(url, timeout=8)
+        if 'error' in data:
+            raise Exception(data.get('reason', 'API error'))
+
+        hourly = data.get('hourly', {})
+        tiempos = hourly.get('time', [])
+
+        def serie(campo, factor=1):
+            return [(v * factor) if v is not None else None for v in hourly.get(campo, [])]
+
+        valores = serie(cfg['campo'], cfg['factor'])
+
+        # 1. BOXPLOT — un box por día
+        grupos = estadistica_utils.agrupar_por_dia(tiempos, valores)
+        boxplot = estadistica_utils.resumen_boxplot_agrupado(grupos)
+
+        # 2. FRECUENCIAS RELATIVAS
+        frecuencias = estadistica_utils.histograma_relativo(valores, n_bins=8)
+
+        # 3. POISSON — horas de lluvia por bloque de 6h (más periodos = test más robusto)
+        precip_serie = serie('precipitation')
+        eventos = [
+            1 if (precip_serie[i] is not None and precip_serie[i] > 0.1) else 0
+            for i in range(len(tiempos))
+        ]
+        eventos_por_bloque = estadistica_utils.agrupar_por_bloque(tiempos, eventos, horas_bloque=6)
+        conteos_por_periodo = [sum(v) for v in eventos_por_bloque.values()]
+        poisson = estadistica_utils.ajuste_poisson(conteos_por_periodo)
+
+        # 4. TEST DE HIPÓTESIS
+        test_hipotesis = None
+        if poisson:
+            test_hipotesis = estadistica_utils.test_bondad_ajuste_poisson(
+                poisson['observado'], poisson['teorico']
+            )
+            test_hipotesis['h0'] = 'El número de horas de lluvia por bloque de 6h sigue una distribución de Poisson.'
+            test_hipotesis['h1'] = 'El número de horas de lluvia por bloque de 6h NO sigue una distribución de Poisson.'
+
+        return JsonResponse({
+            'ok': True,
+            'sector': 'agro',
+            'lat': lat, 'lon': lon,
+            'variable': {'key': variable, **cfg},
+            'variables_disponibles': [{'key': k, 'label': v['label']} for k, v in VARIABLES.items()],
+            'boxplot': boxplot,
+            'frecuencias': frecuencias,
+            'poisson': poisson,
+            'poisson_evento_desc': 'Hora con lluvia: precipitación > 0.1 mm (conteo por bloques de 6h).',
+            'test_hipotesis': test_hipotesis,
+            'muestra_n': len([v for v in valores if v is not None]),
+            'generado_en': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+        })
+
+    except Exception as e:
+        print(f"⚠️ ERROR ESTADISTICAS AGRO: {e}")
+        return JsonResponse({'ok': False, 'error': 'No se pudieron calcular las estadísticas en este momento.'}, status=500)
 
 
 # ==========================================
@@ -1408,6 +1524,123 @@ def naval(request):
 
     return render(request, 'naval.html', contexto)
 
+
+# ============================================================
+# API ESTADÍSTICA · SECTOR NAVAL
+# Pestaña "Estadística": Poisson, Boxplot, Frecuencias relativas
+# y test de hipótesis (bondad de ajuste Chi-cuadrado), calculados
+# en tiempo real sobre el pronóstico horario de Open-Meteo (14 días).
+# ============================================================
+def estadisticas_naval(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'ok': False, 'error': 'No autenticado'}, status=401)
+
+    perfil = getattr(request.user, 'perfil', None)
+    if perfil and not perfil.suscripcion_activa:
+        return JsonResponse({'ok': False, 'error': 'Suscripción inactiva'}, status=403)
+    if perfil and not perfil.tiene_acceso_sector('naval'):
+        return JsonResponse({'ok': False, 'error': 'Sin acceso al sector Naval'}, status=403)
+
+    lat_raw = request.GET.get('lat', '-34.60')
+    lon_raw = request.GET.get('lon', '-58.38')
+    variable = request.GET.get('variable', 'olas')
+    try:
+        lat = float(str(lat_raw).replace(',', '.'))
+        lon = float(str(lon_raw).replace(',', '.'))
+    except ValueError:
+        lat, lon = -34.60, -58.38
+
+    VARIABLES = {
+        'olas':        {'fuente': 'marine', 'campo': 'wave_height', 'label': 'Altura de Olas (m)', 'unidad': 'm', 'factor': 1},
+        'periodo_ola': {'fuente': 'marine', 'campo': 'wave_period', 'label': 'Período de Ola (s)', 'unidad': 's', 'factor': 1},
+        'viento':      {'fuente': 'weather', 'campo': 'wind_speed_10m', 'label': 'Viento (kt)', 'unidad': 'kt', 'factor': 0.539957},
+        'temperatura': {'fuente': 'weather', 'campo': 'temperature_2m', 'label': 'Temperatura (°C)', 'unidad': '°C', 'factor': 1},
+    }
+    if variable not in VARIABLES:
+        variable = 'olas'
+    cfg = VARIABLES[variable]
+
+    url_weather = (
+        f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
+        "&hourly=wind_speed_10m,temperature_2m"
+        "&forecast_days=14&timezone=auto"
+    )
+    url_marine = (
+        f"https://marine-api.open-meteo.com/v1/marine?latitude={lat}&longitude={lon}"
+        "&hourly=wave_height,wave_period"
+        "&forecast_days=14&timezone=auto"
+    )
+
+    try:
+        res_w = _get_meteo(url_weather, timeout=8)
+        res_m = _get_meteo(url_marine, timeout=8)
+        if 'error' in res_w or 'error' in res_m:
+            raise Exception("Error de conexión con boyas virtuales.")
+
+        hourly_w = res_w.get('hourly', {})
+        hourly_m = res_m.get('hourly', {})
+
+        tiempos_w = hourly_w.get('time', [])
+        tiempos_m = hourly_m.get('time', [])
+        n = min(len(tiempos_w), len(tiempos_m))
+        tiempos = tiempos_w[:n]
+
+        def serie(fuente, campo, factor=1):
+            hourly = hourly_w if fuente == 'weather' else hourly_m
+            return [(v * factor) if v is not None else None for v in hourly.get(campo, [])[:n]]
+
+        valores = serie(cfg['fuente'], cfg['campo'], cfg['factor'])
+
+        # 1. BOXPLOT — un box por día
+        grupos = estadistica_utils.agrupar_por_dia(tiempos, valores)
+        boxplot = estadistica_utils.resumen_boxplot_agrupado(grupos)
+
+        # 2. FRECUENCIAS RELATIVAS
+        frecuencias = estadistica_utils.histograma_relativo(valores, n_bins=8)
+
+        # 3. POISSON — horas de riesgo náutico por bloque de 6h (precaución o cierre de puerto)
+        olas_serie = serie('marine', 'wave_height')
+        viento_kt_serie = serie('weather', 'wind_speed_10m', 0.539957)
+        eventos = [
+            1 if (
+                (olas_serie[i] is not None and olas_serie[i] >= 1.5) or
+                (viento_kt_serie[i] is not None and viento_kt_serie[i] >= 15)
+            ) else 0
+            for i in range(n)
+        ]
+        eventos_por_bloque = estadistica_utils.agrupar_por_bloque(tiempos, eventos, horas_bloque=6)
+        conteos_por_periodo = [sum(v) for v in eventos_por_bloque.values()]
+        poisson = estadistica_utils.ajuste_poisson(conteos_por_periodo)
+
+        # 4. TEST DE HIPÓTESIS
+        test_hipotesis = None
+        if poisson:
+            test_hipotesis = estadistica_utils.test_bondad_ajuste_poisson(
+                poisson['observado'], poisson['teorico']
+            )
+            test_hipotesis['h0'] = 'El número de horas de riesgo náutico por bloque de 6h sigue una distribución de Poisson.'
+            test_hipotesis['h1'] = 'El número de horas de riesgo náutico por bloque de 6h NO sigue una distribución de Poisson.'
+
+        return JsonResponse({
+            'ok': True,
+            'sector': 'naval',
+            'lat': lat, 'lon': lon,
+            'variable': {'key': variable, **cfg},
+            'variables_disponibles': [{'key': k, 'label': v['label']} for k, v in VARIABLES.items()],
+            'boxplot': boxplot,
+            'frecuencias': frecuencias,
+            'poisson': poisson,
+            'poisson_evento_desc': 'Hora con riesgo náutico: oleaje ≥ 1.5 m (precaución) o viento ≥ 15 kt (conteo por bloques de 6h).',
+            'test_hipotesis': test_hipotesis,
+            'muestra_n': len([v for v in valores if v is not None]),
+            'generado_en': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+        })
+
+    except Exception as e:
+        print(f"⚠️ ERROR ESTADISTICAS NAVAL: {e}")
+        return JsonResponse({'ok': False, 'error': 'No se pudieron calcular las estadísticas en este momento.'}, status=500)
+
+
 # ==========================================
 # 3. VISTA: MODO AÉREO (Aviación / Pilotos)
 def aereo(request):
@@ -1614,6 +1847,110 @@ def aereo(request):
     return render(request, 'aereo.html', contexto)
 
 
+# ============================================================
+# API ESTADÍSTICA · SECTOR AÉREO
+# Pestaña "📊 Estadística": Poisson, Boxplot, Frecuencias relativas
+# y test de hipótesis (bondad de ajuste Chi-cuadrado), calculados
+# en tiempo real sobre el pronóstico horario de Open-Meteo (14 días).
+# ============================================================
+def estadisticas_aereo(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'ok': False, 'error': 'No autenticado'}, status=401)
+
+    perfil = getattr(request.user, 'perfil', None)
+    if perfil and not perfil.suscripcion_activa:
+        return JsonResponse({'ok': False, 'error': 'Suscripción inactiva'}, status=403)
+    if perfil and not perfil.tiene_acceso_sector('aereo'):
+        return JsonResponse({'ok': False, 'error': 'Sin acceso al sector Aéreo'}, status=403)
+
+    lat_raw = request.GET.get('lat', '-34.60')
+    lon_raw = request.GET.get('lon', '-58.38')
+    variable = request.GET.get('variable', 'temperatura')
+    try:
+        lat = float(str(lat_raw).replace(',', '.'))
+        lon = float(str(lon_raw).replace(',', '.'))
+    except ValueError:
+        lat, lon = -34.60, -58.38
+
+    VARIABLES = {
+        'temperatura': {'campo': 'temperature_2m', 'label': 'Temperatura (°C)', 'unidad': '°C', 'factor': 1},
+        'viento':      {'campo': 'wind_speed_10m', 'label': 'Viento Superficie (kt)', 'unidad': 'kt', 'factor': 1 / 1.852},
+        'rafagas':     {'campo': 'wind_gusts_10m', 'label': 'Ráfagas (kt)', 'unidad': 'kt', 'factor': 1 / 1.852},
+        'nubosidad':   {'campo': 'cloud_cover', 'label': 'Nubosidad (%)', 'unidad': '%', 'factor': 1},
+        'cape':        {'campo': 'cape', 'label': 'CAPE — Inestabilidad (J/kg)', 'unidad': 'J/kg', 'factor': 1},
+    }
+    if variable not in VARIABLES:
+        variable = 'temperatura'
+    cfg = VARIABLES[variable]
+
+    url = (
+        f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
+        "&models=gfs_seamless"
+        "&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,cloud_cover,cape"
+        "&forecast_days=14"
+    )
+
+    try:
+        data = _get_meteo(url, timeout=8)
+        if 'error' in data:
+            raise Exception(data.get('reason', 'API error'))
+
+        hourly = data.get('hourly', {})
+        tiempos = hourly.get('time', [])
+
+        def serie(campo, factor=1):
+            return [(v * factor) if v is not None else None for v in hourly.get(campo, [])]
+
+        valores = serie(cfg['campo'], cfg['factor'])
+
+        # 1. BOXPLOT — un box por día, con los datos horarios reales del pronóstico
+        grupos = estadistica_utils.agrupar_por_dia(tiempos, valores)
+        boxplot = estadistica_utils.resumen_boxplot_agrupado(grupos)
+
+        # 2. FRECUENCIAS RELATIVAS — histograma de la variable elegida
+        frecuencias = estadistica_utils.histograma_relativo(valores, n_bins=8)
+
+        # 3. POISSON — conteo de horas de "riesgo aeronáutico" por bloque de 6h
+        cape_serie = serie('cape')
+        rafagas_kt_serie = serie('wind_gusts_10m', 1 / 1.852)
+        eventos = [
+            1 if (
+                (cape_serie[i] is not None and cape_serie[i] > 300) or
+                (rafagas_kt_serie[i] is not None and rafagas_kt_serie[i] > 25)
+            ) else 0
+            for i in range(len(tiempos))
+        ]
+        eventos_por_bloque = estadistica_utils.agrupar_por_bloque(tiempos, eventos, horas_bloque=6)
+        conteos_por_periodo = [sum(v) for v in eventos_por_bloque.values()]
+        poisson = estadistica_utils.ajuste_poisson(conteos_por_periodo)
+
+        # 4. TEST DE HIPÓTESIS — ¿el conteo de eventos por bloque de 6h sigue Poisson?
+        test_hipotesis = None
+        if poisson:
+            test_hipotesis = estadistica_utils.test_bondad_ajuste_poisson(
+                poisson['observado'], poisson['teorico']
+            )
+
+        return JsonResponse({
+            'ok': True,
+            'sector': 'aereo',
+            'lat': lat, 'lon': lon,
+            'variable': {'key': variable, **cfg},
+            'variables_disponibles': [{'key': k, 'label': v['label']} for k, v in VARIABLES.items()],
+            'boxplot': boxplot,
+            'frecuencias': frecuencias,
+            'poisson': poisson,
+            'poisson_evento_desc': 'Hora con riesgo aeronáutico: CAPE > 300 J/kg (inestabilidad convectiva) o ráfagas > 25 kt (conteo por bloques de 6h).',
+            'test_hipotesis': test_hipotesis,
+            'muestra_n': len([v for v in valores if v is not None]),
+            'generado_en': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+        })
+
+    except Exception as e:
+        print(f"⚠️ ERROR ESTADISTICAS AEREO: {e}")
+        return JsonResponse({'ok': False, 'error': 'No se pudieron calcular las estadísticas en este momento.'}, status=500)
+
+
 # --- VISTA ENERGÍA (ENERGY OPS) ---
 def energia(request):
 
@@ -1816,6 +2153,105 @@ def energia(request):
 
     return render(request, 'energia.html', contexto)
 
+
+# ============================================================
+# API ESTADÍSTICA · SECTOR ENERGÍA
+# Pestaña "Estadística": Poisson, Boxplot, Frecuencias relativas
+# y test de hipótesis (bondad de ajuste Chi-cuadrado), calculados
+# en tiempo real sobre el pronóstico horario de Open-Meteo (14 días).
+# ============================================================
+def estadisticas_energia(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'ok': False, 'error': 'No autenticado'}, status=401)
+
+    perfil = getattr(request.user, 'perfil', None)
+    if perfil and not perfil.suscripcion_activa:
+        return JsonResponse({'ok': False, 'error': 'Suscripción inactiva'}, status=403)
+    if perfil and not perfil.tiene_acceso_sector('energia'):
+        return JsonResponse({'ok': False, 'error': 'Sin acceso al sector Energía'}, status=403)
+
+    lat_raw = request.GET.get('lat', '-34.60')
+    lon_raw = request.GET.get('lon', '-58.38')
+    variable = request.GET.get('variable', 'radiacion')
+    try:
+        lat = float(str(lat_raw).replace(',', '.'))
+        lon = float(str(lon_raw).replace(',', '.'))
+    except ValueError:
+        lat, lon = -34.60, -58.38
+
+    VARIABLES = {
+        'radiacion':   {'campo': 'shortwave_radiation', 'label': 'Radiación Solar (W/m²)', 'unidad': 'W/m²', 'factor': 1},
+        'viento':      {'campo': 'wind_speed_10m', 'label': 'Viento (m/s)', 'unidad': 'm/s', 'factor': 1 / 3.6},
+        'temperatura': {'campo': 'temperature_2m', 'label': 'Temperatura (°C)', 'unidad': '°C', 'factor': 1},
+        'presion':     {'campo': 'pressure_msl', 'label': 'Presión (hPa)', 'unidad': 'hPa', 'factor': 1},
+    }
+    if variable not in VARIABLES:
+        variable = 'radiacion'
+    cfg = VARIABLES[variable]
+
+    url = (
+        f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
+        "&hourly=shortwave_radiation,wind_speed_10m,temperature_2m,pressure_msl"
+        "&forecast_days=14&timezone=auto"
+    )
+
+    try:
+        data = _get_meteo(url, timeout=8)
+        if 'error' in data:
+            raise Exception(data.get('reason', 'API error'))
+
+        hourly = data.get('hourly', {})
+        tiempos = hourly.get('time', [])
+
+        def serie(campo, factor=1):
+            return [(v * factor) if v is not None else None for v in hourly.get(campo, [])]
+
+        valores = serie(cfg['campo'], cfg['factor'])
+
+        # 1. BOXPLOT — un box por día
+        grupos = estadistica_utils.agrupar_por_dia(tiempos, valores)
+        boxplot = estadistica_utils.resumen_boxplot_agrupado(grupos)
+
+        # 2. FRECUENCIAS RELATIVAS
+        frecuencias = estadistica_utils.histograma_relativo(valores, n_bins=8)
+
+        # 3. POISSON — horas sin viento aprovechable por bloque de 6h (< 3 m/s, cut-in eólico)
+        viento_ms_serie = serie('wind_speed_10m', 1 / 3.6)
+        eventos = [
+            1 if (viento_ms_serie[i] is not None and viento_ms_serie[i] < 3) else 0
+            for i in range(len(tiempos))
+        ]
+        eventos_por_bloque = estadistica_utils.agrupar_por_bloque(tiempos, eventos, horas_bloque=6)
+        conteos_por_periodo = [sum(v) for v in eventos_por_bloque.values()]
+        poisson = estadistica_utils.ajuste_poisson(conteos_por_periodo)
+
+        # 4. TEST DE HIPÓTESIS
+        test_hipotesis = None
+        if poisson:
+            test_hipotesis = estadistica_utils.test_bondad_ajuste_poisson(
+                poisson['observado'], poisson['teorico']
+            )
+            test_hipotesis['h0'] = 'El número de horas sin viento aprovechable por bloque de 6h sigue una distribución de Poisson.'
+            test_hipotesis['h1'] = 'El número de horas sin viento aprovechable por bloque de 6h NO sigue una distribución de Poisson.'
+
+        return JsonResponse({
+            'ok': True,
+            'sector': 'energia',
+            'lat': lat, 'lon': lon,
+            'variable': {'key': variable, **cfg},
+            'variables_disponibles': [{'key': k, 'label': v['label']} for k, v in VARIABLES.items()],
+            'boxplot': boxplot,
+            'frecuencias': frecuencias,
+            'poisson': poisson,
+            'poisson_evento_desc': 'Hora sin viento aprovechable: velocidad < 3 m/s (por debajo del cut-in de la turbina; conteo por bloques de 6h).',
+            'test_hipotesis': test_hipotesis,
+            'muestra_n': len([v for v in valores if v is not None]),
+            'generado_en': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+        })
+
+    except Exception as e:
+        print(f"⚠️ ERROR ESTADISTICAS ENERGIA: {e}")
+        return JsonResponse({'ok': False, 'error': 'No se pudieron calcular las estadísticas en este momento.'}, status=500)
 
 
 # COMPARADOR DE MODELOS
@@ -4620,4 +5056,116 @@ def api_alertas_usuarios(request):
             'ubicacion_nombre': perfil.ubicacion_nombre,
         })
     return JsonResponse({'usuarios': usuarios, 'total': len(usuarios)})
+
+
+# ─────────────────────────────────────────────
+# HISTÓRICO CLIMÁTICO (Fase 2 · n8n + BigQuery)
+# ─────────────────────────────────────────────
+
+# Ubicación por defecto que SIEMPRE se snapshotea por sector, aunque el
+# sector todavía no tenga ubicaciones guardadas por usuarios (así el
+# histórico empieza a acumularse desde el día 1).
+_UBICACIONES_DEFAULT_SNAPSHOT = [
+    {'nombre': 'Buenos Aires (Default)', 'lat': -34.60, 'lon': -58.38, 'sector': 'agro'},
+    {'nombre': 'Buenos Aires (Default)', 'lat': -34.60, 'lon': -58.38, 'sector': 'naval'},
+    {'nombre': 'Buenos Aires (Default)', 'lat': -34.60, 'lon': -58.38, 'sector': 'aereo'},
+    {'nombre': 'Buenos Aires (Default)', 'lat': -34.60, 'lon': -58.38, 'sector': 'energia'},
+]
+
+
+def api_n8n_ubicaciones(request):
+    """
+    Endpoint interno para n8n (Workflow A · Schedule Trigger cada 1h):
+    devuelve la lista de ubicaciones (lat/lon/sector) que hay que
+    snapshotear ahora mismo para armar el histórico real en BigQuery.
+
+    Protegido con secreto compartido (header X-Snapshot-Secret), igual
+    patrón que /api/alertas/usuarios/.
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    secret = request.headers.get('X-Snapshot-Secret', '')
+    secreto_esperado = getattr(settings, 'N8N_SNAPSHOT_SECRET', '')
+    if not secreto_esperado or secret != secreto_esperado:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    sectores_validos = {'agro', 'naval', 'aereo', 'energia'}
+    vistas = {}  # dedup por (sector, lat redondeada, lon redondeada)
+
+    def _agregar(nombre, lat, lon, sector):
+        if sector not in sectores_validos or lat is None or lon is None:
+            return
+        clave = (sector, round(float(lat), 2), round(float(lon), 2))
+        if clave not in vistas:
+            vistas[clave] = {'nombre': nombre, 'lat': lat, 'lon': lon, 'sector': sector}
+
+    # 1. Ubicaciones base (garantizan histórico aunque no haya usuarios activos)
+    for u in _UBICACIONES_DEFAULT_SNAPSHOT:
+        _agregar(u['nombre'], u['lat'], u['lon'], u['sector'])
+
+    # 2. Ubicaciones guardadas por usuarios con suscripción activa
+    qs = (UbicacionGuardada.objects
+          .exclude(sector='')
+          .filter(sector__in=sectores_validos)
+          .select_related('usuario__perfil'))
+    for ub in qs:
+        perfil_u = getattr(ub.usuario, 'perfil', None)
+        if perfil_u and not perfil_u.suscripcion_activa:
+            continue
+        _agregar(ub.nombre, ub.lat, ub.lon, ub.sector)
+
+    ubicaciones = list(vistas.values())
+    return JsonResponse({'ubicaciones': ubicaciones, 'total': len(ubicaciones)})
+
+
+@csrf_exempt
+def api_estadisticas_historico(request, sector):
+    """
+    Proxy Django → n8n (Workflow B · Webhook): pide la comparación
+    "hoy vs. promedio de semanas pasadas a esta hora" que n8n calcula
+    contra BigQuery (tabla datos_clima.snapshots_historicos).
+
+    Django nunca toca BigQuery directamente: reenvía la consulta al
+    webhook de n8n y devuelve la respuesta tal cual al frontend.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'ok': False, 'error': 'No autenticado'}, status=401)
+
+    sectores_validos = {'agro', 'naval', 'aereo', 'energia'}
+    if sector not in sectores_validos:
+        return JsonResponse({'ok': False, 'error': 'Sector inválido'}, status=400)
+
+    perfil = getattr(request.user, 'perfil', None)
+    if perfil and not perfil.suscripcion_activa:
+        return JsonResponse({'ok': False, 'error': 'Suscripción inactiva'}, status=403)
+    if perfil and not perfil.tiene_acceso_sector(sector):
+        return JsonResponse({'ok': False, 'error': f'Sin acceso al sector {sector}'}, status=403)
+
+    webhook_url = getattr(settings, 'N8N_HISTORICO_WEBHOOK_URL', '')
+    if not webhook_url:
+        return JsonResponse({'ok': False, 'error': 'Histórico no configurado todavía (falta N8N_HISTORICO_WEBHOOK_URL).'}, status=503)
+
+    lat_raw = request.GET.get('lat', '-34.60')
+    lon_raw = request.GET.get('lon', '-58.38')
+    variable = request.GET.get('variable', '')
+    try:
+        lat = float(str(lat_raw).replace(',', '.'))
+        lon = float(str(lon_raw).replace(',', '.'))
+    except ValueError:
+        lat, lon = -34.60, -58.38
+
+    try:
+        resp = requests.get(
+            webhook_url,
+            params={'sector': sector, 'lat': lat, 'lon': lon, 'variable': variable},
+            headers={'X-N8N-Secret': getattr(settings, 'N8N_HISTORICO_SECRET', '')},
+            timeout=12,
+        )
+        data = resp.json()
+        data.setdefault('ok', True)
+        return JsonResponse(data, status=resp.status_code if resp.status_code < 500 else 200)
+    except Exception as e:
+        logger.warning(f"Histórico n8n/BigQuery no disponible ({sector}): {e}")
+        return JsonResponse({'ok': False, 'error': 'El histórico no está disponible en este momento.'}, status=502)
 

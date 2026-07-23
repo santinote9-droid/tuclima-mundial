@@ -1488,7 +1488,7 @@
                 else { uvNivel = 'Bajo'; uvSvg = `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>`; }
                 cardUV.innerHTML = `
                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                        <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/clear-day.svg" style="width:30px;height:30px;">
+                        <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/clear-day.svg" style="width:30px;height:30px;">
                         <div style="color:#ccc;font-size:0.9em;">ÍNDICE UV MÁXIMO</div>
                     </div>
                     <div style="font-size:2.5em;font-weight:bold;color:${uvColor};">${uv}</div>
@@ -1697,19 +1697,19 @@
         
         <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; margin: 20px 0; display: flex; justify-content: space-around; align-items: center; border: 1px solid rgba(255,255,255,0.1); gap: 15px;">
             <div style="text-align: center; flex: 1;">
-                <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/thermometer.svg" style="width: 35px; height: 35px; margin-bottom: 5px;">
+                <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/thermometer.svg" style="width: 35px; height: 35px; margin-bottom: 5px;">
                 <div style="font-size: 0.7em; color: #ddd;">SENSACIÓN</div>
                 <div id="val-sensacion" style="font-weight: bold; font-size: 1.2em; color: #ffcc00;">{{ sensacion|floatformat:1 }}°</div>
             </div>
             <div style="width: 2px; height: 50px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.3), transparent); border-radius: 1px;"></div>
             <div style="text-align: center; flex: 1;">
-                <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/humidity.svg" style="width: 35px; height: 35px; margin-bottom: 5px;">
+                <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/humidity.svg" style="width: 35px; height: 35px; margin-bottom: 5px;">
                 <div style="font-size: 0.7em; color: #ddd;">HUMEDAD</div>
                 <div id="val-humedad" style="font-weight: bold; font-size: 1.2em; color: #00d2ff;">{{ humedad }}%</div>
             </div>
             <div style="width: 2px; height: 50px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.3), transparent); border-radius: 1px;"></div>
             <div style="text-align: center; flex: 1;">
-                <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/raindrops.svg" style="width: 35px; height: 35px; margin-bottom: 5px;">
+                <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/raindrops.svg" style="width: 35px; height: 35px; margin-bottom: 5px;">
                 <div style="font-size: 0.7em; color: #ddd;">LLUVIA</div>
                 <div id="val-lluvia" style="font-weight: bold; font-size: 1.2em; color: #fff;">{{ lluvia_hoy|floatformat:1 }}mm</div>
             </div>
@@ -1717,12 +1717,12 @@
 
         <div class="sunblock" style="background: rgba(0,0,0,0.3); padding: 15px 25px; border-radius: 18px; margin: 20px 0; display: inline-flex; gap: 50px; align-items: center;">
             <div style="text-align: center;">
-                <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunrise.svg" style="width: 55px; height: 55px; margin-bottom: 8px;">
+                <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/sunrise.svg" style="width: 55px; height: 55px; margin-bottom: 8px;">
                 <div style="font-size: 0.85em; color: #ddd;">AMANECER</div>
                 <div id="val-sunrise" style="font-weight: bold; color: #ffcc00; font-size: 1.1em;">{{ sunrise }}</div>
             </div>
             <div style="text-align: center;">
-                <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/sunset.svg" style="width: 55px; height: 55px; margin-bottom: 8px;">
+                <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/sunset.svg" style="width: 55px; height: 55px; margin-bottom: 8px;">
                 <div style="font-size: 0.85em; color: #ddd;">ATARDECER</div>
                 <div id="val-sunset" style="font-weight: bold; color: #ff6b6b; font-size: 1.1em;">{{ sunset }}</div>
             </div>
@@ -1826,7 +1826,7 @@
         
         <div id="card-uv" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; width: 250px; text-align: left;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/clear-day.svg" style="width: 30px; height: 30px;">
+                <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/clear-day.svg" style="width: 30px; height: 30px;">
                 <div style="color: #ccc; font-size: 0.9em;">ÍNDICE UV MÁXIMO</div>
             </div>
             <div style="font-size: 2.5em; font-weight: bold; color: {% if uv_index > 7 %}#ff4757{% elif uv_index > 4 %}#ffa502{% else %}#2ed573{% endif %};">
@@ -1854,25 +1854,25 @@
 
         <div style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; width: 250px; text-align: left;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/cloudy.svg" style="width: 30px; height: 30px;">
+                <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/cloudy.svg" style="width: 30px; height: 30px;">
                 <div style="color: #ccc; font-size: 0.9em;">FORMACIÓN DE NUBES</div>
             </div>
             <div id="val-tipo-nube" style="font-size: 1.2em; font-weight: bold; color: #fff; margin-bottom: 5px;">{{ tipo_nube }}</div>
             <div style="font-size: 0.8em; color: #aaa;">Observación Satelital</div>
             <div style="margin-top: 10px; text-align: right;">
-                <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/overcast.svg" style="width: 55px; height: 55px; opacity: 0.8;">
+                <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/overcast.svg" style="width: 55px; height: 55px; opacity: 0.8;">
             </div>
         </div>
 
         <div style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; width: 250px; text-align: left;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/fog.svg" style="width: 25px; height: 25px;">
+                <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/fog.svg" style="width: 25px; height: 25px;">
                 <div style="color: #ccc; font-size: 0.9em;">VISIBILIDAD</div>
             </div>
             <div id="val-visibilidad" style="font-size: 1.5em; font-weight: bold; color: #fff;">{{ visibilidad|floatformat:1 }} km</div>
             <hr style="border-color: #444; margin: 10px 0;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                <img src="https://bmcdn.nl/assets/weather-icons/v3.0/fill/svg/hurricane.svg" style="width: 25px; height: 25px;">
+                <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/hurricane.svg" style="width: 25px; height: 25px;">
                 <div style="color: #ccc; font-size: 0.9em;">PRESIÓN</div>
             </div>
             <div id="val-presion" style="font-size: 1.5em; font-weight: bold; color: #00d2ff;">{{ presion|floatformat:1 }} hPa</div>

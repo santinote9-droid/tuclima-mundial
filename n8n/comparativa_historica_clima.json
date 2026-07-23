@@ -1,0 +1,99 @@
+{
+  "name": "Comparativa Histórica Clima (Fase 2 · Estadística)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "historico-clima",
+        "responseMode": "responseNode",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "id": "hist-001-webhook",
+      "name": "Webhook Historico",
+      "webhookId": "historico-clima",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REEMPLAZAR_CON_ID_DE_TU_CREDENCIAL",
+          "name": "X-N8N-Secret Header Auth"
+        }
+      },
+      "notes": "IMPORTANTE: la autenticación se hace con una credencial nativa 'Header Auth' (nombre de header: x-n8n-secret, valor = el mismo secreto que N8N_HISTORICO_SECRET en Django). Esto evita depender de $env dentro de expresiones, que muchas instancias de n8n bloquean por defecto (N8N_BLOCK_ENV_ACCESS_IN_NODE)."
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": {
+          "__rl": true,
+          "value": "proyecto-bi-488218",
+          "mode": "list",
+          "cachedResultName": "proyecto-BI",
+          "cachedResultUrl": "https://console.cloud.google.com/bigquery?project=proyecto-bi-488218"
+        },
+        "sqlQuery": "WITH hoy AS (\n  SELECT AVG(valor) AS valor\n  FROM `proyecto-bi-488218.datos_clima.snapshots_historicos`\n  WHERE sector = @sector AND variable = @variable\n    AND ABS(lat - SAFE_CAST(@lat AS FLOAT64)) < 0.05\n    AND ABS(lon - SAFE_CAST(@lon AS FLOAT64)) < 0.05\n    AND DATE(timestamp) = CURRENT_DATE()\n    AND EXTRACT(HOUR FROM timestamp) = EXTRACT(HOUR FROM CURRENT_TIMESTAMP())\n),\nhistorico AS (\n  SELECT AVG(valor) AS promedio, STDDEV(valor) AS desviacion, COUNT(DISTINCT DATE(timestamp)) AS n_dias\n  FROM `proyecto-bi-488218.datos_clima.snapshots_historicos`\n  WHERE sector = @sector AND variable = @variable\n    AND ABS(lat - SAFE_CAST(@lat AS FLOAT64)) < 0.05\n    AND ABS(lon - SAFE_CAST(@lon AS FLOAT64)) < 0.05\n    AND EXTRACT(HOUR FROM timestamp) = EXTRACT(HOUR FROM CURRENT_TIMESTAMP())\n    AND DATE(timestamp) BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 5 WEEK) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)\n),\nsemanas AS (\n  SELECT FORMAT_DATE('%Y-%m-%d', DATE_TRUNC(DATE(timestamp), WEEK(MONDAY))) AS semana, AVG(valor) AS valor\n  FROM `proyecto-bi-488218.datos_clima.snapshots_historicos`\n  WHERE sector = @sector AND variable = @variable\n    AND ABS(lat - SAFE_CAST(@lat AS FLOAT64)) < 0.05\n    AND ABS(lon - SAFE_CAST(@lon AS FLOAT64)) < 0.05\n    AND EXTRACT(HOUR FROM timestamp) = EXTRACT(HOUR FROM CURRENT_TIMESTAMP())\n    AND DATE(timestamp) BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 5 WEEK) AND CURRENT_DATE()\n  GROUP BY semana\n  ORDER BY semana\n)\nSELECT\n  (SELECT valor FROM hoy) AS hoy_valor,\n  (SELECT promedio FROM historico) AS promedio_historico,\n  (SELECT desviacion FROM historico) AS desviacion,\n  (SELECT n_dias FROM historico) AS n_dias,\n  ARRAY(SELECT AS STRUCT semana, valor FROM semanas) AS serie_semanas;\n",
+        "options": {
+          "queryParameters": {
+            "namedParameters": [
+              { "name": "sector", "value": "={{ $json.query.sector }}" },
+              { "name": "variable", "value": "={{ $json.query.variable }}" },
+              { "name": "lat", "value": "={{ $json.query.lat }}" },
+              { "name": "lon", "value": "={{ $json.query.lon }}" }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [480, 200],
+      "id": "hist-003-bigquery-query",
+      "name": "Consultar Historico BigQuery",
+      "credentials": {
+        "googleApi": {
+          "id": "Ewe5h1U44UTbd2Qs",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Arma el JSON final que consume el frontend (vía proxy Django)\nconst r = $input.first().json;\nconst webhookQuery = $('Webhook Historico').first().json.query || {};\n\nconst hoy = r.hoy_valor != null ? Number(r.hoy_valor.toFixed ? r.hoy_valor.toFixed(2) : r.hoy_valor) : null;\nconst promedio = r.promedio_historico != null ? Number(r.promedio_historico.toFixed ? r.promedio_historico.toFixed(2) : r.promedio_historico) : null;\nconst desviacion = r.desviacion != null ? Number(r.desviacion.toFixed ? r.desviacion.toFixed(2) : r.desviacion) : null;\nconst nDias = r.n_dias || 0;\n\nlet diferenciaPct = null;\nif (hoy != null && promedio) {\n  diferenciaPct = Number((((hoy - promedio) / promedio) * 100).toFixed(1));\n}\n\nconst serieSemanas = (r.serie_semanas || []).map(s => ({ semana: s.semana, valor: s.valor != null ? Number(s.valor.toFixed ? s.valor.toFixed(2) : s.valor) : null }));\nif (hoy != null) serieSemanas.push({ semana: 'Hoy', valor: hoy });\n\nreturn [{\n  json: {\n    ok: true,\n    sector: webhookQuery.sector,\n    variable: webhookQuery.variable,\n    lat: Number(webhookQuery.lat),\n    lon: Number(webhookQuery.lon),\n    hoy: { valor: hoy },\n    promedio_historico: { valor: promedio, desviacion, n_dias: nDias },\n    diferencia_pct: diferenciaPct,\n    serie_semanas: serieSemanas,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 200],
+      "id": "hist-004-formatear",
+      "name": "Formatear Respuesta"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.3,
+      "position": [960, 200],
+      "id": "hist-005-responder-ok",
+      "name": "Responder OK"
+    }
+  ],
+  "connections": {
+    "Webhook Historico": {
+      "main": [[{ "node": "Consultar Historico BigQuery", "type": "main", "index": 0 }]]
+    },
+    "Consultar Historico BigQuery": {
+      "main": [[{ "node": "Formatear Respuesta", "type": "main", "index": 0 }]]
+    },
+    "Formatear Respuesta": {
+      "main": [[{ "node": "Responder OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "19ee95c84ac845adb5e56f055bd53b79a0e674016338a7de7b71fc1ecea83ccf"
+  }
+}

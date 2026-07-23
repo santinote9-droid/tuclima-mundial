@@ -18,6 +18,12 @@ urlpatterns = [
     path('naval/', views.naval, name='naval'),  # MODO NAVAL ⚓
     path('aereo/', views.aereo, name='aereo'),  # MODO AÉREO ✈️
     path('energia/', views.energia, name='energia'), # ENERGÍA ⚡
+
+    # API Estadística — Poisson, boxplot, frecuencias relativas, test de hipótesis (por sector)
+    path('api/estadisticas/agro/', views.estadisticas_agro, name='estadisticas_agro'),
+    path('api/estadisticas/naval/', views.estadisticas_naval, name='estadisticas_naval'),
+    path('api/estadisticas/aereo/', views.estadisticas_aereo, name='estadisticas_aereo'),
+    path('api/estadisticas/energia/', views.estadisticas_energia, name='estadisticas_energia'),
     
     path('pricing/', views.pricing, name='pricing'),
     path('activar-pro/', views.activar_suscripcion, name='activar_pro'),
@@ -106,6 +112,10 @@ urlpatterns = [
 
     # Alertas Proactivas — endpoint para n8n
     path('api/alertas/usuarios/', views.api_alertas_usuarios, name='api_alertas_usuarios'),
+
+    # Histórico climático (Fase 2 · n8n + BigQuery)
+    path('api/n8n/ubicaciones/', views.api_n8n_ubicaciones, name='api_n8n_ubicaciones'),
+    path('api/estadisticas/<str:sector>/historico/', views.api_estadisticas_historico, name='api_estadisticas_historico'),
 
     # Devorador de Reportes — Procesamiento Documental con IA
     path('devorador/', views.devorador_vista, name='devorador'),
