@@ -609,6 +609,87 @@ class ReporteProgramado(models.Model):
         return self.email_destino or self.usuario.email
 
 
+class ConfiguracionModal(models.Model):
+    """
+    Personalización guardada por el usuario dentro de un modal interactivo
+    de las páginas profesionales (agro/naval/aereo/energia). Ej: cultivo
+    elegido, fecha de siembra, tipo de suelo, capacidad de riego, etc.
+    Los campos varían por modal, por eso se guardan en un JSONField libre.
+    """
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='config_modal')
+    sector = models.CharField(max_length=10, help_text="agro/naval/aereo/energia")
+    modal_id = models.CharField(max_length=40, help_text="Ej: modGDD, modVPD, modEol...")
+    lat = models.FloatField(null=True, blank=True)
+    lon = models.FloatField(null=True, blank=True)
+    datos = models.JSONField(default=dict, blank=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Configuración de modal"
+        verbose_name_plural = "Configuraciones de modales"
+        unique_together = ('usuario', 'sector', 'modal_id', 'lat', 'lon')
+
+    def __str__(self):
+        return f"{self.usuario.username} — {self.sector}/{self.modal_id}"
+
+
+class AlertaModal(models.Model):
+    """
+    Regla de alerta configurada por el usuario sobre una variable puntual
+    de un modal (ej. avisar si VPD > 1.5 kPa). Se evalúa en cada carga de
+    la página contra el valor calculado en ese momento.
+    """
+    OPERADORES = [('gt', 'Mayor que'), ('lt', 'Menor que')]
+
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='alertas_modal')
+    sector = models.CharField(max_length=10)
+    modal_id = models.CharField(max_length=40)
+    lat = models.FloatField(null=True, blank=True)
+    lon = models.FloatField(null=True, blank=True)
+    variable = models.CharField(max_length=40, help_text="Clave de la variable a evaluar, ej: 'vpd'")
+    operador = models.CharField(max_length=2, choices=OPERADORES, default='gt')
+    umbral = models.FloatField()
+    activa = models.BooleanField(default=True)
+    creada = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Alerta de modal"
+        verbose_name_plural = "Alertas de modales"
+        ordering = ['-creada']
+
+    def __str__(self):
+        return f"{self.usuario.username} — {self.modal_id}.{self.variable} {self.operador} {self.umbral}"
+
+    def evaluar(self, valor_actual):
+        if valor_actual is None:
+            return False
+        if self.operador == 'gt':
+            return valor_actual > self.umbral
+        return valor_actual < self.umbral
+
+
+class NotaModal(models.Model):
+    """
+    Bitácora libre del usuario asociada a un modal puntual (ej. registrar
+    una aplicación fitosanitaria, un riego, o cualquier observación de campo).
+    """
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notas_modal')
+    sector = models.CharField(max_length=10)
+    modal_id = models.CharField(max_length=40)
+    lat = models.FloatField(null=True, blank=True)
+    lon = models.FloatField(null=True, blank=True)
+    texto = models.TextField(max_length=500)
+    creada = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Nota de modal"
+        verbose_name_plural = "Notas de modales"
+        ordering = ['-creada']
+
+    def __str__(self):
+        return f"{self.usuario.username} — {self.modal_id} ({self.creada:%Y-%m-%d})"
+
+
 class ApiKeyPersonal(models.Model):
     """
     API key de acceso personal para que usuarios Plus+ puedan integrar

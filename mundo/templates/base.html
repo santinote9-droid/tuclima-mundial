@@ -30,15 +30,23 @@
     {# ── Preconnect CDNs (velocidad de carga) ────────────────── #}
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://cdn.weglot.com">
-    <link rel="preconnect" href="https://translate.googleapis.com">
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
 
-    {# ── Font Awesome ────────────────────────────────────────── #}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {# ── Font Awesome (carga no-bloqueante: no retrasa el render) ── #}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
 
-    {# ── Weglot (traductor automático) ───────────────────────── #}
-    <script type="text/javascript" src="https://cdn.weglot.com/weglot.min.js"></script>
+    {% comment %}
+    Weglot (traductor automático — único traductor del sitio).
+    Nota: se carga de forma síncrona (sin defer) a propósito, porque
+    varias páginas de sector (aereo/naval/agro/energia) verifican
+    `typeof Weglot !== 'undefined'` e incluso llaman `Weglot.on(...)`
+    de forma inmediata en scripts inline más abajo en el documento;
+    con `defer` esas comprobaciones fallarían y se rompería el
+    re-renderizado de gráficos al cambiar de idioma.
+    {% endcomment %}
+    <script src="https://cdn.weglot.com/weglot.min.js"></script>
     <script>
         Weglot.initialize({
             api_key: 'wg_169c193b22e7a117be85a2f56113ab415',
@@ -51,36 +59,6 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-
-    {# ── Google Translate (oculto, activa por JS) ────────────── #}
-    <div id="google_translate_element" style="display:none;"></div>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-    <script type="text/javascript">
-        function googleTranslateElementInit() {
-            new google.translate.TranslateElement({
-                pageLanguage: 'es',
-                includedLanguages: 'en,fr,it,pt,de',
-                autoDisplay: false
-            }, 'google_translate_element');
-        }
-        window.addEventListener('load', function () {
-            var idiomaUsuario = (navigator.language || navigator.userLanguage).split('-')[0];
-            if (idiomaUsuario !== 'es') {
-                setTimeout(function () {
-                    var select = document.querySelector('select.goog-te-combo');
-                    if (select) {
-                        select.value = idiomaUsuario;
-                        select.dispatchEvent(new Event('change'));
-                    }
-                }, 1000);
-            }
-        });
-    </script>
-    <style>
-        .goog-te-banner-frame { display: none !important; }
-        body { top: 0px !important; }
-        #google_translate_element { display: none !important; }
-    </style>
 
     {# ── Contenido principal de cada página ──────────────────── #}
     {% block content %}{% endblock %}

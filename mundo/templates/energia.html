@@ -4,7 +4,7 @@
 
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot"></script>
+{# El plugin de boxplot se carga de forma diferida (lazy) — ver partials/_nav_secciones.html #}
 <style>
         /* Animación de espera para la IA - Estilo minimalista */
         .chat-typing {
@@ -456,6 +456,7 @@
 {% endblock %}
 
 {% block content %}
+{% include 'partials/_nav_secciones.html' with tc_activo='energia' %}
 <title class="notranslate">TuClima PRO | ENERGY OPS</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -653,7 +654,7 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
     <div class="grid-energy">
         
         <div class="instrumento" onclick="openModal('modSolar')" style="border-top: 3px solid #facc15;">
-            <div class="inst-head"><h3>Fotovoltaica</h3><svg class="icon-svg" style="color:#facc15;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></div>
+            <div class="inst-head"><h3>Fotovoltaica{% if alertas_disparadas.modSolar %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</h3><svg class="icon-svg" style="color:#facc15;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></div>
             <div class="inst-body">
                 <div class="val-big digital">{{ solar.rad }}</div>
                 <div class="val-sub">Irradiancia (W/m²)</div>
@@ -662,7 +663,7 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
         </div>
 
         <div class="instrumento" onclick="openModal('modEol')" style="border-top: 3px solid #3b82f6;">
-            <div class="inst-head"><h3>Eólica</h3><svg class="icon-svg" style="color:#3b82f6;" viewBox="0 0 24 24"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg></div>
+            <div class="inst-head"><h3>Eólica{% if alertas_disparadas.modEol %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</h3><svg class="icon-svg" style="color:#3b82f6;" viewBox="0 0 24 24"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg></div>
             <div class="inst-body">
                 <div class="val-big digital">{{ eolica.ms }}</div>
                 <div class="val-sub">Viento (m/s)</div>
@@ -671,7 +672,7 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
         </div>
 
         <div class="instrumento" onclick="openModal('modHidro')" style="border-top: 3px solid #10b981;">
-            <div class="inst-head"><h3>Hidrógeno</h3><svg class="icon-svg" style="color:#10b981;" viewBox="0 0 24 24"><path d="M12 2.69l5.74 5.82a7 7 0 0 1 0 9.88l-5.74 5.81l-5.74-5.81a7 7 0 0 1 0-9.88Z"/><path d="M12 18a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg></div>
+            <div class="inst-head"><h3>Hidrógeno{% if alertas_disparadas.modHidro %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</h3><svg class="icon-svg" style="color:#10b981;" viewBox="0 0 24 24"><path d="M12 2.69l5.74 5.82a7 7 0 0 1 0 9.88l-5.74 5.81l-5.74-5.81a7 7 0 0 1 0-9.88Z"/><path d="M12 18a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg></div>
             <div class="inst-body">
                 <div class="val-big digital">{{ hidro.kg }}</div>
                 <div class="val-sub">Producción 24h (kg)</div>
@@ -680,7 +681,7 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
         </div>
 
         <div class="instrumento" onclick="openModal('modEf')" style="border-top: 3px solid #ef4444;">
-            <div class="inst-head"><h3>Termodinámica</h3><svg class="icon-svg" style="color:#ef4444;" viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg></div>
+            <div class="inst-head"><h3>Termodinámica{% if alertas_disparadas.modEf %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</h3><svg class="icon-svg" style="color:#ef4444;" viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg></div>
             <div class="inst-body">
                 <div class="val-big digital">{{ eficiencia.factor }}</div>
                 <div class="val-sub">Eficiencia Real</div>
@@ -689,7 +690,7 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
         </div>
 
         <div class="instrumento" onclick="openModal('modRed')" style="border-top: 3px solid #8b5cf6;">
-            <div class="inst-head"><h3>Presión Atm.</h3><svg class="icon-svg" style="color:#8b5cf6;" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M12 2a10 10 0 0 1 10 10 10 10 0 0 1-10 10 10 10 0 0 1-10-10 10 10 0 0 1 10-10z"/></svg></div>
+            <div class="inst-head"><h3>Presión Atm.{% if alertas_disparadas.modRed %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</h3><svg class="icon-svg" style="color:#8b5cf6;" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M12 2a10 10 0 0 1 10 10 10 10 0 0 1-10 10 10 10 0 0 1-10-10 10 10 0 0 1 10-10z"/></svg></div>
             <div class="inst-body">
                 <div class="val-big digital" style="color: {{ atm.color|default:red.color }}">{{ atm.presion|default:red.estabilidad }}</div>
                 <div class="val-sub">Barómetro Local</div>
@@ -698,7 +699,7 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
         </div>
 
         <div class="instrumento" onclick="openModal('modMix')" style="border-top: 3px solid #06b6d4;">
-            <div class="inst-head"><h3>Matriz Diaria</h3><svg class="icon-svg" style="color:#06b6d4;" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></div>
+            <div class="inst-head"><h3>Matriz Diaria{% if alertas_disparadas.modMix %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</h3><svg class="icon-svg" style="color:#06b6d4;" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></div>
             <div class="inst-body">
                 <div class="val-big digital" style="font-size: 1.6em;">{{ mix.ganador }}</div>
                 <div class="val-sub">Fuente Dominante</div>
@@ -707,7 +708,7 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
         </div>
 
         <div class="instrumento" onclick="openModal('modBat')" style="border-top: 3px solid #d946ef;">
-            <div class="inst-head"><h3>BESS</h3><svg class="icon-svg" style="color:#d946ef;" viewBox="0 0 24 24"><rect x="2" y="7" width="16" height="10" rx="2" ry="2"/><line x1="22" y1="11" x2="22" y2="13"/></svg></div>
+            <div class="inst-head"><h3>BESS{% if alertas_disparadas.modBat %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</h3><svg class="icon-svg" style="color:#d946ef;" viewBox="0 0 24 24"><rect x="2" y="7" width="16" height="10" rx="2" ry="2"/><line x1="22" y1="11" x2="22" y2="13"/></svg></div>
             <div class="inst-body">
                 <div class="val-big digital">{{ smart_meter.bateria_tiempo }}</div>
                 <div class="val-sub">Tiempo Carga Est.</div>
@@ -716,7 +717,7 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
         </div>
 
         <div class="instrumento" onclick="openModal('modCarb')" style="border-top: 3px solid #22c55e;">
-            <div class="inst-head"><h3>Huella CO2</h3><svg class="icon-svg" style="color:#22c55e;" viewBox="0 0 24 24"><path d="M12 20v-6M6 20V10M18 20V4"/></svg></div>
+            <div class="inst-head"><h3>Huella CO2{% if alertas_disparadas.modCarb %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</h3><svg class="icon-svg" style="color:#22c55e;" viewBox="0 0 24 24"><path d="M12 20v-6M6 20V10M18 20V4"/></svg></div>
             <div class="inst-body">
                 <div class="val-big digital">{{ smart_meter.co2 }}</div>
                 <div class="val-sub">kg CO2eq Evitados</div>
@@ -725,7 +726,7 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
         </div>
 
         <div class="instrumento" onclick="openModal('modAtm')" style="border-top: 3px solid #64748b;">
-            <div class="inst-head"><h3>Atmósfera</h3><svg class="icon-svg" style="color:#94a3b8;" viewBox="0 0 24 24"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 16v6M12 16v6M8 16v6"/></svg></div>
+            <div class="inst-head"><h3>Atmósfera{% if alertas_disparadas.modAtm %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</h3><svg class="icon-svg" style="color:#94a3b8;" viewBox="0 0 24 24"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 16v6M12 16v6M8 16v6"/></svg></div>
             <div class="inst-body">
                 <div class="val-big digital">1.225</div>
                 <div class="val-sub">Densidad Aire (kg/m³)</div>
@@ -773,7 +774,7 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
     </div>
 
 </div> <div id="modSolar" class="modal-overlay" onclick="closeModal(this)">
-    <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-content" data-rad="{{ solar.rad }}" onclick="event.stopPropagation()">
         <div class="modal-header">
             <h2 style="color:#facc15;"><svg class="icon-svg" style="color:#facc15;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> Ingeniería Fotovoltaica</h2>
             <span class="modal-close" onclick="closeModalById('modSolar')">✖</span>
@@ -813,12 +814,17 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
                 </div>
                 {{ solar.rec }}
             </div>
+
+            <div class="tc-especial-target" style="display:none;"></div>
+            <div class="tc-interactivo" data-sector="energia" data-modal="modSolar" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-campos='[{"key":"area_paneles","label":"Área de mis paneles","tipo":"number","unidad":"m²","default":20},{"key":"eficiencia","label":"Eficiencia de mis paneles","tipo":"number","unidad":"%","default":18}]'
+                 data-alerta='{"variable":"radiacion","label":"Irradiancia","unidad":"W/m²"}'></div>
         </div>
     </div>
 </div>
 
 <div id="modEol" class="modal-overlay" onclick="closeModal(this)">
-    <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-content" data-viento-ms="{{ eolica.ms }}" onclick="event.stopPropagation()">
         <div class="modal-header">
             <h2 style="color:#3b82f6;"><svg class="icon-svg" style="color:#3b82f6;" viewBox="0 0 24 24"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg> Ingeniería Eólica</h2>
             <span class="modal-close" onclick="closeModalById('modEol')">✖</span>
@@ -858,6 +864,11 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
                 </div>
                 {{ eolica.rec }}
             </div>
+
+            <div class="tc-especial-target" style="display:none;"></div>
+            <div class="tc-interactivo" data-sector="energia" data-modal="modEol" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-campos='[{"key":"viento_max","label":"Mi cut-out personal","tipo":"number","unidad":"m/s","default":25}]'
+                 data-alerta='{"variable":"viento_ms","label":"Viento","unidad":"m/s"}'></div>
         </div>
     </div>
 </div>
@@ -905,6 +916,9 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
                 </div>
                 <p>Almacenar excedentes como Hidrógeno permite desacoplar la generación del consumo estacional. Ideal para períodos de alta producción solar/eólica.</p>
             </div>
+
+            <div class="tc-interactivo" data-sector="energia" data-modal="modHidro" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-alerta='{"variable":"h2_kg","label":"Producción H₂ diaria","unidad":"kg"}'></div>
         </div>
     </div>
 </div>
@@ -949,6 +963,9 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
                 </div>
                 <p>Asegurar flujo de aire posterior para mitigar el derating térmico. Una diferencia de 10°C puede recuperar hasta 4% de eficiencia.</p>
             </div>
+
+            <div class="tc-interactivo" data-sector="energia" data-modal="modEf" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-alerta='{"variable":"temp","label":"Temperatura ambiente","unidad":"°C"}'></div>
         </div>
     </div>
 </div>
@@ -972,6 +989,9 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
                 <div class="tech-item"><label>Estado Sensor</label><span>ACTIVO</span></div>
                 <div class="tech-item" style="grid-column: span 2;"><label>Densidad Aire</label><span style="color:#22c55e;">{{ atm.densidad }}</span></div>
             </div>
+
+            <div class="tc-interactivo" data-sector="energia" data-modal="modRed" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-alerta='{"variable":"presion","label":"Presión atmosférica","unidad":"hPa"}'></div>
         </div>
     </div>
 </div>
@@ -1001,6 +1021,8 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
                 </div>
                 <p><strong>{{ mix.rec }}</strong></p>
             </div>
+
+            <div class="tc-interactivo" data-sector="energia" data-modal="modMix" data-lat="{{ lat }}" data-lon="{{ lon }}"></div>
         </div>
     </div>
 </div>
@@ -1039,6 +1061,10 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
                 </div>
                 <p>El sistema utiliza la batería automáticamente para cubrir los picos de consumo nocturnos (Peak Shaving) y vende excedentes a la red (Net Metering).</p>
             </div>
+
+            <div class="tc-interactivo" data-sector="energia" data-modal="modBat" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-campos='[{"key":"capacidad_bateria","label":"Capacidad de mi batería","tipo":"number","unidad":"kWh","default":10}]'
+                 data-alerta='{"variable":"total_kw","label":"Potencia total","unidad":"kW"}'></div>
         </div>
     </div>
 </div>
@@ -1076,6 +1102,9 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
             <div style="background: #0b1120; padding: 16px; border-radius: 6px; border: 1px solid #334155;">
                 <p style="font-size: 0.9em; color: #cbd5e1; margin:0;">Equivale a no conducir un auto por <strong style="color:#fff;">{{ smart_meter.km_auto }} km</strong>.</p>
             </div>
+
+            <div class="tc-interactivo" data-sector="energia" data-modal="modCarb" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-alerta='{"variable":"co2","label":"CO₂ evitado hoy","unidad":"kg"}'></div>
         </div>
     </div>
 </div>
@@ -1114,6 +1143,9 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
                 </div>
                 <p>{{ hidro_clima.rec }}</p>
             </div>
+
+            <div class="tc-interactivo" data-sector="energia" data-modal="modAtm" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-alerta='{"variable":"lluvia","label":"Lluvia 24h","unidad":"mm"}'></div>
         </div>
     </div>
 </div>
@@ -1152,6 +1184,9 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
                     </div>
                 </div>
             </div>
+
+            <div class="tc-interactivo" data-sector="energia" data-modal="modSmart" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-alerta='{"variable":"total_kw","label":"Potencia total","unidad":"kW"}'></div>
         </div>
     </div>
 </div>
@@ -1529,6 +1564,7 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
         if(el) {
             el.style.display = 'flex'; 
             if(id === 'modSmart') setTimeout(renderModalChart, 200);
+            if (window.tcInteractivoAlAbrir) window.tcInteractivoAlAbrir(id);
         }
     }
     function closeModal(el) { el.style.display = 'none'; }
@@ -1898,6 +1934,8 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
       <button class="stats-energia-tab" data-tab="frecuencias" onclick="statsEnergiaTab('frecuencias')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Frecuencias Relativas</button>
       <button class="stats-energia-tab" data-tab="poisson" onclick="statsEnergiaTab('poisson')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Distribución Poisson</button>
       <button class="stats-energia-tab" data-tab="hipotesis" onclick="statsEnergiaTab('hipotesis')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Test de Hipótesis</button>
+      <button class="stats-energia-tab" data-tab="weibull" onclick="statsEnergiaTab('weibull')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Weibull (Viento)</button>
+      <button class="stats-energia-tab" data-tab="percentiles" onclick="statsEnergiaTab('percentiles')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Percentiles de Riesgo</button>
       <button class="stats-energia-tab" data-tab="historico" onclick="statsEnergiaTab('historico')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Histórico Real</button>
     </div>
 
@@ -1925,6 +1963,24 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
         <div id="stats-energia-hip-resultado"></div>
       </div>
 
+      <div id="stats-energia-pane-weibull" class="stats-energia-pane" style="display:none;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 10px; line-height:1.5;">La distribución de <strong>Weibull</strong> es el modelo estándar en evaluación de recurso eólico: describe la probabilidad de cada velocidad de viento a partir de dos parámetros, <em>k</em> (forma, dispersión) y <em>c</em> (escala, ligado al viento medio). Solo se calcula para la variable Viento.</p>
+        <div id="stats-energia-weibull-na" style="display:none; color:#94a3b8; font-size:0.78rem; text-align:center; padding:20px 14px; background:rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.2); border-radius:10px;">Seleccioná la variable <strong>Viento (m/s)</strong> arriba para ver el ajuste de Weibull.</div>
+        <div id="stats-energia-weibull-contenido" style="display:none;">
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+            <div style="flex:1; min-width:110px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"><div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:4px;">k (forma)</div><div id="stats-energia-weibull-k" style="font-size:1.2rem; font-weight:800; color:#e2e8f0;">—</div></div>
+            <div style="flex:1; min-width:110px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"><div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:4px;">c (escala)</div><div id="stats-energia-weibull-c" style="font-size:1.2rem; font-weight:800; color:#e2e8f0;">—</div></div>
+            <div style="flex:1; min-width:150px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"><div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:4px;">Densidad de potencia</div><div id="stats-energia-weibull-pot" style="font-size:1.2rem; font-weight:800; color:#fbbf24;">—</div></div>
+          </div>
+          <div style="position:relative; height:260px;"><canvas id="stats-energia-chart-weibull"></canvas></div>
+        </div>
+      </div>
+
+      <div id="stats-energia-pane-percentiles" class="stats-energia-pane" style="display:none;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 12px; line-height:1.5;">Percentiles de la muestra: el <strong>P95</strong>, por ejemplo, es el valor que solo se supera el 5% del tiempo en los próximos 14 días — útil como umbral de riesgo operativo.</p>
+        <div id="stats-energia-percentiles-cards" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+      </div>
+
       <div id="stats-energia-pane-historico" class="stats-energia-pane" style="display:none;">
         <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 12px; line-height:1.5;">Comparación en tiempo real: el valor de ahora vs. el promedio real de días anteriores a esta misma hora, calculado sobre snapshots guardados automáticamente cada hora (n8n + BigQuery).</p>
         <div id="stats-energia-historico-loading" style="color:#67e8f9; font-size:0.78rem; text-align:center; padding:20px 0;">Consultando histórico…</div>
@@ -1936,6 +1992,10 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
             <div id="stats-energia-hist-diff" style="flex:1; min-width:140px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"></div>
           </div>
           <div style="position:relative; height:220px;"><canvas id="stats-energia-chart-historico"></canvas></div>
+          <div style="margin-top:8px; font-size:0.65rem; color:#64748b; text-align:center;">Bandas: línea amarilla punteada = media histórica · banda naranja = ±2σ · banda roja = ±3σ (carta de control)</div>
+
+          <div id="stats-energia-control-box" style="display:none; margin-top:16px;"></div>
+          <div id="stats-energia-testt-box" style="margin-top:14px;"></div>
         </div>
       </div>
     </div>
@@ -1946,11 +2006,8 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
     var STATS_LAT = {{ lat|default:"-34.60" }};
     var STATS_LON = {{ lon|default:"-58.38" }};
 
-    if (typeof ChartBoxPlot !== 'undefined' && typeof Chart !== 'undefined') {
-      Chart.register(ChartBoxPlot.BoxPlotController, ChartBoxPlot.BoxAndWiskers);
-    }
-
     var statsEnergiaCharts = {};
+    var tcBoxplotRegistrado = false;
 
     window.statsEnergiaTab = function(tab) {
       document.querySelectorAll('.stats-energia-tab').forEach(function(btn){
@@ -1971,37 +2028,43 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
     function statsEnergiaRenderBoxplot(data) {
       var canvas = document.getElementById('stats-energia-chart-boxplot');
       if (!canvas || !data.boxplot || !data.boxplot.length) return;
-      statsEnergiaDestroy('boxplot');
-      var labels = data.boxplot.map(function(g){ return g.label; });
-      var puntos = data.boxplot.map(function(g){
-        return { min: g.min, q1: g.q1, median: g.mediana, q3: g.q3, max: g.max, outliers: g.outliers || [] };
-      });
-      statsEnergiaCharts['boxplot'] = new Chart(canvas.getContext('2d'), {
-        type: 'boxplot',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: data.variable.label,
-            data: puntos,
-            backgroundColor: 'rgba(34,211,238,0.18)',
-            borderColor: '#22d3ee',
-            borderWidth: 1.5,
-            outlierColor: '#f87171',
-            itemRadius: 3
-          }]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            title: { display: true, text: data.variable.label + ' — variabilidad diaria del pronóstico', color: '#e2e8f0', font: { size: 13 } }
-          },
-          scales: {
-            y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
-            x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
-          }
+      tcCargarBoxplotPlugin().then(function(){
+        if (!tcBoxplotRegistrado) {
+          Chart.register(ChartBoxPlot.BoxPlotController, ChartBoxPlot.BoxAndWiskers);
+          tcBoxplotRegistrado = true;
         }
-      });
+        statsEnergiaDestroy('boxplot');
+        var labels = data.boxplot.map(function(g){ return g.label; });
+        var puntos = data.boxplot.map(function(g){
+          return { min: g.min, q1: g.q1, median: g.mediana, q3: g.q3, max: g.max, outliers: g.outliers || [] };
+        });
+        statsEnergiaCharts['boxplot'] = new Chart(canvas.getContext('2d'), {
+          type: 'boxplot',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: data.variable.label,
+              data: puntos,
+              backgroundColor: 'rgba(34,211,238,0.18)',
+              borderColor: '#22d3ee',
+              borderWidth: 1.5,
+              outlierColor: '#f87171',
+              itemRadius: 3
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              title: { display: true, text: data.variable.label + ' — variabilidad diaria del pronóstico', color: '#e2e8f0', font: { size: 13 } }
+            },
+            scales: {
+              y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+              x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
+            }
+          }
+        });
+      }).catch(function(err){ console.error('No se pudo cargar el módulo de boxplot:', err); });
     }
 
     function statsEnergiaRenderFrecuencias(data) {
@@ -2104,6 +2167,65 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
         '</div>';
     }
 
+    function statsEnergiaRenderWeibull(data) {
+      var na = document.getElementById('stats-energia-weibull-na');
+      var cont = document.getElementById('stats-energia-weibull-contenido');
+      var canvas = document.getElementById('stats-energia-chart-weibull');
+      if (!na || !cont) return;
+      if (data.variable.key !== 'viento' || !data.weibull) {
+        na.style.display = 'block';
+        na.innerText = data.variable.key !== 'viento'
+          ? 'Seleccioná la variable Viento (m/s) arriba para ver el ajuste de Weibull.'
+          : 'No hay suficientes datos de viento en este pronóstico para ajustar una distribución de Weibull (mínimo 10 valores).';
+        cont.style.display = 'none';
+        return;
+      }
+      na.style.display = 'none';
+      cont.style.display = 'block';
+      var w = data.weibull;
+      document.getElementById('stats-energia-weibull-k').innerText = w.k_forma;
+      document.getElementById('stats-energia-weibull-c').innerText = w.c_escala + ' m/s';
+      document.getElementById('stats-energia-weibull-pot').innerText = w.densidad_potencia_wm2 + ' W/m²';
+      if (!canvas || !w.curva || !w.curva.length) return;
+      statsEnergiaDestroy('weibull');
+      statsEnergiaCharts['weibull'] = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: w.curva.map(function(b){ return b.rango; }),
+          datasets: [
+            { type: 'bar', label: 'Observado', data: w.curva.map(function(b){ return b.observado; }), backgroundColor: 'rgba(96,165,250,0.5)', borderRadius: 4, order: 2 },
+            { type: 'line', label: 'Weibull teórico (k=' + w.k_forma + ', c=' + w.c_escala + ')', data: w.curva.map(function(b){ return b.teorico; }), borderColor: '#fbbf24', backgroundColor: 'transparent', borderWidth: 2.5, tension: 0.35, pointRadius: 2, order: 1 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#94a3b8' } },
+            title: { display: true, text: 'Velocidad de viento (m/s) — observado vs. Weibull', color: '#e2e8f0', font: { size: 13 } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+            x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function statsEnergiaRenderPercentiles(data) {
+      var el = document.getElementById('stats-energia-percentiles-cards');
+      if (!el) return;
+      if (!data.percentiles || !data.percentiles.valores) { el.innerHTML = ''; return; }
+      var unidad = data.variable.unidad || '';
+      el.innerHTML = data.percentiles.valores.map(function(p){
+        var destacado = p.p >= 90;
+        return '<div style="flex:1; min-width:110px; background:' + (destacado ? 'rgba(251,191,36,0.08)' : '#0f172a') + '; border:1px solid ' + (destacado ? 'rgba(251,191,36,0.3)' : '#1e293b') + '; border-radius:10px; padding:12px 14px; text-align:center;">' +
+          '<div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:6px;">P' + p.p + '</div>' +
+          '<div style="font-size:1.25rem; font-weight:800; color:' + (destacado ? '#fbbf24' : '#e2e8f0') + ';">' + p.valor + ' <span style="font-size:0.6em; color:#64748b;">' + unidad + '</span></div>' +
+          '<div style="font-size:0.62rem; color:#64748b; margin-top:4px;">se supera solo el ' + (100 - p.p) + '% del tiempo</div>' +
+        '</div>';
+      }).join('');
+    }
+
     function statsEnergiaRenderHistorico(data) {
       var loading = document.getElementById('stats-energia-historico-loading');
       var empty = document.getElementById('stats-energia-historico-empty');
@@ -2126,20 +2248,78 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
       document.getElementById('stats-energia-hist-prom').innerHTML = '<div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Promedio (' + (data.promedio_historico.n_dias || 0) + ' días previos)</div><div style="font-size:1.3rem; font-weight:800; color:#e2e8f0;">' + data.promedio_historico.valor + '</div>';
       document.getElementById('stats-energia-hist-diff').innerHTML = '<div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Diferencia vs. histórico</div><div style="font-size:1.3rem; font-weight:800; color:' + diffColor + ';">' + (diff > 0 ? '+' : '') + diff + '%</div>';
 
+      // Carta de control (±2σ / ±3σ) y test t, si BigQuery devolvió suficiente muestra
+      statsEnergiaRenderControlYTestT(data);
+
       var canvas = document.getElementById('stats-energia-chart-historico');
       if (!canvas || !data.serie_semanas || !data.serie_semanas.length) return;
       statsEnergiaDestroy('historico');
       var labels = data.serie_semanas.map(function(s){ return s.semana; });
       var valores = data.serie_semanas.map(function(s){ return s.valor; });
+      var cc = data.carta_control;
+      var datasets = [{ type: 'bar', label: textoVar, data: valores, backgroundColor: labels.map(function(l){ return l === 'Hoy' ? 'rgba(250,204,21,0.75)' : 'rgba(34,211,238,0.5)'; }), borderRadius: 4, order: 3 }];
+      if (cc) {
+        var rellenar = function(v){ return labels.map(function(){ return v; }); };
+        datasets.push({ type: 'line', label: 'Media histórica', data: rellenar(cc.media), borderColor: '#fbbf24', borderDash: [5,4], borderWidth: 1.5, pointRadius: 0, fill: false, order: 1 });
+        datasets.push({ type: 'line', label: '+2σ', data: rellenar(cc.limite_superior_2s), borderColor: 'rgba(251,146,60,0.6)', borderWidth: 1, pointRadius: 0, fill: false, order: 2 });
+        datasets.push({ type: 'line', label: '-2σ', data: rellenar(cc.limite_inferior_2s), borderColor: 'rgba(251,146,60,0.6)', borderWidth: 1, pointRadius: 0, fill: false, order: 2 });
+        datasets.push({ type: 'line', label: '+3σ', data: rellenar(cc.limite_superior_3s), borderColor: 'rgba(239,68,68,0.5)', borderWidth: 1, borderDash: [2,3], pointRadius: 0, fill: false, order: 2 });
+        datasets.push({ type: 'line', label: '-3σ', data: rellenar(cc.limite_inferior_3s), borderColor: 'rgba(239,68,68,0.5)', borderWidth: 1, borderDash: [2,3], pointRadius: 0, fill: false, order: 2 });
+      }
       statsEnergiaCharts['historico'] = new Chart(canvas.getContext('2d'), {
-        type: 'bar',
-        data: { labels: labels, datasets: [{ label: textoVar, data: valores, backgroundColor: labels.map(function(l){ return l === 'Hoy' ? 'rgba(250,204,21,0.75)' : 'rgba(34,211,238,0.5)'; }), borderRadius: 4 }] },
+        data: { labels: labels, datasets: datasets },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false }, title: { display: true, text: 'Evolución semanal — ' + textoVar, color: '#e2e8f0', font: { size: 13 } } },
+          plugins: { legend: { display: !!cc, labels: { color: '#94a3b8', font: { size: 9 }, filter: function(item){ return item.text !== textoVar; } } }, title: { display: true, text: 'Evolución semanal — ' + textoVar, color: '#e2e8f0', font: { size: 13 } } },
           scales: { y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } } }
         }
       });
+    }
+
+    function statsEnergiaRenderControlYTestT(data) {
+      var boxCC = document.getElementById('stats-energia-control-box');
+      var boxTT = document.getElementById('stats-energia-testt-box');
+      if (boxCC) {
+        var cc = data.carta_control;
+        if (!cc) {
+          boxCC.style.display = 'none';
+        } else {
+          boxCC.style.display = 'block';
+          var estColor = cc.estado === 'normal' ? '#4ade80' : (cc.estado === 'fuera_2s' ? '#fb923c' : '#ef4444');
+          var estTexto = cc.estado === 'normal' ? 'DENTRO DE LO NORMAL' : (cc.estado === 'fuera_2s' ? 'ANOMALÍA MODERADA (fuera de ±2σ)' : 'ANOMALÍA SEVERA (fuera de ±3σ)');
+          boxCC.innerHTML =
+            '<div style="font-size:0.7rem; color:#67e8f9; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">Carta de Control (Shewhart)</div>' +
+            '<div style="background:rgba(' + (cc.estado === 'normal' ? '74,222,128' : cc.estado === 'fuera_2s' ? '251,146,60' : '239,68,68') + ',0.08); border:1px solid ' + estColor + '33; border-radius:10px; padding:14px 16px;">' +
+              '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">z-score = <strong style="color:#e2e8f0;">' + cc.z_score + '</strong></span>' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">n histórico = <strong style="color:#e2e8f0;">' + cc.n_historico + ' días</strong></span>' +
+              '</div>' +
+              '<div style="font-size:0.82rem; font-weight:700; color:' + estColor + ';">' + estTexto + '</div>' +
+            '</div>';
+        }
+      }
+      if (boxTT) {
+        var t = data.test_t;
+        if (!t) {
+          boxTT.innerHTML = '<div style="color:#94a3b8; font-size:0.78rem; line-height:1.5; background:rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.2); border-radius:10px; padding:12px 14px;">Se necesitan más días de histórico acumulado para calcular el test t de Student.</div>';
+        } else {
+          var col = t.rechaza_h0 ? '#f87171' : '#4ade80';
+          var bg = t.rechaza_h0 ? 'rgba(239,68,68,0.08)' : 'rgba(74,222,128,0.08)';
+          boxTT.innerHTML =
+            '<div style="font-size:0.7rem; color:#67e8f9; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">Test t de Student: ¿hoy es distinto de lo normal?</div>' +
+            '<div style="background:' + bg + '; border:1px solid ' + col + '33; border-radius:10px; padding:14px 16px;">' +
+              '<div style="font-size:0.68rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">H0</div>' +
+              '<div style="font-size:0.8rem; color:#e2e8f0; margin-bottom:10px;">' + t.h0 + '</div>' +
+              '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">t = <strong style="color:#e2e8f0;">' + t.estadistico_t + '</strong></span>' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">gl = <strong style="color:#e2e8f0;">' + t.grados_libertad + '</strong></span>' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">p-valor = <strong style="color:#e2e8f0;">' + t.p_valor + '</strong></span>' +
+              '</div>' +
+              '<div style="font-size:0.8rem; font-weight:700; color:' + col + ';">' + (t.rechaza_h0 ? 'SE RECHAZA H0' : 'NO SE RECHAZA H0') + '</div>' +
+              '<div style="font-size:0.76rem; color:#cbd5e1; margin-top:6px; line-height:1.5;">' + t.conclusion + '</div>' +
+            '</div>';
+        }
+      }
     }
 
     window.statsEnergiaCargarHistorico = function() {
@@ -2185,6 +2365,8 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
           statsEnergiaRenderFrecuencias(data);
           statsEnergiaRenderPoisson(data);
           statsEnergiaRenderHipotesis(data);
+          statsEnergiaRenderWeibull(data);
+          statsEnergiaRenderPercentiles(data);
         })
         .catch(function(){
           loading.style.display = 'none';
@@ -2834,4 +3016,6 @@ function createSampleChart(chartData = null) {
     drawChart(variablesDisponibles[0]);
 }
 </script>
+{% include 'partials/_modal_interactivo.html' %}
+{% include 'partials/_chat_excel_boxplot.html' %}
 {% endblock %}

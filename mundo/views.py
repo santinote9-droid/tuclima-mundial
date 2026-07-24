@@ -20,7 +20,7 @@ from django.contrib.auth.models import Group, User
 from django.utils import timezone
 from datetime import datetime, timedelta
 import uuid
-from .models import PerfilUsuario, DatoSectorial, UbicacionGuardada, ReporteProgramado, ApiKeyPersonal
+from .models import PerfilUsuario, DatoSectorial, UbicacionGuardada, ReporteProgramado, ApiKeyPersonal, ConfiguracionModal, AlertaModal, NotaModal
 from . import estadistica_utils
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -941,19 +941,24 @@ def agro(request):
             gdd_acum += gdd_diario
 
         # 3. Balance Hídrico (Lluvia vs ETo)
-        lluvia_semana = sum(daily.get('precipitation_sum', [])[:7])
-        eto_list = daily.get('et0_fao_evapotranspiration', [])
+        # IMPORTANTE: Open-Meteo puede devolver "null" en días puntuales del
+        # rango de 14 días (p.ej. el último día del pronóstico extendido).
+        # Si no se sanea, un solo None en la lista rompe sum()/round() más
+        # abajo con un TypeError y tira todo el bloque de Balance Hídrico
+        # (gráfico incluido) al fallback de error.
+        lluvias_diarias = [v if v is not None else 0 for v in daily.get('precipitation_sum', [])]
+        eto_list = [v if v is not None else 0 for v in daily.get('et0_fao_evapotranspiration', [])]
         # Rellenar con 0 si falta datos
         if not eto_list: eto_list = [0]*14
-        
+
+        lluvia_semana = sum(lluvias_diarias[:7])
         evapo_semana = sum(eto_list[:7])
         balance_neto = lluvia_semana - evapo_semana
 
         # 4. Tabla de Balance Diario
         tabla_balance = []
         fechas_raw = daily.get('time', [])
-        lluvias_diarias = daily.get('precipitation_sum', [])
-        
+
         for i in range(min(len(fechas_raw), 14)):
             r = lluvias_diarias[i] if i < len(lluvias_diarias) else 0
             e = eto_list[i] if i < len(eto_list) else 0
@@ -1116,12 +1121,36 @@ def agro(request):
         }
         contexto['alerta_banner'] = alerta_banner
 
+        # --- MODALES INTERACTIVOS: evaluar alertas configuradas por el usuario ---
+        try:
+            valores_modales_agro = {
+                'gdd': round(gdd_acum, 1),
+                'humedad_superficial': contexto['suelo']['sup_hum'],
+                'delta_t': delta_t,
+                'humedad_relativa': contexto['ambiente']['humedad'],
+                'radiacion': contexto['radiacion']['watts'],
+                'balance_neto': contexto['balance']['diff'],
+                'temp_raiz': contexto['raices']['temp'],
+                'vpd': vpd_val,
+                'eto_hoy': contexto['eto']['hoy'],
+            }
+            alertas_disparadas = {}
+            _lat_k, _lon_k = _coord_key(lat), _coord_key(lon)
+            for _a in AlertaModal.objects.filter(usuario=request.user, sector='agro', activa=True, lat=_lat_k, lon=_lon_k):
+                if _a.evaluar(valores_modales_agro.get(_a.variable)):
+                    alertas_disparadas[_a.modal_id] = True
+            contexto['alertas_disparadas'] = alertas_disparadas
+        except Exception as _e_alert:
+            print(f"⚠️ No se pudieron evaluar alertas de modal (agro): {_e_alert}")
+            contexto['alertas_disparadas'] = {}
+
     except Exception as e:
         print(f"Error en vista AGRO: {e}")
         # En caso de error, mandamos contexto vacío pero seguro para no romper el HTML
         contexto = {
             'error': 'No se pudieron cargar los datos climáticos.',
-            'lat': lat, 'lon': lon
+            'lat': lat, 'lon': lon,
+            'alertas_disparadas': {},
         }
 
     # Permisos de plan
@@ -1220,6 +1249,12 @@ def estadisticas_agro(request):
                     conteos_por_periodo, 'lluvia (precipitación > 0.1 mm)'
                 )
 
+        # 5. PERCENTILES DE RIESGO (P50/P90/P95/P99) — cualquier variable
+        percentiles = estadistica_utils.percentiles_riesgo(valores)
+
+        # 6. DISTRIBUCIÓN DE WEIBULL — solo tiene sentido físico para viento
+        weibull = estadistica_utils.ajuste_weibull(valores) if variable == 'viento' else None
+
         return JsonResponse({
             'ok': True,
             'sector': 'agro',
@@ -1232,6 +1267,8 @@ def estadisticas_agro(request):
             'poisson_evento_desc': 'Hora con lluvia: precipitación > 0.1 mm (conteo por bloques de 6h).',
             'test_hipotesis': test_hipotesis,
             'test_hipotesis_motivo': test_hipotesis_motivo,
+            'percentiles': percentiles,
+            'weibull': weibull,
             'muestra_n': len([v for v in valores if v is not None]),
             'generado_en': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
         })
@@ -1399,9 +1436,15 @@ def naval(request):
         # 7. GRÁFICO 24H (Tendencia)
         raw_olas = hourly_m.get('wave_height', [])
         if not raw_olas: raw_olas = [0] * 24
-        
+        # IMPORTANTE: en ubicaciones de tierra firme, la API marina devuelve
+        # la lista completa de wave_height con "null" en cada hora (no la
+        # lista vacía). Sin este saneo, graf_olas terminaba en un array de
+        # `null`s que rompía el gráfico de olas en el frontend.
+        raw_olas = [v if v is not None else 0.0 for v in raw_olas]
+
         raw_viento = hourly_w.get('wind_speed_10m', [])
-        
+        raw_viento = [v if v is not None else 0.0 for v in raw_viento]
+
         # Cortar a próximas 24hs
         graf_olas = raw_olas[idx:idx+24]
         graf_viento = [round(v * 0.539957, 1) for v in raw_viento[idx:idx+24]]
@@ -1512,6 +1555,29 @@ def naval(request):
         }
         contexto['alerta_banner'] = alerta_banner
 
+        # --- MODALES INTERACTIVOS: evaluar alertas configuradas por el usuario ---
+        try:
+            valores_modales_naval = {
+                'swell_altura': swell_h,
+                'luz_horas': day_len,
+                'presion': curr_w.get('pressure_msl', 1013),
+                'ola_altura': wave_h,
+                'viento_kt': wind_kt,
+                'visibilidad': vis_nm,
+                'ola_periodo': curr_m.get('wave_period', 0),
+                'temp_aire': temp_aire,
+                'temp_agua': temp_agua_est,
+            }
+            alertas_disparadas = {}
+            _lat_k, _lon_k = _coord_key(lat), _coord_key(lon)
+            for _a in AlertaModal.objects.filter(usuario=request.user, sector='naval', activa=True, lat=_lat_k, lon=_lon_k):
+                if _a.evaluar(valores_modales_naval.get(_a.variable)):
+                    alertas_disparadas[_a.modal_id] = True
+            contexto['alertas_disparadas'] = alertas_disparadas
+        except Exception as _e_alert:
+            print(f"⚠️ No se pudieron evaluar alertas de modal (naval): {_e_alert}")
+            contexto['alertas_disparadas'] = {}
+
     except Exception as e:
         print(f"Error Naval: {e}")
         # Contexto de emergencia
@@ -1520,7 +1586,8 @@ def naval(request):
             'lat': lat, 'lon': lon,
             'status': {'msg': 'OFFLINE', 'color': '#ef4444'},
             'mar': {'altura': 0, 'estado': '-', 'douglas': 0},
-            'grafico_naval': {'fechas': '[]', 'olas': '[]', 'viento': '[]'}
+            'grafico_naval': {'fechas': '[]', 'olas': '[]', 'viento': '[]'},
+            'alertas_disparadas': {},
         }
 
     # Permisos de plan
@@ -1634,6 +1701,12 @@ def estadisticas_naval(request):
                     conteos_por_periodo, 'riesgo náutico (oleaje ≥ 1.5 m o viento ≥ 15 kt)'
                 )
 
+        # 5. PERCENTILES DE RIESGO (P50/P90/P95/P99) — cualquier variable
+        percentiles = estadistica_utils.percentiles_riesgo(valores)
+
+        # 6. DISTRIBUCIÓN DE WEIBULL — solo tiene sentido físico para viento
+        weibull = estadistica_utils.ajuste_weibull(valores) if variable == 'viento' else None
+
         return JsonResponse({
             'ok': True,
             'sector': 'naval',
@@ -1646,6 +1719,8 @@ def estadisticas_naval(request):
             'poisson_evento_desc': 'Hora con riesgo náutico: oleaje ≥ 1.5 m (precaución) o viento ≥ 15 kt (conteo por bloques de 6h).',
             'test_hipotesis': test_hipotesis,
             'test_hipotesis_motivo': test_hipotesis_motivo,
+            'percentiles': percentiles,
+            'weibull': weibull,
             'muestra_n': len([v for v in valores if v is not None]),
             'generado_en': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
         })
@@ -1847,10 +1922,32 @@ def aereo(request):
         }
         contexto['alerta_banner'] = alerta_banner
 
+        # --- MODALES INTERACTIVOS: evaluar alertas configuradas por el usuario ---
+        try:
+            valores_modales_aereo = {
+                'qnh': int(curr.get('pressure_msl', 1013) or 1013),
+                'viento_kt': wind_k,
+                'cobertura': int(cover),
+                'shear': gusts - wind_k,
+                'viento_5000': int(w_5000),
+                'temp': int(temp),
+                'cape': int(max_cape),
+                'visibilidad': float(vis_km) if isinstance(vis_display, (int, float)) else (10.0 if vis_display == '10+' else float(str(vis_display).replace('+', '') or 10)),
+            }
+            alertas_disparadas = {}
+            _lat_k, _lon_k = _coord_key(lat), _coord_key(lon)
+            for _a in AlertaModal.objects.filter(usuario=request.user, sector='aereo', activa=True, lat=_lat_k, lon=_lon_k):
+                if _a.evaluar(valores_modales_aereo.get(_a.variable)):
+                    alertas_disparadas[_a.modal_id] = True
+            contexto['alertas_disparadas'] = alertas_disparadas
+        except Exception as _e_alert:
+            print(f"⚠️ No se pudieron evaluar alertas de modal (aereo): {_e_alert}")
+            contexto['alertas_disparadas'] = {}
+
     except Exception as e:
         print(f"⚠️ ERROR CRÍTICO AEREO: {e}")
         # En caso de fallo, mostramos esto para debug
-        contexto = {'error': 'Error de Datos'}
+        contexto = {'error': 'Error de Datos', 'alertas_disparadas': {}}
 
     # Permisos de plan
     _perfil = getattr(request.user, 'perfil', None)
@@ -1950,6 +2047,12 @@ def estadisticas_aereo(request):
                     conteos_por_periodo, 'riesgo aeronáutico (CAPE > 300 J/kg o ráfagas > 25 kt)'
                 )
 
+        # 5. PERCENTILES DE RIESGO (P50/P90/P95/P99) — cualquier variable
+        percentiles = estadistica_utils.percentiles_riesgo(valores)
+
+        # 6. DISTRIBUCIÓN DE WEIBULL — solo tiene sentido físico para viento
+        weibull = estadistica_utils.ajuste_weibull(valores) if variable == 'viento' else None
+
         return JsonResponse({
             'ok': True,
             'sector': 'aereo',
@@ -1962,6 +2065,8 @@ def estadisticas_aereo(request):
             'poisson_evento_desc': 'Hora con riesgo aeronáutico: CAPE > 300 J/kg (inestabilidad convectiva) o ráfagas > 25 kt (conteo por bloques de 6h).',
             'test_hipotesis': test_hipotesis,
             'test_hipotesis_motivo': test_hipotesis_motivo,
+            'percentiles': percentiles,
+            'weibull': weibull,
             'muestra_n': len([v for v in valores if v is not None]),
             'generado_en': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
         })
@@ -2161,9 +2266,31 @@ def energia(request):
         }
         contexto['alerta_banner'] = alerta_banner
 
+        # --- MODALES INTERACTIVOS: evaluar alertas configuradas por el usuario ---
+        try:
+            valores_modales_energia = {
+                'radiacion': rad_now,
+                'viento_ms': round(wind_ms, 1),
+                'h2_kg': round(h2_rate * 24, 2),
+                'temp': temp_now,
+                'presion': int(presion_hpa),
+                'total_kw': round(total_kw, 2),
+                'co2': round(co2_evitado, 1),
+                'lluvia': 0,
+            }
+            alertas_disparadas = {}
+            _lat_k, _lon_k = _coord_key(lat), _coord_key(lon)
+            for _a in AlertaModal.objects.filter(usuario=request.user, sector='energia', activa=True, lat=_lat_k, lon=_lon_k):
+                if _a.evaluar(valores_modales_energia.get(_a.variable)):
+                    alertas_disparadas[_a.modal_id] = True
+            contexto['alertas_disparadas'] = alertas_disparadas
+        except Exception as _e_alert:
+            print(f"⚠️ No se pudieron evaluar alertas de modal (energia): {_e_alert}")
+            contexto['alertas_disparadas'] = {}
+
     except Exception as e:
         print(f"Error Energia: {e}")
-        contexto = {'error': 'Sin datos'}
+        contexto = {'error': 'Sin datos', 'alertas_disparadas': {}}
 
     # Permisos de plan
     _perfil = getattr(request.user, 'perfil', None)
@@ -2260,6 +2387,14 @@ def estadisticas_energia(request):
                     conteos_por_periodo, 'ausencia de viento aprovechable (< 3 m/s)'
                 )
 
+        # 5. PERCENTILES DE RIESGO (P50/P90/P95/P99) — cualquier variable
+        percentiles = estadistica_utils.percentiles_riesgo(valores)
+
+        # 6. DISTRIBUCIÓN DE WEIBULL — solo tiene sentido físico para viento
+        weibull = None
+        if variable == 'viento':
+            weibull = estadistica_utils.ajuste_weibull(viento_ms_serie)
+
         return JsonResponse({
             'ok': True,
             'sector': 'energia',
@@ -2272,6 +2407,8 @@ def estadisticas_energia(request):
             'poisson_evento_desc': 'Hora sin viento aprovechable: velocidad < 3 m/s (por debajo del cut-in de la turbina; conteo por bloques de 6h).',
             'test_hipotesis': test_hipotesis,
             'test_hipotesis_motivo': test_hipotesis_motivo,
+            'percentiles': percentiles,
+            'weibull': weibull,
             'muestra_n': len([v for v in valores if v is not None]),
             'generado_en': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
         })
@@ -4474,6 +4611,248 @@ def api_ubicacion_delete(request, pk):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# MODALES INTERACTIVOS (personalización / alertas / notas)
+# Endpoints genéricos usados por los ~40 modales de agro/naval/aereo/energia.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _coord_key(v):
+    """Redondea lat/lon a ~111m de precisión para agrupar 'la misma ubicación'."""
+    try:
+        return round(float(v), 3)
+    except (TypeError, ValueError):
+        return None
+
+
+def _leer_json_o_post(request):
+    try:
+        return json.loads(request.body) if request.body else {}
+    except (json.JSONDecodeError, TypeError):
+        return request.POST
+
+
+SECTORES_VALIDOS = {'agro', 'naval', 'aereo', 'energia'}
+
+
+@login_required
+def api_modal_config(request):
+    """
+    GET  ?sector=agro&modal=modGDD&lat=&lon=  → {'datos': {...}}
+    POST {sector, modal, lat, lon, datos: {...}} → guarda/actualiza (upsert)
+    """
+    if request.method == 'GET':
+        sector = str(request.GET.get('sector', '')).strip().lower()
+        modal_id = str(request.GET.get('modal', '')).strip()
+        lat = _coord_key(request.GET.get('lat'))
+        lon = _coord_key(request.GET.get('lon'))
+        if sector not in SECTORES_VALIDOS or not modal_id:
+            return JsonResponse({'error': 'Parámetros inválidos.'}, status=400)
+        obj = ConfiguracionModal.objects.filter(
+            usuario=request.user, sector=sector, modal_id=modal_id, lat=lat, lon=lon
+        ).first()
+        return JsonResponse({'datos': obj.datos if obj else {}})
+
+    if request.method == 'POST':
+        body = _leer_json_o_post(request)
+        sector = str(body.get('sector', '')).strip().lower()
+        modal_id = str(body.get('modal', '')).strip()[:40]
+        lat = _coord_key(body.get('lat'))
+        lon = _coord_key(body.get('lon'))
+        datos = body.get('datos', {})
+        if sector not in SECTORES_VALIDOS or not modal_id:
+            return JsonResponse({'error': 'Parámetros inválidos.'}, status=400)
+        if not isinstance(datos, dict):
+            return JsonResponse({'error': "'datos' debe ser un objeto."}, status=400)
+        obj, _creado = ConfiguracionModal.objects.update_or_create(
+            usuario=request.user, sector=sector, modal_id=modal_id, lat=lat, lon=lon,
+            defaults={'datos': datos},
+        )
+        return JsonResponse({'ok': True, 'datos': obj.datos})
+
+    return JsonResponse({'error': 'Método no permitido.'}, status=405)
+
+
+@login_required
+def api_modal_alertas(request):
+    """
+    GET    ?sector=&modal=&lat=&lon=      → lista de alertas del usuario para ese modal/ubicación
+    POST   {sector, modal, lat, lon, variable, operador, umbral, activa} → crea una alerta
+    DELETE ?id=<id>                        → elimina una alerta propia
+    """
+    if request.method == 'GET':
+        sector = str(request.GET.get('sector', '')).strip().lower()
+        modal_id = str(request.GET.get('modal', '')).strip()
+        lat = _coord_key(request.GET.get('lat'))
+        lon = _coord_key(request.GET.get('lon'))
+        qs = AlertaModal.objects.filter(usuario=request.user)
+        if sector:
+            qs = qs.filter(sector=sector)
+        if modal_id:
+            qs = qs.filter(modal_id=modal_id)
+        if lat is not None and lon is not None:
+            qs = qs.filter(lat=lat, lon=lon)
+        return JsonResponse({'alertas': list(qs.values(
+            'id', 'sector', 'modal_id', 'variable', 'operador', 'umbral', 'activa', 'creada'
+        ))})
+
+    if request.method == 'POST':
+        body = _leer_json_o_post(request)
+        sector = str(body.get('sector', '')).strip().lower()
+        modal_id = str(body.get('modal', '')).strip()[:40]
+        lat = _coord_key(body.get('lat'))
+        lon = _coord_key(body.get('lon'))
+        variable = str(body.get('variable', '')).strip()[:40]
+        operador = str(body.get('operador', 'gt')).strip().lower()
+        try:
+            umbral = float(body.get('umbral'))
+        except (TypeError, ValueError):
+            return JsonResponse({'error': 'Umbral inválido.'}, status=400)
+        if sector not in SECTORES_VALIDOS or not modal_id or not variable:
+            return JsonResponse({'error': 'Parámetros inválidos.'}, status=400)
+        if operador not in ('gt', 'lt'):
+            operador = 'gt'
+        alerta = AlertaModal.objects.create(
+            usuario=request.user, sector=sector, modal_id=modal_id, lat=lat, lon=lon,
+            variable=variable, operador=operador, umbral=umbral, activa=True,
+        )
+        return JsonResponse({'ok': True, 'id': alerta.id}, status=201)
+
+    if request.method == 'DELETE':
+        alerta_id = request.GET.get('id')
+        try:
+            alerta = AlertaModal.objects.get(pk=alerta_id, usuario=request.user)
+        except (AlertaModal.DoesNotExist, ValueError, TypeError):
+            return JsonResponse({'error': 'No encontrada.'}, status=404)
+        alerta.delete()
+        return JsonResponse({'ok': True})
+
+    return JsonResponse({'error': 'Método no permitido.'}, status=405)
+
+
+@login_required
+def api_modal_notas(request):
+    """
+    GET    ?sector=&modal=&lat=&lon=  → lista de notas del usuario para ese modal/ubicación
+    POST   {sector, modal, lat, lon, texto} → crea una nota
+    DELETE ?id=<id>                    → elimina una nota propia
+    """
+    if request.method == 'GET':
+        sector = str(request.GET.get('sector', '')).strip().lower()
+        modal_id = str(request.GET.get('modal', '')).strip()
+        lat = _coord_key(request.GET.get('lat'))
+        lon = _coord_key(request.GET.get('lon'))
+        qs = NotaModal.objects.filter(usuario=request.user)
+        if sector:
+            qs = qs.filter(sector=sector)
+        if modal_id:
+            qs = qs.filter(modal_id=modal_id)
+        if lat is not None and lon is not None:
+            qs = qs.filter(lat=lat, lon=lon)
+        return JsonResponse({'notas': list(qs.values('id', 'texto', 'creada')[:50])})
+
+    if request.method == 'POST':
+        body = _leer_json_o_post(request)
+        sector = str(body.get('sector', '')).strip().lower()
+        modal_id = str(body.get('modal', '')).strip()[:40]
+        lat = _coord_key(body.get('lat'))
+        lon = _coord_key(body.get('lon'))
+        texto = str(body.get('texto', '')).strip()[:500]
+        if sector not in SECTORES_VALIDOS or not modal_id or not texto:
+            return JsonResponse({'error': 'Parámetros inválidos.'}, status=400)
+        nota = NotaModal.objects.create(
+            usuario=request.user, sector=sector, modal_id=modal_id, lat=lat, lon=lon, texto=texto,
+        )
+        return JsonResponse({'ok': True, 'id': nota.id, 'creada': nota.creada}, status=201)
+
+    if request.method == 'DELETE':
+        nota_id = request.GET.get('id')
+        try:
+            nota = NotaModal.objects.get(pk=nota_id, usuario=request.user)
+        except (NotaModal.DoesNotExist, ValueError, TypeError):
+            return JsonResponse({'error': 'No encontrada.'}, status=404)
+        nota.delete()
+        return JsonResponse({'ok': True})
+
+    return JsonResponse({'error': 'Método no permitido.'}, status=405)
+
+
+@login_required
+def api_agro_gdd_siembra(request):
+    """
+    Calcula los Grados Día de Crecimiento (GDD) REALES acumulados desde una
+    fecha de siembra elegida por el usuario, usando temperaturas históricas
+    diarias reales (Open-Meteo Archive API, sin costo ni API key).
+
+    GET ?lat=&lon=&fecha_siembra=YYYY-MM-DD&t_base=10
+    """
+    lat_raw = request.GET.get('lat', '-34.60')
+    lon_raw = request.GET.get('lon', '-58.38')
+    fecha_siembra_raw = request.GET.get('fecha_siembra', '')
+    try:
+        lat = float(str(lat_raw).replace(',', '.'))
+        lon = float(str(lon_raw).replace(',', '.'))
+    except ValueError:
+        return JsonResponse({'ok': False, 'error': 'Coordenadas inválidas.'}, status=400)
+
+    try:
+        t_base = float(request.GET.get('t_base', 10))
+    except (TypeError, ValueError):
+        t_base = 10.0
+
+    try:
+        fecha_siembra = datetime.strptime(fecha_siembra_raw, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'ok': False, 'error': 'Fecha de siembra inválida (usar YYYY-MM-DD).'}, status=400)
+
+    hoy = datetime.utcnow().date()
+    if fecha_siembra > hoy:
+        return JsonResponse({'ok': False, 'error': 'La fecha de siembra no puede ser futura.'}, status=400)
+    dias_transcurridos = (hoy - fecha_siembra).days
+    if dias_transcurridos > 300:
+        return JsonResponse({'ok': False, 'error': 'La fecha de siembra es demasiado antigua (máximo ~300 días).'}, status=400)
+    if dias_transcurridos < 1:
+        return JsonResponse({'ok': True, 'gdd_acumulado': 0, 'dias': 0, 'fecha_siembra': fecha_siembra_raw})
+
+    # end_date un día atrás: el archive API no siempre tiene el día en curso disponible todavía
+    fecha_fin = hoy - timedelta(days=1)
+    url = (
+        "https://archive-api.open-meteo.com/v1/archive"
+        f"?latitude={lat}&longitude={lon}"
+        f"&start_date={fecha_siembra.isoformat()}&end_date={fecha_fin.isoformat()}"
+        "&daily=temperature_2m_max,temperature_2m_min&timezone=auto"
+    )
+
+    try:
+        data = _get_meteo(url, timeout=10, reintentos=1)
+        if 'error' in data or 'daily' not in data:
+            raise Exception(data.get('reason', 'API de histórico no disponible.'))
+
+        daily = data['daily']
+        tmax_list = daily.get('temperature_2m_max', [])
+        tmin_list = daily.get('temperature_2m_min', [])
+
+        gdd_acumulado = 0.0
+        dias_validos = 0
+        for tmax, tmin in zip(tmax_list, tmin_list):
+            if tmax is None or tmin is None:
+                continue
+            gdd_dia = ((tmax + tmin) / 2) - t_base
+            if gdd_dia > 0:
+                gdd_acumulado += gdd_dia
+            dias_validos += 1
+
+        return JsonResponse({
+            'ok': True,
+            'gdd_acumulado': round(gdd_acumulado, 1),
+            'dias': dias_validos,
+            'fecha_siembra': fecha_siembra_raw,
+            't_base': t_base,
+        })
+    except Exception as e:
+        print(f"⚠️ ERROR GDD SIEMBRA: {e}")
+        return JsonResponse({'ok': False, 'error': 'No se pudo calcular el histórico de temperaturas en este momento.'}, status=500)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # REPORTES PROGRAMADOS
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -5191,6 +5570,23 @@ def api_estadisticas_historico(request, sector):
         )
         data = resp.json()
         data.setdefault('ok', True)
+
+        # Enriquecemos con carta de control (±2σ/±3σ) y test t de Student
+        # usando media/desvío/n que BigQuery ya calcula (STDDEV en la
+        # consulta SQL del workflow n8n). No requiere tocar n8n.
+        try:
+            hoy_valor = (data.get('hoy') or {}).get('valor')
+            prom = data.get('promedio_historico') or {}
+            media_hist = prom.get('valor')
+            desvio_hist = prom.get('desviacion')
+            n_hist = prom.get('n_dias')
+            data['carta_control'] = estadistica_utils.carta_control(hoy_valor, media_hist, desvio_hist, n_hist)
+            data['test_t'] = estadistica_utils.test_t_una_observacion(hoy_valor, media_hist, desvio_hist, n_hist)
+        except Exception as e:
+            logger.warning(f"No se pudo calcular carta de control/test t ({sector}): {e}")
+            data['carta_control'] = None
+            data['test_t'] = None
+
         return JsonResponse(data, status=resp.status_code if resp.status_code < 500 else 200)
     except Exception as e:
         logger.warning(f"Histórico n8n/BigQuery no disponible ({sector}): {e}")

@@ -270,6 +270,227 @@ def motivo_test_no_disponible(conteos_por_periodo, evento_desc=""):
 
 
 # ------------------------------------------------------------------
+# PERCENTILES DE RIESGO (P90/P95/P99)
+# ------------------------------------------------------------------
+def percentiles_riesgo(valores, percentiles=(50, 90, 95, 99)):
+    """
+    Calcula percentiles de una muestra para análisis de riesgo operativo
+    (ej. "el viento supera este valor solo el 5% del tiempo" = P95).
+    """
+    datos = sorted(v for v in valores if v is not None)
+    n = len(datos)
+    if n == 0:
+        return None
+    return {
+        'n': n,
+        'valores': [
+            {'p': p, 'valor': round(_percentil(datos, p / 100), 2)}
+            for p in percentiles
+        ],
+    }
+
+
+# ------------------------------------------------------------------
+# DISTRIBUCIÓN DE WEIBULL (estándar en evaluación de recurso eólico)
+# ------------------------------------------------------------------
+def ajuste_weibull(valores, n_bins=10):
+    """
+    Ajusta una distribución de Weibull de 2 parámetros a una muestra de
+    velocidad de viento (>= 0), usando el método de momentos con la
+    aproximación de Justus (1978) para el parámetro de forma k a partir
+    del coeficiente de variación. Es el modelo estándar en evaluación de
+    recurso eólico (no requiere numpy/scipy).
+
+    k (forma): a mayor k, menos dispersa la velocidad de viento.
+    c (escala): parámetro relacionado con el viento medio, mismas unidades
+    que `valores`.
+    """
+    datos = [v for v in valores if v is not None and v >= 0]
+    n = len(datos)
+    if n < 10:
+        return None
+
+    media = sum(datos) / n
+    if media <= 0:
+        return None
+    varianza = sum((v - media) ** 2 for v in datos) / n
+    desvio = math.sqrt(varianza)
+    if desvio <= 0:
+        return None
+
+    cv = desvio / media
+    k = cv ** (-1.086)  # Aproximación de Justus
+    k = max(0.8, min(k, 8.0))  # límites físicamente razonables
+    c = media / math.gamma(1 + 1 / k)
+
+    # Densidad de potencia eólica teórica media (rho aire ≈ 1.225 kg/m3)
+    densidad_potencia = 0.5 * 1.225 * (c ** 3) * math.gamma(1 + 3 / k)
+
+    vmax = max(datos) * 1.15 if max(datos) > 0 else 1.0
+    ancho = vmax / n_bins
+    obs_bins = [0] * n_bins
+    for v in datos:
+        idx = min(int(v / ancho), n_bins - 1) if ancho > 0 else 0
+        obs_bins[idx] += 1
+
+    curva = []
+    for i in range(n_bins):
+        ini = ancho * i
+        fin = ancho * (i + 1)
+        centro = (ini + fin) / 2
+        dens = (k / c) * ((centro / c) ** (k - 1)) * math.exp(-((centro / c) ** k)) if c > 0 else 0
+        curva.append({
+            'rango': f"{ini:.1f}–{fin:.1f}",
+            'observado': obs_bins[i],
+            'teorico': round(dens * ancho * n, 2),
+        })
+
+    return {
+        'k_forma': round(k, 3),
+        'c_escala': round(c, 3),
+        'media_muestral': round(media, 2),
+        'densidad_potencia_wm2': round(densidad_potencia, 1),
+        'curva': curva,
+        'n': n,
+    }
+
+
+# ------------------------------------------------------------------
+# DISTRIBUCIÓN t DE STUDENT (para test de hipótesis sobre medias)
+# ------------------------------------------------------------------
+def _betacf(a, b, x):
+    """Fracción continua de Lentz para la función beta incompleta (Numerical Recipes)."""
+    maxit = 200
+    eps = 3e-12
+    fpmin = 1e-300
+    qab = a + b
+    qap = a + 1.0
+    qam = a - 1.0
+    c = 1.0
+    d = 1.0 - qab * x / qap
+    if abs(d) < fpmin:
+        d = fpmin
+    d = 1.0 / d
+    h = d
+    for m in range(1, maxit + 1):
+        m2 = 2 * m
+        aa = m * (b - m) * x / ((qam + m2) * (a + m2))
+        d = 1.0 + aa * d
+        if abs(d) < fpmin:
+            d = fpmin
+        c = 1.0 + aa / c
+        if abs(c) < fpmin:
+            c = fpmin
+        d = 1.0 / d
+        h *= d * c
+        aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2))
+        d = 1.0 + aa * d
+        if abs(d) < fpmin:
+            d = fpmin
+        c = 1.0 + aa / c
+        if abs(c) < fpmin:
+            c = fpmin
+        d = 1.0 / d
+        delta = d * c
+        h *= delta
+        if abs(delta - 1.0) < eps:
+            break
+    return h
+
+
+def _incbeta(a, b, x):
+    """Función beta incompleta regularizada I_x(a, b) (sin depender de scipy)."""
+    if x <= 0:
+        return 0.0
+    if x >= 1:
+        return 1.0
+    lbeta = math.lgamma(a + b) - math.lgamma(a) - math.lgamma(b) + a * math.log(x) + b * math.log(1 - x)
+    bt = math.exp(lbeta)
+    if x < (a + 1) / (a + b + 2):
+        return bt * _betacf(a, b, x) / a
+    return 1.0 - bt * _betacf(b, a, 1 - x) / b
+
+
+def t_p_valor_dos_colas(t_stat, df):
+    """p-valor a dos colas de |t_stat| para una t de Student con `df` grados de libertad."""
+    if df <= 0:
+        return 1.0
+    x = df / (df + t_stat * t_stat)
+    return max(0.0, min(1.0, _incbeta(df / 2.0, 0.5, x)))
+
+
+def carta_control(valor_hoy, media_hist, desvio_hist, n_hist):
+    """
+    Carta de control estadístico (tipo Shewhart) para el valor de "hoy"
+    contra la media y desvío histórico (ya calculados en BigQuery a
+    partir de los snapshots horarios reales). Marca anomalía si "hoy"
+    cae fuera de las bandas de ±2σ / ±3σ.
+    """
+    if valor_hoy is None or media_hist is None or desvio_hist is None or not n_hist or n_hist < 3:
+        return None
+    if desvio_hist <= 0:
+        return None
+    z = (valor_hoy - media_hist) / desvio_hist
+    return {
+        'media': round(media_hist, 2),
+        'desvio': round(desvio_hist, 2),
+        'limite_superior_2s': round(media_hist + 2 * desvio_hist, 2),
+        'limite_inferior_2s': round(media_hist - 2 * desvio_hist, 2),
+        'limite_superior_3s': round(media_hist + 3 * desvio_hist, 2),
+        'limite_inferior_3s': round(media_hist - 3 * desvio_hist, 2),
+        'valor_hoy': round(valor_hoy, 2),
+        'z_score': round(z, 2),
+        'n_historico': n_hist,
+        'estado': 'fuera_3s' if abs(z) > 3 else ('fuera_2s' if abs(z) > 2 else 'normal'),
+    }
+
+
+def test_t_una_observacion(valor_hoy, media_hist, desvio_hist, n_hist, alfa=0.05):
+    """
+    Test t de Student de una nueva observación ("hoy") contra la muestra
+    histórica de semanas anteriores a esta misma hora.
+
+    H0: "hoy" proviene del mismo proceso climático que el histórico.
+    H1: "hoy" difiere significativamente del patrón histórico.
+
+    Usa el error estándar de una PREDICCIÓN individual (SE = σ·√(1+1/n)),
+    mayor al error estándar de la media, porque se compara un único valor
+    puntual (no un promedio) contra la distribución histórica.
+    """
+    if valor_hoy is None or media_hist is None or desvio_hist is None or not n_hist or n_hist < 3:
+        return None
+    if desvio_hist <= 0:
+        return None
+
+    se = desvio_hist * math.sqrt(1 + 1 / n_hist)
+    t_stat = (valor_hoy - media_hist) / se
+    df = n_hist - 1
+    p_valor = t_p_valor_dos_colas(t_stat, df)
+    rechaza = p_valor < alfa
+
+    return {
+        'h0': 'El valor de hoy proviene del mismo proceso climático que el histórico de semanas anteriores a esta hora (no hay diferencia significativa).',
+        'h1': 'El valor de hoy difiere significativamente del patrón histórico a esta hora.',
+        'media_historica': round(media_hist, 2),
+        'desvio_historico': round(desvio_hist, 2),
+        'valor_hoy': round(valor_hoy, 2),
+        'n_historico': n_hist,
+        'estadistico_t': round(t_stat, 3),
+        'grados_libertad': df,
+        'p_valor': round(p_valor, 4),
+        'alfa': alfa,
+        'rechaza_h0': rechaza,
+        'conclusion': (
+            f"Con p = {round(p_valor, 4)} < α = {alfa}, se RECHAZA H0: el valor de hoy es "
+            "estadísticamente atípico respecto del patrón histórico a esta hora."
+            if rechaza else
+            f"Con p = {round(p_valor, 4)} ≥ α = {alfa}, NO se rechaza H0: el valor de hoy es "
+            "compatible con la variabilidad histórica normal a esta hora."
+        ),
+    }
+
+
+# ------------------------------------------------------------------
 # AGRUPAR SERIE HORARIA POR DÍA (usa el array `time` de Open-Meteo)
 # ------------------------------------------------------------------
 def agrupar_por_dia(tiempos, valores):

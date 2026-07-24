@@ -125,6 +125,12 @@ urlpatterns = [
     path('api/ubicaciones/', views.api_ubicaciones, name='api_ubicaciones'),
     path('api/ubicaciones/<int:pk>/', views.api_ubicacion_delete, name='api_ubicacion_delete'),
 
+    # Modales interactivos (personalización / alertas / notas) — agro/naval/aereo/energia
+    path('api/modal/config/', views.api_modal_config, name='api_modal_config'),
+    path('api/modal/alertas/', views.api_modal_alertas, name='api_modal_alertas'),
+    path('api/modal/notas/', views.api_modal_notas, name='api_modal_notas'),
+    path('api/agro/gdd-siembra/', views.api_agro_gdd_siembra, name='api_agro_gdd_siembra'),
+
     # Reportes programados
     path('mis-reportes/', views.reportes_programados, name='reportes_programados'),
 

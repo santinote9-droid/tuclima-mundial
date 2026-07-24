@@ -1,0 +1,233 @@
+{% comment %}
+  Parches del chat: Excel (autolink Sheets) + boxplot Chart.js.
+  Incluir UNA vez por página sectorial, DESPUÉS de createSampleChart / processMarkdown.
+{% endcomment %}
+<script>
+(function () {
+  // ── 1) Autolink de Google Sheets / URLs sueltas en processMarkdown ──
+  if (typeof processMarkdown === 'function') {
+    var _pmOrig = processMarkdown;
+    processMarkdown = function (text) {
+      if (!text) return _pmOrig(text);
+      var t = String(text);
+      // Convertir URLs bare de Sheets a markdown link si aún no están en []()
+      t = t.replace(
+        /(^|[^\]\(])(https:\/\/docs\.google\.com\/spreadsheets\/d\/[a-zA-Z0-9_-]+(?:\/edit)?[^\s\)\"]*)/g,
+        function (_m, pre, url) {
+          return pre + '[Abrir planilla Excel](' + url.replace(/[.,;:]+$/, '') + ')';
+        }
+      );
+      return _pmOrig(t);
+    };
+  }
+
+  // ── 2) Parser: reconocer boxplot_datos / serie ──
+  if (typeof extractChartData === 'function') {
+    var _exOrig = extractChartData;
+    extractChartData = function (aiResponse) {
+      var r = _exOrig(aiResponse);
+      if (!r) return r;
+      // Si type llegó como array
+      if (Array.isArray(r.type)) r.type = r.type[0] || 'line';
+      if (typeof r.type === 'string') r.type = r.type.toLowerCase().trim();
+
+      // Alias
+      if (r.boxplot_data && !r.boxplot_datos) r.boxplot_datos = r.boxplot_data;
+      if (r.series && !r.serie) r.serie = r.series;
+      if (Array.isArray(r.serie)) r.serie = r.serie[0];
+
+      // boxplot_datos puede llegar como array de números (un solo grupo)
+      // o como string con grupos separados por |
+      if (r.boxplot_datos != null && !r._boxplot_grupos) {
+        var raw = r.boxplot_datos;
+        var grupos = [];
+        if (typeof raw === 'string') {
+          raw.split('|').forEach(function (g) {
+            var nums = g.split(',').map(function (v) {
+              v = v.trim();
+              var n = Number(v);
+              return (v !== '' && !isNaN(n)) ? n : null;
+            }).filter(function (n) { return n !== null; });
+            if (nums.length) grupos.push(nums);
+          });
+        } else if (Array.isArray(raw)) {
+          // Si el parser partió por comas un string con |, reconstruir
+          var joined = raw.map(String).join(',');
+          if (joined.indexOf('|') >= 0) {
+            joined.split('|').forEach(function (g) {
+              var nums = g.split(',').map(function (v) {
+                v = v.trim();
+                var n = Number(v);
+                return (v !== '' && !isNaN(n)) ? n : null;
+              }).filter(function (n) { return n !== null; });
+              if (nums.length) grupos.push(nums);
+            });
+          } else {
+            // Un solo grupo de números
+            var nums2 = raw.map(Number).filter(function (n) { return !isNaN(n); });
+            if (nums2.length) grupos.push(nums2);
+          }
+        }
+        if (grupos.length) r._boxplot_grupos = grupos;
+      }
+
+      // Resumen Tukey precomputado (opcional)
+      if (!r._boxplot_grupos && r.boxplot_min && r.boxplot_q1 && r.boxplot_median && r.boxplot_q3 && r.boxplot_max) {
+        var mins = [].concat(r.boxplot_min);
+        var q1s = [].concat(r.boxplot_q1);
+        var meds = [].concat(r.boxplot_median);
+        var q3s = [].concat(r.boxplot_q3);
+        var maxs = [].concat(r.boxplot_max);
+        var n = Math.min(mins.length, q1s.length, meds.length, q3s.length, maxs.length);
+        var resumen = [];
+        for (var i = 0; i < n; i++) {
+          resumen.push({
+            min: Number(mins[i]), q1: Number(q1s[i]), median: Number(meds[i]),
+            q3: Number(q3s[i]), max: Number(maxs[i]), outliers: []
+          });
+        }
+        if (resumen.length) r._boxplot_resumen = resumen;
+      }
+
+      return r;
+    };
+  }
+
+  // ── 3) Resumen Tukey en cliente (si llegan muestras crudas) ──
+  function tcPercentil(sorted, p) {
+    var n = sorted.length;
+    if (n === 1) return sorted[0];
+    var k = (n - 1) * p;
+    var f = Math.floor(k);
+    var c = Math.ceil(k);
+    if (f === c) return sorted[k];
+    return sorted[f] + (sorted[c] - sorted[f]) * (k - f);
+  }
+
+  function tcResumenBox(valores) {
+    var datos = valores.filter(function (v) { return v != null && !isNaN(v); }).slice().sort(function (a, b) { return a - b; });
+    if (!datos.length) return null;
+    var q1 = tcPercentil(datos, 0.25);
+    var mediana = tcPercentil(datos, 0.5);
+    var q3 = tcPercentil(datos, 0.75);
+    var iqr = q3 - q1;
+    var limInf = q1 - 1.5 * iqr;
+    var limSup = q3 + 1.5 * iqr;
+    var dentro = datos.filter(function (v) { return v >= limInf && v <= limSup; });
+    var outliers = datos.filter(function (v) { return v < limInf || v > limSup; });
+    return {
+      min: dentro.length ? Math.min.apply(null, dentro) : datos[0],
+      q1: q1,
+      median: mediana,
+      q3: q3,
+      max: dentro.length ? Math.max.apply(null, dentro) : datos[datos.length - 1],
+      outliers: outliers
+    };
+  }
+
+  // ── 4) Render boxplot en #climatChart ──
+  async function tcRenderChatBoxplot(chartData) {
+    var canvas = document.getElementById('climatChart');
+    var tabsContainer = document.getElementById('chart-tabs');
+    if (!canvas || typeof Chart === 'undefined') return;
+    if (tabsContainer) tabsContainer.innerHTML = '';
+
+    if (typeof window.tcCargarBoxplotPlugin === 'function') {
+      try { await window.tcCargarBoxplotPlugin(); }
+      catch (err) { console.error(err); return; }
+    }
+
+    var labels = chartData.etiquetas || [];
+    var puntos = [];
+
+    if (chartData._boxplot_resumen && chartData._boxplot_resumen.length) {
+      puntos = chartData._boxplot_resumen;
+      if (!labels.length) labels = puntos.map(function (_, i) { return 'G' + (i + 1); });
+    } else if (chartData._boxplot_grupos && chartData._boxplot_grupos.length) {
+      chartData._boxplot_grupos.forEach(function (g, i) {
+        var r = tcResumenBox(g);
+        if (r) puntos.push(r);
+        else puntos.push({ min: 0, q1: 0, median: 0, q3: 0, max: 0, outliers: [] });
+      });
+      if (!labels.length) labels = puntos.map(function (_, i) { return 'G' + (i + 1); });
+      // Alinear longitudes
+      if (labels.length > puntos.length) labels = labels.slice(0, puntos.length);
+      while (labels.length < puntos.length) labels.push('G' + (labels.length + 1));
+    } else {
+      console.warn('Boxplot sin boxplot_datos ni resumen Tukey');
+      return;
+    }
+
+    var titulo = chartData.serie || chartData.region || chartData.puerto || chartData.ubicacion || 'Boxplot';
+    if (Array.isArray(titulo)) titulo = titulo[0];
+    titulo = String(titulo).replace(/["']/g, '').trim();
+    if (titulo.length > 40) titulo = titulo.substring(0, 37) + '...';
+
+    if (window.myChart) { try { window.myChart.destroy(); } catch (e) {} }
+
+    var ctx = canvas.getContext('2d');
+    window.myChart = new Chart(ctx, {
+      type: 'boxplot',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: titulo,
+          data: puntos,
+          backgroundColor: 'rgba(74, 222, 128, 0.25)',
+          borderColor: '#4ade80',
+          borderWidth: 1.5,
+          outlierColor: '#f87171',
+          medianColor: '#facc15',
+          itemRadius: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: 'Boxplot — ' + titulo,
+            color: '#e2e8f0',
+            font: { size: 14 }
+          }
+        },
+        scales: {
+          y: {
+            ticks: { color: '#94a3b8' },
+            grid: { color: '#334155' }
+          },
+          x: {
+            ticks: { color: '#94a3b8' },
+            grid: { color: '#334155' }
+          }
+        }
+      }
+    });
+
+    if (tabsContainer) {
+      var btn = document.createElement('button');
+      btn.innerText = 'Boxplot';
+      btn.style.cssText = 'padding:6px 14px;border-radius:20px;border:1px solid #3b82f6;background:#3b82f6;color:#fff;cursor:default;font-size:0.85rem;white-space:nowrap;';
+      tabsContainer.appendChild(btn);
+    }
+  }
+
+  // ── 5) Envolver createSampleChart ──
+  if (typeof createSampleChart === 'function') {
+    var _csOrig = createSampleChart;
+    createSampleChart = function (chartData) {
+      if (!chartData) return;
+      var tipo = (chartData.type || 'line').toString().toLowerCase().trim();
+      if (tipo === 'boxplot' || tipo === 'box' || tipo === 'caja') {
+        return tcRenderChatBoxplot(chartData);
+      }
+      return _csOrig(chartData);
+    };
+    window.createSampleChart = createSampleChart;
+  }
+
+  window.tcRenderChatBoxplot = tcRenderChatBoxplot;
+})();
+</script>

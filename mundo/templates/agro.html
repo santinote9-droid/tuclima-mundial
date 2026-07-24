@@ -5,7 +5,7 @@
 
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot"></script>
+{# El plugin de boxplot se carga de forma diferida (lazy) — ver partials/_nav_secciones.html #}
 <style>
         /* Animación de espera para la IA - Estilo minimalista */
         .chat-typing {
@@ -811,6 +811,7 @@
 {% endblock %}
 
 {% block content %}
+{% include 'partials/_nav_secciones.html' with tc_activo='agro' %}
 <header class="header-eng">
         <div class="brand-box">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5a4 4 0 0 1 5.66 0"/><path d="M10 10a2 2 0 0 1 2.83 0"/></svg>
@@ -860,7 +861,7 @@
 
             <div class="card" onclick="openModal('modGDD')">
                 <div class="c-head">
-                    <span class="c-title">Crecimiento (GDD)</span>
+                    <span class="c-title">Crecimiento (GDD){% if alertas_disparadas.modGDD %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                     <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22h20"/><path d="M12 22V10a5 5 0 0 1 5-5"/><path d="M12 12a5 5 0 0 0-5-5"/></svg>
                 </div>
                 <div class="c-main">
@@ -872,7 +873,7 @@
 
             <div class="card" onclick="openModal('modAgua')">
                 <div class="c-head">
-                    <span class="c-title">Perfil de Suelo</span>
+                    <span class="c-title">Perfil de Suelo{% if alertas_disparadas.modAgua %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                     <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/><path d="M12 22v-6"/></svg>
                 </div>
                 
@@ -909,7 +910,7 @@
 
             <div class="card" onclick="openModal('modPulv')">
                 <div class="c-head">
-                    <span class="c-title">Pulverización</span>
+                    <span class="c-title">Pulverización{% if alertas_disparadas.modPulv %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                     <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
                 </div>
                 <div class="c-main">
@@ -925,7 +926,7 @@
 
             <div class="card" onclick="openModal('modAtm')">
                 <div class="c-head">
-                    <span class="c-title">Atmósfera</span>
+                    <span class="c-title">Atmósfera{% if alertas_disparadas.modAtm %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                     <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
                 </div>
                 <div class="data-row">
@@ -948,7 +949,7 @@
 
             <div class="card" onclick="openModal('modRad')">
                 <div class="c-head">
-                    <span class="c-title">Radiación Solar</span>
+                    <span class="c-title">Radiación Solar{% if alertas_disparadas.modRad %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                     <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
                 </div>
                 <div class="c-main">
@@ -963,7 +964,7 @@
 
             <div class="card" onclick="openModal('modBal')">
                 <div class="c-head">
-                    <span class="c-title">Balance (7 Días)</span>
+                    <span class="c-title">Balance (7 Días){% if alertas_disparadas.modBal %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                     <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
                 </div>
                 <div style="display:flex; justify-content: space-around; text-align: center; margin: 10px 0;">
@@ -984,7 +985,7 @@
 
             <div class="card" onclick="openModal('modRaiz')">
                 <div class="c-head">
-                    <span class="c-title">Zona Radicular (-18cm)</span>
+                    <span class="c-title">Zona Radicular (-18cm){% if alertas_disparadas.modRaiz %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                     <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>
                 </div>
                 <div class="c-main">
@@ -999,7 +1000,7 @@
 
             <div class="card" onclick="openModal('modVPD')">
                 <div class="c-head">
-                    <span class="c-title">Estrés (VPD)</span>
+                    <span class="c-title">Estrés (VPD){% if alertas_disparadas.modVPD %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                     <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                 </div>
                 <div class="c-main">
@@ -1011,7 +1012,7 @@
 
             <div class="card" onclick="openModal('modETo')">
                 <div class="c-head">
-                    <span class="c-title">Evapotranspiración</span>
+                    <span class="c-title">Evapotranspiración{% if alertas_disparadas.modETo %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                     <svg class="c-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.74 5.89c.98 1.01 1.52 2.38 1.52 3.82 0 2.96-2.26 5.6-5.78 5.6-3.51 0-7.48-2.64-7.48-5.6 0-1.44.54-2.81 1.52-3.82L12 2.69z"/></svg>
                 </div>
                 <div class="c-main">
@@ -1136,13 +1137,19 @@
             <table class="tech-table">
                 <thead><tr><th>Cultivo</th><th>T. Base</th><th>T. Óptima</th><th>Riesgo Calor</th></tr></thead>
                 <tbody>
-                    <tr><td>Trigo / Cebada</td><td>0 – 4°C</td><td>15 – 20°C</td><td class="risk-crit">&gt;28°C</td></tr>
-                    <tr><td>Maíz (Zea Mays)</td><td>10°C</td><td>25 – 30°C</td><td class="risk-crit">&gt;35°C</td></tr>
-                    <tr><td>Soja (Glycine max)</td><td>10°C</td><td>22 – 28°C</td><td class="risk-crit">&gt;38°C</td></tr>
-                    <tr><td>Girasol</td><td>6°C</td><td>20 – 25°C</td><td class="risk-crit">&gt;32°C</td></tr>
-                    <tr><td>Algodón</td><td>15°C</td><td>28 – 32°C</td><td class="risk-crit">&gt;40°C</td></tr>
+                    <tr data-tc-match="cultivo:trigo"><td>Trigo / Cebada</td><td>0 – 4°C</td><td>15 – 20°C</td><td class="risk-crit">&gt;28°C</td></tr>
+                    <tr data-tc-match="cultivo:maiz"><td>Maíz (Zea Mays)</td><td>10°C</td><td>25 – 30°C</td><td class="risk-crit">&gt;35°C</td></tr>
+                    <tr data-tc-match="cultivo:soja"><td>Soja (Glycine max)</td><td>10°C</td><td>22 – 28°C</td><td class="risk-crit">&gt;38°C</td></tr>
+                    <tr data-tc-match="cultivo:girasol"><td>Girasol</td><td>6°C</td><td>20 – 25°C</td><td class="risk-crit">&gt;32°C</td></tr>
+                    <tr data-tc-match="cultivo:algodon"><td>Algodón</td><td>15°C</td><td>28 – 32°C</td><td class="risk-crit">&gt;40°C</td></tr>
                 </tbody>
             </table>
+
+            <div id="agro-gdd-real" class="tc-especial-target" style="display:none;"></div>
+
+            <div class="tc-interactivo" data-sector="agro" data-modal="modGDD" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-campos='[{"key":"cultivo","label":"Mi cultivo","tipo":"cultivo"},{"key":"fecha_siembra","label":"Fecha de siembra (calcula tu GDD real)","tipo":"date"}]'
+                 data-alerta='{"variable":"gdd","label":"GDD acumulados (7d)"}'></div>
         </div>
     </div>
 
@@ -1196,9 +1203,9 @@
                     <tr><th>Tipo de Suelo</th><th>Cap. Campo (CC)</th><th>Pto. Marchitez (PMP)</th><th>Agua Útil (AU)</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td>Arcilloso</td><td>40 - 50%</td><td>25 - 30%</td><td class="risk-ok">Alta Retención</td></tr>
-                    <tr><td>Franco (Ideal)</td><td>25 - 35%</td><td>10 - 15%</td><td class="risk-ok">Equilibrado</td></tr>
-                    <tr><td>Arenoso</td><td>10 - 15%</td><td>3 - 5%</td><td class="risk-crit">Baja (Drenaje rápido)</td></tr>
+                    <tr data-tc-match="tipo_suelo:arcilloso"><td>Arcilloso</td><td>40 - 50%</td><td>25 - 30%</td><td class="risk-ok">Alta Retención</td></tr>
+                    <tr data-tc-match="tipo_suelo:franco"><td>Franco (Ideal)</td><td>25 - 35%</td><td>10 - 15%</td><td class="risk-ok">Equilibrado</td></tr>
+                    <tr data-tc-match="tipo_suelo:arenoso"><td>Arenoso</td><td>10 - 15%</td><td>3 - 5%</td><td class="risk-crit">Baja (Drenaje rápido)</td></tr>
                 </tbody>
             </table>
 
@@ -1208,11 +1215,15 @@
                     <div><strong>Temp. Cama Siembra:</strong> {{ suelo.temp_6 }}°C</div>
                 </div>
             </div>
+
+            <div class="tc-interactivo" data-sector="agro" data-modal="modAgua" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-campos='[{"key":"tipo_suelo","label":"Mi tipo de suelo","tipo":"select","opciones":[["arcilloso","Arcilloso"],["franco","Franco"],["arenoso","Arenoso"]]}]'
+                 data-alerta='{"variable":"humedad_superficial","label":"Humedad superficial","unidad":"%"}'></div>
         </div>
     </div>
 
     <div id="modPulv" class="modal-overlay">
-        <div class="modal-content">
+        <div class="modal-content" data-delta-t="{{ pulverizacion.delta_t }}" data-viento="{{ pulverizacion.viento }}">
             <button class="btn-close" onclick="closeModal('modPulv')">×</button>
             <div class="pop-title">Calidad de Aplicación (Delta T)</div>
             <div class="pop-text">
@@ -1234,6 +1245,12 @@
             <div class="highlight-box" style="border-left-color: {{ pulverizacion.color }};">
                  <strong>CONDICIÓN ACTUAL:</strong> Delta T {{ pulverizacion.delta_t }} ({{ pulverizacion.estado }}) | Viento: {{ pulverizacion.viento }} km/h
             </div>
+
+            <div id="agro-pulv-custom" class="tc-especial-target" style="display:none;"></div>
+
+            <div class="tc-interactivo" data-sector="agro" data-modal="modPulv" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-campos='[{"key":"viento_max","label":"Viento máx. de mi equipo","tipo":"number","unidad":"km/h","default":15},{"key":"delta_t_max","label":"Delta T máx. tolerado","tipo":"number","default":8}]'
+                 data-alerta='{"variable":"delta_t","label":"Delta T"}'></div>
         </div>
     </div>
 
@@ -1284,6 +1301,10 @@
                 {% else %}<span style="color:#4ade80;"> BAJO</span> — Condiciones desfavorables para hongos foliares. Sin acción urgente.
                 {% endif %}</div>
             </div>
+
+            <div class="tc-interactivo" data-sector="agro" data-modal="modAtm" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-campos='[{"key":"sensibilidad_hongos","label":"Sensibilidad de mi cultivo a hongos","tipo":"select","opciones":[["baja","Baja"],["media","Media"],["alta","Alta"]]}]'
+                 data-alerta='{"variable":"humedad_relativa","label":"Humedad relativa","unidad":"%"}'></div>
         </div>
     </div>
 
@@ -1324,16 +1345,21 @@
             <div style="margin-top:16px; background:rgba(15,23,42,0.8); border:1px solid rgba(251,191,36,0.2); border-radius:10px; padding:14px 16px;">
                 <div style="font-size:0.65rem; color:#92400e; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:10px;">Eficiencia por Vía Fotosintética</div>
                 <div style="display:flex; flex-direction:column; gap:6px; font-size:0.77rem;">
-                    <div style="display:flex; justify-content:space-between;"><span style="color:#94a3b8;">Maíz / Sorgo / Caña (C4)</span><span style="color:#4ade80; font-weight:700;">Alta — satura a ~1500 µmol/m²/s</span></div>
-                    <div style="display:flex; justify-content:space-between;"><span style="color:#94a3b8;">Soja / Trigo / Girasol (C3)</span><span style="color:#fbbf24; font-weight:700;">Media — satura a ~800 µmol/m²/s</span></div>
-                    <div style="display:flex; justify-content:space-between;"><span style="color:#94a3b8;">Pasturas mixtas</span><span style="color:#94a3b8; font-weight:600;">Variable según especie dominante</span></div>
+                    <div data-tc-match="via_fotosintetica:c4" style="display:flex; justify-content:space-between; padding:4px 6px; border-radius:6px;"><span style="color:#94a3b8;">Maíz / Sorgo / Caña (C4)</span><span style="color:#4ade80; font-weight:700;">Alta — satura a ~1500 µmol/m²/s</span></div>
+                    <div data-tc-match="via_fotosintetica:c3" style="display:flex; justify-content:space-between; padding:4px 6px; border-radius:6px;"><span style="color:#94a3b8;">Soja / Trigo / Girasol (C3)</span><span style="color:#fbbf24; font-weight:700;">Media — satura a ~800 µmol/m²/s</span></div>
+                    <div data-tc-match="via_fotosintetica:mixta" style="display:flex; justify-content:space-between; padding:4px 6px; border-radius:6px;"><span style="color:#94a3b8;">Pasturas mixtas</span><span style="color:#94a3b8; font-weight:600;">Variable según especie dominante</span></div>
                 </div>
             </div>
+
+            <div class="tc-interactivo" data-sector="agro" data-modal="modRad" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-campos='[{"key":"via_fotosintetica","label":"Vía fotosintética de mi cultivo","tipo":"select","opciones":[["c4","Maíz / Sorgo / Caña (C4)"],["c3","Soja / Trigo / Girasol (C3)"],["mixta","Pasturas mixtas"]]}]'
+                 data-alerta='{"variable":"radiacion","label":"Radiación","unidad":"W/m²"}'
+                 data-notas="0"></div>
         </div>
     </div>
 
     <div id="modBal" class="modal-overlay">
-        <div class="modal-content">
+        <div class="modal-content" data-eto-hoy="{{ eto.hoy }}">
             <button class="btn-close" onclick="closeModal('modBal')">×</button>
             <div class="pop-title">Detalle de Balance Hídrico (14 Días)</div>
             <div class="pop-text">Registro contable de cada milímetro de agua que entra y sale del sistema suelo-planta.</div>
@@ -1355,6 +1381,12 @@
                     {% endfor %}
                 </tbody>
             </table>
+
+            <div id="agro-bal-real" class="tc-especial-target" style="display:none;"></div>
+
+            <div class="tc-interactivo" data-sector="agro" data-modal="modBal" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-campos='[{"key":"lluvia_real","label":"Lluvia real medida hoy (tu pluviómetro)","tipo":"number","unidad":"mm"}]'
+                 data-alerta='{"variable":"balance_neto","label":"Saldo hídrico semanal","unidad":"mm"}'></div>
         </div>
     </div>
 
@@ -1419,12 +1451,16 @@
             <table class="tech-table">
                 <thead><tr><th>Cultivo</th><th>T. Mínima (6cm)</th><th>T. Óptima Absorción</th><th>Consecuencia</th></tr></thead>
                 <tbody>
-                    <tr><td>Maíz</td><td>12°C</td><td>20 – 25°C</td><td class="risk-crit">Hojas violetas — Bloqueo P</td></tr>
-                    <tr><td>Soja</td><td>18°C</td><td>22 – 28°C</td><td class="risk-warn">Nódulos inactivos — Sin fijación N</td></tr>
-                    <tr><td>Trigo / Cebada</td><td>4°C</td><td>12 – 18°C</td><td class="risk-ok">Tolerante — Crecimiento lento</td></tr>
-                    <tr><td>Girasol</td><td>10°C</td><td>18 – 22°C</td><td class="risk-warn">Retraso marcado de emergencia</td></tr>
+                    <tr data-tc-match="cultivo:maiz"><td>Maíz</td><td>12°C</td><td>20 – 25°C</td><td class="risk-crit">Hojas violetas — Bloqueo P</td></tr>
+                    <tr data-tc-match="cultivo:soja"><td>Soja</td><td>18°C</td><td>22 – 28°C</td><td class="risk-warn">Nódulos inactivos — Sin fijación N</td></tr>
+                    <tr data-tc-match="cultivo:trigo"><td>Trigo / Cebada</td><td>4°C</td><td>12 – 18°C</td><td class="risk-ok">Tolerante — Crecimiento lento</td></tr>
+                    <tr data-tc-match="cultivo:girasol"><td>Girasol</td><td>10°C</td><td>18 – 22°C</td><td class="risk-warn">Retraso marcado de emergencia</td></tr>
                 </tbody>
             </table>
+
+            <div class="tc-interactivo" data-sector="agro" data-modal="modRaiz" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-campos='[{"key":"cultivo","label":"Mi cultivo","tipo":"cultivo"}]'
+                 data-alerta='{"variable":"temp_raiz","label":"Temperatura raíz activa (18cm)","unidad":"°C"}'></div>
         </div>
     </div>
 
@@ -1468,16 +1504,20 @@
             <div style="margin-top:16px; background:rgba(15,23,42,0.8); border:1px solid rgba(51,65,85,0.4); border-radius:10px; padding:12px 16px;">
                 <div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:7px;">Sensibilidad por Cultivo</div>
                 <div style="display:flex; flex-direction:column; gap:5px; font-size:0.75rem; color:#94a3b8; line-height:1.55;">
-                    <div><strong style="color:#fbbf24;">Soja:</strong> Muy sensible. VPD &gt;1.5 kPa en floración reduce rendimiento hasta 25% por aborto de flores.</div>
-                    <div><strong style="color:#4ade80;">Maíz:</strong> Sensible en floración y polinización. VPD &gt;2.0 kPa afecta cuajado de granos.</div>
-                    <div><strong style="color:#60a5fa;">Trigo:</strong> Moderado. Tolera VPD hasta 2.5 kPa en etapa vegetativa sin daño severo.</div>
+                    <div data-tc-match="cultivo:soja" style="padding:4px 6px; border-radius:6px;"><strong style="color:#fbbf24;">Soja:</strong> Muy sensible. VPD &gt;1.5 kPa en floración reduce rendimiento hasta 25% por aborto de flores.</div>
+                    <div data-tc-match="cultivo:maiz" style="padding:4px 6px; border-radius:6px;"><strong style="color:#4ade80;">Maíz:</strong> Sensible en floración y polinización. VPD &gt;2.0 kPa afecta cuajado de granos.</div>
+                    <div data-tc-match="cultivo:trigo" style="padding:4px 6px; border-radius:6px;"><strong style="color:#60a5fa;">Trigo:</strong> Moderado. Tolera VPD hasta 2.5 kPa en etapa vegetativa sin daño severo.</div>
                 </div>
             </div>
+
+            <div class="tc-interactivo" data-sector="agro" data-modal="modVPD" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-campos='[{"key":"cultivo","label":"Mi cultivo","tipo":"cultivo"}]'
+                 data-alerta='{"variable":"vpd","label":"VPD","unidad":"kPa"}'></div>
         </div>
     </div>
 
     <div id="modETo" class="modal-overlay">
-        <div class="modal-content">
+        <div class="modal-content" data-eto-hoy="{{ eto.hoy }}">
             <button class="btn-close" onclick="closeModal('modETo')">×</button>
             <div class="pop-title">Evapotranspiración (ETo) y Necesidades de Riego</div>
             <div class="pop-text">El método FAO-56 Penman-Monteith combina radiación, temperatura, viento y humedad para calcular la demanda hídrica de referencia (pasto corto 12 cm). La demanda real de cada cultivo se obtiene con <strong>ETc = ETo × Kc</strong>.</div>
@@ -1499,11 +1539,11 @@
             <table class="tech-table">
                 <thead><tr><th>Cultivo</th><th>Kc Inicial</th><th>Kc Medio (pico)</th><th>ETc hoy (pico)</th></tr></thead>
                 <tbody>
-                    <tr><td>Maíz</td><td>0.30</td><td>1.20</td><td style="color:#a78bfa; font-weight:bold;">{{ eto.hoy }} × 1.20 mm</td></tr>
-                    <tr><td>Soja</td><td>0.40</td><td>1.15</td><td style="color:#a78bfa; font-weight:bold;">{{ eto.hoy }} × 1.15 mm</td></tr>
-                    <tr><td>Trigo</td><td>0.30</td><td>1.15</td><td style="color:#a78bfa; font-weight:bold;">{{ eto.hoy }} × 1.15 mm</td></tr>
-                    <tr><td>Girasol</td><td>0.35</td><td>1.10</td><td style="color:#a78bfa; font-weight:bold;">{{ eto.hoy }} × 1.10 mm</td></tr>
-                    <tr><td>Pasturas</td><td>0.40</td><td>1.05</td><td style="color:#a78bfa; font-weight:bold;">{{ eto.hoy }} × 1.05 mm</td></tr>
+                    <tr data-tc-match="cultivo:maiz"><td>Maíz</td><td>0.30</td><td>1.20</td><td style="color:#a78bfa; font-weight:bold;">{{ eto.hoy }} × 1.20 mm</td></tr>
+                    <tr data-tc-match="cultivo:soja"><td>Soja</td><td>0.40</td><td>1.15</td><td style="color:#a78bfa; font-weight:bold;">{{ eto.hoy }} × 1.15 mm</td></tr>
+                    <tr data-tc-match="cultivo:trigo"><td>Trigo</td><td>0.30</td><td>1.15</td><td style="color:#a78bfa; font-weight:bold;">{{ eto.hoy }} × 1.15 mm</td></tr>
+                    <tr data-tc-match="cultivo:girasol"><td>Girasol</td><td>0.35</td><td>1.10</td><td style="color:#a78bfa; font-weight:bold;">{{ eto.hoy }} × 1.10 mm</td></tr>
+                    <tr data-tc-match="cultivo:pasturas"><td>Pasturas</td><td>0.40</td><td>1.05</td><td style="color:#a78bfa; font-weight:bold;">{{ eto.hoy }} × 1.05 mm</td></tr>
                 </tbody>
             </table>
 
@@ -1527,6 +1567,12 @@
             <div class="highlight-box" style="background:rgba(167,139,250,0.08); border-left-color:#a78bfa; margin-top:16px;">
                 <div><strong>Ejemplo de cálculo:</strong> Si ETo = {{ eto.hoy }} mm/día y el cultivo está en etapa media (Kc ≈ 1.15) → <strong style="color:#a78bfa;">ETc ≈ {{ eto.hoy }} × 1.15 mm/día</strong> de demanda hídrica real. Ese es el volumen a reponer por riego si no llueve.</div>
             </div>
+
+            <div id="agro-eto-riego" class="tc-especial-target" style="display:none;"></div>
+
+            <div class="tc-interactivo" data-sector="agro" data-modal="modETo" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-campos='[{"key":"cultivo","label":"Mi cultivo","tipo":"cultivo"},{"key":"capacidad_riego","label":"Capacidad de mi equipo de riego","tipo":"number","unidad":"mm/hora","default":5}]'
+                 data-alerta='{"variable":"eto_hoy","label":"ETo de hoy","unidad":"mm"}'></div>
         </div>
     </div>
 
@@ -1550,6 +1596,7 @@
             if (chartAgro) {
                 setTimeout(() => { chartAgro.reflow(); }, 10);
             }
+            if (window.tcInteractivoAlAbrir) window.tcInteractivoAlAbrir(id);
         } else {
             console.error("No encuentro el modal con ID:", id);
         }
@@ -1570,9 +1617,19 @@
     // ------------------------------------------
     // 2. DIBUJAR GRÁFICO (Con protección anti-errores)
     // ------------------------------------------
+    var _tcAgroReintentos = 0;
     function renderChart() {
         // Guarda: Highcharts debe estar disponible
         if (typeof Highcharts === 'undefined') {
+            _tcAgroReintentos++;
+            if (_tcAgroReintentos > 20) {
+                // Después de ~10s dejamos de reintentar en silencio y avisamos.
+                var cont = document.getElementById('container-agro');
+                if (cont) {
+                    cont.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#f87171; font-size:0.85rem; text-align:center; padding:20px;">No se pudo cargar la librería de gráficos (Highcharts). Revisá tu conexión o si algún bloqueador de contenido está impidiendo la carga de code.highcharts.com, y volvé a intentar.</div>';
+                }
+                return;
+            }
             setTimeout(renderChart, 500);
             return;
         }
@@ -1581,8 +1638,9 @@
         const dataLluvia = {{ grafico_agro.lluvia|default:"[]"|safe }};
         const dataEto = {{ grafico_agro.eto|default:"[]"|safe }};
 
+        try {
         // Balance neto calculado: lluvia - ETo
-        const dataBalance = dataLluvia.map((v, i) => parseFloat((v - (dataEto[i] || 0)).toFixed(1)));
+        const dataBalance = dataLluvia.map((v, i) => parseFloat(((v || 0) - (dataEto[i] || 0)).toFixed(1)));
 
         // Intentar leer traducciones (si fallan, usa español por defecto)
         let txtLluvia = "Lluvia (Ingreso)";
@@ -1667,6 +1725,13 @@
             }],
             credits: { enabled: false }
         });
+        } catch (errRender) {
+            console.error('Error renderizando el gráfico de Balance Hídrico:', errRender);
+            var contErr = document.getElementById('container-agro');
+            if (contErr) {
+                contErr.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#f87171; font-size:0.85rem; text-align:center; padding:20px;">No se pudo dibujar el gráfico de Balance Hídrico (' + (errRender && errRender.message ? errRender.message : 'error desconocido') + '). Probá recargar la página.</div>';
+            }
+        }
     }
 
     // ------------------------------------------
@@ -2036,6 +2101,8 @@ Generado por TuClima Pro - www.tuclima.com
       <button class="stats-agro-tab" data-tab="frecuencias" onclick="statsAgroTab('frecuencias')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Frecuencias Relativas</button>
       <button class="stats-agro-tab" data-tab="poisson" onclick="statsAgroTab('poisson')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Distribución Poisson</button>
       <button class="stats-agro-tab" data-tab="hipotesis" onclick="statsAgroTab('hipotesis')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Test de Hipótesis</button>
+      <button class="stats-agro-tab" data-tab="weibull" onclick="statsAgroTab('weibull')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Weibull (Viento)</button>
+      <button class="stats-agro-tab" data-tab="percentiles" onclick="statsAgroTab('percentiles')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Percentiles de Riesgo</button>
       <button class="stats-agro-tab" data-tab="historico" onclick="statsAgroTab('historico')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Histórico Real</button>
     </div>
 
@@ -2063,6 +2130,24 @@ Generado por TuClima Pro - www.tuclima.com
         <div id="stats-agro-hip-resultado"></div>
       </div>
 
+      <div id="stats-agro-pane-weibull" class="stats-agro-pane" style="display:none;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 10px; line-height:1.5;">La distribución de <strong>Weibull</strong> es el modelo estándar en evaluación de recurso eólico: describe la probabilidad de cada velocidad de viento a partir de dos parámetros, <em>k</em> (forma, dispersión) y <em>c</em> (escala, ligado al viento medio). Solo se calcula para la variable Viento.</p>
+        <div id="stats-agro-weibull-na" style="display:none; color:#94a3b8; font-size:0.78rem; text-align:center; padding:20px 14px; background:rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.2); border-radius:10px;">Seleccioná la variable <strong>Viento</strong> arriba para ver el ajuste de Weibull.</div>
+        <div id="stats-agro-weibull-contenido" style="display:none;">
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+            <div style="flex:1; min-width:110px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"><div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:4px;">k (forma)</div><div id="stats-agro-weibull-k" style="font-size:1.2rem; font-weight:800; color:#e2e8f0;">—</div></div>
+            <div style="flex:1; min-width:110px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"><div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:4px;">c (escala)</div><div id="stats-agro-weibull-c" style="font-size:1.2rem; font-weight:800; color:#e2e8f0;">—</div></div>
+            <div style="flex:1; min-width:150px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"><div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:4px;">Densidad de potencia</div><div id="stats-agro-weibull-pot" style="font-size:1.2rem; font-weight:800; color:#fbbf24;">—</div></div>
+          </div>
+          <div style="position:relative; height:260px;"><canvas id="stats-agro-chart-weibull"></canvas></div>
+        </div>
+      </div>
+
+      <div id="stats-agro-pane-percentiles" class="stats-agro-pane" style="display:none;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 12px; line-height:1.5;">Percentiles de la muestra: el <strong>P95</strong>, por ejemplo, es el valor que solo se supera el 5% del tiempo en los próximos 14 días — útil como umbral de riesgo operativo.</p>
+        <div id="stats-agro-percentiles-cards" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+      </div>
+
       <div id="stats-agro-pane-historico" class="stats-agro-pane" style="display:none;">
         <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 12px; line-height:1.5;">Comparación en tiempo real: el valor de ahora vs. el promedio real de días anteriores a esta misma hora, calculado sobre snapshots guardados automáticamente cada hora (n8n + BigQuery).</p>
         <div id="stats-agro-historico-loading" style="color:#67e8f9; font-size:0.78rem; text-align:center; padding:20px 0;">Consultando histórico…</div>
@@ -2074,6 +2159,10 @@ Generado por TuClima Pro - www.tuclima.com
             <div id="stats-agro-hist-diff" style="flex:1; min-width:140px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"></div>
           </div>
           <div style="position:relative; height:220px;"><canvas id="stats-agro-chart-historico"></canvas></div>
+          <div style="margin-top:8px; font-size:0.65rem; color:#64748b; text-align:center;">Bandas: línea amarilla punteada = media histórica · banda naranja = ±2σ · banda roja = ±3σ (carta de control)</div>
+
+          <div id="stats-agro-control-box" style="display:none; margin-top:16px;"></div>
+          <div id="stats-agro-testt-box" style="margin-top:14px;"></div>
         </div>
       </div>
     </div>
@@ -2084,11 +2173,8 @@ Generado por TuClima Pro - www.tuclima.com
     var STATS_LAT = {{ lat|default:"-34.60" }};
     var STATS_LON = {{ lon|default:"-58.38" }};
 
-    if (typeof ChartBoxPlot !== 'undefined' && typeof Chart !== 'undefined') {
-      Chart.register(ChartBoxPlot.BoxPlotController, ChartBoxPlot.BoxAndWiskers);
-    }
-
     var statsAgroCharts = {};
+    var tcBoxplotRegistrado = false;
 
     window.statsAgroTab = function(tab) {
       document.querySelectorAll('.stats-agro-tab').forEach(function(btn){
@@ -2109,37 +2195,43 @@ Generado por TuClima Pro - www.tuclima.com
     function statsAgroRenderBoxplot(data) {
       var canvas = document.getElementById('stats-agro-chart-boxplot');
       if (!canvas || !data.boxplot || !data.boxplot.length) return;
-      statsAgroDestroy('boxplot');
-      var labels = data.boxplot.map(function(g){ return g.label; });
-      var puntos = data.boxplot.map(function(g){
-        return { min: g.min, q1: g.q1, median: g.mediana, q3: g.q3, max: g.max, outliers: g.outliers || [] };
-      });
-      statsAgroCharts['boxplot'] = new Chart(canvas.getContext('2d'), {
-        type: 'boxplot',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: data.variable.label,
-            data: puntos,
-            backgroundColor: 'rgba(34,211,238,0.18)',
-            borderColor: '#22d3ee',
-            borderWidth: 1.5,
-            outlierColor: '#f87171',
-            itemRadius: 3
-          }]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            title: { display: true, text: data.variable.label + ' — variabilidad diaria del pronóstico', color: '#e2e8f0', font: { size: 13 } }
-          },
-          scales: {
-            y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
-            x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
-          }
+      tcCargarBoxplotPlugin().then(function(){
+        if (!tcBoxplotRegistrado) {
+          Chart.register(ChartBoxPlot.BoxPlotController, ChartBoxPlot.BoxAndWiskers);
+          tcBoxplotRegistrado = true;
         }
-      });
+        statsAgroDestroy('boxplot');
+        var labels = data.boxplot.map(function(g){ return g.label; });
+        var puntos = data.boxplot.map(function(g){
+          return { min: g.min, q1: g.q1, median: g.mediana, q3: g.q3, max: g.max, outliers: g.outliers || [] };
+        });
+        statsAgroCharts['boxplot'] = new Chart(canvas.getContext('2d'), {
+          type: 'boxplot',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: data.variable.label,
+              data: puntos,
+              backgroundColor: 'rgba(34,211,238,0.18)',
+              borderColor: '#22d3ee',
+              borderWidth: 1.5,
+              outlierColor: '#f87171',
+              itemRadius: 3
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              title: { display: true, text: data.variable.label + ' — variabilidad diaria del pronóstico', color: '#e2e8f0', font: { size: 13 } }
+            },
+            scales: {
+              y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+              x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
+            }
+          }
+        });
+      }).catch(function(err){ console.error('No se pudo cargar el módulo de boxplot:', err); });
     }
 
     function statsAgroRenderFrecuencias(data) {
@@ -2242,6 +2334,65 @@ Generado por TuClima Pro - www.tuclima.com
         '</div>';
     }
 
+    function statsAgroRenderWeibull(data) {
+      var na = document.getElementById('stats-agro-weibull-na');
+      var cont = document.getElementById('stats-agro-weibull-contenido');
+      var canvas = document.getElementById('stats-agro-chart-weibull');
+      if (!na || !cont) return;
+      if (data.variable.key !== 'viento' || !data.weibull) {
+        na.style.display = 'block';
+        na.innerText = data.variable.key !== 'viento'
+          ? 'Seleccioná la variable Viento arriba para ver el ajuste de Weibull.'
+          : 'No hay suficientes datos de viento en este pronóstico para ajustar una distribución de Weibull (mínimo 10 valores).';
+        cont.style.display = 'none';
+        return;
+      }
+      na.style.display = 'none';
+      cont.style.display = 'block';
+      var w = data.weibull;
+      document.getElementById('stats-agro-weibull-k').innerText = w.k_forma;
+      document.getElementById('stats-agro-weibull-c').innerText = w.c_escala + ' ' + (data.variable.unidad || '');
+      document.getElementById('stats-agro-weibull-pot').innerText = w.densidad_potencia_wm2 + ' W/m²';
+      if (!canvas || !w.curva || !w.curva.length) return;
+      statsAgroDestroy('weibull');
+      statsAgroCharts['weibull'] = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: w.curva.map(function(b){ return b.rango; }),
+          datasets: [
+            { type: 'bar', label: 'Observado', data: w.curva.map(function(b){ return b.observado; }), backgroundColor: 'rgba(96,165,250,0.5)', borderRadius: 4, order: 2 },
+            { type: 'line', label: 'Weibull teórico (k=' + w.k_forma + ', c=' + w.c_escala + ')', data: w.curva.map(function(b){ return b.teorico; }), borderColor: '#fbbf24', backgroundColor: 'transparent', borderWidth: 2.5, tension: 0.35, pointRadius: 2, order: 1 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#94a3b8' } },
+            title: { display: true, text: 'Viento (' + (data.variable.unidad || '') + ') — observado vs. Weibull', color: '#e2e8f0', font: { size: 13 } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+            x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function statsAgroRenderPercentiles(data) {
+      var el = document.getElementById('stats-agro-percentiles-cards');
+      if (!el) return;
+      if (!data.percentiles || !data.percentiles.valores) { el.innerHTML = ''; return; }
+      var unidad = data.variable.unidad || '';
+      el.innerHTML = data.percentiles.valores.map(function(p){
+        var destacado = p.p >= 90;
+        return '<div style="flex:1; min-width:110px; background:' + (destacado ? 'rgba(251,191,36,0.08)' : '#0f172a') + '; border:1px solid ' + (destacado ? 'rgba(251,191,36,0.3)' : '#1e293b') + '; border-radius:10px; padding:12px 14px; text-align:center;">' +
+          '<div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:6px;">P' + p.p + '</div>' +
+          '<div style="font-size:1.25rem; font-weight:800; color:' + (destacado ? '#fbbf24' : '#e2e8f0') + ';">' + p.valor + ' <span style="font-size:0.6em; color:#64748b;">' + unidad + '</span></div>' +
+          '<div style="font-size:0.62rem; color:#64748b; margin-top:4px;">se supera solo el ' + (100 - p.p) + '% del tiempo</div>' +
+        '</div>';
+      }).join('');
+    }
+
     function statsAgroRenderHistorico(data) {
       var loading = document.getElementById('stats-agro-historico-loading');
       var empty = document.getElementById('stats-agro-historico-empty');
@@ -2264,20 +2415,78 @@ Generado por TuClima Pro - www.tuclima.com
       document.getElementById('stats-agro-hist-prom').innerHTML = '<div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Promedio (' + (data.promedio_historico.n_dias || 0) + ' días previos)</div><div style="font-size:1.3rem; font-weight:800; color:#e2e8f0;">' + data.promedio_historico.valor + '</div>';
       document.getElementById('stats-agro-hist-diff').innerHTML = '<div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Diferencia vs. histórico</div><div style="font-size:1.3rem; font-weight:800; color:' + diffColor + ';">' + (diff > 0 ? '+' : '') + diff + '%</div>';
 
+      // Carta de control (±2σ / ±3σ) y test t, si BigQuery devolvió suficiente muestra
+      statsAgroRenderControlYTestT(data);
+
       var canvas = document.getElementById('stats-agro-chart-historico');
       if (!canvas || !data.serie_semanas || !data.serie_semanas.length) return;
       statsAgroDestroy('historico');
       var labels = data.serie_semanas.map(function(s){ return s.semana; });
       var valores = data.serie_semanas.map(function(s){ return s.valor; });
+      var cc = data.carta_control;
+      var datasets = [{ type: 'bar', label: textoVar, data: valores, backgroundColor: labels.map(function(l){ return l === 'Hoy' ? 'rgba(250,204,21,0.75)' : 'rgba(34,211,238,0.5)'; }), borderRadius: 4, order: 3 }];
+      if (cc) {
+        var rellenar = function(v){ return labels.map(function(){ return v; }); };
+        datasets.push({ type: 'line', label: 'Media histórica', data: rellenar(cc.media), borderColor: '#fbbf24', borderDash: [5,4], borderWidth: 1.5, pointRadius: 0, fill: false, order: 1 });
+        datasets.push({ type: 'line', label: '+2σ', data: rellenar(cc.limite_superior_2s), borderColor: 'rgba(251,146,60,0.6)', borderWidth: 1, pointRadius: 0, fill: false, order: 2 });
+        datasets.push({ type: 'line', label: '-2σ', data: rellenar(cc.limite_inferior_2s), borderColor: 'rgba(251,146,60,0.6)', borderWidth: 1, pointRadius: 0, fill: false, order: 2 });
+        datasets.push({ type: 'line', label: '+3σ', data: rellenar(cc.limite_superior_3s), borderColor: 'rgba(239,68,68,0.5)', borderWidth: 1, borderDash: [2,3], pointRadius: 0, fill: false, order: 2 });
+        datasets.push({ type: 'line', label: '-3σ', data: rellenar(cc.limite_inferior_3s), borderColor: 'rgba(239,68,68,0.5)', borderWidth: 1, borderDash: [2,3], pointRadius: 0, fill: false, order: 2 });
+      }
       statsAgroCharts['historico'] = new Chart(canvas.getContext('2d'), {
-        type: 'bar',
-        data: { labels: labels, datasets: [{ label: textoVar, data: valores, backgroundColor: labels.map(function(l){ return l === 'Hoy' ? 'rgba(250,204,21,0.75)' : 'rgba(34,211,238,0.5)'; }), borderRadius: 4 }] },
+        data: { labels: labels, datasets: datasets },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false }, title: { display: true, text: 'Evolución semanal — ' + textoVar, color: '#e2e8f0', font: { size: 13 } } },
+          plugins: { legend: { display: !!cc, labels: { color: '#94a3b8', font: { size: 9 }, filter: function(item){ return item.text !== textoVar; } } }, title: { display: true, text: 'Evolución semanal — ' + textoVar, color: '#e2e8f0', font: { size: 13 } } },
           scales: { y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } } }
         }
       });
+    }
+
+    function statsAgroRenderControlYTestT(data) {
+      var boxCC = document.getElementById('stats-agro-control-box');
+      var boxTT = document.getElementById('stats-agro-testt-box');
+      if (boxCC) {
+        var cc = data.carta_control;
+        if (!cc) {
+          boxCC.style.display = 'none';
+        } else {
+          boxCC.style.display = 'block';
+          var estColor = cc.estado === 'normal' ? '#4ade80' : (cc.estado === 'fuera_2s' ? '#fb923c' : '#ef4444');
+          var estTexto = cc.estado === 'normal' ? 'DENTRO DE LO NORMAL' : (cc.estado === 'fuera_2s' ? 'ANOMALÍA MODERADA (fuera de ±2σ)' : 'ANOMALÍA SEVERA (fuera de ±3σ)');
+          boxCC.innerHTML =
+            '<div style="font-size:0.7rem; color:#67e8f9; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">Carta de Control (Shewhart)</div>' +
+            '<div style="background:rgba(' + (cc.estado === 'normal' ? '74,222,128' : cc.estado === 'fuera_2s' ? '251,146,60' : '239,68,68') + ',0.08); border:1px solid ' + estColor + '33; border-radius:10px; padding:14px 16px;">' +
+              '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">z-score = <strong style="color:#e2e8f0;">' + cc.z_score + '</strong></span>' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">n histórico = <strong style="color:#e2e8f0;">' + cc.n_historico + ' días</strong></span>' +
+              '</div>' +
+              '<div style="font-size:0.82rem; font-weight:700; color:' + estColor + ';">' + estTexto + '</div>' +
+            '</div>';
+        }
+      }
+      if (boxTT) {
+        var t = data.test_t;
+        if (!t) {
+          boxTT.innerHTML = '<div style="color:#94a3b8; font-size:0.78rem; line-height:1.5; background:rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.2); border-radius:10px; padding:12px 14px;">Se necesitan más días de histórico acumulado para calcular el test t de Student.</div>';
+        } else {
+          var col = t.rechaza_h0 ? '#f87171' : '#4ade80';
+          var bg = t.rechaza_h0 ? 'rgba(239,68,68,0.08)' : 'rgba(74,222,128,0.08)';
+          boxTT.innerHTML =
+            '<div style="font-size:0.7rem; color:#67e8f9; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">Test t de Student: ¿hoy es distinto de lo normal?</div>' +
+            '<div style="background:' + bg + '; border:1px solid ' + col + '33; border-radius:10px; padding:14px 16px;">' +
+              '<div style="font-size:0.68rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">H0</div>' +
+              '<div style="font-size:0.8rem; color:#e2e8f0; margin-bottom:10px;">' + t.h0 + '</div>' +
+              '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">t = <strong style="color:#e2e8f0;">' + t.estadistico_t + '</strong></span>' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">gl = <strong style="color:#e2e8f0;">' + t.grados_libertad + '</strong></span>' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">p-valor = <strong style="color:#e2e8f0;">' + t.p_valor + '</strong></span>' +
+              '</div>' +
+              '<div style="font-size:0.8rem; font-weight:700; color:' + col + ';">' + (t.rechaza_h0 ? 'SE RECHAZA H0' : 'NO SE RECHAZA H0') + '</div>' +
+              '<div style="font-size:0.76rem; color:#cbd5e1; margin-top:6px; line-height:1.5;">' + t.conclusion + '</div>' +
+            '</div>';
+        }
+      }
     }
 
     window.statsAgroCargarHistorico = function() {
@@ -2323,6 +2532,8 @@ Generado por TuClima Pro - www.tuclima.com
           statsAgroRenderFrecuencias(data);
           statsAgroRenderPoisson(data);
           statsAgroRenderHipotesis(data);
+          statsAgroRenderWeibull(data);
+          statsAgroRenderPercentiles(data);
         })
         .catch(function(){
           loading.style.display = 'none';
@@ -3371,4 +3582,6 @@ function createSampleChart(chartData = null) {
 // INICIALIZACIÓN DEL CHAT CON MARKDOWN
 // ==========================================
 </script>
+{% include 'partials/_modal_interactivo.html' %}
+{% include 'partials/_chat_excel_boxplot.html' %}
 {% endblock %}

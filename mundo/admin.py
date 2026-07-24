@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import PerfilUsuario, ReporteUsuario, FeedbackIA, UbicacionGuardada, ReporteProgramado, ApiKeyPersonal
+from .models import PerfilUsuario, ReporteUsuario, FeedbackIA, UbicacionGuardada, ReporteProgramado, ApiKeyPersonal, ConfiguracionModal, AlertaModal, NotaModal
 
 
 @admin.register(PerfilUsuario)
@@ -104,3 +104,34 @@ class ApiKeyPersonalAdmin(admin.ModelAdmin):
     search_fields = ('usuario__username', 'nombre')
     ordering = ('-creada',)
     readonly_fields = ('clave', 'creada', 'ultimo_uso')
+
+
+# ── Modales interactivos (personalización / alertas / notas) ────────────────
+
+@admin.register(ConfiguracionModal)
+class ConfiguracionModalAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'sector', 'modal_id', 'lat', 'lon', 'actualizado_en')
+    list_filter = ('sector', 'modal_id')
+    search_fields = ('usuario__username', 'modal_id')
+    ordering = ('-actualizado_en',)
+
+
+@admin.register(AlertaModal)
+class AlertaModalAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'sector', 'modal_id', 'variable', 'operador', 'umbral', 'activa', 'creada')
+    list_filter = ('sector', 'modal_id', 'activa')
+    search_fields = ('usuario__username', 'modal_id', 'variable')
+    ordering = ('-creada',)
+    list_editable = ('activa',)
+
+
+@admin.register(NotaModal)
+class NotaModalAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'sector', 'modal_id', 'texto_corto', 'creada')
+    list_filter = ('sector', 'modal_id')
+    search_fields = ('usuario__username', 'modal_id', 'texto')
+    ordering = ('-creada',)
+
+    def texto_corto(self, obj):
+        return obj.texto[:60] + '...' if len(obj.texto) > 60 else obj.texto
+    texto_corto.short_description = 'Nota'

@@ -4,7 +4,7 @@
 
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot"></script>
+{# El plugin de boxplot se carga de forma diferida (lazy) — ver partials/_nav_secciones.html #}
 <style>
         /* Animación de espera para la IA - Estilo minimalista */
         .chat-typing {
@@ -904,6 +904,7 @@
 {% endblock %}
 
 {% block content %}
+{% include 'partials/_nav_secciones.html' with tc_activo='naval' %}
 <header class="nav-header">
         <div class="brand-container">
             <div class="brand-logo">
@@ -944,7 +945,7 @@
 
         <div class="instrument-card" onclick="openModal('modStatus')" style="border-top: 6px solid {{ status.color }}">
             <div class="card-header">
-                <span class="card-title">Condición de Puerto</span>
+                <span class="card-title">Condición de Puerto{% if alertas_disparadas.modStatus %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                 <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="{{ status.color }}" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
             <div class="card-body">
@@ -958,7 +959,7 @@
 
         <div class="instrument-card" onclick="openModal('modMar')">
             <div class="card-header">
-                <span class="card-title">Estado del Mar</span>
+                <span class="card-title">Estado del Mar{% if alertas_disparadas.modMar %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                 <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20"/><path d="M2 17h20"/><path d="M2 7h20"/></svg>
             </div>
             <div class="card-body">
@@ -973,7 +974,7 @@
 
         <div class="instrument-card" onclick="openModal('modViento')">
             <div class="card-header">
-                <span class="card-title">Viento (Nudos)</span>
+                <span class="card-title">Viento (Nudos){% if alertas_disparadas.modViento %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                 <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
             </div>
             <div class="card-body">
@@ -988,7 +989,7 @@
 
         <div class="instrument-card" onclick="openModal('modOla')">
             <div class="card-header">
-                <span class="card-title">Periodo de Ola</span>
+                <span class="card-title">Periodo de Ola{% if alertas_disparadas.modOla %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                 <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             </div>
             <div class="card-body">
@@ -1005,7 +1006,7 @@
 
         <div class="instrument-card" onclick="openModal('modSwell')">
             <div class="card-header">
-                <span class="card-title">Mar de Fondo</span>
+                <span class="card-title">Mar de Fondo{% if alertas_disparadas.modSwell %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                 <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/></svg>
             </div>
             <div class="card-body">
@@ -1020,7 +1021,7 @@
 
         <div class="instrument-card" onclick="openModal('modAstro')">
             <div class="card-header">
-                <span class="card-title">Astronomía</span>
+                <span class="card-title">Astronomía{% if alertas_disparadas.modAstro %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                 <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
             </div>
             <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center; gap:12px;">
@@ -1041,7 +1042,7 @@
 
         <div class="instrument-card" onclick="openModal('modAmbiente')">
             <div class="card-header">
-                <span class="card-title">Ambiente (Aire)</span>
+                <span class="card-title">Ambiente (Aire){% if alertas_disparadas.modAmbiente %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                 <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
             </div>
             <div class="card-body">
@@ -1055,7 +1056,7 @@
 
         <div class="instrument-card" onclick="openModal('modAgua')">
             <div class="card-header">
-                <span class="card-title">Temp. Agua (SST)</span>
+                <span class="card-title">Temp. Agua (SST){% if alertas_disparadas.modAgua %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                 <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.8-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"/></svg>
             </div>
             <div class="card-body">
@@ -1070,7 +1071,7 @@
 
         <div class="instrument-card" onclick="openModal('modPresion')">
             <div class="card-header">
-                <span class="card-title">Barómetro (QNH)</span>
+                <span class="card-title">Barómetro (QNH){% if alertas_disparadas.modPresion %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}</span>
                 <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16.2 7.8l-2.1 6.3-6.3 2.1 2.1-6.3z"/></svg>
             </div>
             <div class="card-body">
@@ -1086,6 +1087,7 @@
         <div style="font-family:'JetBrains Mono'; font-weight:bold; color:var(--text-muted); display:flex; align-items:center; gap:15px; font-size:1.2rem;">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
             VISIBILIDAD NÁUTICA
+            {% if alertas_disparadas.modVis %}<span class="tc-badge-alerta" title="Alerta activada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>{% endif %}
         </div>
         <div style="font-family:'JetBrains Mono'; font-size:2rem; font-weight:bold; color:var(--accent-cyan)">
              {{ nav.vis_nm }} Millas Náuticas ({{ nav.cond_vis }})
@@ -1199,6 +1201,9 @@
             <div class="info-highlight">
                 <strong>Consejo de Maniobra:</strong> Nunca tome un Swell de largo periodo (>12s) por el través (de costado). Cambie el rumbo 45° para "amurar" la ola.
             </div>
+
+            <div class="tc-interactivo" data-sector="naval" data-modal="modSwell" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-alerta='{"variable":"swell_altura","label":"Altura de swell","unidad":"m"}'></div>
         </div>
     </div>
 
@@ -1243,6 +1248,9 @@
             <div class="info-highlight">
                 <strong>Consejo de Travésía:</strong> Planifique entradas a puerto en el crepúsculo civil (45 min antes del amanecer / después del atardecer). Máxima luz real sin encandilamiento solar. Ideal para reconocer cabos, boyas y luces de enfilación.
             </div>
+
+            <div class="tc-interactivo" data-sector="naval" data-modal="modAstro" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-alerta='{"variable":"luz_horas","label":"Horas de luz diurna","unidad":"h"}'></div>
         </div>
     </div>
 
@@ -1282,6 +1290,9 @@
                     <tr><td>Baja Explosiva</td><td>&gt; 6 hPa</td><td><span class="st-risk">CICLOGÉNESIS</span> Temporal severo inmediato. Buscar abrigo.</td></tr>
                 </tbody>
             </table>
+
+            <div class="tc-interactivo" data-sector="naval" data-modal="modPresion" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-alerta='{"variable":"presion","label":"Presión QNH","unidad":"hPa"}'></div>
         </div>
     </div>
 
@@ -1298,6 +1309,8 @@
                     <tr><td><span class="st-risk">CERRADO</span></td><td>Viento > 25kt O Ola > 2.5m</td></tr>
                 </tbody>
             </table>
+
+            <div class="tc-interactivo" data-sector="naval" data-modal="modStatus" data-lat="{{ lat }}" data-lon="{{ lon }}" data-notas="1"></div>
         </div>
     </div>
 
@@ -1315,11 +1328,14 @@
                     <tr><td>6+</td><td>> 4.0</td><td><span class="st-risk">Muy Gruesa / Arbolada</span></td></tr>
                 </tbody>
             </table>
+
+            <div class="tc-interactivo" data-sector="naval" data-modal="modMar" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-alerta='{"variable":"ola_altura","label":"Altura de ola","unidad":"m"}'></div>
         </div>
     </div>
 
     <div id="modViento" class="modal-overlay" onclick="closeModal('modViento')">
-        <div class="modal-box" onclick="event.stopPropagation()">
+        <div class="modal-box" data-viento-kt="{{ viento.kt }}" onclick="event.stopPropagation()">
             <button class="btn-close-modal" onclick="closeModal('modViento')">×</button>
             <div class="modal-title">Escala Beaufort — Viento Actual</div>
             <div class="modal-text">La escala Beaufort (F0–F12) es el estándar internacional para clasificar la intensidad del viento y su efecto en el mar. Diseñada por el Almirante Sir Francis Beaufort en 1805 para la Royal Navy británica.</div>
@@ -1364,11 +1380,17 @@
             <div class="info-highlight">
                 <strong>Regla práctica Beaufort → Altura de Ola:</strong> Altura ≈ (F² × 0.5) metros. Ej.: F6 → ≈3m media. Las ráfagas pueden incrementar la altura real un 30% sobre la ola media.
             </div>
+
+            <div class="tc-especial-target" style="display:none;"></div>
+
+            <div class="tc-interactivo" data-sector="naval" data-modal="modViento" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-campos='[{"key":"viento_max","label":"Mi límite personal de navegación","tipo":"number","unidad":"kt","default":20}]'
+                 data-alerta='{"variable":"viento_kt","label":"Viento","unidad":"kt"}'></div>
         </div>
     </div>
 
     <div id="modVis" class="modal-overlay" onclick="closeModal('modVis')">
-        <div class="modal-box" onclick="event.stopPropagation()">
+        <div class="modal-box" data-vis-nm="{{ nav.vis_nm }}" onclick="event.stopPropagation()">
             <button class="btn-close-modal" onclick="closeModal('modVis')">×</button>
             <div class="modal-title">Visibilidad Náutica y COLREGS</div>
             <div class="modal-text">La Regla 19 del COLREGS (Convenio Internacional de 1972) regula el comportamiento en visibilidad reducida: velocidad de seguridad, medios de detección activos (radar) y señales fónicas cada 2 minutos.</div>
@@ -1400,6 +1422,12 @@
             <div class="info-highlight">
                 <strong>Niebla de Radiación:</strong> Se forma en noches despejadas con HR &gt; 90% y viento &lt; 3kt. Típica al amanecer en rías, fondos de rada y estuarios. Suele disipar 1–2h después del alba.
             </div>
+
+            <div class="tc-especial-target" style="display:none;"></div>
+
+            <div class="tc-interactivo" data-sector="naval" data-modal="modVis" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-campos='[{"key":"visibilidad_min","label":"Mi mínimo operativo","tipo":"number","unidad":"NM","default":2}]'
+                 data-alerta='{"variable":"visibilidad","label":"Visibilidad","unidad":"NM"}'></div>
         </div>
     </div>
 
@@ -1469,6 +1497,9 @@
                 <hr style="border:0; border-top:1px solid #334155; margin:15px 0;">
                 <small style="color:#94a3b8;">*Consejo: Con periodos largos (>10s), aumente la distancia de seguridad con la costa y evite navegar paralelo a las olas.</small>
             </div>
+
+            <div class="tc-interactivo" data-sector="naval" data-modal="modOla" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-alerta='{"variable":"ola_periodo","label":"Periodo de ola","unidad":"s"}'></div>
         </div>
     </div>
 
@@ -1505,6 +1536,9 @@
                     <tr><td>Punto de Rocío</td><td>= Temp. Aire</td><td>Saturación total. Niebla o llovizna inmediata. Precaución en cubierta.</td></tr>
                 </tbody>
             </table>
+
+            <div class="tc-interactivo" data-sector="naval" data-modal="modAmbiente" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-alerta='{"variable":"temp_aire","label":"Temperatura del aire","unidad":"°C"}'></div>
         </div>
     </div>
 
@@ -1556,28 +1590,22 @@
             <div class="info-highlight">
                 <strong>Protocolo MOB:</strong> [1] Gritar &quot;HOMBRE AL AGUA&quot;. [2] Activar MOB en GPS/Plotter. [3] Arrojar aro salvavidas + señal fumígena. [4] Mayday en VHF Canal 16. [5] Nunca perder contacto visual.
             </div>
+
+            <div class="tc-interactivo" data-sector="naval" data-modal="modAgua" data-lat="{{ lat }}" data-lon="{{ lon }}"
+                 data-alerta='{"variable":"temp_agua","label":"Temperatura del agua","unidad":"°C"}'></div>
         </div>
     </div>
 
         <script>
-        // 1. TRADUCTOR AUTOMÁTICO
-        function googleTranslateElementInit() {
-            new google.translate.TranslateElement({ pageLanguage: 'es', includedLanguages: 'en,fr,pt,de', autoDisplay: false }, 'google_translate_element');
-        }
-        window.addEventListener('load', function() {
-            var l = (navigator.language || navigator.userLanguage).split('-')[0];
-            if (l !== 'es') {
-                setTimeout(function() {
-                    var s = document.querySelector('select.goog-te-combo');
-                    if (s) { s.value = l; s.dispatchEvent(new Event('change')); }
-                }, 1000);
-            }
-        });
+        // (Traductor: manejado globalmente por Weglot desde base.html)
 
         // 2. MODALES (BLINDADO)
         function openModal(id) {
             const m = document.getElementById(id);
-            if (m) { m.style.display = 'flex'; setTimeout(() => m.classList.add('active'), 10); }
+            if (m) {
+                m.style.display = 'flex'; setTimeout(() => m.classList.add('active'), 10);
+                if (window.tcInteractivoAlAbrir) window.tcInteractivoAlAbrir(id);
+            }
         }
         function closeModal(id) {
             const m = document.getElementById(id);
@@ -1758,9 +1786,19 @@
 
         // 3. INICIALIZACIÓN Y SINCRONIZACIÓN
         document.addEventListener("DOMContentLoaded", function() {
-            // Guarda: si Highcharts no cargó (CDN bloqueado/lento) reintentar hasta 3s
+            // Guarda: si Highcharts no cargó (CDN bloqueado/lento) reintentar hasta ~10s
+            var _tcNavalReintentos = 0;
             function initCharts() {
                 if (typeof Highcharts === 'undefined') {
+                    _tcNavalReintentos++;
+                    if (_tcNavalReintentos > 20) {
+                        console.error('Highcharts no se pudo cargar tras varios intentos.');
+                        ['navalChart', 'navalChart7d'].forEach(function(id) {
+                            var el = document.getElementById(id);
+                            if (el) el.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#f87171; font-size:0.85rem; text-align:center; padding:20px;">No se pudo cargar la librería de gráficos (Highcharts). Revisá tu conexión o si algún bloqueador de contenido está impidiendo la carga de code.highcharts.com.</div>';
+                        });
+                        return;
+                    }
                     console.warn('Highcharts no listo, reintentando...');
                     setTimeout(initCharts, 500);
                     return;
@@ -2040,6 +2078,8 @@
       <button class="stats-naval-tab" data-tab="frecuencias" onclick="statsNavalTab('frecuencias')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Frecuencias Relativas</button>
       <button class="stats-naval-tab" data-tab="poisson" onclick="statsNavalTab('poisson')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Distribución Poisson</button>
       <button class="stats-naval-tab" data-tab="hipotesis" onclick="statsNavalTab('hipotesis')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Test de Hipótesis</button>
+      <button class="stats-naval-tab" data-tab="weibull" onclick="statsNavalTab('weibull')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Weibull (Viento)</button>
+      <button class="stats-naval-tab" data-tab="percentiles" onclick="statsNavalTab('percentiles')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Percentiles de Riesgo</button>
       <button class="stats-naval-tab" data-tab="historico" onclick="statsNavalTab('historico')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Histórico Real</button>
     </div>
 
@@ -2067,6 +2107,24 @@
         <div id="stats-naval-hip-resultado"></div>
       </div>
 
+      <div id="stats-naval-pane-weibull" class="stats-naval-pane" style="display:none;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 10px; line-height:1.5;">La distribución de <strong>Weibull</strong> es el modelo estándar en evaluación de recurso eólico: describe la probabilidad de cada velocidad de viento a partir de dos parámetros, <em>k</em> (forma, dispersión) y <em>c</em> (escala, ligado al viento medio). Solo se calcula para la variable Viento.</p>
+        <div id="stats-naval-weibull-na" style="display:none; color:#94a3b8; font-size:0.78rem; text-align:center; padding:20px 14px; background:rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.2); border-radius:10px;">Seleccioná la variable <strong>Viento</strong> arriba para ver el ajuste de Weibull.</div>
+        <div id="stats-naval-weibull-contenido" style="display:none;">
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+            <div style="flex:1; min-width:110px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"><div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:4px;">k (forma)</div><div id="stats-naval-weibull-k" style="font-size:1.2rem; font-weight:800; color:#e2e8f0;">—</div></div>
+            <div style="flex:1; min-width:110px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"><div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:4px;">c (escala)</div><div id="stats-naval-weibull-c" style="font-size:1.2rem; font-weight:800; color:#e2e8f0;">—</div></div>
+            <div style="flex:1; min-width:150px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"><div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:4px;">Densidad de potencia</div><div id="stats-naval-weibull-pot" style="font-size:1.2rem; font-weight:800; color:#fbbf24;">—</div></div>
+          </div>
+          <div style="position:relative; height:260px;"><canvas id="stats-naval-chart-weibull"></canvas></div>
+        </div>
+      </div>
+
+      <div id="stats-naval-pane-percentiles" class="stats-naval-pane" style="display:none;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 12px; line-height:1.5;">Percentiles de la muestra: el <strong>P95</strong>, por ejemplo, es el valor que solo se supera el 5% del tiempo en los próximos 14 días — útil como umbral de riesgo operativo.</p>
+        <div id="stats-naval-percentiles-cards" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+      </div>
+
       <div id="stats-naval-pane-historico" class="stats-naval-pane" style="display:none;">
         <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 12px; line-height:1.5;">Comparación en tiempo real: el valor de ahora vs. el promedio real de días anteriores a esta misma hora, calculado sobre snapshots guardados automáticamente cada hora (n8n + BigQuery).</p>
         <div id="stats-naval-historico-loading" style="color:#67e8f9; font-size:0.78rem; text-align:center; padding:20px 0;">Consultando histórico…</div>
@@ -2078,6 +2136,10 @@
             <div id="stats-naval-hist-diff" style="flex:1; min-width:140px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"></div>
           </div>
           <div style="position:relative; height:220px;"><canvas id="stats-naval-chart-historico"></canvas></div>
+          <div style="margin-top:8px; font-size:0.65rem; color:#64748b; text-align:center;">Bandas: línea amarilla punteada = media histórica · banda naranja = ±2σ · banda roja = ±3σ (carta de control)</div>
+
+          <div id="stats-naval-control-box" style="display:none; margin-top:16px;"></div>
+          <div id="stats-naval-testt-box" style="margin-top:14px;"></div>
         </div>
       </div>
     </div>
@@ -2088,11 +2150,8 @@
     var STATS_LAT = {{ lat|default:"-34.60" }};
     var STATS_LON = {{ lon|default:"-58.38" }};
 
-    if (typeof ChartBoxPlot !== 'undefined' && typeof Chart !== 'undefined') {
-      Chart.register(ChartBoxPlot.BoxPlotController, ChartBoxPlot.BoxAndWiskers);
-    }
-
     var statsNavalCharts = {};
+    var tcBoxplotRegistrado = false;
 
     window.statsNavalTab = function(tab) {
       document.querySelectorAll('.stats-naval-tab').forEach(function(btn){
@@ -2113,37 +2172,43 @@
     function statsNavalRenderBoxplot(data) {
       var canvas = document.getElementById('stats-naval-chart-boxplot');
       if (!canvas || !data.boxplot || !data.boxplot.length) return;
-      statsNavalDestroy('boxplot');
-      var labels = data.boxplot.map(function(g){ return g.label; });
-      var puntos = data.boxplot.map(function(g){
-        return { min: g.min, q1: g.q1, median: g.mediana, q3: g.q3, max: g.max, outliers: g.outliers || [] };
-      });
-      statsNavalCharts['boxplot'] = new Chart(canvas.getContext('2d'), {
-        type: 'boxplot',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: data.variable.label,
-            data: puntos,
-            backgroundColor: 'rgba(34,211,238,0.18)',
-            borderColor: '#22d3ee',
-            borderWidth: 1.5,
-            outlierColor: '#f87171',
-            itemRadius: 3
-          }]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            title: { display: true, text: data.variable.label + ' — variabilidad diaria del pronóstico', color: '#e2e8f0', font: { size: 13 } }
-          },
-          scales: {
-            y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
-            x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
-          }
+      tcCargarBoxplotPlugin().then(function(){
+        if (!tcBoxplotRegistrado) {
+          Chart.register(ChartBoxPlot.BoxPlotController, ChartBoxPlot.BoxAndWiskers);
+          tcBoxplotRegistrado = true;
         }
-      });
+        statsNavalDestroy('boxplot');
+        var labels = data.boxplot.map(function(g){ return g.label; });
+        var puntos = data.boxplot.map(function(g){
+          return { min: g.min, q1: g.q1, median: g.mediana, q3: g.q3, max: g.max, outliers: g.outliers || [] };
+        });
+        statsNavalCharts['boxplot'] = new Chart(canvas.getContext('2d'), {
+          type: 'boxplot',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: data.variable.label,
+              data: puntos,
+              backgroundColor: 'rgba(34,211,238,0.18)',
+              borderColor: '#22d3ee',
+              borderWidth: 1.5,
+              outlierColor: '#f87171',
+              itemRadius: 3
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              title: { display: true, text: data.variable.label + ' — variabilidad diaria del pronóstico', color: '#e2e8f0', font: { size: 13 } }
+            },
+            scales: {
+              y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+              x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
+            }
+          }
+        });
+      }).catch(function(err){ console.error('No se pudo cargar el módulo de boxplot:', err); });
     }
 
     function statsNavalRenderFrecuencias(data) {
@@ -2246,6 +2311,65 @@
         '</div>';
     }
 
+    function statsNavalRenderWeibull(data) {
+      var na = document.getElementById('stats-naval-weibull-na');
+      var cont = document.getElementById('stats-naval-weibull-contenido');
+      var canvas = document.getElementById('stats-naval-chart-weibull');
+      if (!na || !cont) return;
+      if (data.variable.key !== 'viento' || !data.weibull) {
+        na.style.display = 'block';
+        na.innerText = data.variable.key !== 'viento'
+          ? 'Seleccioná la variable Viento arriba para ver el ajuste de Weibull.'
+          : 'No hay suficientes datos de viento en este pronóstico para ajustar una distribución de Weibull (mínimo 10 valores).';
+        cont.style.display = 'none';
+        return;
+      }
+      na.style.display = 'none';
+      cont.style.display = 'block';
+      var w = data.weibull;
+      document.getElementById('stats-naval-weibull-k').innerText = w.k_forma;
+      document.getElementById('stats-naval-weibull-c').innerText = w.c_escala + ' ' + (data.variable.unidad || '');
+      document.getElementById('stats-naval-weibull-pot').innerText = w.densidad_potencia_wm2 + ' W/m²';
+      if (!canvas || !w.curva || !w.curva.length) return;
+      statsNavalDestroy('weibull');
+      statsNavalCharts['weibull'] = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: w.curva.map(function(b){ return b.rango; }),
+          datasets: [
+            { type: 'bar', label: 'Observado', data: w.curva.map(function(b){ return b.observado; }), backgroundColor: 'rgba(96,165,250,0.5)', borderRadius: 4, order: 2 },
+            { type: 'line', label: 'Weibull teórico (k=' + w.k_forma + ', c=' + w.c_escala + ')', data: w.curva.map(function(b){ return b.teorico; }), borderColor: '#fbbf24', backgroundColor: 'transparent', borderWidth: 2.5, tension: 0.35, pointRadius: 2, order: 1 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#94a3b8' } },
+            title: { display: true, text: 'Viento (' + (data.variable.unidad || '') + ') — observado vs. Weibull', color: '#e2e8f0', font: { size: 13 } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+            x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function statsNavalRenderPercentiles(data) {
+      var el = document.getElementById('stats-naval-percentiles-cards');
+      if (!el) return;
+      if (!data.percentiles || !data.percentiles.valores) { el.innerHTML = ''; return; }
+      var unidad = data.variable.unidad || '';
+      el.innerHTML = data.percentiles.valores.map(function(p){
+        var destacado = p.p >= 90;
+        return '<div style="flex:1; min-width:110px; background:' + (destacado ? 'rgba(251,191,36,0.08)' : '#0f172a') + '; border:1px solid ' + (destacado ? 'rgba(251,191,36,0.3)' : '#1e293b') + '; border-radius:10px; padding:12px 14px; text-align:center;">' +
+          '<div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:6px;">P' + p.p + '</div>' +
+          '<div style="font-size:1.25rem; font-weight:800; color:' + (destacado ? '#fbbf24' : '#e2e8f0') + ';">' + p.valor + ' <span style="font-size:0.6em; color:#64748b;">' + unidad + '</span></div>' +
+          '<div style="font-size:0.62rem; color:#64748b; margin-top:4px;">se supera solo el ' + (100 - p.p) + '% del tiempo</div>' +
+        '</div>';
+      }).join('');
+    }
+
     function statsNavalRenderHistorico(data) {
       var loading = document.getElementById('stats-naval-historico-loading');
       var empty = document.getElementById('stats-naval-historico-empty');
@@ -2268,20 +2392,78 @@
       document.getElementById('stats-naval-hist-prom').innerHTML = '<div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Promedio (' + (data.promedio_historico.n_dias || 0) + ' días previos)</div><div style="font-size:1.3rem; font-weight:800; color:#e2e8f0;">' + data.promedio_historico.valor + '</div>';
       document.getElementById('stats-naval-hist-diff').innerHTML = '<div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Diferencia vs. histórico</div><div style="font-size:1.3rem; font-weight:800; color:' + diffColor + ';">' + (diff > 0 ? '+' : '') + diff + '%</div>';
 
+      // Carta de control (±2σ / ±3σ) y test t, si BigQuery devolvió suficiente muestra
+      statsNavalRenderControlYTestT(data);
+
       var canvas = document.getElementById('stats-naval-chart-historico');
       if (!canvas || !data.serie_semanas || !data.serie_semanas.length) return;
       statsNavalDestroy('historico');
       var labels = data.serie_semanas.map(function(s){ return s.semana; });
       var valores = data.serie_semanas.map(function(s){ return s.valor; });
+      var cc = data.carta_control;
+      var datasets = [{ type: 'bar', label: textoVar, data: valores, backgroundColor: labels.map(function(l){ return l === 'Hoy' ? 'rgba(250,204,21,0.75)' : 'rgba(34,211,238,0.5)'; }), borderRadius: 4, order: 3 }];
+      if (cc) {
+        var rellenar = function(v){ return labels.map(function(){ return v; }); };
+        datasets.push({ type: 'line', label: 'Media histórica', data: rellenar(cc.media), borderColor: '#fbbf24', borderDash: [5,4], borderWidth: 1.5, pointRadius: 0, fill: false, order: 1 });
+        datasets.push({ type: 'line', label: '+2σ', data: rellenar(cc.limite_superior_2s), borderColor: 'rgba(251,146,60,0.6)', borderWidth: 1, pointRadius: 0, fill: false, order: 2 });
+        datasets.push({ type: 'line', label: '-2σ', data: rellenar(cc.limite_inferior_2s), borderColor: 'rgba(251,146,60,0.6)', borderWidth: 1, pointRadius: 0, fill: false, order: 2 });
+        datasets.push({ type: 'line', label: '+3σ', data: rellenar(cc.limite_superior_3s), borderColor: 'rgba(239,68,68,0.5)', borderWidth: 1, borderDash: [2,3], pointRadius: 0, fill: false, order: 2 });
+        datasets.push({ type: 'line', label: '-3σ', data: rellenar(cc.limite_inferior_3s), borderColor: 'rgba(239,68,68,0.5)', borderWidth: 1, borderDash: [2,3], pointRadius: 0, fill: false, order: 2 });
+      }
       statsNavalCharts['historico'] = new Chart(canvas.getContext('2d'), {
-        type: 'bar',
-        data: { labels: labels, datasets: [{ label: textoVar, data: valores, backgroundColor: labels.map(function(l){ return l === 'Hoy' ? 'rgba(250,204,21,0.75)' : 'rgba(34,211,238,0.5)'; }), borderRadius: 4 }] },
+        data: { labels: labels, datasets: datasets },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false }, title: { display: true, text: 'Evolución semanal — ' + textoVar, color: '#e2e8f0', font: { size: 13 } } },
+          plugins: { legend: { display: !!cc, labels: { color: '#94a3b8', font: { size: 9 }, filter: function(item){ return item.text !== textoVar; } } }, title: { display: true, text: 'Evolución semanal — ' + textoVar, color: '#e2e8f0', font: { size: 13 } } },
           scales: { y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } } }
         }
       });
+    }
+
+    function statsNavalRenderControlYTestT(data) {
+      var boxCC = document.getElementById('stats-naval-control-box');
+      var boxTT = document.getElementById('stats-naval-testt-box');
+      if (boxCC) {
+        var cc = data.carta_control;
+        if (!cc) {
+          boxCC.style.display = 'none';
+        } else {
+          boxCC.style.display = 'block';
+          var estColor = cc.estado === 'normal' ? '#4ade80' : (cc.estado === 'fuera_2s' ? '#fb923c' : '#ef4444');
+          var estTexto = cc.estado === 'normal' ? 'DENTRO DE LO NORMAL' : (cc.estado === 'fuera_2s' ? 'ANOMALÍA MODERADA (fuera de ±2σ)' : 'ANOMALÍA SEVERA (fuera de ±3σ)');
+          boxCC.innerHTML =
+            '<div style="font-size:0.7rem; color:#67e8f9; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">Carta de Control (Shewhart)</div>' +
+            '<div style="background:rgba(' + (cc.estado === 'normal' ? '74,222,128' : cc.estado === 'fuera_2s' ? '251,146,60' : '239,68,68') + ',0.08); border:1px solid ' + estColor + '33; border-radius:10px; padding:14px 16px;">' +
+              '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">z-score = <strong style="color:#e2e8f0;">' + cc.z_score + '</strong></span>' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">n histórico = <strong style="color:#e2e8f0;">' + cc.n_historico + ' días</strong></span>' +
+              '</div>' +
+              '<div style="font-size:0.82rem; font-weight:700; color:' + estColor + ';">' + estTexto + '</div>' +
+            '</div>';
+        }
+      }
+      if (boxTT) {
+        var t = data.test_t;
+        if (!t) {
+          boxTT.innerHTML = '<div style="color:#94a3b8; font-size:0.78rem; line-height:1.5; background:rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.2); border-radius:10px; padding:12px 14px;">Se necesitan más días de histórico acumulado para calcular el test t de Student.</div>';
+        } else {
+          var col = t.rechaza_h0 ? '#f87171' : '#4ade80';
+          var bg = t.rechaza_h0 ? 'rgba(239,68,68,0.08)' : 'rgba(74,222,128,0.08)';
+          boxTT.innerHTML =
+            '<div style="font-size:0.7rem; color:#67e8f9; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">Test t de Student: ¿hoy es distinto de lo normal?</div>' +
+            '<div style="background:' + bg + '; border:1px solid ' + col + '33; border-radius:10px; padding:14px 16px;">' +
+              '<div style="font-size:0.68rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">H0</div>' +
+              '<div style="font-size:0.8rem; color:#e2e8f0; margin-bottom:10px;">' + t.h0 + '</div>' +
+              '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">t = <strong style="color:#e2e8f0;">' + t.estadistico_t + '</strong></span>' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">gl = <strong style="color:#e2e8f0;">' + t.grados_libertad + '</strong></span>' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">p-valor = <strong style="color:#e2e8f0;">' + t.p_valor + '</strong></span>' +
+              '</div>' +
+              '<div style="font-size:0.8rem; font-weight:700; color:' + col + ';">' + (t.rechaza_h0 ? 'SE RECHAZA H0' : 'NO SE RECHAZA H0') + '</div>' +
+              '<div style="font-size:0.76rem; color:#cbd5e1; margin-top:6px; line-height:1.5;">' + t.conclusion + '</div>' +
+            '</div>';
+        }
+      }
     }
 
     window.statsNavalCargarHistorico = function() {
@@ -2327,6 +2509,8 @@
           statsNavalRenderFrecuencias(data);
           statsNavalRenderPoisson(data);
           statsNavalRenderHipotesis(data);
+          statsNavalRenderWeibull(data);
+          statsNavalRenderPercentiles(data);
         })
         .catch(function(){
           loading.style.display = 'none';
@@ -3329,4 +3513,6 @@ function createSampleChart(chartData = null) {
     drawChart(variablesDisponibles[0]);
 }
 </script>
+{% include 'partials/_modal_interactivo.html' %}
+{% include 'partials/_chat_excel_boxplot.html' %}
 {% endblock %}

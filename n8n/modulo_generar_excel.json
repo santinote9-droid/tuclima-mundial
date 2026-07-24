@@ -2,6 +2,61 @@
   "nodes": [
     {
       "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "filas_excel",
+              "type": "array"
+            }
+          ]
+        }
+      },
+      "id": "c055762a-8fe7-4141-a639-df2372f30060",
+      "typeVersion": 1.1,
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [160, 352]
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Normaliza filas_excel → 1 item con {_rows, _n}.\n * Acepta array, string JSON, objeto envuelto, markdown fences.\n */\nfunction stripFences(s) {\n  return String(s).trim()\n    .replace(/^```(?:json)?\\s*/i, '')\n    .replace(/\\s*```$/i, '')\n    .trim();\n}\n\nfunction tryParse(s) {\n  try { return JSON.parse(s); } catch (e) { return null; }\n}\n\nfunction normalizeFilas(raw) {\n  if (raw == null || raw === '') return [];\n\n  if (typeof raw === 'string') {\n    const parsed = tryParse(stripFences(raw));\n    if (parsed == null) return [];\n    raw = parsed;\n  }\n\n  if (Array.isArray(raw) && raw.length === 1 && typeof raw[0] === 'string') {\n    const parsed = tryParse(stripFences(raw[0]));\n    if (parsed != null) raw = parsed;\n  }\n\n  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {\n    if (Array.isArray(raw.filas_excel)) raw = raw.filas_excel;\n    else if (Array.isArray(raw.data)) raw = raw.data;\n    else if (Array.isArray(raw.rows)) raw = raw.rows;\n    else if (Array.isArray(raw.datos)) raw = raw.datos;\n    else raw = [raw];\n  }\n\n  if (!Array.isArray(raw)) return [];\n\n  const rows = [];\n  for (const item of raw) {\n    let row = item;\n    if (typeof row === 'string') {\n      const parsed = tryParse(stripFences(row));\n      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) row = parsed;\n      else continue;\n    }\n    if (!row || typeof row !== 'object' || Array.isArray(row)) continue;\n\n    const out = {};\n    for (const [k, v] of Object.entries(row)) {\n      if (v === null || v === undefined) out[k] = '';\n      else if (typeof v === 'object') out[k] = JSON.stringify(v);\n      else out[k] = v;\n    }\n    if (Object.keys(out).length) rows.push(out);\n  }\n  return rows;\n}\n\nconst trigger = $input.first().json;\nconst raw = trigger.filas_excel !== undefined ? trigger.filas_excel : trigger;\nlet rows = normalizeFilas(raw);\n\nif (!rows.length) {\n  throw new Error(\n    'filas_excel inválido o vacío. Se esperaba un Array JSON de objetos homogéneos. ' +\n    'Ejemplo: [{\"Fecha_Hora\":\"24/07 12:00\",\"Temperatura_C\":22,\"Viento_kt\":12}]'\n  );\n}\n\nconst keys = [];\nconst seen = new Set();\nfor (const r of rows) {\n  for (const k of Object.keys(r)) {\n    if (!seen.has(k)) { seen.add(k); keys.push(k); }\n  }\n}\nrows = rows.map((r) => {\n  const o = {};\n  for (const k of keys) o[k] = r[k] !== undefined ? r[k] : '';\n  return o;\n});\n\nreturn [{ json: { _rows: rows, _n: rows.length, _keys: keys } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [368, 352],
+      "id": "f6a0ba0e-9fa4-4c4e-ba74-855eb3627941",
+      "name": "Normalizar filas"
+    },
+    {
+      "parameters": {
+        "resource": "spreadsheet",
+        "title": "=Reporte_TuClima_{{$now.format(\"yyyyMMdd_HHmm\")}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [576, 352],
+      "id": "9fdf3c97-9b38-4ec7-bf11-4931a17df80b",
+      "name": "Create sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ehd2rV2uiwCw192S",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $('Normalizar filas').first().json._rows || [];\nreturn rows.map((r) => ({ json: r }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [784, 352],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Expandir filas"
+    },
+    {
+      "parameters": {
         "operation": "append",
         "documentId": {
           "__rl": true,
@@ -27,10 +82,7 @@
       },
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
-      "position": [
-        816,
-        352
-      ],
+      "position": [992, 352],
       "id": "6fef87fc-bf41-43d9-8a67-83808e2e3f0a",
       "name": "Append row in sheet",
       "credentials": {
@@ -42,126 +94,30 @@
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "187b03ac-450c-479c-afb3-da911efed107",
-              "name": "mensaje_respuesta",
-              "value": "=https://docs.google.com/spreadsheets/d/{{ $('Create sheet').first().json.spreadsheetId }}/edit",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        992,
-        352
-      ],
-      "id": "29bdcc26-2958-4783-8f6c-0c2d66b47148",
-      "name": "Edit Fields"
-    },
-    {
-      "parameters": {
-        "resource": "spreadsheet",
-        "title": "=Reporte_TuClima_{{$now.format(\"yyyyMMdd_HHmm\")}}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
-      "position": [
-        464,
-        352
-      ],
-      "id": "9fdf3c97-9b38-4ec7-bf11-4931a17df80b",
-      "name": "Create sheet",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "ehd2rV2uiwCw192S",
-          "name": "Google Sheets account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "// n8n ya hizo la magia, los datos ya son una lista real. Solo los pasamos.\nconst datosClima = $('Execute Workflow Trigger').item.json.filas_excel;\n\nreturn datosClima;"
+        "jsCode": "const id = $('Create sheet').first().json.spreadsheetId;\nconst n = $('Normalizar filas').first().json._n || 0;\nconst url = 'https://docs.google.com/spreadsheets/d/' + id + '/edit';\nreturn [{\n  json: {\n    mensaje_respuesta: '[Abrir planilla Excel](' + url + ')',\n    url_planilla: url,\n    filas_escritas: n\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        640,
-        352
-      ],
-      "id": "f6a0ba0e-9fa4-4c4e-ba74-855eb3627941",
-      "name": "Code in JavaScript"
-    },
-    {
-      "parameters": {
-        "workflowInputs": {
-          "values": [
-            {
-              "name": "filas_excel",
-              "type": "array"
-            }
-          ]
-        }
-      },
-      "id": "c055762a-8fe7-4141-a639-df2372f30060",
-      "typeVersion": 1.1,
-      "name": "Execute Workflow Trigger",
-      "type": "n8n-nodes-base.executeWorkflowTrigger",
-      "position": [
-        272,
-        352
-      ]
+      "position": [1200, 352],
+      "id": "29bdcc26-2958-4783-8f6c-0c2d66b47148",
+      "name": "Respuesta unica"
     }
   ],
   "connections": {
-    "Append row in sheet": {
-      "main": [
-        [
-          {
-            "node": "Edit Fields",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+    "Execute Workflow Trigger": {
+      "main": [[{ "node": "Normalizar filas", "type": "main", "index": 0 }]]
+    },
+    "Normalizar filas": {
+      "main": [[{ "node": "Create sheet", "type": "main", "index": 0 }]]
     },
     "Create sheet": {
-      "main": [
-        [
-          {
-            "node": "Code in JavaScript",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Expandir filas", "type": "main", "index": 0 }]]
     },
-    "Code in JavaScript": {
-      "main": [
-        [
-          {
-            "node": "Append row in sheet",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+    "Expandir filas": {
+      "main": [[{ "node": "Append row in sheet", "type": "main", "index": 0 }]]
     },
-    "Execute Workflow Trigger": {
-      "main": [
-        [
-          {
-            "node": "Create sheet",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+    "Append row in sheet": {
+      "main": [[{ "node": "Respuesta unica", "type": "main", "index": 0 }]]
     }
   },
   "pinData": {},

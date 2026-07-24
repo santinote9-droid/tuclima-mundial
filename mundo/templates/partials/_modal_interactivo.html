@@ -1,0 +1,611 @@
+{% comment %}
+   ==========================================================================
+   BLOQUE INTERACTIVO REUTILIZABLE PARA VENTANAS MODALES
+   (agro / naval / aereo / energia)
+
+   Cada modal que quiera "Personalizar / Alerta / Notas / Exportar" agrega
+   dentro de su .modal-content un elemento con clase tc-interactivo y estos
+   data-atributos:
+
+     data-sector   = "agro" | "naval" | "aereo" | "energia"
+     data-modal    = "modGDD" (el mismo id del modal)
+     data-lat / data-lon
+     data-campos   = JSON array de campos de personalización, ej:
+                     [{"key":"cultivo","label":"Mi cultivo","tipo":"cultivo"},
+                      {"key":"fecha_siembra","label":"Fecha de siembra","tipo":"date"}]
+                     (opcional — si se omite no se muestra la sección)
+     data-alerta   = JSON con la variable a la que aplica la alerta, ej:
+                     {"variable":"vpd","label":"VPD","unidad":"kPa"}
+                     (opcional — si se omite no se muestra la sección)
+     data-notas    = "0" para desactivar la bitácora (por defecto está activa)
+
+   Este archivo se incluye UNA sola vez por página. Además, cada página debe
+   llamar a window.tcInteractivoAlAbrir(modalId) dentro de su función
+   openModal(id) existente, para cargar los datos la primera vez que el
+   usuario abre ese modal puntual (carga perezosa).
+   ==========================================================================
+{% endcomment %}
+<style>
+.tc-int { margin-top: 26px; border-top: 1px dashed rgba(148,163,184,0.25); padding-top: 18px; }
+.tc-int > .tc-int-label { font-size:0.62rem; color:#64748b; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:10px; }
+.tc-int-secciones { display:flex; flex-direction:column; gap:10px; margin-bottom:12px; }
+.tc-int-sec {
+  background: linear-gradient(180deg, #111827 0%, #0f172a 100%);
+  border:1px solid #1e293b;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25), inset 0 1px 0 rgba(148,163,184,0.06);
+}
+.tc-int-head {
+  display:flex; align-items:center; gap:8px; padding:12px 14px; cursor:pointer; user-select:none;
+  font-size:0.76rem; font-weight:700; color:#e2e8f0;
+  background: linear-gradient(90deg, rgba(74,222,128,0.06), transparent 55%);
+  border-bottom:1px solid transparent;
+}
+.tc-int-sec.abierta .tc-int-head { border-bottom-color:#1e293b; }
+.tc-int-head svg { flex-shrink:0; color:#4ade80; filter: drop-shadow(0 0 4px rgba(74,222,128,0.35)); }
+.tc-int-head .tc-int-chev { margin-left:auto; color:#64748b; transition:transform .2s; }
+.tc-int-sec.abierta .tc-int-chev { transform:rotate(180deg); }
+.tc-int-body { display:none; padding:12px 14px 14px; background:rgba(2,6,23,0.35); }
+.tc-int-sec.abierta .tc-int-body { display:block; }
+.tc-int-campo { margin-bottom:10px; }
+.tc-int-campo label { display:block; font-size:0.64rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px; }
+.tc-int-campo select, .tc-int-campo input, .tc-int-campo textarea {
+  width:100%; background:#0b1220; border:1px solid #334155; border-radius:8px; color:#e2e8f0;
+  padding:9px 11px; font-size:0.8rem; font-family:inherit; box-sizing:border-box;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.35);
+  -webkit-appearance:none; appearance:none;
+}
+.tc-int-campo select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center; padding-right:28px;
+}
+.tc-int-campo select:focus, .tc-int-campo input:focus, .tc-int-campo textarea:focus {
+  outline:none; border-color:#4ade80; box-shadow:0 0 0 3px rgba(74,222,128,0.15), inset 0 1px 2px rgba(0,0,0,0.35);
+}
+.tc-int-campo textarea { min-height:72px; resize:vertical; line-height:1.45; }
+.tc-int-btn {
+  display:inline-flex; align-items:center; gap:6px;
+  background:linear-gradient(180deg, rgba(74,222,128,0.18), rgba(74,222,128,0.08));
+  border:1px solid rgba(74,222,128,0.4); color:#4ade80;
+  padding:8px 14px; border-radius:8px; cursor:pointer; font-size:0.72rem; font-weight:700;
+  font-family:inherit; white-space:nowrap;
+  box-shadow: 0 2px 8px rgba(74,222,128,0.08);
+  transition: background .15s, border-color .15s, transform .1s;
+}
+.tc-int-btn:hover { background:linear-gradient(180deg, rgba(74,222,128,0.28), rgba(74,222,128,0.14)); border-color:rgba(74,222,128,0.55); }
+.tc-int-btn:active { transform:translateY(1px); }
+.tc-int-btn-secondary {
+  background:linear-gradient(180deg, rgba(148,163,184,0.14), rgba(148,163,184,0.06));
+  border-color:rgba(148,163,184,0.35); color:#94a3b8;
+  box-shadow:none;
+}
+.tc-int-btn-secondary:hover { background:linear-gradient(180deg, rgba(148,163,184,0.22), rgba(148,163,184,0.1)); }
+.tc-int-fila { display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; }
+.tc-int-lista, .tc-int-lista-alertas, .tc-int-lista-notas { display:flex; flex-direction:column; gap:6px; }
+.tc-int-item {
+  display:flex; align-items:flex-start; gap:8px;
+  background:linear-gradient(180deg, #1e293b, #172033);
+  border:1px solid #334155; border-radius:8px; padding:9px 11px;
+  font-size:0.74rem; color:#cbd5e1; line-height:1.5;
+  box-shadow: inset 0 1px 0 rgba(148,163,184,0.05);
+}
+.tc-int-item .tc-int-item-txt { flex:1; }
+.tc-int-item button { background:none; border:none; color:#64748b; cursor:pointer; padding:2px; flex-shrink:0; }
+.tc-int-item button:hover { color:#f87171; }
+.tc-int-msg { font-size:0.7rem; margin-top:6px; min-height:1em; }
+.tc-int-exportar { display:flex; gap:8px; flex-wrap:wrap; }
+.tc-badge-alerta {
+  display:inline-flex; align-items:center; justify-content:center; width:19px; height:19px;
+  background:radial-gradient(circle at 35% 30%, #f87171, #ef4444 60%, #b91c1c);
+  border-radius:50%; margin-left:7px; vertical-align:middle;
+  box-shadow:0 0 0 3px rgba(239,68,68,0.18), 0 2px 6px rgba(239,68,68,0.35);
+  animation: tc-badge-pulse 2s ease-in-out infinite;
+}
+@keyframes tc-badge-pulse {
+  0%, 100% { box-shadow:0 0 0 3px rgba(239,68,68,0.18), 0 2px 6px rgba(239,68,68,0.35); }
+  50% { box-shadow:0 0 0 5px rgba(239,68,68,0.1), 0 2px 8px rgba(239,68,68,0.45); }
+}
+.tc-badge-alerta svg { width:10px; height:10px; color:#fff; }
+.tc-resaltado { outline:2px solid #4ade80 !important; border-radius:8px; }
+tr.tc-resaltado > td { background:rgba(74,222,128,0.1) !important; border-left:3px solid #4ade80; outline:none !important; }
+@media print {
+  body.tc-imprimiendo > *:not(.tc-print-target-wrap) { display:none !important; }
+  .tc-print-target-wrap { display:block !important; position:static !important; background:#fff !important; padding:20px !important; }
+  .tc-print-target-wrap .modal-content, .tc-print-target-wrap .modal-box { position:static !important; max-height:none !important; overflow:visible !important; box-shadow:none !important; border:none !important; background:#fff !important; color:#000 !important; width:100% !important; max-width:100% !important; }
+  .tc-print-target-wrap .modal-content *, .tc-print-target-wrap .modal-box * { color:#000 !important; background:transparent !important; }
+  .tc-print-target-wrap .tc-int, .tc-print-target-wrap .btn-close, .tc-print-target-wrap .btn-close-modal { display:none !important; }
+}
+</style>
+<script>
+(function(){
+  if (window.tcInteractivoInit) return; // evita doble-registro si el partial se incluye más de una vez
+
+  var TC_ICONOS = {
+    engranaje: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+    campana: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+    nota: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+    exportar: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+    copiar: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+    basura: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+    chev: '<svg class="tc-int-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>',
+  };
+
+  var TC_CULTIVOS = [
+    ['maiz', 'Maíz'], ['soja', 'Soja'], ['trigo', 'Trigo'],
+    ['girasol', 'Girasol'], ['algodon', 'Algodón'], ['pasturas', 'Pasturas'],
+  ];
+
+  function tcModalContenedor(cont) {
+    // Distintas páginas usan distinta clase para la caja interna del modal
+    // (agro/aereo/energia usan .modal-content, naval usa .modal-box).
+    return cont.closest('.modal-content, .modal-box');
+  }
+
+  function tcCsrf() {
+    var m = document.cookie.split(';').map(function(c){ return c.trim(); }).find(function(c){ return c.indexOf('csrftoken=') === 0; });
+    return m ? m.split('=')[1] : '';
+  }
+
+  function tcEscapar(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+
+  function tcCampoHtml(campo, idx) {
+    var opciones = campo.tipo === 'cultivo' ? TC_CULTIVOS : (campo.opciones || []);
+    if (campo.tipo === 'select' || campo.tipo === 'cultivo') {
+      var opts = '<option value="">— Elegir —</option>' + opciones.map(function(o){
+        return '<option value="' + tcEscapar(o[0]) + '">' + tcEscapar(o[1]) + '</option>';
+      }).join('');
+      return '<div class="tc-int-campo"><label>' + tcEscapar(campo.label) + '</label><select data-key="' + tcEscapar(campo.key) + '">' + opts + '</select></div>';
+    }
+    if (campo.tipo === 'date') {
+      return '<div class="tc-int-campo"><label>' + tcEscapar(campo.label) + '</label><input type="date" data-key="' + tcEscapar(campo.key) + '"></div>';
+    }
+    return '<div class="tc-int-campo"><label>' + tcEscapar(campo.label) + (campo.unidad ? (' (' + tcEscapar(campo.unidad) + ')') : '') + '</label><input type="number" step="any" data-key="' + tcEscapar(campo.key) + '" placeholder="' + (campo.default != null ? tcEscapar(campo.default) : '') + '"></div>';
+  }
+
+  function tcInteractivoBuild(el) {
+    if (el.dataset.built === '1') return;
+    el.dataset.built = '1';
+
+    var campos = [];
+    try { campos = el.dataset.campos ? JSON.parse(el.dataset.campos) : []; } catch (e) { campos = []; }
+    var alertaSpec = null;
+    try { alertaSpec = el.dataset.alerta ? JSON.parse(el.dataset.alerta) : null; } catch (e) { alertaSpec = null; }
+    var conNotas = el.dataset.notas !== '0';
+
+    var html = '<div class="tc-int-label">Tu configuración, alertas y bitácora</div>';
+    html += '<div class="tc-int-secciones">';
+
+    if (campos.length) {
+      html += '<div class="tc-int-sec tc-int-sec-config abierta"><div class="tc-int-head">' + TC_ICONOS.engranaje + ' Personalizar' + TC_ICONOS.chev + '</div><div class="tc-int-body">';
+      campos.forEach(function(c, i){ html += tcCampoHtml(c, i); });
+      html += '<button class="tc-int-btn" data-tc-action="guardar-config">Guardar</button><div class="tc-int-msg tc-int-msg-config"></div>';
+      html += '</div></div>';
+    }
+
+    if (alertaSpec) {
+      html += '<div class="tc-int-sec"><div class="tc-int-head">' + TC_ICONOS.campana + ' Alerta' + TC_ICONOS.chev + '</div><div class="tc-int-body">';
+      html += '<div class="tc-int-lista-alertas" style="font-size:0.72rem; color:#64748b;">Cargando…</div>';
+      html += '<div class="tc-int-fila" style="margin-top:10px;">';
+      html += '<div class="tc-int-campo" style="flex:1; min-width:130px;"><label>Avisarme si ' + tcEscapar(alertaSpec.label || alertaSpec.variable) + ' es</label><select class="tc-int-alerta-operador"><option value="gt">Mayor que</option><option value="lt">Menor que</option></select></div>';
+      html += '<div class="tc-int-campo" style="flex:1; min-width:90px;"><label>Umbral' + (alertaSpec.unidad ? (' (' + tcEscapar(alertaSpec.unidad) + ')') : '') + '</label><input type="number" step="any" class="tc-int-alerta-umbral"></div>';
+      html += '<button class="tc-int-btn" data-tc-action="guardar-alerta">+ Crear</button>';
+      html += '</div><div class="tc-int-msg tc-int-msg-alerta"></div>';
+      html += '</div></div>';
+    }
+
+    if (conNotas) {
+      html += '<div class="tc-int-sec"><div class="tc-int-head">' + TC_ICONOS.nota + ' Notas / Bitácora' + TC_ICONOS.chev + '</div><div class="tc-int-body">';
+      html += '<div class="tc-int-lista-notas" style="font-size:0.72rem; color:#64748b;">Cargando…</div>';
+      html += '<div class="tc-int-campo" style="margin-top:10px;"><textarea class="tc-int-nota-texto" rows="2" maxlength="500" placeholder="Agregar una observación, labor o medición propia..."></textarea></div>';
+      html += '<button class="tc-int-btn" data-tc-action="agregar-nota">+ Agregar nota</button><div class="tc-int-msg tc-int-msg-nota"></div>';
+      html += '</div></div>';
+    }
+
+    html += '</div>'; // .tc-int-secciones
+
+    html += '<div class="tc-int-exportar">';
+    html += '<button class="tc-int-btn tc-int-btn-secondary" data-tc-action="copiar">' + TC_ICONOS.copiar + ' Copiar resumen</button>';
+    html += '<button class="tc-int-btn tc-int-btn-secondary" data-tc-action="pdf">' + TC_ICONOS.exportar + ' Exportar PDF</button>';
+    html += '</div>';
+
+    el.classList.add('tc-int');
+    el.innerHTML = html;
+
+    // Handlers locales (no en document): naval/energia usan
+    // onclick="event.stopPropagation()" en .modal-content/.modal-box
+    // y eso bloquea la delegación global.
+    if (el.dataset.tcBound !== '1') {
+      el.dataset.tcBound = '1';
+      el.addEventListener('click', function(e){
+        var head = e.target.closest('.tc-int-head');
+        if (head && el.contains(head)) {
+          e.preventDefault();
+          e.stopPropagation();
+          var sec = head.closest('.tc-int-sec');
+          if (sec) sec.classList.toggle('abierta');
+          return;
+        }
+
+        var btn = e.target.closest('[data-tc-action]');
+        if (!btn || !el.contains(btn)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        switch (btn.dataset.tcAction) {
+          case 'guardar-config': tcGuardarConfig(el); break;
+          case 'guardar-alerta': tcGuardarAlerta(el); break;
+          case 'eliminar-alerta': tcEliminarAlerta(el, btn.dataset.id); break;
+          case 'agregar-nota': tcAgregarNota(el); break;
+          case 'eliminar-nota': tcEliminarNota(el, btn.dataset.id); break;
+          case 'copiar': tcCopiarResumen(el, btn); break;
+          case 'pdf': tcExportarPDF(el); break;
+        }
+      });
+    }
+  }
+
+  function tcQuery(cont) {
+    return 'sector=' + encodeURIComponent(cont.dataset.sector) + '&modal=' + encodeURIComponent(cont.dataset.modal) +
+      '&lat=' + encodeURIComponent(cont.dataset.lat || '') + '&lon=' + encodeURIComponent(cont.dataset.lon || '');
+  }
+
+  function tcRenderAlertas(cont, alertas, spec) {
+    var lista = cont.querySelector('.tc-int-lista-alertas');
+    if (!lista) return;
+    if (!alertas.length) { lista.innerHTML = '<div style="font-size:0.72rem; color:#64748b;">No configuraste ninguna alerta todavía.</div>'; return; }
+    lista.innerHTML = alertas.map(function(a){
+      var txt = 'Avisarme cuando <strong>' + tcEscapar(spec.label || a.variable) + '</strong> sea ' + (a.operador === 'gt' ? 'mayor' : 'menor') + ' que <strong>' + a.umbral + '</strong>' + (spec.unidad ? (' ' + tcEscapar(spec.unidad)) : '');
+      return '<div class="tc-int-item"><span class="tc-int-item-txt">' + txt + '</span><button data-tc-action="eliminar-alerta" data-id="' + a.id + '" title="Eliminar">' + TC_ICONOS.basura + '</button></div>';
+    }).join('');
+  }
+
+  function tcRenderNotas(cont, notas) {
+    var lista = cont.querySelector('.tc-int-lista-notas');
+    if (!lista) return;
+    if (!notas.length) { lista.innerHTML = '<div style="font-size:0.72rem; color:#64748b;">Todavía no agregaste notas.</div>'; return; }
+    lista.innerHTML = notas.map(function(n){
+      var fecha = new Date(n.creada);
+      var fechaTxt = isNaN(fecha.getTime()) ? '' : fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      return '<div class="tc-int-item"><span class="tc-int-item-txt"><span style="color:#64748b; font-size:0.66rem;">' + fechaTxt + '</span><br>' + tcEscapar(n.texto) + '</span><button data-tc-action="eliminar-nota" data-id="' + n.id + '" title="Eliminar">' + TC_ICONOS.basura + '</button></div>';
+    }).join('');
+  }
+
+  function tcAplicarResaltados(modalContent, datos) {
+    if (!modalContent || !datos) return;
+    modalContent.querySelectorAll('[data-tc-match]').forEach(function(elMatch){
+      var condiciones = elMatch.dataset.tcMatch.split(',').map(function(s){ return s.trim(); });
+      var coincide = condiciones.length > 0 && condiciones.every(function(cond){
+        var partes = cond.split(':');
+        return datos[partes[0]] !== undefined && datos[partes[0]] !== '' && String(datos[partes[0]]) === partes[1];
+      });
+      elMatch.classList.toggle('tc-resaltado', coincide);
+    });
+  }
+
+  // Reacciones "especiales" para modales concretos que además de resaltar
+  // filas, recalculan algo con los datos personalizados (ej. GDD real desde
+  // la fecha de siembra, horas de riego con la capacidad propia, etc.)
+  function tcModalEspecial(cont, datos) {
+    var modal = cont.dataset.modal;
+    var sector = cont.dataset.sector;
+    var modalContent = tcModalContenedor(cont);
+    if (!modalContent) return;
+
+    if (sector === 'agro' && modal === 'modGDD' && datos.fecha_siembra) {
+      var target = modalContent.querySelector('.tc-especial-target');
+      if (target) {
+        var tbase = { maiz: 10, soja: 10, trigo: 4, girasol: 6, algodon: 15, pasturas: 5 }[datos.cultivo] || 10;
+        target.style.display = 'block';
+        target.innerHTML = '<div style="color:#94a3b8; font-size:0.76rem; padding:10px 0;">Calculando GDD real desde tu fecha de siembra…</div>';
+        fetch('/api/agro/gdd-siembra/?lat=' + cont.dataset.lat + '&lon=' + cont.dataset.lon + '&fecha_siembra=' + encodeURIComponent(datos.fecha_siembra) + '&t_base=' + tbase, { credentials: 'include' })
+          .then(function(r){ return r.json(); })
+          .then(function(res){
+            if (!res.ok) { target.innerHTML = '<div style="color:#f87171; font-size:0.76rem;">' + tcEscapar(res.error || 'No se pudo calcular.') + '</div>'; return; }
+            target.innerHTML = '<div style="background:rgba(74,222,128,0.08); border:1px solid rgba(74,222,128,0.3); border-radius:10px; padding:14px 16px; margin-top:10px;">' +
+              '<div style="font-size:0.62rem; color:#4ade80; font-weight:700; text-transform:uppercase; margin-bottom:6px;">GDD real desde tu siembra (' + res.dias + ' días · base ' + tbase + '°C)</div>' +
+              '<div style="font-size:1.7rem; font-weight:800; color:#4ade80; font-family:\'JetBrains Mono\',monospace;">' + res.gdd_acumulado + ' <span style="font-size:0.5em; color:#94a3b8;">GDD</span></div>' +
+            '</div>';
+          })
+          .catch(function(){ target.innerHTML = '<div style="color:#f87171; font-size:0.76rem;">No se pudo conectar con el servidor.</div>'; });
+      }
+    }
+
+    if (sector === 'agro' && modal === 'modETo' && datos.capacidad_riego) {
+      var targetEto = modalContent.querySelector('.tc-especial-target');
+      var capacidad = parseFloat(datos.capacidad_riego);
+      if (targetEto && capacidad > 0) {
+        var etoHoy = parseFloat(modalContent.dataset.etoHoy || '0');
+        var kc = { maiz: 1.20, soja: 1.15, trigo: 1.15, girasol: 1.10, pasturas: 1.05 }[datos.cultivo] || 1.0;
+        var etc = etoHoy * kc;
+        var horas = etc / capacidad;
+        targetEto.style.display = 'block';
+        targetEto.innerHTML = '<div style="background:rgba(167,139,250,0.08); border:1px solid rgba(167,139,250,0.3); border-radius:10px; padding:14px 16px; margin-top:10px;">' +
+          '<div style="font-size:0.62rem; color:#a78bfa; font-weight:700; text-transform:uppercase; margin-bottom:6px;">Horas de riego necesarias hoy (con tu equipo)</div>' +
+          '<div style="font-size:1.7rem; font-weight:800; color:#a78bfa; font-family:\'JetBrains Mono\',monospace;">' + horas.toFixed(1) + ' <span style="font-size:0.5em; color:#94a3b8;">horas</span></div>' +
+          '<div style="font-size:0.66rem; color:#64748b; margin-top:4px;">ETc≈' + etc.toFixed(1) + ' mm ÷ ' + capacidad + ' mm/h de tu equipo</div>' +
+        '</div>';
+      }
+    }
+
+    if (sector === 'agro' && modal === 'modPulv' && (datos.viento_max || datos.delta_t_max)) {
+      var targetPulv = modalContent.querySelector('.tc-especial-target');
+      if (targetPulv) {
+        var deltaT = parseFloat(modalContent.dataset.deltaT || '0');
+        var viento = parseFloat(modalContent.dataset.viento || '0');
+        var vientoMax = parseFloat(datos.viento_max || 15);
+        var deltaTMax = parseFloat(datos.delta_t_max || 8);
+        var apto = (deltaT >= 2 && deltaT <= deltaTMax && viento <= vientoMax);
+        targetPulv.style.display = 'block';
+        targetPulv.innerHTML = '<div style="background:rgba(' + (apto ? '74,222,128' : '239,68,68') + ',0.08); border:1px solid rgba(' + (apto ? '74,222,128' : '239,68,68') + ',0.3); border-radius:10px; padding:14px 16px; margin-top:10px;">' +
+          '<div style="font-size:0.62rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:6px;">Evaluación con tu equipo (viento máx ' + vientoMax + ' km/h · Delta T máx ' + deltaTMax + ')</div>' +
+          '<div style="font-size:1rem; font-weight:800; color:' + (apto ? '#4ade80' : '#ef4444') + ';">' + (apto ? 'CONDICIONES APTAS' : 'NO APLICAR AHORA') + '</div>' +
+        '</div>';
+      }
+    }
+
+    if (sector === 'naval' && modal === 'modViento' && datos.viento_max) {
+      var targetViento = modalContent.querySelector('.tc-especial-target');
+      if (targetViento) {
+        var vientoActual = parseFloat(modalContent.dataset.vientoKt || '0');
+        var vientoMaxNav = parseFloat(datos.viento_max);
+        var aptoNav = vientoActual <= vientoMaxNav;
+        targetViento.style.display = 'block';
+        targetViento.innerHTML = '<div style="background:rgba(' + (aptoNav ? '74,222,128' : '239,68,68') + ',0.08); border:1px solid rgba(' + (aptoNav ? '74,222,128' : '239,68,68') + ',0.3); border-radius:10px; padding:14px 16px; margin-top:10px;">' +
+          '<div style="font-size:0.62rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:6px;">Evaluación con tu límite personal (' + vientoMaxNav + ' kt)</div>' +
+          '<div style="font-size:1rem; font-weight:800; color:' + (aptoNav ? '#4ade80' : '#ef4444') + ';">' + (aptoNav ? 'APTO PARA NAVEGAR' : 'SUPERA TU LÍMITE') + '</div>' +
+        '</div>';
+      }
+    }
+
+    if (sector === 'naval' && modal === 'modVis' && datos.visibilidad_min) {
+      var targetVis = modalContent.querySelector('.tc-especial-target');
+      if (targetVis) {
+        var visActual = parseFloat(modalContent.dataset.visNm || '0');
+        var visMin = parseFloat(datos.visibilidad_min);
+        var aptoVis = visActual >= visMin;
+        targetVis.style.display = 'block';
+        targetVis.innerHTML = '<div style="background:rgba(' + (aptoVis ? '74,222,128' : '239,68,68') + ',0.08); border:1px solid rgba(' + (aptoVis ? '74,222,128' : '239,68,68') + ',0.3); border-radius:10px; padding:14px 16px; margin-top:10px;">' +
+          '<div style="font-size:0.62rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:6px;">Evaluación con tu mínimo operativo (' + visMin + ' NM)</div>' +
+          '<div style="font-size:1rem; font-weight:800; color:' + (aptoVis ? '#4ade80' : '#ef4444') + ';">' + (aptoVis ? 'VISIBILIDAD SUFICIENTE' : 'POR DEBAJO DE TU MÍNIMO') + '</div>' +
+        '</div>';
+      }
+    }
+
+    if (sector === 'aereo' && modal === 'modViento' && datos.viento_max) {
+      var targetVientoA = modalContent.querySelector('.tc-especial-target');
+      if (targetVientoA) {
+        var vientoActualA = parseFloat(modalContent.dataset.vientoKt || '0');
+        var vientoMaxA = parseFloat(datos.viento_max);
+        var aptoA = vientoActualA <= vientoMaxA;
+        targetVientoA.style.display = 'block';
+        targetVientoA.innerHTML = '<div style="background:rgba(' + (aptoA ? '74,222,128' : '239,68,68') + ',0.08); border:1px solid rgba(' + (aptoA ? '74,222,128' : '239,68,68') + ',0.3); border-radius:10px; padding:14px 16px; margin-top:10px;">' +
+          '<div style="font-size:0.62rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:6px;">Evaluación con tu límite personal (' + vientoMaxA + ' kt)</div>' +
+          '<div style="font-size:1rem; font-weight:800; color:' + (aptoA ? '#4ade80' : '#ef4444') + ';">' + (aptoA ? 'DENTRO DE TU LÍMITE' : 'SUPERA TU LÍMITE PERSONAL') + '</div>' +
+        '</div>';
+      }
+    }
+
+    if (sector === 'aereo' && modal === 'modVis' && datos.visibilidad_min) {
+      var targetVisA = modalContent.querySelector('.tc-especial-target');
+      if (targetVisA) {
+        var visActualA = parseFloat(modalContent.dataset.visKm || '0');
+        var visMinA = parseFloat(datos.visibilidad_min);
+        var aptoVisA = visActualA >= visMinA;
+        targetVisA.style.display = 'block';
+        targetVisA.innerHTML = '<div style="background:rgba(' + (aptoVisA ? '74,222,128' : '239,68,68') + ',0.08); border:1px solid rgba(' + (aptoVisA ? '74,222,128' : '239,68,68') + ',0.3); border-radius:10px; padding:14px 16px; margin-top:10px;">' +
+          '<div style="font-size:0.62rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:6px;">Evaluación con tus mínimos personales (' + visMinA + ' km)</div>' +
+          '<div style="font-size:1rem; font-weight:800; color:' + (aptoVisA ? '#4ade80' : '#ef4444') + ';">' + (aptoVisA ? 'VISIBILIDAD SUFICIENTE' : 'POR DEBAJO DE TUS MÍNIMOS') + '</div>' +
+        '</div>';
+      }
+    }
+
+    if (sector === 'energia' && modal === 'modSolar' && (datos.area_paneles || datos.eficiencia)) {
+      var targetSolar = modalContent.querySelector('.tc-especial-target');
+      if (targetSolar) {
+        var rad = parseFloat(modalContent.dataset.rad || '0');
+        var area = parseFloat(datos.area_paneles || 20);
+        var eff = parseFloat(datos.eficiencia || 18) / 100;
+        var potW = rad * area * eff;
+        targetSolar.style.display = 'block';
+        targetSolar.innerHTML = '<div style="background:rgba(250,204,21,0.08); border:1px solid rgba(250,204,21,0.3); border-radius:10px; padding:14px 16px; margin-top:10px;">' +
+          '<div style="font-size:0.62rem; color:#facc15; font-weight:700; text-transform:uppercase; margin-bottom:6px;">Potencia estimada con TU instalación</div>' +
+          '<div style="font-size:1.5rem; font-weight:800; color:#facc15; font-family:\'JetBrains Mono\',monospace;">' + Math.round(potW) + ' <span style="font-size:0.5em; color:#94a3b8;">W</span></div>' +
+          '<div style="font-size:0.66rem; color:#64748b; margin-top:4px;">' + rad + ' W/m² × ' + area + ' m² × ' + (eff * 100) + '% eficiencia</div>' +
+        '</div>';
+      }
+    }
+
+    if (sector === 'energia' && modal === 'modEol' && datos.viento_max) {
+      var targetEol = modalContent.querySelector('.tc-especial-target');
+      if (targetEol) {
+        var vientoMs = parseFloat(modalContent.dataset.vientoMs || '0');
+        var cutOut = parseFloat(datos.viento_max);
+        var seguro = vientoMs < cutOut;
+        targetEol.style.display = 'block';
+        targetEol.innerHTML = '<div style="background:rgba(' + (seguro ? '74,222,128' : '239,68,68') + ',0.08); border:1px solid rgba(' + (seguro ? '74,222,128' : '239,68,68') + ',0.3); border-radius:10px; padding:14px 16px; margin-top:10px;">' +
+          '<div style="font-size:0.62rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:6px;">Evaluación con tu cut-out personal (' + cutOut + ' m/s)</div>' +
+          '<div style="font-size:1rem; font-weight:800; color:' + (seguro ? '#4ade80' : '#ef4444') + ';">' + (seguro ? 'DENTRO DE RANGO SEGURO' : 'SUPERA TU CUT-OUT') + '</div>' +
+        '</div>';
+      }
+    }
+
+    if (sector === 'agro' && modal === 'modBal' && datos.lluvia_real !== undefined && datos.lluvia_real !== '') {
+      var targetBal = modalContent.querySelector('.tc-especial-target');
+      if (targetBal) {
+        var etoHoyBal = parseFloat(modalContent.dataset.etoHoy || '0');
+        var lluviaReal = parseFloat(datos.lluvia_real);
+        var diffReal = lluviaReal - etoHoyBal;
+        targetBal.style.display = 'block';
+        targetBal.innerHTML = '<div style="background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.3); border-radius:10px; padding:14px 16px; margin-top:10px;">' +
+          '<div style="font-size:0.62rem; color:#60a5fa; font-weight:700; text-transform:uppercase; margin-bottom:6px;">Saldo de hoy corregido con TU pluviómetro</div>' +
+          '<div style="font-size:1.4rem; font-weight:800; color:' + (diffReal < 0 ? '#ef4444' : '#4ade80') + '; font-family:\'JetBrains Mono\',monospace;">' + (diffReal > 0 ? '+' : '') + diffReal.toFixed(1) + ' mm</div>' +
+          '<div style="font-size:0.66rem; color:#64748b; margin-top:4px;">Lluvia real ' + lluviaReal + ' mm − ETo pronosticada ' + etoHoyBal.toFixed(1) + ' mm</div>' +
+        '</div>';
+      }
+    }
+  }
+
+  function tcInteractivoCargar(cont) {
+    if (cont.dataset.cargado === '1') return;
+    cont.dataset.cargado = '1';
+    var qs = tcQuery(cont);
+
+    if (cont.querySelector('.tc-int-sec-config')) {
+      fetch('/api/modal/config/?' + qs, { credentials: 'include' })
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          var datos = res.datos || {};
+          cont.querySelectorAll('.tc-int-sec-config [data-key]').forEach(function(inp){
+            if (datos[inp.dataset.key] !== undefined) inp.value = datos[inp.dataset.key];
+          });
+          tcAplicarResaltados(tcModalContenedor(cont), datos);
+          tcModalEspecial(cont, datos);
+        }).catch(function(){});
+    }
+
+    if (cont.dataset.alerta) {
+      var spec = JSON.parse(cont.dataset.alerta);
+      fetch('/api/modal/alertas/?' + qs, { credentials: 'include' })
+        .then(function(r){ return r.json(); })
+        .then(function(res){ tcRenderAlertas(cont, res.alertas || [], spec); }).catch(function(){});
+    }
+
+    if (cont.querySelector('.tc-int-lista-notas')) {
+      fetch('/api/modal/notas/?' + qs, { credentials: 'include' })
+        .then(function(r){ return r.json(); })
+        .then(function(res){ tcRenderNotas(cont, res.notas || []); }).catch(function(){});
+    }
+  }
+
+  function tcGuardarConfig(cont) {
+    var datos = {};
+    cont.querySelectorAll('.tc-int-sec-config [data-key]').forEach(function(inp){
+      if (inp.value !== '') datos[inp.dataset.key] = inp.value;
+    });
+    var msgEl = cont.querySelector('.tc-int-msg-config');
+    fetch('/api/modal/config/', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': tcCsrf() },
+      body: JSON.stringify({ sector: cont.dataset.sector, modal: cont.dataset.modal, lat: cont.dataset.lat, lon: cont.dataset.lon, datos: datos }),
+    }).then(function(r){ return r.json(); }).then(function(res){
+      if (res.ok) {
+        if (msgEl) { msgEl.style.color = '#4ade80'; msgEl.textContent = 'Guardado ✓'; setTimeout(function(){ msgEl.textContent = ''; }, 2500); }
+        tcAplicarResaltados(tcModalContenedor(cont), datos);
+        tcModalEspecial(cont, datos);
+      } else if (msgEl) { msgEl.style.color = '#f87171'; msgEl.textContent = res.error || 'No se pudo guardar.'; }
+    }).catch(function(){ if (msgEl) { msgEl.style.color = '#f87171'; msgEl.textContent = 'Error de conexión.'; } });
+  }
+
+  function tcGuardarAlerta(cont) {
+    var operador = cont.querySelector('.tc-int-alerta-operador').value;
+    var umbralEl = cont.querySelector('.tc-int-alerta-umbral');
+    var umbral = parseFloat(umbralEl.value);
+    var msgEl = cont.querySelector('.tc-int-msg-alerta');
+    if (isNaN(umbral)) { if (msgEl) { msgEl.style.color = '#f87171'; msgEl.textContent = 'Ingresá un umbral válido.'; } return; }
+    var spec = JSON.parse(cont.dataset.alerta);
+    fetch('/api/modal/alertas/', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': tcCsrf() },
+      body: JSON.stringify({ sector: cont.dataset.sector, modal: cont.dataset.modal, lat: cont.dataset.lat, lon: cont.dataset.lon, variable: spec.variable, operador: operador, umbral: umbral }),
+    }).then(function(r){ return r.json(); }).then(function(res){
+      if (res.ok) {
+        umbralEl.value = '';
+        if (msgEl) { msgEl.style.color = '#4ade80'; msgEl.textContent = 'Alerta creada ✓'; setTimeout(function(){ msgEl.textContent = ''; }, 2500); }
+        fetch('/api/modal/alertas/?' + tcQuery(cont), { credentials: 'include' }).then(function(r){ return r.json(); }).then(function(r2){ tcRenderAlertas(cont, r2.alertas || [], spec); });
+      } else if (msgEl) { msgEl.style.color = '#f87171'; msgEl.textContent = res.error || 'No se pudo guardar.'; }
+    }).catch(function(){ if (msgEl) { msgEl.style.color = '#f87171'; msgEl.textContent = 'Error de conexión.'; } });
+  }
+
+  function tcEliminarAlerta(cont, id) {
+    fetch('/api/modal/alertas/?id=' + encodeURIComponent(id), { method: 'DELETE', credentials: 'include', headers: { 'X-CSRFToken': tcCsrf() } })
+      .then(function(){
+        var spec = JSON.parse(cont.dataset.alerta);
+        fetch('/api/modal/alertas/?' + tcQuery(cont), { credentials: 'include' }).then(function(r){ return r.json(); }).then(function(r2){ tcRenderAlertas(cont, r2.alertas || [], spec); });
+      });
+  }
+
+  function tcAgregarNota(cont) {
+    var textEl = cont.querySelector('.tc-int-nota-texto');
+    var texto = (textEl.value || '').trim();
+    var msgEl = cont.querySelector('.tc-int-msg-nota');
+    if (!texto) { if (msgEl) { msgEl.style.color = '#f87171'; msgEl.textContent = 'Escribí algo antes de guardar.'; } return; }
+    fetch('/api/modal/notas/', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': tcCsrf() },
+      body: JSON.stringify({ sector: cont.dataset.sector, modal: cont.dataset.modal, lat: cont.dataset.lat, lon: cont.dataset.lon, texto: texto }),
+    }).then(function(r){ return r.json(); }).then(function(res){
+      if (res.ok) {
+        textEl.value = '';
+        if (msgEl) { msgEl.style.color = '#4ade80'; msgEl.textContent = 'Nota agregada ✓'; setTimeout(function(){ msgEl.textContent = ''; }, 2500); }
+        fetch('/api/modal/notas/?' + tcQuery(cont), { credentials: 'include' }).then(function(r){ return r.json(); }).then(function(r2){ tcRenderNotas(cont, r2.notas || []); });
+      } else if (msgEl) { msgEl.style.color = '#f87171'; msgEl.textContent = res.error || 'No se pudo guardar.'; }
+    }).catch(function(){ if (msgEl) { msgEl.style.color = '#f87171'; msgEl.textContent = 'Error de conexión.'; } });
+  }
+
+  function tcEliminarNota(cont, id) {
+    fetch('/api/modal/notas/?id=' + encodeURIComponent(id), { method: 'DELETE', credentials: 'include', headers: { 'X-CSRFToken': tcCsrf() } })
+      .then(function(){ fetch('/api/modal/notas/?' + tcQuery(cont), { credentials: 'include' }).then(function(r){ return r.json(); }).then(function(r2){ tcRenderNotas(cont, r2.notas || []); }); });
+  }
+
+  function tcCopiarResumen(cont, btn) {
+    var modalContent = tcModalContenedor(cont);
+    if (!modalContent) return;
+    var clone = modalContent.cloneNode(true);
+    var intBlock = clone.querySelector('.tc-int'); if (intBlock) intBlock.remove();
+    var closeBtn = clone.querySelector('.btn-close, .btn-close-modal'); if (closeBtn) closeBtn.remove();
+    document.body.appendChild(clone);
+    clone.style.cssText = 'position:absolute; left:-9999px; top:-9999px;';
+    var texto = clone.innerText.replace(/\n{3,}/g, '\n\n').trim();
+    clone.remove();
+    var feedback = function(ok){
+      if (!btn) return;
+      var original = btn.dataset.original || btn.innerHTML;
+      btn.dataset.original = original;
+      btn.innerHTML = ok ? 'Copiado ✓' : 'No se pudo copiar';
+      setTimeout(function(){ btn.innerHTML = original; }, 2000);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texto).then(function(){ feedback(true); }).catch(function(){ feedback(false); });
+    } else { feedback(false); }
+  }
+
+  function tcExportarPDF(cont) {
+    var modalContent = tcModalContenedor(cont);
+    var overlay = cont.closest('.modal-overlay');
+    if (!modalContent || !overlay) return;
+    overlay.classList.add('tc-print-target-wrap');
+    document.body.classList.add('tc-imprimiendo');
+    window.print();
+    var limpiar = function(){
+      overlay.classList.remove('tc-print-target-wrap');
+      document.body.classList.remove('tc-imprimiendo');
+      window.removeEventListener('afterprint', limpiar);
+    };
+    window.addEventListener('afterprint', limpiar);
+    setTimeout(limpiar, 4000);
+  }
+
+  window.tcInteractivoInit = function() {
+    document.querySelectorAll('.tc-interactivo').forEach(function(el){ tcInteractivoBuild(el); });
+  };
+
+  window.tcInteractivoAlAbrir = function(modalId) {
+    var modal = document.getElementById(modalId);
+    if (!modal) return;
+    var el = modal.querySelector('.tc-interactivo');
+    if (!el) return;
+    tcInteractivoBuild(el);
+    tcInteractivoCargar(el);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.tcInteractivoInit);
+  } else {
+    window.tcInteractivoInit();
+  }
+})();
+</script>
