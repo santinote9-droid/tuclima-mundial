@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import PerfilUsuario, ReporteUsuario, FeedbackIA, UbicacionGuardada, ReporteProgramado, ApiKeyPersonal, ConfiguracionModal, AlertaModal, NotaModal
+from .models import (
+    PerfilUsuario, ReporteUsuario, FeedbackIA, HistorialTokens,
+    UbicacionGuardada, ReporteProgramado, ApiKeyPersonal,
+    ConfiguracionModal, AlertaModal, NotaModal,
+)
 
 
 @admin.register(PerfilUsuario)
@@ -76,6 +80,19 @@ class FeedbackIAAdmin(admin.ModelAdmin):
         count = queryset.update(revisado=False)
         self.message_user(request, f'{count} feedback(s) marcado(s) como no revisado(s).')
     marcar_como_no_revisado.short_description = 'Marcar seleccionados como no revisados'
+
+
+@admin.register(HistorialTokens)
+class HistorialTokensAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'tipo', 'cantidad', 'tokens_restantes', 'descripcion_corta', 'fecha')
+    list_filter = ('tipo', 'fecha')
+    search_fields = ('usuario__username', 'descripcion')
+    ordering = ('-fecha',)
+    readonly_fields = ('fecha',)
+
+    def descripcion_corta(self, obj):
+        return obj.descripcion[:60] + '...' if len(obj.descripcion) > 60 else obj.descripcion
+    descripcion_corta.short_description = 'Descripción'
 
 
 # ── Nuevos modelos ──────────────────────────────────────────────────────────

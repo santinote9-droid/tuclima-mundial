@@ -109,7 +109,7 @@
             <i class="fas fa-credit-card" style="font-size:1.1rem;"></i>
             Pagar con tarjeta o PayPal
         </div>
-        <div class="ls-subtitle">Activacion automatica &middot; Procesado por Lemon Squeezy</div>
+            <div class="ls-subtitle">Cobro en USD &middot; Activacion automatica &middot; Lemon Squeezy</div>
 
         <a href="/ls-checkout/?paquete={{ paquete_id }}" class="btn-ls">
             <i class="fas fa-lock" style="font-size:.9rem;opacity:.85;"></i>
@@ -136,10 +136,14 @@
             <h4><i class="fas fa-mobile-screen-button" style="margin-right:6px;"></i>Mercado Pago</h4>
 
             <a href="/pagar-tokens/?paquete={{ paquete_id }}" class="btn-mp-checkout">
-                <i class="fas fa-bolt"></i> Pagar con Mercado Pago
+                <i class="fas fa-bolt"></i> Pagar ${{ precio_usd }} USD con Mercado Pago
             </a>
 
-            <div class="section-divider">O transferi manualmente</div>
+            <div class="section-divider">Transferencia (solo Argentina)</div>
+            <p style="color:#64748b;font-size:.78rem;line-height:1.5;margin:0 0 14px;">
+                El precio del plan es <strong style="color:#e2e8f0;">${{ precio_usd }} USD</strong>.
+                Si transferís por CVU, enviá el equivalente en ARS del día e indicá el monto USD en el comprobante.
+            </p>
 
             <div class="row">
                 <span class="lbl">CVU</span>
@@ -158,8 +162,7 @@
             <div class="row">
                 <span class="lbl">Monto</span>
                 <div class="val big-amount">
-                    ${{ monto_ars }} ARS
-                    <small style="color:#64748b;font-size:.7rem;font-weight:400;">&approx; ${{ precio_usd }} USD</small>
+                    ${{ precio_usd }} USD
                 </div>
             </div>
 

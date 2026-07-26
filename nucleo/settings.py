@@ -262,6 +262,12 @@ DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'Weather Pro <climapro00@g
 MP_ACCESS_TOKEN = os.getenv('MP_ACCESS_TOKEN', '')
 SITE_URL        = os.getenv('SITE_URL', 'http://127.0.0.1:8000')  # ngrok en desarrollo
 
+# Obsoleto para UI (cobro oficial en USD). Se mantiene por compatibilidad.
+try:
+    ARS_POR_USD = int(os.getenv('ARS_POR_USD', '1000'))
+except (TypeError, ValueError):
+    ARS_POR_USD = 1000
+
 # ============================================================
 # PAYPAL — configura en .env
 # PAYPAL_MODE=sandbox (desarrollo) o live (producción)

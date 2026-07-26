@@ -73,12 +73,15 @@
 {% block content %}
 <div class="container">
         <h2>Destino de Fondos</h2>
+        <p style="text-align:center;color:#64748b;font-size:.82rem;margin:-8px 0 18px;line-height:1.5;">
+            Precio oficial en <strong style="color:#a5b4fc;">USD</strong>. Opción local para Argentina (CVU en ARS al tipo del día).
+        </p>
 
         <!-- Badge plan -->
         {% if plan == 'anual' %}
         <div style="text-align:center; background:#1e3a5f; border:1px solid #3b82f6; border-radius:12px; padding:8px 20px; margin-bottom:20px; color:#60a5fa; font-size:0.95rem;">
             Plan <strong>Anual</strong> — <strong style="color:#fff;">$200 USD</strong>
-            <span style="display:inline-block; background:#16a34a; color:#fff; font-size:0.72em; font-weight:bold; padding:2px 9px; border-radius:20px; margin-left:8px; vertical-align:middle;">Ahorrás $40</span>
+            <span style="display:inline-block; background:#16a34a; color:#fff; font-size:0.72em; font-weight:bold; padding:2px 9px; border-radius:20px; margin-left:8px; vertical-align:middle;">Ahorrás $40 USD</span>
         </div>
         {% else %}
         <div style="text-align:center; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:8px 20px; margin-bottom:20px; color:#94a3b8; font-size:0.95rem;">
@@ -127,8 +130,11 @@
             </div>
 
             <div class="row">
-                <span class="label">Monto Total</span>
-                <div class="value" style="color:#a663cc; font-weight:bold;">${{ monto_ars_brubank }} ARS<br><small style="color:#64748b; font-size:0.78em;">equiv. ${{ precio_usd }} USD</small></div>
+                <span class="label">Monto (USD)</span>
+                <div class="value" style="color:#a663cc; font-weight:bold;">
+                    ${{ precio_usd }} USD
+                    <br><small style="color:#64748b; font-size:0.78em;">Transferí el equivalente en ARS del día e indicá este monto USD en el comprobante.</small>
+                </div>
             </div>
         </div>
 
@@ -162,8 +168,11 @@
                 </div>
             </div>
             <div class="row">
-                <span class="label">Monto Total</span>
-                <div class="value" style="color:#0ea5e9; font-weight:bold;">${{ monto_ars_mp }} ARS<br><small style="color:#64748b; font-size:0.78em;">equiv. ${{ precio_usd }} USD</small></div>
+                <span class="label">Monto (USD)</span>
+                <div class="value" style="color:#0ea5e9; font-weight:bold;">
+                    ${{ precio_usd }} USD
+                    <br><small style="color:#64748b; font-size:0.78em;">Transferí el equivalente en ARS del día e indicá este monto USD en el comprobante.</small>
+                </div>
             </div>
         </div>
 

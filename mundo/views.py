@@ -2749,7 +2749,7 @@ def ls_checkout(request):
     paquete    = _PAQUETES_MAP.get(paquete_id)
 
     if not paquete or not paquete.get('ls_variant_id'):
-        return redirect('recargar_tokens')
+        return redirect('/pricing/#tokens')
 
     api_key    = getattr(settings, 'LEMONSQUEEZY_API_KEY', '').strip()
     store_id   = getattr(settings, 'LEMONSQUEEZY_STORE_ID', '').strip()
@@ -2855,11 +2855,11 @@ def ls_checkout(request):
 
 @login_required
 def ls_retorno(request):
-    """Página de retorno desde Lemon Squeezy. El webhook activa el plan en segundos."""
-    # Intentar obtener el paquete del query param (viene del redirect_url de la API)
+    """
+    Retorno desde Lemon Squeezy. El webhook activa el plan; aquí esperamos
+    confirmación real en HistorialTokens / perfil antes de mostrar éxito.
+    """
     paquete_id = request.GET.get('paquete_id', '')
-
-    # Si no está en la URL, intentar recuperarlo de la sesión (fallback sin API)
     if not paquete_id:
         paquete_id = request.session.pop('ls_paquete_id_pendiente', '')
     else:
@@ -2867,9 +2867,32 @@ def ls_retorno(request):
     request.session.pop('ls_user_id_pendiente', None)
 
     paquete = _PAQUETES_MAP.get(paquete_id)
-    return render(request, 'pago_exitoso_tokens.html', {
-        'paquete':            paquete,
-        'tokens_disponibles': request.user.perfil.tokens_disponibles,
+    request.user.perfil.refresh_from_db()
+
+    if paquete and _plan_tokens_ya_activado(request.user, paquete):
+        return render(request, 'pago_exitoso_tokens.html', _ctx_pago_exitoso_tokens(request.user, paquete))
+
+    # Webhook aún no llegó: reintentar unos segundos
+    try:
+        intento = int(request.GET.get('w', '0') or 0)
+    except (TypeError, ValueError):
+        intento = 0
+
+    if paquete and intento < 8:
+        q = f"?paquete_id={paquete_id}&w={intento + 1}" if paquete_id else f"?w={intento + 1}"
+        return render(request, 'pending.html', {
+            'plan': 'tokens',
+            'metodo': 'lemonsqueezy',
+            'paquete': paquete,
+            'auto_refresh_url': request.path + q,
+            'auto_refresh_seconds': 3,
+        })
+
+    # Sin confirmación tras reintentos: no fingir éxito
+    return render(request, 'pending.html', {
+        'plan': 'tokens',
+        'metodo': 'lemonsqueezy',
+        'paquete': paquete,
     })
 
 
@@ -2879,9 +2902,15 @@ def ls_webhook(request):
     if request.method != 'POST':
         return HttpResponse(status=200)
 
-    # 1. Verificar firma
-    secret = getattr(settings, 'LEMONSQUEEZY_WEBHOOK_SECRET', '').encode('utf-8')
-    if secret:
+    # 1. Verificar firma (obligatoria fuera de DEBUG)
+    secret_raw = getattr(settings, 'LEMONSQUEEZY_WEBHOOK_SECRET', '') or ''
+    secret = secret_raw.encode('utf-8')
+    if not secret:
+        if not settings.DEBUG:
+            logger.error('[LS WEBHOOK] LEMONSQUEEZY_WEBHOOK_SECRET no configurado')
+            return HttpResponse(status=503)
+        logger.warning('[LS WEBHOOK] Sin secreto — verificación omitida (DEBUG)')
+    else:
         sig_header = request.headers.get('X-Signature', '')
         computed   = hmac.new(secret, request.body, hashlib.sha256).hexdigest()
         if not hmac.compare_digest(computed, sig_header):
@@ -2912,22 +2941,10 @@ def ls_webhook(request):
             return HttpResponse(status=200)
 
         user = User.objects.get(id=int(user_id))
-
-        from .models import HistorialTokens
-        ya_procesado = HistorialTokens.objects.filter(
-            usuario=user,
-            tipo='BONO',
-            descripcion__icontains=paquete['nombre'],
-            fecha__date=timezone.now().date(),
-        ).exists()
-        if not ya_procesado:
-            meses_label = f"{paquete['meses']}m" + (f"+{paquete['regalo']}regalo" if paquete['regalo'] else '')
-            user.perfil.activar_plan_tokens(
-                paquete['tokens_dia'],
-                paquete['dias'],
-                f"Plan {paquete['nombre']} {meses_label} — {paquete['tokens_dia']:,} tokens/día",
-            )
+        if _activar_plan_tokens_si_nuevo(user, paquete):
             logger.info(f"[LS WEBHOOK] Plan activado: {user.username} — {paquete_id}")
+        else:
+            logger.info(f"[LS WEBHOOK] Ya procesado: {user.username} — {paquete_id}")
 
     except User.DoesNotExist:
         logger.error(f'[LS WEBHOOK] Usuario no encontrado: user_id={user_id}')
@@ -2959,15 +2976,11 @@ def transferencia(request):
     plan = request.GET.get('plan', 'mensual')
     if plan not in ('mensual', 'anual'):
         plan = 'mensual'
+    # Precio oficial siempre en USD (la CVU argentina cobra el equivalente en ARS del día)
     precio_usd = '200' if plan == 'anual' else '20'
-    # Monto ARS referencial (el admin actualiza según cotización)
-    monto_ars_brubank = '200000' if plan == 'anual' else '20000'
-    monto_ars_mp = '200000' if plan == 'anual' else '20000'
     return render(request, 'transferencia.html', {
         'plan': plan,
         'precio_usd': precio_usd,
-        'monto_ars_brubank': monto_ars_brubank,
-        'monto_ars_mp': monto_ars_mp,
     })
 
 @login_required
@@ -3096,8 +3109,8 @@ def mp_crear_preferencia(request):
         "items": [{
             "title": titulo,
             "quantity": 1,
-            "unit_price": precio,
-            "currency_id": "USD",
+            "unit_price": float(precio),
+            "currency_id": "USD",  # moneda oficial mundial
         }],
         "back_urls": {
             "success": f"{site}/mp-retorno/?plan={plan}&status=approved",
@@ -3162,27 +3175,20 @@ def mp_webhook(request):
         user_id_str = partes[0]
         user = User.objects.get(id=int(user_id_str))
 
-        # ¿Es compra de tokens? (external_reference: "123_tk_tokens_estandar")
+        # ¿Es compra de tokens? (external_reference: "123_tk_starter_1m")
         if len(partes) >= 3 and partes[1] == 'tk':
             paquete_id = partes[2]
             paquete = _PAQUETES_MAP.get(paquete_id)
             if not paquete:
                 return HttpResponse(status=200)
-            from .models import HistorialTokens
-            ya_procesado = HistorialTokens.objects.filter(
-                usuario=user,
-                tipo='RECARGA',
-                descripcion__icontains=paquete['nombre'],
-                fecha__date=timezone.now().date(),
-            ).exists()
-            if not ya_procesado:
-                meses_label = f"{paquete['meses']}m" + (f"+{paquete['regalo']}regalo" if paquete['regalo'] else '')
-                user.perfil.activar_plan_tokens(
-                    paquete['tokens_dia'],
-                    paquete['dias'],
-                    f"Plan {paquete['nombre']} {meses_label} — {paquete['tokens_dia']:,} tokens/día",
+            # activar_plan_tokens escribe tipo='BONO' (no RECARGA)
+            if _activar_plan_tokens_si_nuevo(user, paquete):
+                logger.info(
+                    f"[MP WEBHOOK] Plan tokens activado: {user.username} — "
+                    f"{paquete['nombre']} {_meses_label_paquete(paquete)}"
                 )
-                logger.info(f"[MP WEBHOOK] Plan tokens activado: {user.username} — {paquete['nombre']} {meses_label}")
+            else:
+                logger.info(f"[MP WEBHOOK] Ya procesado: {user.username} — {paquete_id}")
             return HttpResponse(status=200)
 
         # Es suscripción mensual/anual (external_reference: "123_mensual" o "123_anual")
@@ -4088,6 +4094,58 @@ for _plan in PLANES_TOKENS:
         }
 
 
+def _meses_label_paquete(paquete):
+    """Etiqueta corta de duración: '1m', '3m+1regalo', etc."""
+    label = f"{paquete['meses']}m"
+    if paquete.get('regalo'):
+        label += f"+{paquete['regalo']}regalo"
+    return label
+
+
+def _descripcion_plan_tokens(paquete):
+    """Descripción canónica del HistorialTokens (tipo BONO). Incluye [paquete_id] para idempotencia."""
+    return (
+        f"Plan {paquete['nombre']} [{paquete['id']}] {_meses_label_paquete(paquete)} "
+        f"— {paquete['tokens_dia']:,} tokens/día"
+    )
+
+
+def _plan_tokens_ya_activado(user, paquete):
+    """
+    Idempotencia: activar_plan_tokens registra tipo='BONO'.
+    Prioriza el marcador [paquete_id]; acepta también el formato legacy sin corchetes.
+    """
+    from .models import HistorialTokens
+    hoy = timezone.now().date()
+    base = HistorialTokens.objects.filter(usuario=user, tipo='BONO', fecha__date=hoy)
+    if base.filter(descripcion__icontains=f"[{paquete['id']}]").exists():
+        return True
+    # Legacy (antes del marcador [id])
+    legacy = f"Plan {paquete['nombre']} {_meses_label_paquete(paquete)}"
+    return base.filter(descripcion__icontains=legacy).exists()
+
+
+def _activar_plan_tokens_si_nuevo(user, paquete):
+    """Activa el plan solo si no fue procesado hoy. Devuelve True si activó ahora."""
+    if _plan_tokens_ya_activado(user, paquete):
+        return False
+    user.perfil.activar_plan_tokens(
+        paquete['tokens_dia'],
+        paquete['dias'],
+        _descripcion_plan_tokens(paquete),
+    )
+    return True
+
+
+def _ctx_pago_exitoso_tokens(user, paquete):
+    user.perfil.refresh_from_db()
+    return {
+        'paquete': paquete,
+        'tokens_disponibles': user.perfil.tokens_disponibles,
+        'dias': paquete['dias'] if paquete else 30,
+    }
+
+
 @login_required
 def seleccionar_pago_tokens(request):
     """Página de selección de método de pago para un plan de tokens."""
@@ -4096,19 +4154,14 @@ def seleccionar_pago_tokens(request):
     if not paquete:
         return redirect('/pricing/#tokens')
 
-    # Tipo de cambio referencial ARS (actualizar según cotización)
-    ARS_POR_USD = 1000
-    monto_ars = int(paquete['precio'] * ARS_POR_USD)
-    monto_ars_fmt = f"{monto_ars:,}".replace(',', '.')
-
     meses_label = f"{paquete['meses']} mes{'es' if paquete['meses'] > 1 else ''}"
     regalo_label = f" + {paquete['regalo']} de regalo" if paquete['regalo'] else ''
 
     return render(request, 'pago_tokens.html', {
         'paquete':     paquete,
         'paquete_id':  paquete_id,
-        'monto_ars':   monto_ars_fmt,
         'precio_usd':  int(paquete['precio']),
+        'moneda':      'USD',
         'periodo':     meses_label + regalo_label,
     })
 
@@ -4142,7 +4195,7 @@ def confirmar_manual_tokens(request):
                 <p style="margin-top:20px;color:#94a3b8;">Para activar en la shell de admin:</p>
                 <code style="background:#1e293b;color:#4ade80;padding:10px;display:block;border-radius:8px;font-size:0.85em;">
                     user = User.objects.get(id={request.user.id})<br>
-                    user.perfil.activar_plan_tokens({paquete['tokens_dia'] if paquete else 0}, {paquete['dias'] if paquete else 30}, "{plan_label}")
+                    user.perfil.activar_plan_tokens({paquete['tokens_dia'] if paquete else 0}, {paquete['dias'] if paquete else 30}, "{_descripcion_plan_tokens(paquete) if paquete else plan_label}")
                 </code>
             </div>
             """
@@ -4170,7 +4223,7 @@ def mp_crear_preferencia_tokens(request):
     paquete = _PAQUETES_MAP.get(paquete_id)
 
     if not paquete:
-        return redirect('recargar_tokens')
+        return redirect('/pricing/#tokens')
 
     sdk  = mercadopago.SDK(settings.MP_ACCESS_TOKEN)
     site = settings.SITE_URL.rstrip('/')
@@ -4182,12 +4235,12 @@ def mp_crear_preferencia_tokens(request):
         "items": [{
             "title": f"Weather PRO — {paquete['nombre']} {paquete['tokens_dia']:,} tokens/día · {meses_label}{regalo_label}",
             "quantity": 1,
-            "unit_price": paquete['precio'],
-            "currency_id": "USD",
+            "unit_price": float(paquete['precio']),
+            "currency_id": "USD",  # moneda oficial mundial
         }],
         "back_urls": {
             "success": f"{site}/tokens-retorno/?paquete={paquete_id}&status=approved",
-            "failure": f"{site}/recargar-tokens/",
+            "failure": f"{site}/pricing/#tokens",
             "pending": f"{site}/tokens-retorno/?paquete={paquete_id}&status=pending",
         },
         "auto_return": "approved",
@@ -4202,7 +4255,7 @@ def mp_crear_preferencia_tokens(request):
         return redirect(response["init_point"])
 
     logger.error(f"[MP Tokens] Error creando preferencia: {result}")
-    return redirect('recargar_tokens')
+    return redirect('/pricing/#tokens')
 
 
 @login_required
@@ -4231,32 +4284,24 @@ def tokens_retorno_view(request):
 
         if not pago_verificado:
             logger.warning(f'[MP TOKENS RETORNO] Pago no verificado para usuario {request.user.id}, payment_id={payment_id}')
-            return redirect('recargar_tokens')
+            return redirect('/pricing/#tokens')
 
-        from .models import HistorialTokens
-        # Usar tipo 'RECARGA' (mismo que usa el webhook) para la verificación de idempotencia
-        ya_procesado = HistorialTokens.objects.filter(
-            usuario=request.user,
-            tipo='RECARGA',
-            descripcion__icontains=paquete['nombre'],
-            fecha__date=timezone.now().date(),
-        ).exists()
-        if not ya_procesado:
-            meses_label = f"{paquete['meses']}m" + (f"+{paquete['regalo']}regalo" if paquete['regalo'] else '')
-            request.user.perfil.activar_plan_tokens(
-                paquete['tokens_dia'],
-                paquete['dias'],
-                f"Plan {paquete['nombre']} {meses_label} — {paquete['tokens_dia']:,} tokens/día",
-            )
-        return render(request, 'pago_exitoso_tokens.html', {
-            'paquete': paquete,
-            'tokens_disponibles': request.user.perfil.tokens_disponibles,
-        })
+        if _activar_plan_tokens_si_nuevo(request.user, paquete):
+            logger.info(f"[MP TOKENS RETORNO] Plan activado: {request.user.username} — {paquete_id}")
+        return render(
+            request,
+            'pago_exitoso_tokens.html',
+            _ctx_pago_exitoso_tokens(request.user, paquete),
+        )
 
     if status == 'pending':
-        return render(request, 'pending.html', {'plan': 'tokens', 'metodo': 'mercadopago'})
+        return render(request, 'pending.html', {
+            'plan': 'tokens',
+            'metodo': 'mercadopago',
+            'paquete': paquete,
+        })
 
-    return redirect('recargar_tokens')
+    return redirect('/pricing/#tokens')
 
 
 # ==========================================

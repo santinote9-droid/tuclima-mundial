@@ -76,6 +76,9 @@
             .icon-box { font-size: 3.5rem; margin-bottom: 20px; }
         }
     </style>
+{% if auto_refresh_url %}
+<meta http-equiv="refresh" content="{{ auto_refresh_seconds|default:3 }};url={{ auto_refresh_url }}">
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -84,10 +87,61 @@
             <div class="icon-box">
                 <i class="fas fa-clock"></i>
             </div>
-            
+
+            {% if metodo == 'lemonsqueezy' and plan == 'tokens' %}
+            <h1>Confirmando tu pago</h1>
+            <p>Estamos activando tu plan{% if paquete %} <strong>{{ paquete.nombre }}</strong>{% endif %}. Esto suele tardar unos segundos.</p>
+            <div class="steps">
+                <div class="step">
+                    <i class="fas fa-check-circle" style="color:#22c55e"></i>
+                    <span>Pago recibido por Lemon Squeezy.</span>
+                </div>
+                <div class="step">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Activando tokens en tu cuenta…</span>
+                </div>
+                <div class="step">
+                    <i class="fas fa-user-check"></i>
+                    <span>Te redirigimos automáticamente al confirmar.</span>
+                </div>
+            </div>
+            {% elif plan == 'tokens' and metodo == 'mercadopago' %}
+            <h1>Pago en proceso</h1>
+            <p>Mercado Pago está verificando el pago. Cuando se acredite, tu plan de tokens se activará automáticamente.</p>
+            <div class="steps">
+                <div class="step">
+                    <i class="fas fa-check-circle" style="color:#22c55e"></i>
+                    <span>Solicitud enviada a Mercado Pago.</span>
+                </div>
+                <div class="step">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Esperando acreditación.</span>
+                </div>
+                <div class="step">
+                    <i class="fas fa-user-check"></i>
+                    <span>Activación automática al confirmarse.</span>
+                </div>
+            </div>
+            {% elif plan == 'tokens' %}
+            <h1>Pago en verificación</h1>
+            <p>Registramos tu transferencia. Activaremos el plan de tokens{% if paquete %} <strong>{{ paquete.nombre }}</strong>{% endif %} cuando verifiquemos el comprobante.</p>
+            <div class="steps">
+                <div class="step">
+                    <i class="fas fa-check-circle" style="color:#22c55e"></i>
+                    <span>Solicitud enviada.</span>
+                </div>
+                <div class="step">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Esperando comprobante por email.</span>
+                </div>
+                <div class="step">
+                    <i class="fas fa-user-check"></i>
+                    <span>Activación manual (máx. 24 hs).</span>
+                </div>
+            </div>
+            {% else %}
             <h1>Pago en Verificación</h1>
             <p>Hemos registrado tu solicitud. Tu acceso PRO se activará una vez que nuestro equipo verifique la acreditación de la transferencia.</p>
-
             <div class="steps">
                 <div class="step">
                     <i class="fas fa-check-circle" style="color:#22c55e"></i>
@@ -102,12 +156,15 @@
                     <span>Activación manual (Demora máx: 24hs).</span>
                 </div>
             </div>
+            {% endif %}
 
             <p style="font-size:0.9em;">
-                ¿Olvidaste enviar el comprobante? Envíalo a <a href="mailto:climapro00@gmail.com" class="contact-link">climapro00@gmail.com</a> para acelerar el proceso.
+                ¿Problemas? Escribí a <a href="mailto:climapro00@gmail.com" class="contact-link">climapro00@gmail.com</a>.
             </p>
 
-            <a href="/" class="btn-home">Volver al Inicio (Modo Gratuito)</a>
+            <a href="{% if plan == 'tokens' %}/pricing/#tokens{% else %}/{% endif %}" class="btn-home">
+                {% if plan == 'tokens' %}Ver planes{% else %}Volver al Inicio (Modo Gratuito){% endif %}
+            </a>
         </div>
     </div>
 {% endblock %}

@@ -102,6 +102,7 @@
         /* Price */
         .tok-price { font-size: 2.2rem; font-weight: 900; color: #fff; text-align: center; }
         .tok-price sup { font-size: .88rem; vertical-align: super; color: #94a3b8; }
+        .tok-price .tok-currency { display: block; font-size: .72rem; font-weight: 700; letter-spacing: .08em; color: #64748b; margin-top: 2px; }
         .tok-period { font-size: .7rem; color: #475569; text-align: center; margin-bottom: 3px; }
         .tok-saving { font-size: .7rem; color: #4ade80; text-align: center; min-height: 1rem; margin-bottom: 14px; }
 
@@ -177,10 +178,14 @@
     <div class="page-header">
         <h1><i class="fas fa-layer-group" style="margin-right:12px;"></i>Planes TuClima</h1>
         <p>Acceso a los 4 modos profesionales · IA Gemini incluida · Tokens diarios · Memoria IA por modo</p>
+        <p style="margin-top:10px;font-size:.82rem;color:#64748b;">
+            <i class="fas fa-globe" style="color:#60a5fa;margin-right:6px;"></i>
+            Precios en <strong style="color:#a5b4fc;">USD</strong> · pagos internacionales con tarjeta o PayPal
+        </p>
     </div>
 
-    <!-- Token plans -->
-    <div class="tok-title-block">
+    <!-- Token plans (ancla /pricing/#tokens) -->
+    <div id="tokens" class="tok-title-block">
         <h2><i class="fas fa-microchip" style="margin-right:8px;"></i>Planes de Tokens IA</h2>
         <p>Tokens diarios · se renuevan automáticamente · incluyen acceso a todos los modos Pro</p>
     </div>
@@ -340,7 +345,7 @@
                 {% endfor %}
             </div>
 
-            <div class="tok-price" id="tokp-{{ plan.id }}"><sup>$</sup>{{ plan.variantes.0.precio|floatformat:0 }}</div>
+            <div class="tok-price" id="tokp-{{ plan.id }}"><sup>$</sup>{{ plan.variantes.0.precio|floatformat:0 }}<span class="tok-currency">USD</span></div>
             <div class="tok-period" id="tokper-{{ plan.id }}">1 mes de acceso</div>
             <div class="tok-saving" id="tokah-{{ plan.id }}">&nbsp;</div>
 
@@ -364,6 +369,7 @@
     <div class="tok-footer">
         <i class="fas fa-info-circle" style="color:#6366f1;margin-right:5px;"></i>
         Todos los planes incluyen <b>acceso completo a los 4 modos Pro</b> y <b>IA Gemini</b>.<br>
+        Precios en <b>USD</b>. Cobro internacional con tarjeta o PayPal (Lemon Squeezy).<br>
         La <b>Memoria IA por modo</b> guarda el contexto de tus conversaciones — configurable en Mi Cuenta.<br>
         ¿Dudas? <a href="mailto:climapro00@gmail.com">climapro00@gmail.com</a>
     </div>
@@ -390,14 +396,14 @@
                             <i class="fas fa-bolt" style="color:#f59e0b;font-size:.9rem;"></i>
                             <span style="color:#f59e0b;font-weight:800;">Starter</span>
                         </div>
-                        <div style="color:#475569;font-size:.68rem;margin-top:2px;">$20/mes</div>
+                        <div style="color:#475569;font-size:.68rem;margin-top:2px;">$20 USD/mes</div>
                     </th>
                     <th style="text-align:center;padding:14px 12px;border-bottom:1px solid #334155;background:rgba(99,102,241,.06);white-space:nowrap;">
                         <div style="display:inline-flex;align-items:center;gap:6px;">
                             <i class="fas fa-rocket" style="color:#3b82f6;font-size:.9rem;"></i>
                             <span style="color:#3b82f6;font-weight:800;">Plus</span>
                         </div>
-                        <div style="color:#475569;font-size:.68rem;margin-top:2px;">$35/mes</div>
+                        <div style="color:#475569;font-size:.68rem;margin-top:2px;">$35 USD/mes</div>
                         <div style="background:rgba(99,102,241,.2);color:#a5b4fc;font-size:.6rem;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:4px;display:inline-block;">Más popular</div>
                     </th>
                     <th style="text-align:center;padding:14px 12px;border-bottom:1px solid #1e293b;white-space:nowrap;">
@@ -405,14 +411,14 @@
                             <i class="fas fa-gem" style="color:#a855f7;font-size:.9rem;"></i>
                             <span style="color:#a855f7;font-weight:800;">Pro IA</span>
                         </div>
-                        <div style="color:#475569;font-size:.68rem;margin-top:2px;">$75/mes</div>
+                        <div style="color:#475569;font-size:.68rem;margin-top:2px;">$75 USD/mes</div>
                     </th>
                     <th style="text-align:center;padding:14px 12px;border-bottom:1px solid #1e293b;white-space:nowrap;">
                         <div style="display:inline-flex;align-items:center;gap:6px;">
                             <i class="fas fa-star" style="color:#eab308;font-size:.9rem;"></i>
                             <span style="color:#eab308;font-weight:800;">Power</span>
                         </div>
-                        <div style="color:#475569;font-size:.68rem;margin-top:2px;">$150/mes</div>
+                        <div style="color:#475569;font-size:.68rem;margin-top:2px;">$150 USD/mes</div>
                     </th>
                 </tr>
             </thead>
@@ -557,20 +563,21 @@ document.addEventListener('DOMContentLoaded', function () {
             tabsContainer.querySelectorAll('.tok-tab').forEach(function (t) { t.classList.remove('active'); });
             this.classList.add('active');
 
-            // Price
-            document.getElementById('tokp-' + planId).innerHTML = '<sup>$</sup>' + Math.round(precio);
+            // Price (siempre USD)
+            document.getElementById('tokp-' + planId).innerHTML =
+                '<sup>$</sup>' + Math.round(precio) + '<span class="tok-currency">USD</span>';
 
             // Period text
             var total = meses + regalo;
             var txt = total + ' mes' + (total > 1 ? 'es' : '') + ' de acceso';
-            if (regalo > 0) txt += ' (' + meses + ' pag. + ' + regalo + ' de regalo 🎁)';
+            if (regalo > 0) txt += ' (' + meses + ' pag. + ' + regalo + ' de regalo)';
             document.getElementById('tokper-' + planId).innerText = txt;
 
             // Saving text
             var ahEl = document.getElementById('tokah-' + planId);
             if (regalo > 0) {
                 var ahorrado = Math.round((precio / meses) * regalo);
-                ahEl.innerText = '🎉 Ahorrás $' + ahorrado + ' vs pago mensual';
+                ahEl.innerText = 'Ahorrás $' + ahorrado + ' USD vs pago mensual';
             } else {
                 ahEl.innerHTML = '&nbsp;';
             }

@@ -100,7 +100,15 @@
         </div>
         <div class="data-row">
             <span class="data-label">Duración</span>
-            <span class="data-value">30 días</span>
+            <span class="data-value">
+                {% if paquete.regalo %}
+                    {{ paquete.meses }} mes{% if paquete.meses != 1 %}es{% endif %}
+                    + {{ paquete.regalo }} de regalo
+                    ({{ dias|default:paquete.dias }} días)
+                {% else %}
+                    {{ dias|default:paquete.dias|default:30 }} días
+                {% endif %}
+            </span>
         </div>
         <div class="data-row">
             <span class="data-label">Saldo hoy</span>
