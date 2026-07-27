@@ -2660,22 +2660,45 @@ def crear_pago_paypal(request):
     - Tokens (flujo actual): ?paquete=starter_1m
     - Legacy renovación: ?plan=mensual|anual
     """
+    from django.contrib import messages
+
     paquete_id = (request.GET.get('paquete') or '').strip()
     paquete = _PAQUETES_MAP.get(paquete_id) if paquete_id else None
 
+    client_id = (os.getenv('PAYPAL_CLIENT_ID') or '').strip()
+    client_secret = (os.getenv('PAYPAL_CLIENT_SECRET') or '').strip()
+    mode = (os.getenv('PAYPAL_MODE') or 'sandbox').strip()
+    if not client_id or not client_secret:
+        messages.error(
+            request,
+            'PayPal no está configurado en el servidor. Usá Lemon Squeezy (incluye PayPal con tarjeta).',
+        )
+        if paquete_id:
+            return redirect(f'/activar-plan/?paquete={paquete_id}')
+        return redirect('/pricing/#tokens')
+
+    # Reconfigurar en cada request (env de Render puede diferir del import-time)
+    paypalrestsdk.configure({
+        'mode': mode,
+        'client_id': client_id,
+        'client_secret': client_secret,
+    })
+
+    site = settings.SITE_URL.rstrip('/')
     if paquete:
         request.session['paypal_paquete_id'] = paquete_id
         request.session.pop('plan_pago', None)
         precio = f"{float(paquete['precio']):.2f}"
         meses_label = f"{paquete['meses']} mes{'es' if paquete['meses'] > 1 else ''}"
         regalo = f" + {paquete['regalo']} regalo" if paquete.get('regalo') else ''
-        nombre_item = f"Weather PRO — {paquete['nombre']} ({meses_label}{regalo})"
+        nombre_item = f"Weather PRO - {paquete['nombre']} ({meses_label}{regalo})"
         sku = f"tk_{paquete_id}"
         descripcion = (
-            f"{paquete['tokens_dia']:,} tokens/día · {paquete['dias']} días de acceso"
+            f"{paquete['tokens_dia']} tokens/dia - {paquete['dias']} dias de acceso"
         )
-        cancel_url = f"{settings.SITE_URL.rstrip('/')}/activar-plan/?paquete={paquete_id}"
-        return_url = f"{settings.SITE_URL.rstrip('/')}/paypal-retorno/?paquete={paquete_id}"
+        cancel_url = f"{site}/activar-plan/?paquete={paquete_id}"
+        return_url = f"{site}/paypal-retorno/?paquete={paquete_id}"
+        custom = paquete_id
     else:
         plan = request.GET.get('plan', 'mensual')
         if plan not in ('mensual', 'anual'):
@@ -2685,19 +2708,18 @@ def crear_pago_paypal(request):
 
         if plan == 'anual':
             precio = '200.00'
-            nombre_item = 'Suscripción Weather PRO Anual'
+            nombre_item = 'Suscripcion Weather PRO Anual'
             sku = 'pro_anual'
             descripcion = 'Acceso anual a Weather Pro Suite (12 meses)'
         else:
             precio = '20.00'
-            nombre_item = 'Suscripción Weather PRO Mensual'
+            nombre_item = 'Suscripcion Weather PRO Mensual'
             sku = 'pro_mensual'
             descripcion = 'Acceso mensual a Weather Pro Suite'
-        site = settings.SITE_URL.rstrip('/')
         cancel_url = f"{site}/pricing/"
         return_url = f"{site}/paypal-retorno/"
+        custom = plan
 
-    site = settings.SITE_URL.rstrip('/')
     payment = paypalrestsdk.Payment({
         "intent": "sale",
         "payer": {
@@ -2722,19 +2744,28 @@ def crear_pago_paypal(request):
                 "currency": "USD"
             },
             "description": descripcion[:127],
-            "custom": paquete_id or request.session.get('plan_pago', 'mensual'),
+            "custom": custom,
         }]
     })
 
-    if payment.create():
-        for link in payment.links:
-            if link.rel == "approval_url":
-                return redirect(link.href)
-    else:
-        logger.error(f'[PAYPAL] Error creando pago: {payment.error}')
-        if paquete_id:
-            return redirect(f'/activar-plan/?paquete={paquete_id}')
-        return redirect('pricing')
+    try:
+        if payment.create():
+            for link in payment.links:
+                if link.rel == "approval_url":
+                    return redirect(link.href)
+            logger.error('[PAYPAL] payment.create OK pero sin approval_url: %s', payment.to_dict())
+        else:
+            logger.error('[PAYPAL] Error creando pago: %s', payment.error)
+    except Exception:
+        logger.exception('[PAYPAL] Excepcion al crear pago')
+
+    messages.error(
+        request,
+        'No se pudo iniciar PayPal. Usá Lemon Squeezy (ahí también podés pagar con PayPal).',
+    )
+    if paquete_id:
+        return redirect(f'/activar-plan/?paquete={paquete_id}')
+    return redirect('/pricing/#tokens')
 
 
 @login_required
@@ -4269,6 +4300,8 @@ def recargar_tokens_view(request):
 @login_required
 def mp_crear_preferencia_tokens(request):
     """Crea una preferencia de pago en MP para un plan de tokens (con variante de duración)."""
+    from django.contrib import messages
+
     paquete_id = request.GET.get('paquete', '')
     paquete = _PAQUETES_MAP.get(paquete_id)
 
@@ -4277,24 +4310,37 @@ def mp_crear_preferencia_tokens(request):
 
     # MP solo Argentina — el resto usa Lemon Squeezy (USD mundial)
     if not _es_usuario_argentina(request):
+        messages.info(
+            request,
+            'Mercado Pago solo está disponible en Argentina. Usá Lemon Squeezy o PayPal.',
+        )
         return redirect(f'/activar-plan/?paquete={paquete_id}')
 
-    sdk  = mercadopago.SDK(settings.MP_ACCESS_TOKEN)
+    mp_token = (getattr(settings, 'MP_ACCESS_TOKEN', '') or '').strip()
+    if not mp_token:
+        messages.error(request, 'Mercado Pago no está configurado. Usá Lemon Squeezy.')
+        return redirect(f'/activar-plan/?paquete={paquete_id}')
+
+    sdk  = mercadopago.SDK(mp_token)
     site = settings.SITE_URL.rstrip('/')
 
     meses_label = f"{paquete['meses']} mes{'es' if paquete['meses'] > 1 else ''}"
     regalo_label = f" + {paquete['regalo']} de regalo" if paquete['regalo'] else ''
 
+    # Cuentas MP de Argentina suelen rechazar USD → cobramos ARS (equiv. del precio USD)
+    ars_rate = int(getattr(settings, 'ARS_POR_USD', 1000) or 1000)
+    monto_ars = round(float(paquete['precio']) * ars_rate, 2)
+
     preference_data = {
         "items": [{
-            "title": f"Weather PRO — {paquete['nombre']} {paquete['tokens_dia']:,} tokens/día · {meses_label}{regalo_label}",
+            "title": f"Weather PRO - {paquete['nombre']} {paquete['tokens_dia']} tok/dia - {meses_label}{regalo_label}",
             "quantity": 1,
-            "unit_price": float(paquete['precio']),
-            "currency_id": "USD",  # moneda oficial mundial
+            "unit_price": monto_ars,
+            "currency_id": "ARS",
         }],
         "back_urls": {
             "success": f"{site}/tokens-retorno/?paquete={paquete_id}&status=approved",
-            "failure": f"{site}/pricing/#tokens",
+            "failure": f"{site}/activar-plan/?paquete={paquete_id}&pais=AR",
             "pending": f"{site}/tokens-retorno/?paquete={paquete_id}&status=pending",
         },
         "auto_return": "approved",
@@ -4302,14 +4348,21 @@ def mp_crear_preferencia_tokens(request):
         "notification_url": f"{site}/mp-webhook/",
     }
 
-    result   = sdk.preference().create(preference_data)
-    response = result.get("response", {})
+    try:
+        result   = sdk.preference().create(preference_data)
+        response = result.get("response", {})
+        if result.get("status") in (200, 201) and "init_point" in response:
+            return redirect(response["init_point"])
+        logger.error(f"[MP Tokens] Error creando preferencia: {result}")
+        messages.error(
+            request,
+            'Mercado Pago no pudo crear el pago. Probá Lemon Squeezy o revisá el Access Token en Render.',
+        )
+    except Exception:
+        logger.exception('[MP Tokens] Excepcion creando preferencia')
+        messages.error(request, 'Error al conectar con Mercado Pago. Probá Lemon Squeezy.')
 
-    if result.get("status") in (200, 201) and "init_point" in response:
-        return redirect(response["init_point"])
-
-    logger.error(f"[MP Tokens] Error creando preferencia: {result}")
-    return redirect('/pricing/#tokens')
+    return redirect(f'/activar-plan/?paquete={paquete_id}&pais=AR')
 
 
 @login_required

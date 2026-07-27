@@ -86,6 +86,16 @@
 {% block content %}
 <div class="container">
 
+    {% if messages %}
+    <div style="margin-bottom:16px;">
+        {% for message in messages %}
+        <div style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#fecaca;padding:12px 14px;border-radius:10px;font-size:.85rem;margin-bottom:8px;">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <a href="/pricing/#tokens" class="back-link">
         <i class="fas fa-arrow-left"></i> Volver a planes
     </a>
@@ -131,7 +141,7 @@
             <span style="color:#3b6ea8;"><i class="fas fa-shield-halved"></i> Pago encriptado</span>
         </div>
         <p style="text-align:center;margin:12px 0 0;color:#4e6fa3;font-size:.72rem;line-height:1.4;">
-            Lemon Squeezy incluye tarjeta y PayPal. El botón PayPal de abajo cobra directo (USD).
+            Recomendado: Lemon Squeezy (tarjeta o PayPal en el checkout). El botón PayPal directo es opcional.
         </p>
     </div>
     {% endif %}
@@ -150,8 +160,11 @@
             </p>
 
             <a href="/pagar-tokens/?paquete={{ paquete_id }}" class="btn-mp-checkout">
-                <i class="fas fa-bolt"></i> Pagar ${{ precio_usd }} USD con Mercado Pago
+                <i class="fas fa-bolt"></i> Pagar con Mercado Pago (ARS)
             </a>
+            <p style="color:#64748b;font-size:.72rem;line-height:1.4;margin:-8px 0 12px;">
+                Equivalente local del precio en USD. Lemon Squeezy sigue siendo la vía recomendada.
+            </p>
         </div>
         <p style="text-align:center;margin-top:16px;">
             <a href="?paquete={{ paquete_id }}&amp;pais=XX" style="color:#64748b;font-size:.78rem;text-decoration:none;">No estoy en Argentina — ocultar Mercado Pago</a>
