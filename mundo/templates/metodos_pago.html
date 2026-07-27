@@ -122,26 +122,16 @@
                     {% if plan == 'anual' %}Pagar $200 USD con MP{% else %}Pagar $20 USD con MP{% endif %}
                 </div>
             </a>
-
-            <!-- TRANSFERENCIA: solo Argentina -->
-            <a href="/transferencia/?plan={{ plan }}" class="option option-bank" style="opacity:0.8;">
-                <div class="icon-container">
-                    <i class="fas fa-university"></i>
-                </div>
-                <h3>Transferencia (Argentina)</h3>
-                <p>Precio en <strong style="color:#fff;">USD</strong>. CVU local: enviá el equivalente en ARS. <strong style="color:#facc15;">Activación manual (hasta 24 hs).</strong></p>
-                <div class="btn-go btn-bank">Ver datos de transferencia</div>
-            </a>
             {% endif %}
         </div>
         {% if not opciones_ar %}
         <p style="margin-top:22px;color:#64748b;font-size:.88rem;">
             ¿Estás en Argentina?
-            <a href="?plan={{ plan }}&amp;pais=AR" style="color:#7dd3fc;font-weight:600;text-decoration:none;">Ver Mercado Pago y transferencia</a>
+            <a href="?plan={{ plan }}&amp;pais=AR" style="color:#7dd3fc;font-weight:600;text-decoration:none;">Ver Mercado Pago</a>
         </p>
         {% else %}
         <p style="margin-top:22px;color:#64748b;font-size:.82rem;">
-            <a href="?plan={{ plan }}&amp;pais=XX" style="color:#64748b;text-decoration:none;">No estoy en Argentina — ocultar opciones locales</a>
+            <a href="?plan={{ plan }}&amp;pais=XX" style="color:#64748b;text-decoration:none;">No estoy en Argentina — ocultar Mercado Pago</a>
         </p>
         {% endif %}
         <br><br>

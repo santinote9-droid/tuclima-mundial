@@ -138,7 +138,7 @@
 
     {% if opciones_ar %}
     <button class="other-toggle" id="toggle-other" onclick="toggleOther()">
-        <span><i class="fas fa-ellipsis" style="margin-right:8px;"></i>Opciones Argentina (Mercado Pago / transferencia)</span>
+        <span><i class="fas fa-ellipsis" style="margin-right:8px;"></i>Opcion Argentina (Mercado Pago)</span>
         <i class="fas fa-chevron-down chevron"></i>
     </button>
 
@@ -146,55 +146,21 @@
         <div class="mp-section">
             <h4><i class="fas fa-mobile-screen-button" style="margin-right:6px;"></i>Mercado Pago</h4>
             <p style="color:#64748b;font-size:.78rem;line-height:1.5;margin:0 0 12px;">
-                Disponible solo en Argentina. Si estás fuera del país, usá Lemon Squeezy arriba.
+                Disponible solo en Argentina. Pagos internacionales: Lemon Squeezy o PayPal arriba.
             </p>
 
             <a href="/pagar-tokens/?paquete={{ paquete_id }}" class="btn-mp-checkout">
                 <i class="fas fa-bolt"></i> Pagar ${{ precio_usd }} USD con Mercado Pago
             </a>
-
-            <div class="section-divider">Transferencia bancaria</div>
-            <p style="color:#64748b;font-size:.78rem;line-height:1.5;margin:0 0 14px;">
-                El precio del plan es <strong style="color:#e2e8f0;">${{ precio_usd }} USD</strong>.
-                Si transferís por CVU, enviá el equivalente en ARS del día e indicá el monto USD en el comprobante.
-            </p>
-
-            <div class="row">
-                <span class="lbl">CVU</span>
-                <div class="val">
-                    <span>0000003100089409598541</span>
-                    <button class="copy-btn" onclick="copyText('0000003100089409598541', this)"><i class="fas fa-copy"></i></button>
-                </div>
-            </div>
-            <div class="row">
-                <span class="lbl">Alias</span>
-                <div class="val">
-                    <span>santiigioffre</span>
-                    <button class="copy-btn" onclick="copyText('santiigioffre', this)"><i class="fas fa-copy"></i></button>
-                </div>
-            </div>
-            <div class="row">
-                <span class="lbl">Monto</span>
-                <div class="val big-amount">${{ precio_usd }} USD</div>
-            </div>
-
-            <div class="email-note">
-                Envia el comprobante a
-                <a href="mailto:climapro00@gmail.com">climapro00@gmail.com</a>
-            </div>
-
-            <a href="/confirmar-manual-tokens/?paquete={{ paquete_id }}" class="btn-confirm">
-                <i class="fas fa-check-circle"></i> Ya hice la transferencia
-            </a>
         </div>
         <p style="text-align:center;margin-top:16px;">
-            <a href="?paquete={{ paquete_id }}&amp;pais=XX" style="color:#64748b;font-size:.78rem;text-decoration:none;">No estoy en Argentina — ocultar estas opciones</a>
+            <a href="?paquete={{ paquete_id }}&amp;pais=XX" style="color:#64748b;font-size:.78rem;text-decoration:none;">No estoy en Argentina — ocultar Mercado Pago</a>
         </p>
     </div>
     {% else %}
     <p style="text-align:center;margin:18px 0 0;color:#64748b;font-size:.8rem;line-height:1.5;">
         ¿Estás en Argentina?
-        <a href="?paquete={{ paquete_id }}&amp;pais=AR" style="color:#7dd3fc;font-weight:600;text-decoration:none;">Ver Mercado Pago y transferencia</a>
+        <a href="?paquete={{ paquete_id }}&amp;pais=AR" style="color:#7dd3fc;font-weight:600;text-decoration:none;">Ver Mercado Pago</a>
     </p>
     {% endif %}
 

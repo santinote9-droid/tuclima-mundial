@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.shortcuts import render
 from .models import (
     PerfilUsuario, ReporteUsuario, FeedbackIA, HistorialTokens,
     UbicacionGuardada, ReporteProgramado, ApiKeyPersonal,
@@ -8,11 +9,53 @@ from .models import (
 
 @admin.register(PerfilUsuario)
 class PerfilUsuarioAdmin(admin.ModelAdmin):
-    # Aquí estaba el error. Cambiamos 'es_premium' por 'suscripcion_activa'
-    list_display = ('user', 'fecha_vencimiento', 'suscripcion_activa')
-    
-    # Esto permite buscar por nombre de usuario
-    search_fields = ('user__username',)
+    list_display = (
+        'user', 'fecha_vencimiento', 'suscripcion_activa',
+        'tokens_diarios_limite', 'tokens_disponibles', 'fecha_vencimiento_tokens',
+    )
+    search_fields = ('user__username', 'user__email')
+    list_filter = ('tokens_diarios_limite',)
+    actions = ['activar_plan_tokens_action']
+
+    @admin.action(description='Activar plan de tokens…')
+    def activar_plan_tokens_action(self, request, queryset):
+        from mundo.views import _PAQUETES_MAP, _descripcion_plan_tokens
+
+        if 'apply' in request.POST:
+            paquete_id = (request.POST.get('paquete_id') or '').strip()
+            paquete = _PAQUETES_MAP.get(paquete_id)
+            if not paquete:
+                self.message_user(request, 'Paquete inválido.', level='error')
+                return None
+
+            activados = 0
+            for perfil in queryset.select_related('user'):
+                desc = f"[Admin] {_descripcion_plan_tokens(paquete)}"
+                perfil.activar_plan_tokens(
+                    paquete['tokens_dia'],
+                    paquete['dias'],
+                    desc,
+                )
+                activados += 1
+
+            self.message_user(
+                request,
+                f'Plan {paquete["nombre"]} ({paquete_id}) activado para {activados} usuario(s).',
+            )
+            return None
+
+        paquetes = sorted(_PAQUETES_MAP.values(), key=lambda p: (p['precio'], p['id']))
+        return render(
+            request,
+            'admin/activar_plan_tokens.html',
+            context={
+                **self.admin_site.each_context(request),
+                'title': 'Activar plan de tokens',
+                'queryset': queryset,
+                'paquetes': paquetes,
+                'opts': self.model._meta,
+            },
+        )
 
 
 

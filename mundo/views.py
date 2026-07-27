@@ -3042,55 +3042,13 @@ def metodos_pago(request):
 
 @login_required
 def transferencia(request):
-    plan = request.GET.get('plan', 'mensual')
-    if plan not in ('mensual', 'anual'):
-        plan = 'mensual'
-    if not _es_usuario_argentina(request):
-        return redirect('/pricing/#tokens')
-    # Precio oficial siempre en USD (la CVU argentina cobra el equivalente en ARS del día)
-    precio_usd = '200' if plan == 'anual' else '20'
-    return render(request, 'transferencia.html', {
-        'plan': plan,
-        'precio_usd': precio_usd,
-    })
+    """Transferencia CVU deshabilitada (foco internacional)."""
+    return redirect('/pricing/#tokens')
 
 @login_required
 def confirmar_manual(request):
-    # El usuario dice que ya hizo la transferencia.
-    # No activamos todavía — le avisamos al admin por email.
-    plan = request.GET.get('plan', 'mensual')
-    if not _es_usuario_argentina(request):
-        return redirect('/pricing/#tokens')
-    precio = '$200 USD' if plan == 'anual' else '$20 USD'
-
-    # Notificar al admin para que active manualmente
-    try:
-        send_mail(
-            subject=f'[Weather PRO] Transferencia pendiente — {request.user.username}',
-            message='',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=['climapro00@gmail.com'],
-            fail_silently=True,
-            html_message=f"""
-            <div style="font-family:'Segoe UI',sans-serif;background:#0f172a;color:#fff;padding:30px;border-radius:12px;max-width:480px;margin:auto;">
-                <h3 style="color:#f59e0b;">⏳ Transferencia pendiente de verificación</h3>
-                <table style="width:100%;border-collapse:collapse;">
-                    <tr><td style="color:#94a3b8;padding:6px 0;">Usuario</td><td style="color:#fff;font-weight:bold;">{request.user.username}</td></tr>
-                    <tr><td style="color:#94a3b8;padding:6px 0;">Email</td><td style="color:#fff;">{request.user.email or '(sin email)'}</td></tr>
-                    <tr><td style="color:#94a3b8;padding:6px 0;">Plan</td><td style="color:#fff;">{plan.capitalize()} — {precio}</td></tr>
-                    <tr><td style="color:#94a3b8;padding:6px 0;">ID Usuario</td><td style="color:#fff;">{request.user.id}</td></tr>
-                </table>
-                <p style="margin-top:20px;color:#94a3b8;">Para activar ejecut\u00e1 en la shell:</p>
-                <code style="background:#1e293b;color:#4ade80;padding:10px;display:block;border-radius:8px;font-size:0.85em;">
-                    activar_suscripcion_dias(User.objects.get(id={request.user.id}), {'365' if plan == 'anual' else '30'}, '{plan}')
-                </code>
-            </div>
-            """
-        )
-    except Exception as e:
-        print(f"[CONFIRMAR_MANUAL] Error enviando mail admin: {e}")
-
-    return render(request, 'pending.html', {'plan': plan})
+    """Transferencia manual legacy deshabilitada."""
+    return redirect('/pricing/#tokens')
 
 
 
@@ -3208,7 +3166,7 @@ def mp_crear_preferencia(request):
 
     # Si MP falla (ej: token no configurado), redirigir a transferencia manual
     print(f"[MP] Error creando preferencia: {result}")
-    return redirect(f'/transferencia/?plan={plan}')
+    return redirect('/pricing/#tokens')
 
 
 @csrf_exempt
@@ -4297,48 +4255,9 @@ def seleccionar_pago_tokens(request):
 
 @login_required
 def confirmar_manual_tokens(request):
-    """El usuario declara haber transferido para un plan de tokens."""
+    """Transferencia tokens deshabilitada; activar desde admin si hace falta."""
     paquete_id = request.GET.get('paquete', '')
-    if not _es_usuario_argentina(request):
-        return redirect(f'/activar-plan/?paquete={paquete_id}' if paquete_id else '/pricing/#tokens')
-    paquete    = _PAQUETES_MAP.get(paquete_id)
-    plan_label = paquete['nombre'] if paquete else 'tokens'
-    precio     = f"${int(paquete['precio'])} USD" if paquete else '—'
-
-    try:
-        from django.core.mail import send_mail
-        send_mail(
-            subject=f'[Weather PRO] Transferencia TOKENS pendiente — {request.user.username}',
-            message='',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=['climapro00@gmail.com'],
-            fail_silently=True,
-            html_message=f"""
-            <div style="font-family:'Segoe UI',sans-serif;background:#0f172a;color:#fff;padding:30px;border-radius:12px;max-width:480px;margin:auto;">
-                <h3 style="color:#f59e0b;">&#9203; Transferencia TOKENS pendiente</h3>
-                <table style="width:100%;border-collapse:collapse;">
-                    <tr><td style="color:#94a3b8;padding:6px 0;">Usuario</td><td style="color:#fff;font-weight:bold;">{request.user.username}</td></tr>
-                    <tr><td style="color:#94a3b8;padding:6px 0;">Email</td><td style="color:#fff;">{request.user.email or '(sin email)'}</td></tr>
-                    <tr><td style="color:#94a3b8;padding:6px 0;">Plan</td><td style="color:#fff;">{plan_label} &mdash; {precio}</td></tr>
-                    <tr><td style="color:#94a3b8;padding:6px 0;">Paquete ID</td><td style="color:#fff;">{paquete_id}</td></tr>
-                    <tr><td style="color:#94a3b8;padding:6px 0;">ID Usuario</td><td style="color:#fff;">{request.user.id}</td></tr>
-                </table>
-                <p style="margin-top:20px;color:#94a3b8;">Para activar en la shell de admin:</p>
-                <code style="background:#1e293b;color:#4ade80;padding:10px;display:block;border-radius:8px;font-size:0.85em;">
-                    user = User.objects.get(id={request.user.id})<br>
-                    user.perfil.activar_plan_tokens({paquete['tokens_dia'] if paquete else 0}, {paquete['dias'] if paquete else 30}, "{_descripcion_plan_tokens(paquete) if paquete else plan_label}")
-                </code>
-            </div>
-            """
-        )
-    except Exception as e:
-        print(f"[CONFIRMAR_MANUAL_TOKENS] Error enviando mail admin: {e}")
-
-    return render(request, 'pending.html', {
-        'plan':   'tokens',
-        'metodo': 'transferencia',
-        'paquete': paquete,
-    })
+    return redirect(f'/activar-plan/?paquete={paquete_id}' if paquete_id else '/pricing/#tokens')
 
 
 @login_required
