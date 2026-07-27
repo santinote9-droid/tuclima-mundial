@@ -110,19 +110,20 @@
                 </div>
             </a>
 
-            <!-- MERCADOPAGO CHECKOUT: automático -->
+            {% if opciones_ar %}
+            <!-- MERCADOPAGO: solo Argentina -->
             <a href="/pagar-mercadopago/?plan={{ plan }}" class="option" style="border-color:#334155;">
                 <div class="icon-container">
                     <i class="fas fa-credit-card" style="font-size:4rem; color:#00bcf2;"></i>
                 </div>
                 <h3>MercadoPago</h3>
-                <p>Cobro en <strong style="color:#fff;">USD</strong>. Tarjeta, débito o saldo MP. <strong style="color:#4ade80">Activación inmediata y automática.</strong></p>
+                <p>Solo Argentina. Tarjeta, débito o saldo MP. <strong style="color:#4ade80">Activación inmediata.</strong></p>
                 <div class="btn-go" style="background:#00bcf2; color:#000;">
                     {% if plan == 'anual' %}Pagar $200 USD con MP{% else %}Pagar $20 USD con MP{% endif %}
                 </div>
             </a>
 
-            <!-- TRANSFERENCIA BRUBANK: manual -->
+            <!-- TRANSFERENCIA: solo Argentina -->
             <a href="/transferencia/?plan={{ plan }}" class="option option-bank" style="opacity:0.8;">
                 <div class="icon-container">
                     <i class="fas fa-university"></i>
@@ -131,7 +132,18 @@
                 <p>Precio en <strong style="color:#fff;">USD</strong>. CVU local: enviá el equivalente en ARS. <strong style="color:#facc15;">Activación manual (hasta 24 hs).</strong></p>
                 <div class="btn-go btn-bank">Ver datos de transferencia</div>
             </a>
+            {% endif %}
         </div>
+        {% if not opciones_ar %}
+        <p style="margin-top:22px;color:#64748b;font-size:.88rem;">
+            ¿Estás en Argentina?
+            <a href="?plan={{ plan }}&amp;pais=AR" style="color:#7dd3fc;font-weight:600;text-decoration:none;">Ver Mercado Pago y transferencia</a>
+        </p>
+        {% else %}
+        <p style="margin-top:22px;color:#64748b;font-size:.82rem;">
+            <a href="?plan={{ plan }}&amp;pais=XX" style="color:#64748b;text-decoration:none;">No estoy en Argentina — ocultar opciones locales</a>
+        </p>
+        {% endif %}
         <br><br>
         <a href="/pricing/" style="color:#64748b; text-decoration:none; font-weight:bold;">← Volver a los planes</a>
         &nbsp;&nbsp;|&nbsp;&nbsp;

@@ -51,9 +51,14 @@ class Command(BaseCommand):
                 continue
 
             plan = perfil.plan_tipo or 'mensual'
-            plan_label = 'Anual ($200 USD)' if plan == 'anual' else 'Mensual ($20 USD)'
             venc_str = perfil.fecha_vencimiento.strftime('%d/%m/%Y')
-            link_renovacion = f"{site_url}/metodos-pago/?plan={plan}"
+            link_renovacion = f"{site_url}/pricing/#tokens"
+            if plan == 'anual':
+                plan_label = 'Anual legacy ($200 USD) — renovar en planes actuales'
+            elif plan == 'mensual':
+                plan_label = 'Mensual legacy ($20 USD) — renovar en planes actuales'
+            else:
+                plan_label = 'Pro / tokens'
 
             asunto = '🔔 Tu suscripción Weather PRO vence pronto'
             cuerpo_html = f"""

@@ -2655,26 +2655,48 @@ paypalrestsdk.configure({
 
 @login_required
 def crear_pago_paypal(request):
-    # El plan se pasa como query param (?plan=mensual o ?plan=anual)
-    plan = request.GET.get('plan', 'mensual')
-    if plan not in ('mensual', 'anual'):
-        plan = 'mensual'
+    """
+    PayPal en USD.
+    - Tokens (flujo actual): ?paquete=starter_1m
+    - Legacy renovación: ?plan=mensual|anual
+    """
+    paquete_id = (request.GET.get('paquete') or '').strip()
+    paquete = _PAQUETES_MAP.get(paquete_id) if paquete_id else None
 
-    # Guardar plan en sesión para recuperarlo al volver de PayPal
-    request.session['plan_pago'] = plan
-
-    if plan == 'anual':
-        precio = '200.00'
-        nombre_item = 'Suscripción Weather PRO Anual'
-        sku = 'pro_anual'
-        descripcion = 'Acceso anual a Weather Pro Suite (12 meses)'
+    if paquete:
+        request.session['paypal_paquete_id'] = paquete_id
+        request.session.pop('plan_pago', None)
+        precio = f"{float(paquete['precio']):.2f}"
+        meses_label = f"{paquete['meses']} mes{'es' if paquete['meses'] > 1 else ''}"
+        regalo = f" + {paquete['regalo']} regalo" if paquete.get('regalo') else ''
+        nombre_item = f"Weather PRO — {paquete['nombre']} ({meses_label}{regalo})"
+        sku = f"tk_{paquete_id}"
+        descripcion = (
+            f"{paquete['tokens_dia']:,} tokens/día · {paquete['dias']} días de acceso"
+        )
+        cancel_url = f"{settings.SITE_URL.rstrip('/')}/activar-plan/?paquete={paquete_id}"
+        return_url = f"{settings.SITE_URL.rstrip('/')}/paypal-retorno/?paquete={paquete_id}"
     else:
-        precio = '20.00'
-        nombre_item = 'Suscripción Weather PRO Mensual'
-        sku = 'pro_mensual'
-        descripcion = 'Acceso mensual a Weather Pro Suite'
+        plan = request.GET.get('plan', 'mensual')
+        if plan not in ('mensual', 'anual'):
+            plan = 'mensual'
+        request.session['plan_pago'] = plan
+        request.session.pop('paypal_paquete_id', None)
 
-    # 1. Crear el objeto de pago
+        if plan == 'anual':
+            precio = '200.00'
+            nombre_item = 'Suscripción Weather PRO Anual'
+            sku = 'pro_anual'
+            descripcion = 'Acceso anual a Weather Pro Suite (12 meses)'
+        else:
+            precio = '20.00'
+            nombre_item = 'Suscripción Weather PRO Mensual'
+            sku = 'pro_mensual'
+            descripcion = 'Acceso mensual a Weather Pro Suite'
+        site = settings.SITE_URL.rstrip('/')
+        cancel_url = f"{site}/pricing/"
+        return_url = f"{site}/paypal-retorno/"
+
     site = settings.SITE_URL.rstrip('/')
     payment = paypalrestsdk.Payment({
         "intent": "sale",
@@ -2682,14 +2704,14 @@ def crear_pago_paypal(request):
             "payment_method": "paypal"
         },
         "redirect_urls": {
-            "return_url": f"{site}/paypal-retorno/",
-            "cancel_url": f"{site}/pricing/"
+            "return_url": return_url,
+            "cancel_url": cancel_url,
         },
         "transactions": [{
             "item_list": {
                 "items": [{
-                    "name": nombre_item,
-                    "sku": sku,
+                    "name": nombre_item[:127],
+                    "sku": sku[:50],
                     "price": precio,
                     "currency": "USD",
                     "quantity": 1
@@ -2699,38 +2721,77 @@ def crear_pago_paypal(request):
                 "total": precio,
                 "currency": "USD"
             },
-            "description": descripcion
+            "description": descripcion[:127],
+            "custom": paquete_id or request.session.get('plan_pago', 'mensual'),
         }]
     })
 
-    # 2. Enviar a PayPal
     if payment.create():
         for link in payment.links:
             if link.rel == "approval_url":
                 return redirect(link.href)
     else:
-        print(payment.error)
+        logger.error(f'[PAYPAL] Error creando pago: {payment.error}')
+        if paquete_id:
+            return redirect(f'/activar-plan/?paquete={paquete_id}')
         return redirect('pricing')
+
 
 @login_required
 def paypal_retorno(request):
-    # 3. El usuario volvió. Ahora EJECUTAMOS el cobro.
+    """Ejecuta el cobro PayPal y activa plan tokens o suscripción legacy."""
     payment_id = request.GET.get('paymentId')
     payer_id   = request.GET.get('PayerID')
+    paquete_id = (
+        request.GET.get('paquete')
+        or request.session.pop('paypal_paquete_id', '')
+        or ''
+    )
 
-    if payment_id and payer_id:
+    if not (payment_id and payer_id):
+        return redirect('/pricing/#tokens' if paquete_id else 'pricing')
+
+    try:
         payment = paypalrestsdk.Payment.find(payment_id)
+    except Exception as e:
+        logger.error(f'[PAYPAL RETORNO] No se pudo cargar payment {payment_id}: {e}')
+        return redirect('/pricing/#tokens' if paquete_id else 'pricing')
 
-        if payment.execute({"payer_id": payer_id}):
-            plan = request.session.pop('plan_pago', 'mensual')
-            dias = 365 if plan == 'anual' else 30
-            activar_suscripcion_dias(request.user, dias, plan)
-            return redirect('pago_exitoso_view')
-        else:
-            logger.error(f'[PAYPAL RETORNO] Error ejecutando pago: {payment.error}')
+    if not payment.execute({"payer_id": payer_id}):
+        logger.error(f'[PAYPAL RETORNO] Error ejecutando pago: {payment.error}')
+        return redirect(f'/activar-plan/?paquete={paquete_id}' if paquete_id else 'pricing')
 
-    # Si algo falló
-    return redirect('pricing')
+    # Flujo tokens
+    if not paquete_id:
+        # Fallback: custom field del payment
+        try:
+            custom = payment.transactions[0].custom
+            if custom and custom in _PAQUETES_MAP:
+                paquete_id = custom
+        except Exception:
+            pass
+
+    paquete = _PAQUETES_MAP.get(paquete_id) if paquete_id else None
+    if paquete:
+        if _activar_plan_tokens_si_nuevo(request.user, paquete):
+            logger.info(f'[PAYPAL] Plan tokens activado: {request.user.username} — {paquete_id}')
+        return render(
+            request,
+            'pago_exitoso_tokens.html',
+            _ctx_pago_exitoso_tokens(request.user, paquete),
+        )
+
+    # Legacy mensual/anual
+    plan = request.session.pop('plan_pago', 'mensual')
+    try:
+        custom = payment.transactions[0].custom
+        if custom in ('mensual', 'anual'):
+            plan = custom
+    except Exception:
+        pass
+    dias = 365 if plan == 'anual' else 30
+    activar_suscripcion_dias(request.user, dias, plan)
+    return redirect('pago_exitoso_view')
 
 
 # ==========================================
@@ -2960,6 +3021,13 @@ def ls_webhook(request):
 
 @login_required
 def metodos_pago(request):
+    """
+    Legacy /metodos-pago/ — redirige al catálogo de tokens.
+    Usá ?legacy=1 para ver la página vieja (PayPal/MP mensual-anual).
+    """
+    if request.GET.get('legacy') != '1':
+        return redirect('/pricing/#tokens')
+
     plan = request.GET.get('plan', 'mensual')
     if plan not in ('mensual', 'anual'):
         plan = 'mensual'
@@ -2969,6 +3037,7 @@ def metodos_pago(request):
         'plan': plan,
         'precio': precio,
         'paypal_sandbox': paypal_mode == 'sandbox',
+        'opciones_ar': _es_usuario_argentina(request),
     })
 
 @login_required
@@ -2976,6 +3045,8 @@ def transferencia(request):
     plan = request.GET.get('plan', 'mensual')
     if plan not in ('mensual', 'anual'):
         plan = 'mensual'
+    if not _es_usuario_argentina(request):
+        return redirect('/pricing/#tokens')
     # Precio oficial siempre en USD (la CVU argentina cobra el equivalente en ARS del día)
     precio_usd = '200' if plan == 'anual' else '20'
     return render(request, 'transferencia.html', {
@@ -2988,6 +3059,8 @@ def confirmar_manual(request):
     # El usuario dice que ya hizo la transferencia.
     # No activamos todavía — le avisamos al admin por email.
     plan = request.GET.get('plan', 'mensual')
+    if not _es_usuario_argentina(request):
+        return redirect('/pricing/#tokens')
     precio = '$200 USD' if plan == 'anual' else '$20 USD'
 
     # Notificar al admin para que active manualmente
@@ -3094,6 +3167,10 @@ def mp_crear_preferencia(request):
     plan = request.GET.get('plan', 'mensual')
     if plan not in ('mensual', 'anual'):
         plan = 'mensual'
+
+    # MP solo para Argentina (no acepta bien cobros USD internacionales)
+    if not _es_usuario_argentina(request):
+        return redirect('/pricing/#tokens')
 
     if plan == 'anual':
         titulo = 'Weather PRO — Plan Anual (12 meses)'
@@ -4102,6 +4179,56 @@ def _meses_label_paquete(paquete):
     return label
 
 
+def _aplicar_override_pais_pago(request):
+    """
+    Permite forzar el país de pago vía ?pais=AR|XX (queda en sesión).
+    Útil si la geo falla o un argentino está de viaje.
+    """
+    pais = (request.GET.get('pais') or '').strip().upper()
+    if pais in ('AR', 'XX'):
+        request.session['pago_pais'] = pais
+    return request.session.get('pago_pais')
+
+
+def _es_usuario_argentina(request):
+    """
+    Mercado Pago y transferencia CVU solo aplican a Argentina.
+    Lemon Squeezy queda como vía mundial (USD).
+    """
+    override = _aplicar_override_pais_pago(request)
+    if override == 'AR':
+        return True
+    if override == 'XX':
+        return False
+
+    # Headers típicos de CDN / edge
+    for header in (
+        'HTTP_CF_IPCOUNTRY',
+        'HTTP_CLOUDFRONT_VIEWER_COUNTRY',
+        'HTTP_X_APPENGINE_COUNTRY',
+        'HTTP_X_COUNTRY_CODE',
+        'HTTP_X_VERCEL_IP_COUNTRY',
+    ):
+        code = (request.META.get(header) or '').strip().upper()
+        if code == 'AR':
+            return True
+        if code and code not in ('XX', 'T1', 'ZZ'):
+            # País conocido distinto de AR
+            return False
+
+    # Cookie de timezone seteada por el front (America/Argentina/...)
+    tz = (request.COOKIES.get('tc_tz') or '').strip()
+    if tz.startswith('America/Argentina'):
+        return True
+
+    # Accept-Language: es-AR
+    al = (request.META.get('HTTP_ACCEPT_LANGUAGE') or '').lower()
+    if 'es-ar' in al or 'es_ar' in al:
+        return True
+
+    return False
+
+
 def _descripcion_plan_tokens(paquete):
     """Descripción canónica del HistorialTokens (tipo BONO). Incluye [paquete_id] para idempotencia."""
     return (
@@ -4156,6 +4283,7 @@ def seleccionar_pago_tokens(request):
 
     meses_label = f"{paquete['meses']} mes{'es' if paquete['meses'] > 1 else ''}"
     regalo_label = f" + {paquete['regalo']} de regalo" if paquete['regalo'] else ''
+    opciones_ar = _es_usuario_argentina(request)
 
     return render(request, 'pago_tokens.html', {
         'paquete':     paquete,
@@ -4163,6 +4291,7 @@ def seleccionar_pago_tokens(request):
         'precio_usd':  int(paquete['precio']),
         'moneda':      'USD',
         'periodo':     meses_label + regalo_label,
+        'opciones_ar': opciones_ar,
     })
 
 
@@ -4170,6 +4299,8 @@ def seleccionar_pago_tokens(request):
 def confirmar_manual_tokens(request):
     """El usuario declara haber transferido para un plan de tokens."""
     paquete_id = request.GET.get('paquete', '')
+    if not _es_usuario_argentina(request):
+        return redirect(f'/activar-plan/?paquete={paquete_id}' if paquete_id else '/pricing/#tokens')
     paquete    = _PAQUETES_MAP.get(paquete_id)
     plan_label = paquete['nombre'] if paquete else 'tokens'
     precio     = f"${int(paquete['precio'])} USD" if paquete else '—'
@@ -4224,6 +4355,10 @@ def mp_crear_preferencia_tokens(request):
 
     if not paquete:
         return redirect('/pricing/#tokens')
+
+    # MP solo Argentina — el resto usa Lemon Squeezy (USD mundial)
+    if not _es_usuario_argentina(request):
+        return redirect(f'/activar-plan/?paquete={paquete_id}')
 
     sdk  = mercadopago.SDK(settings.MP_ACCESS_TOKEN)
     site = settings.SITE_URL.rstrip('/')

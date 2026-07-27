@@ -28,6 +28,14 @@
         .ls-card .ls-subtitle { color: #4e6fa3; font-size: .8rem; margin-bottom: 22px; padding-left: 34px; }
         .btn-ls { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 15px 24px; background: #1d4ed8; color: #fff; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 1rem; letter-spacing: .02em; box-shadow: 0 4px 18px rgba(29,78,216,.4); transition: background .18s, transform .15s, box-shadow .2s; border: none; }
         .btn-ls:hover { background: #1e40af; transform: translateY(-2px); box-shadow: 0 8px 26px rgba(29,78,216,.5); }
+        .btn-paypal-direct {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            width: 100%; padding: 12px 20px; margin-top: 10px;
+            background: #003087; color: #fff; text-decoration: none;
+            border-radius: 12px; font-weight: 700; font-size: .9rem;
+            transition: background .18s, transform .15s;
+        }
+        .btn-paypal-direct:hover { background: #005ea6; transform: translateY(-1px); }
         .ls-trust { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
         .ls-trust span { display: inline-flex; align-items: center; gap: 5px; color: #7c6fac; font-size: .74rem; }
         .badge-paypal { background: #003087; color: #fff !important; padding: 2px 9px; border-radius: 5px; font-size: .7rem; font-weight: 700; }
@@ -59,17 +67,13 @@
         .cancel-link { display: block; text-align: center; color: #475569; text-decoration: none; font-size: .82rem; margin-top: 20px; }
         .cancel-link:hover { color: #94a3b8; }
 
-        /* ── Responsive ──────────────────────────────────── */
         @media (max-width: 520px) {
             body { padding: 20px 12px; }
-            /* Plan badge: apila ícono + info + precio */
             .plan-badge { flex-wrap: wrap; gap: 10px; }
             .plan-badge .price { width: 100%; text-align: left; }
             .plan-badge .price .amount { font-size: 1.35rem; }
-            /* Carta LS */
             .ls-card { padding: 20px 16px; }
             .btn-ls   { padding: 13px 16px; font-size: 0.9rem; }
-            /* Badges de confianza */
             .ls-trust { gap: 7px; }
         }
         @media (max-width: 380px) {
@@ -86,7 +90,6 @@
         <i class="fas fa-arrow-left"></i> Volver a planes
     </a>
 
-    <!-- Plan badge -->
     <div class="plan-badge">
         <div class="icon-wrap" style="background:{{ paquete.bg|default:'rgba(99,102,241,.15)' }};">
             <i class="fas fa-{{ paquete.icono_fa.fa|default:'bolt' }}" style="color:{{ paquete.icono_fa.color|default:'#a5b4fc' }};"></i>
@@ -101,19 +104,24 @@
         </div>
     </div>
 
-    <!-- PRINCIPAL: Lemon Squeezy -->
+    <!-- Lemon Squeezy: via mundial USD -->
     {% if paquete.ls_variant_id %}
-    <div class="section-label"><i class="fas fa-star" style="color:#f59e0b;margin-right:6px;"></i>Metodo recomendado</div>
+    <div class="section-label"><i class="fas fa-star" style="color:#f59e0b;margin-right:6px;"></i>Metodo recomendado · internacional</div>
     <div class="ls-card">
         <div class="ls-title">
             <i class="fas fa-credit-card" style="font-size:1.1rem;"></i>
             Pagar con tarjeta o PayPal
         </div>
-            <div class="ls-subtitle">Cobro en USD &middot; Activacion automatica &middot; Lemon Squeezy</div>
+        <div class="ls-subtitle">Cobro en USD &middot; Activacion automatica &middot; Lemon Squeezy</div>
 
         <a href="/ls-checkout/?paquete={{ paquete_id }}" class="btn-ls">
             <i class="fas fa-lock" style="font-size:.9rem;opacity:.85;"></i>
             Suscribirse — ${{ precio_usd }} USD
+        </a>
+
+        <a href="/pagar-paypal/?paquete={{ paquete_id }}" class="btn-paypal-direct">
+            <i class="fab fa-paypal"></i>
+            Pagar ${{ precio_usd }} USD con PayPal
         </a>
 
         <div class="ls-trust">
@@ -122,24 +130,30 @@
             <span class="badge-paypal">PayPal</span>
             <span style="color:#3b6ea8;"><i class="fas fa-shield-halved"></i> Pago encriptado</span>
         </div>
+        <p style="text-align:center;margin:12px 0 0;color:#4e6fa3;font-size:.72rem;line-height:1.4;">
+            Lemon Squeezy incluye tarjeta y PayPal. El botón PayPal de abajo cobra directo (USD).
+        </p>
     </div>
     {% endif %}
 
-    <!-- OTRAS OPCIONES (colapsadas) -->
+    {% if opciones_ar %}
     <button class="other-toggle" id="toggle-other" onclick="toggleOther()">
-        <span><i class="fas fa-ellipsis" style="margin-right:8px;"></i>Otras opciones de pago</span>
+        <span><i class="fas fa-ellipsis" style="margin-right:8px;"></i>Opciones Argentina (Mercado Pago / transferencia)</span>
         <i class="fas fa-chevron-down chevron"></i>
     </button>
 
     <div class="other-body" id="other-body">
         <div class="mp-section">
             <h4><i class="fas fa-mobile-screen-button" style="margin-right:6px;"></i>Mercado Pago</h4>
+            <p style="color:#64748b;font-size:.78rem;line-height:1.5;margin:0 0 12px;">
+                Disponible solo en Argentina. Si estás fuera del país, usá Lemon Squeezy arriba.
+            </p>
 
             <a href="/pagar-tokens/?paquete={{ paquete_id }}" class="btn-mp-checkout">
                 <i class="fas fa-bolt"></i> Pagar ${{ precio_usd }} USD con Mercado Pago
             </a>
 
-            <div class="section-divider">Transferencia (solo Argentina)</div>
+            <div class="section-divider">Transferencia bancaria</div>
             <p style="color:#64748b;font-size:.78rem;line-height:1.5;margin:0 0 14px;">
                 El precio del plan es <strong style="color:#e2e8f0;">${{ precio_usd }} USD</strong>.
                 Si transferís por CVU, enviá el equivalente en ARS del día e indicá el monto USD en el comprobante.
@@ -161,9 +175,7 @@
             </div>
             <div class="row">
                 <span class="lbl">Monto</span>
-                <div class="val big-amount">
-                    ${{ precio_usd }} USD
-                </div>
+                <div class="val big-amount">${{ precio_usd }} USD</div>
             </div>
 
             <div class="email-note">
@@ -175,16 +187,42 @@
                 <i class="fas fa-check-circle"></i> Ya hice la transferencia
             </a>
         </div>
+        <p style="text-align:center;margin-top:16px;">
+            <a href="?paquete={{ paquete_id }}&amp;pais=XX" style="color:#64748b;font-size:.78rem;text-decoration:none;">No estoy en Argentina — ocultar estas opciones</a>
+        </p>
     </div>
+    {% else %}
+    <p style="text-align:center;margin:18px 0 0;color:#64748b;font-size:.8rem;line-height:1.5;">
+        ¿Estás en Argentina?
+        <a href="?paquete={{ paquete_id }}&amp;pais=AR" style="color:#7dd3fc;font-weight:600;text-decoration:none;">Ver Mercado Pago y transferencia</a>
+    </p>
+    {% endif %}
 
     <a href="/pricing/#tokens" class="cancel-link">Cancelar</a>
 
 </div>
 
 <script>
+(function () {
+    try {
+        var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+        if (tz) {
+            document.cookie = 'tc_tz=' + encodeURIComponent(tz) + ';path=/;max-age=31536000;SameSite=Lax';
+        }
+        {% if not opciones_ar %}
+        if (tz.indexOf('America/Argentina') === 0 && !sessionStorage.getItem('tc_ar_reload')) {
+            sessionStorage.setItem('tc_ar_reload', '1');
+            var u = new URL(window.location.href);
+            u.searchParams.set('pais', 'AR');
+            window.location.replace(u.toString());
+        }
+        {% endif %}
+    } catch (e) {}
+})();
 function toggleOther() {
     var btn  = document.getElementById('toggle-other');
     var body = document.getElementById('other-body');
+    if (!btn || !body) return;
     var open = body.classList.toggle('open');
     btn.classList.toggle('open', open);
 }
