@@ -3,8 +3,6 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
 import json
-from google.cloud import bigquery
-from google.oauth2 import service_account
 import os
 import logging
 from dotenv import load_dotenv
@@ -332,8 +330,9 @@ class DatoSectorial(models.Model):
                 'procesado_en': self.procesado_en.isoformat()
             }
             
-            # Inicializar cliente BigQuery
+            # Inicializar cliente BigQuery (import lazy: evita cargar pandas al arrancar Django)
             try:
+                from google.cloud import bigquery
                 client = bigquery.Client(project=project_id)
             except Exception as e:
                 if "credentials" in str(e).lower():
