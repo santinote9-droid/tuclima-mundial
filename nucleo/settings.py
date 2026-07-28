@@ -260,7 +260,12 @@ DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'Weather Pro <climapro00@g
 # SITE_URL=https://tuclima-mundial.onrender.com  (para webhooks y back_urls)
 # ============================================================
 MP_ACCESS_TOKEN = os.getenv('MP_ACCESS_TOKEN', '')
-SITE_URL        = os.getenv('SITE_URL', 'http://127.0.0.1:8000')  # ngrok en desarrollo
+# Preferí SITE_URL; en Render cae a RENDER_EXTERNAL_URL si no está definida.
+SITE_URL = (
+    (os.getenv('SITE_URL') or '').strip()
+    or (os.getenv('RENDER_EXTERNAL_URL') or '').strip()
+    or 'http://127.0.0.1:8000'
+)
 
 # Cotización USD→ARS para Mercado Pago Argentina (preferencias en ARS).
 # Actualizá en Render según cotización aproximada.

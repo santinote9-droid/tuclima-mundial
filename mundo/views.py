@@ -4179,6 +4179,30 @@ def _aplicar_override_pais_pago(request):
     return request.session.get('pago_pais')
 
 
+def _site_url_publico(request=None):
+    """
+    URL HTTPS pública para back_urls / webhooks de pagos.
+    Orden: SITE_URL https → RENDER_EXTERNAL_URL → host del request → fallback producción.
+    """
+    candidates = [
+        (getattr(settings, 'SITE_URL', '') or '').rstrip('/'),
+        (os.getenv('RENDER_EXTERNAL_URL') or '').rstrip('/'),
+    ]
+    if request is not None:
+        host = (request.get_host() or '').split(':')[0].strip().lower()
+        if host and host not in ('127.0.0.1', 'localhost'):
+            # Detrás de Render/proxy siempre HTTPS público
+            candidates.append(f'https://{host}')
+
+    for site in candidates:
+        if not site:
+            continue
+        if site.startswith('https://') and '127.0.0.1' not in site and 'localhost' not in site:
+            return site.rstrip('/')
+
+    return 'https://tuclima-mundial.onrender.com'
+
+
 def _es_usuario_argentina(request):
     """
     Mercado Pago y transferencia CVU solo aplican a Argentina.
@@ -4321,11 +4345,12 @@ def mp_crear_preferencia_tokens(request):
         messages.error(request, 'Mercado Pago no está configurado. Usá Lemon Squeezy.')
         return redirect(f'/activar-plan/?paquete={paquete_id}&pais=AR')
 
-    site = (getattr(settings, 'SITE_URL', '') or '').rstrip('/')
+    site = _site_url_publico(request)
     if not site.startswith('https://'):
         messages.error(
             request,
-            'SITE_URL debe ser HTTPS público (ej. https://tuclima-mundial.onrender.com) para Mercado Pago.',
+            'No hay URL HTTPS pública para Mercado Pago. '
+            'Definí SITE_URL=https://tuclima-mundial.onrender.com en Render.',
         )
         return redirect(f'/activar-plan/?paquete={paquete_id}&pais=AR')
 
