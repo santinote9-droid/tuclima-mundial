@@ -4319,25 +4319,39 @@ def mp_crear_preferencia_tokens(request):
     mp_token = (getattr(settings, 'MP_ACCESS_TOKEN', '') or '').strip()
     if not mp_token:
         messages.error(request, 'Mercado Pago no está configurado. Usá Lemon Squeezy.')
-        return redirect(f'/activar-plan/?paquete={paquete_id}')
+        return redirect(f'/activar-plan/?paquete={paquete_id}&pais=AR')
 
-    sdk  = mercadopago.SDK(mp_token)
-    site = settings.SITE_URL.rstrip('/')
+    site = (getattr(settings, 'SITE_URL', '') or '').rstrip('/')
+    if not site.startswith('https://'):
+        messages.error(
+            request,
+            'SITE_URL debe ser HTTPS público (ej. https://tuclima-mundial.onrender.com) para Mercado Pago.',
+        )
+        return redirect(f'/activar-plan/?paquete={paquete_id}&pais=AR')
+
+    sdk = mercadopago.SDK(mp_token)
 
     meses_label = f"{paquete['meses']} mes{'es' if paquete['meses'] > 1 else ''}"
     regalo_label = f" + {paquete['regalo']} de regalo" if paquete['regalo'] else ''
 
-    # Cuentas MP de Argentina suelen rechazar USD → cobramos ARS (equiv. del precio USD)
+    # Cuentas MP AR: cobro en ARS (equiv. del precio USD)
     ars_rate = int(getattr(settings, 'ARS_POR_USD', 1000) or 1000)
-    monto_ars = round(float(paquete['precio']) * ars_rate, 2)
+    monto_ars = int(round(float(paquete['precio']) * ars_rate))
+    if monto_ars < 1:
+        monto_ars = 1
 
+    title = f"Weather PRO - {paquete['nombre']} {paquete['tokens_dia']} tok/dia - {meses_label}{regalo_label}"
     preference_data = {
         "items": [{
-            "title": f"Weather PRO - {paquete['nombre']} {paquete['tokens_dia']} tok/dia - {meses_label}{regalo_label}",
+            "id": paquete_id,
+            "title": title[:250],
             "quantity": 1,
             "unit_price": monto_ars,
             "currency_id": "ARS",
         }],
+        "payer": {
+            "email": (request.user.email or '')[:100],
+        },
         "back_urls": {
             "success": f"{site}/tokens-retorno/?paquete={paquete_id}&status=approved",
             "failure": f"{site}/activar-plan/?paquete={paquete_id}&pais=AR",
@@ -4346,21 +4360,63 @@ def mp_crear_preferencia_tokens(request):
         "auto_return": "approved",
         "external_reference": f"{request.user.id}_tk_{paquete_id}",
         "notification_url": f"{site}/mp-webhook/",
+        "statement_descriptor": "TUCLIMA",
     }
 
+    def _mp_error_text(result_obj):
+        resp = (result_obj or {}).get('response') or {}
+        if isinstance(resp, dict):
+            parts = []
+            for key in ('message', 'error', 'cause'):
+                val = resp.get(key)
+                if isinstance(val, list) and val:
+                    for item in val[:3]:
+                        if isinstance(item, dict):
+                            parts.append(str(item.get('description') or item.get('code') or item))
+                        else:
+                            parts.append(str(item))
+                elif val:
+                    parts.append(str(val))
+            if parts:
+                return ' | '.join(parts)[:300]
+        return f"status={result_obj.get('status')}"
+
     try:
-        result   = sdk.preference().create(preference_data)
-        response = result.get("response", {})
-        if result.get("status") in (200, 201) and "init_point" in response:
-            return redirect(response["init_point"])
-        logger.error(f"[MP Tokens] Error creando preferencia: {result}")
+        result = sdk.preference().create(preference_data)
+        response = result.get('response') or {}
+        status = result.get('status')
+        # TEST tokens → sandbox_init_point; prod → init_point
+        init_url = response.get('init_point') or response.get('sandbox_init_point')
+        if status in (200, 201) and init_url:
+            logger.info(
+                '[MP Tokens] Preferencia OK paquete=%s monto_ars=%s token_prefix=%s',
+                paquete_id, monto_ars, mp_token[:10],
+            )
+            return redirect(init_url)
+
+        # Retry sin auto_return (a veces falla por back_urls)
+        if status not in (200, 201):
+            preference_retry = dict(preference_data)
+            preference_retry.pop('auto_return', None)
+            result2 = sdk.preference().create(preference_retry)
+            response2 = result2.get('response') or {}
+            init_url2 = response2.get('init_point') or response2.get('sandbox_init_point')
+            if result2.get('status') in (200, 201) and init_url2:
+                logger.info('[MP Tokens] Preferencia OK en retry sin auto_return')
+                return redirect(init_url2)
+            result = result2
+
+        err = _mp_error_text(result)
+        logger.error('[MP Tokens] Error creando preferencia: %s | full=%s', err, result)
         messages.error(
             request,
-            'Mercado Pago no pudo crear el pago. Probá Lemon Squeezy o revisá el Access Token en Render.',
+            f'Mercado Pago rechazó el pago: {err}. '
+            f'Revisá MP_ACCESS_TOKEN (APP_USR-…), SITE_URL=https://tuclima-mundial.onrender.com '
+            f'y ARS_POR_USD en Render.',
         )
-    except Exception:
+    except Exception as e:
         logger.exception('[MP Tokens] Excepcion creando preferencia')
-        messages.error(request, 'Error al conectar con Mercado Pago. Probá Lemon Squeezy.')
+        messages.error(request, f'Error al conectar con Mercado Pago: {e}')
 
     return redirect(f'/activar-plan/?paquete={paquete_id}&pais=AR')
 
