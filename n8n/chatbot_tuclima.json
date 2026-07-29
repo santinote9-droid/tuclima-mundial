@@ -240,7 +240,7 @@
             {
               "keyName": "session_id",
               "condition": "eq",
-              "keyValue": "={{ $json.body.sessionId }}"
+              "keyValue": "={{ $json.body?.sessionId || $json.body?.session_id || $('Webhook').item.json.body?.sessionId || $('Webhook').item.json.body?.userId || 'default' }}"
             }
           ]
         }
@@ -261,7 +261,7 @@
           "name": "Supabase account"
         }
       },
-      "disabled": true
+      "disabled": false
     },
     {
       "parameters": {
@@ -1258,7 +1258,8 @@
           "id": "iTS56n8NpxTtVcYY",
           "name": "Postgres account"
         }
-      }
+      },
+      "disabled": true
     },
     {
       "parameters": {
@@ -1330,7 +1331,7 @@
             "index": 0
           },
           {
-            "node": "Execute a SQL query",
+            "node": "Get many rows",
             "type": "main",
             "index": 0
           }
@@ -1422,7 +1423,13 @@
     },
     "Get many rows": {
       "main": [
-        []
+        [
+          {
+            "node": "Code 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Merge": {
@@ -1718,13 +1725,7 @@
     },
     "Execute a SQL query": {
       "main": [
-        [
-          {
-            "node": "Code 1",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Preparar_Vision": {
