@@ -867,7 +867,7 @@
         "promptType": "define",
         "text": "={{ $('Webhook').item.json.body.chatInput }}\n{{ $json.contexto_memoria ? '\\n[MEMORIA]\\n' + String($json.contexto_memoria).substring(0, 4000) : '' }}\n{{ $json.imageAnalysis ? '\\n[VISION]\\n' + String($json.imageAnalysis).substring(0, 4000) : '' }}\n{{ $json.text ? '\\n[DATOS COPIA]\\n' + String($json.text).substring(0, 8000) : ($json.data ? '\\n[DATOS COPIA]\\n' + (typeof $json.data === 'string' ? String($json.data).substring(0, 8000) : JSON.stringify($json.data).substring(0, 8000)) : '') }}\n{{ $('Webhook').item.json.body.sector ? '\\n[SECTOR]\\n' + $('Webhook').item.json.body.sector : '' }}",
         "options": {
-          "systemMessage": "Sos TuClima IA (Gemini). Asistente técnico operativo para Agro, Naval, Aéreo y Energías.\nRespondé en español, claro y accionable. No inventes clima ni datos: usá herramientas.\n\n## Contexto de sesión\n- El body trae `sector` (agro|naval|aereo|energia). Priorizá tools de ese sector.\n- Si hay bloque [MEMORIA], usalo para continuidad.\n- Si hay [VISION] / análisis visual, presentalo y cruzalo con clima real del lugar.\n- Si hay [DATOS]/IA] (Excel/PDF), analizá eso primero.\n\n## Jerarquía de tools\n1) Datos: `obtener_clima` + tool sectorial (`consultar_agro` / `obtener_mar` / `consultar_aereo` / `consultar_energia`).\n2) Gráficos/dashboard/visualización: primero datos reales, luego SOLO el módulo BI del sector:\n   - agro → Modulo_Agro_BI\n   - naval → Modulo_Naval_BI\n   - aereo → Modulo_Aereo_BI\n   - energia → Modulo_Energia_BI\n   Nunca llames un BI de otro sector. No menciones Power BI ni links: el front dibuja el gráfico.\n3) PDF/informe descargable: solo si el usuario lo pide explícitamente (módulo reporte / Docs).\n4) Excel: tool Excel cuando pidan planilla/export.\n5) Web search: último recurso (noticias o teoría).\n\n## Secuencia gráficos (obligatoria)\nPASO 1: obtener_clima + tool del sector.\nPASO 2: pasar esos datos al Modulo_*_BI correspondiente.\nProhibido BI sin datos previos.\n\n## Visión\nSi hay análisis visual preprocesado: resumí hallazgos → tools de clima/sector → riesgos + recomendaciones.\n\n## Estilo\n- Sé breve salvo reportes pedidos.\n- Unidades claras (nudos, hPa, mm, kW, GDD, etc.).\n- Si faltan datos de tool, decilo y pedí ubicación.\n"
+          "systemMessage": "Sos TuClima IA (Gemini). Asistente técnico operativo para Agro, Naval, Aéreo y Energías.\nRespondé en español, claro y accionable. No inventes clima ni datos: usá herramientas.\n\n## Contexto de sesión\n- El body trae `sector` (agro|naval|aereo|energia). Priorizá tools de ese sector.\n- Si hay bloque [MEMORIA], usalo para continuidad.\n- Si hay [VISION] / análisis visual, presentalo y cruzalo con clima real del lugar.\n- Si hay [DATOS]/IA] (Excel/PDF), analizá eso primero.\n\n## Jerarquía de tools\n1) Datos: `obtener_clima` + tool sectorial (`consultar_agro` / `obtener_mar` / `consultar_aereo` / `consultar_energia`).\n2) Gráficos/dashboard/visualización: primero datos reales, luego SOLO el módulo BI del sector:\n   - agro → Modulo_Agro_BI\n   - naval → Modulo_Naval_BI\n   - aereo → Modulo_Aereo_BI\n   - energia → Modulo_Energia_BI\n   Nunca llames un BI de otro sector. No menciones Power BI ni links: el front dibuja el gráfico.\n3) PDF/informe descargable: solo si el usuario lo pide explícitamente (módulo reporte / Docs).\n4) Excel: tool Excel cuando pidan planilla/export.\n5) Web search: último recurso (noticias o teoría).\n\n## Secuencia gráficos (obligatoria)\nPASO 1: obtener_clima + tool del sector.\nPASO 2: pasar esos datos al Modulo_*_BI correspondiente.\nProhibido BI sin datos previos.\n\n## Visión\nSi hay análisis visual preprocesado: resumí hallazgos → tools de clima/sector → riesgos + recomendaciones.\n\n## Estilo\n- Sé breve salvo reportes pedidos.\n- Unidades claras (nudos, hPa, mm, kW, GDD, etc.).\n- Si faltan datos de tool, decilo y pedí ubicación.\n\n\n## Devorador de reportes\nSi el usuario adjunta un PDF/informe y pide analisis ejecutivo, usa Modulo_Devorador_Reportes con texto_documento (texto ya extraido), sector y empresa. No reenvies el binario."
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
@@ -1297,6 +1297,84 @@
       ],
       "id": "vision-node-001",
       "name": "Preparar_Vision"
+    },
+    {
+      "parameters": {
+        "description": "Analiza un DOCUMENTO TECNICO ya extraido como TEXTO (PDF/informe). NO envies archivos binarios: envia el texto plano completo. Usa cuando el usuario subio un PDF/informe y pide resumen ejecutivo, alertas criticas o proximas acciones. Parametros: texto_documento (string), sector (AGRO|NAVAL|AEREO|ENERGIA|GENERAL), empresa (string).",
+        "workflowId": {
+          "__rl": true,
+          "value": "Devorador de Reportes — Procesamiento Documental",
+          "mode": "name",
+          "cachedResultName": "Devorador de Reportes — Procesamiento Documental"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "texto_documento": "={{ $fromAI('texto_documento', 'Texto completo extraido del PDF o informe.', 'string') }}",
+            "sector": "={{ $fromAI('sector', 'AGRO, NAVAL, AEREO, ENERGIA o GENERAL', 'string') }}",
+            "empresa": "={{ $fromAI('empresa', 'Nombre de empresa o Cliente; si no, Empresa', 'string') }}",
+            "session_id": "={{ $('Webhook').item.json.body?.sessionId ?? $('Webhook').item.json.body?.userId ?? 'chat' }}"
+          },
+          "matchingColumns": [
+            "texto_documento",
+            "sector",
+            "empresa",
+            "session_id"
+          ],
+          "schema": [
+            {
+              "id": "texto_documento",
+              "displayName": "texto_documento",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "sector",
+              "displayName": "sector",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "empresa",
+              "displayName": "empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        5760,
+        640
+      ],
+      "id": "drc-tool-devorador-001",
+      "name": "Modulo_Devorador_Reportes"
     }
   ],
   "connections": {
@@ -1735,6 +1813,17 @@
             "node": "Merge",
             "type": "main",
             "index": 1
+          }
+        ]
+      ]
+    },
+    "Modulo_Devorador_Reportes": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
           }
         ]
       ]
