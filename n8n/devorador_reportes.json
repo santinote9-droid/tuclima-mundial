@@ -11,26 +11,38 @@
           "allowedOrigins": "https://tuclima-mundial.onrender.com",
           "responseHeaders": {
             "entries": [
-              { "name": "Access-Control-Allow-Origin", "value": "*" },
-              { "name": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, X-N8N-Secret" }
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type, Authorization, X-N8N-Secret"
+              }
             ]
           }
         }
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [200, 300],
+      "position": [
+        200,
+        300
+      ],
       "id": "drc001-4f8a-4b2c-9e1d-a3b7c8d9e0f1",
       "name": "Webhook Devorador",
       "webhookId": "devorador-reportes-2026-v1"
     },
     {
       "parameters": {
-        "jsCode": "// Validacion de origen — para activar, poner el secreto en secretEsperado\nconst secretEsperado = '';\nconst secretRecibido = $input.first().json.headers?.['x-n8n-secret'] || '';\n\nif (secretEsperado && secretRecibido !== secretEsperado) {\n  throw new Error('401 Unauthorized: X-N8N-Secret invalido o ausente');\n}\n\nreturn $input.all();"
+        "jsCode": "// Validacion de origen — secreto compartido Django ↔ n8n\n// Configurar en n8n: Settings → Variables → N8N_WEBHOOK_SECRET\nlet secretEsperado = '';\ntry { secretEsperado = String($vars['N8N_WEBHOOK_SECRET'] || '').trim(); } catch (e) {}\n\nconst headers = $input.first().json.headers || {};\nconst secretRecibido = String(\n  headers['x-n8n-secret'] || headers['X-N8N-Secret'] || ''\n).trim();\n\nif (secretEsperado && secretRecibido !== secretEsperado) {\n  throw new Error('401 Unauthorized: X-N8N-Secret invalido o ausente');\n}\n\nreturn $input.all();\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [420, 300],
+      "position": [
+        420,
+        300
+      ],
       "id": "drc002-5a9b-4c3d-8f2e-b4c8d9e0f1a2",
       "name": "Validar Secreto"
     },
@@ -40,7 +52,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [640, 300],
+      "position": [
+        640,
+        300
+      ],
       "id": "drc003-6b0c-4d4e-7a3f-c5d9e0f1a2b3",
       "name": "Validar Archivo"
     },
@@ -51,7 +66,10 @@
       },
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1,
-      "position": [860, 300],
+      "position": [
+        860,
+        300
+      ],
       "id": "drc004-7c1d-4e5f-6b4a-d6e0f1a2b3c4",
       "name": "Extraer Texto PDF"
     },
@@ -61,7 +79,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1080, 300],
+      "position": [
+        1080,
+        300
+      ],
       "id": "drc005-8d2e-4f6a-5c5b-e7f1a2b3c4d5",
       "name": "Preparar Prompt Sectorial"
     },
@@ -83,7 +104,10 @@
         "specifyHeaders": "keypair",
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -100,7 +124,10 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1300, 300],
+      "position": [
+        1300,
+        300
+      ],
       "id": "drc006-9e3f-4a7b-4d6c-f8a2b3c4d5e6",
       "name": "Llamar Gemini API"
     },
@@ -110,7 +137,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1520, 300],
+      "position": [
+        1520,
+        300
+      ],
       "id": "drc007-0f4a-4b8c-3e7d-a9b3c4d5e6f7",
       "name": "Formatear Respuesta"
     },
@@ -122,14 +152,20 @@
           "responseCode": 200,
           "responseHeaders": {
             "entries": [
-              { "name": "Content-Type", "value": "application/json" }
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
             ]
           }
         }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1740, 300],
+      "position": [
+        1740,
+        300
+      ],
       "id": "drc008-1a5b-4c9d-2f8e-b0c4d5e6f7a8",
       "name": "Responder Exito"
     }
@@ -137,37 +173,79 @@
   "connections": {
     "Webhook Devorador": {
       "main": [
-        [{ "node": "Validar Secreto", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Validar Secreto",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Validar Secreto": {
       "main": [
-        [{ "node": "Validar Archivo", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Validar Archivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Validar Archivo": {
       "main": [
-        [{ "node": "Extraer Texto PDF", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Extraer Texto PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Extraer Texto PDF": {
       "main": [
-        [{ "node": "Preparar Prompt Sectorial", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Preparar Prompt Sectorial",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Preparar Prompt Sectorial": {
       "main": [
-        [{ "node": "Llamar Gemini API", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Llamar Gemini API",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Llamar Gemini API": {
       "main": [
-        [{ "node": "Formatear Respuesta", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Formatear Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Formatear Respuesta": {
       "main": [
-        [{ "node": "Responder Exito", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Responder Exito",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },

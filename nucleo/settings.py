@@ -297,6 +297,14 @@ LEMONSQUEEZY_API_KEY          = os.getenv('LEMONSQUEEZY_API_KEY', '')
 LEMONSQUEEZY_WEBHOOK_SECRET   = os.getenv('LEMONSQUEEZY_WEBHOOK_SECRET', '')
 
 # ============================================================
+# N8N — webhooks / chat IA
+# N8N_BASE_URL: host de Railway (sin path)
+# N8N_WEBHOOK_SECRET: mismo valor en n8n Variables → N8N_WEBHOOK_SECRET
+# ============================================================
+N8N_BASE_URL = os.getenv('N8N_BASE_URL', 'https://n8n-production-2651.up.railway.app').rstrip('/')
+N8N_WEBHOOK_SECRET = os.getenv('N8N_WEBHOOK_SECRET', '')
+
+# ============================================================
 # ALERTAS PROACTIVAS (n8n)
 # N8N_ALERTAS_SECRET=tuclima-alertas-2026  (mismo valor en n8n y en esta variable)
 # ============================================================

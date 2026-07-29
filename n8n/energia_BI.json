@@ -13,8 +13,10 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-3.1-pro-preview-customtools",
-        "options": {"maxOutputTokens": 2000}
+        "modelName": "models/gemini-2.0-flash",
+        "options": {
+          "maxOutputTokens": 2000
+        }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,

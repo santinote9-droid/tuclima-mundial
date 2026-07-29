@@ -4017,6 +4017,74 @@ def enviar_dato_sectorial_a_n8n(request):
 # SISTEMA DE TOKENS IA
 # ==========================================
 
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def api_chat_ia(request):
+    """
+    Proxy autenticado hacia el webhook /webhook/chat de n8n.
+    Evita exponer el webhook público y envía X-N8N-Secret desde el servidor.
+    """
+    n8n_base = getattr(settings, 'N8N_BASE_URL', '') or os.getenv(
+        'N8N_BASE_URL', 'https://n8n-production-2651.up.railway.app'
+    )
+    n8n_base = n8n_base.rstrip('/')
+    webhook_url = f"{n8n_base}/webhook/chat"
+    secret = getattr(settings, 'N8N_WEBHOOK_SECRET', '') or os.getenv('N8N_WEBHOOK_SECRET', '')
+
+    # Campos de texto (FormData del front)
+    data = {key: value for key, value in request.POST.items()}
+    # No confiar en userId del cliente
+    data['userId'] = str(request.user.id)
+    data['userName'] = request.user.username
+    if not data.get('sessionId'):
+        data['sessionId'] = request.session.session_key or f"u{request.user.id}"
+
+    files = None
+    if request.FILES:
+        files = {}
+        for key, uploaded in request.FILES.items():
+            content = uploaded.read()
+            files[key] = (
+                uploaded.name,
+                content,
+                uploaded.content_type or 'application/octet-stream',
+            )
+
+    headers = {
+        'User-Agent': 'Django-TuClima/1.0',
+        'X-N8N-Secret': secret,
+    }
+
+    try:
+        respuesta = requests.post(
+            webhook_url,
+            data=data,
+            files=files,
+            headers=headers,
+            timeout=180,
+        )
+    except requests.exceptions.Timeout:
+        logger.error('[CHAT IA] Timeout n8n user=%s', request.user.id)
+        return JsonResponse({'error': 'La IA tardó demasiado. Reintentá.'}, status=504)
+    except requests.exceptions.RequestException as e:
+        logger.error('[CHAT IA] Conexion n8n: %s', e)
+        return JsonResponse({'error': 'No se pudo conectar con la IA.'}, status=503)
+
+    content_type = respuesta.headers.get('Content-Type', 'application/json')
+    if 'application/json' in content_type:
+        try:
+            return JsonResponse(respuesta.json(), status=respuesta.status_code, safe=False)
+        except ValueError:
+            pass
+
+    return HttpResponse(
+        respuesta.content,
+        status=respuesta.status_code,
+        content_type=content_type,
+    )
+
+
 @login_required
 def api_saldo_tokens(request):
     """Devuelve el saldo de tokens del usuario autenticado."""
@@ -4780,6 +4848,9 @@ def devorador_api(request):
             webhook_url,
             files=files,
             data=data,
+            headers={
+                'X-N8N-Secret': getattr(settings, 'N8N_WEBHOOK_SECRET', '') or os.getenv('N8N_WEBHOOK_SECRET', ''),
+            },
             timeout=120  # 2 minutos para documentos extensos
         )
         respuesta.raise_for_status()

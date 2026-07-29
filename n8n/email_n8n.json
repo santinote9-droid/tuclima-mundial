@@ -24,7 +24,9 @@
       "parameters": {
         "promptType": "define",
         "text": "Genera un reporte del clima actual para {{ $json.ubicacion }}. El usuario se llama {{ $json.nombre }} y trabaja en {{ $json.trabajo }}. El reporte debe ser útil para su trabajo, breve, motivador y con recomendaciones. ",
-        "options": {"maxIterations": 3}
+        "options": {
+          "maxIterations": 3
+        }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
@@ -37,8 +39,10 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-3.1-pro-preview-customtools",
-        "options": {"maxOutputTokens": 800}
+        "modelName": "models/gemini-2.0-flash",
+        "options": {
+          "maxOutputTokens": 800
+        }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,

@@ -1961,7 +1961,7 @@ Generado por TuClima Pro - www.tuclima.com
     fd.append('userId',djangoUserId);
     fd.append('sector','agro');
     fd.append('data00',file);
-    fetch(urlN8N,{method:'POST',body:fd})
+    fetch(urlN8N,{method:'POST',credentials:'include',body:fd})
       .then(function(r){return r.json();})
       .then(function(d){
         var txt=(d.output||d.text||JSON.stringify(d)).replace(/</g,'&lt;').replace(/\n/g,'<br>');
@@ -2678,7 +2678,7 @@ function enviarAccionRapida(txt) {
 <script>
     // --- CONFIGURACIÓN AGRO INTELLIGENCE PRO ---
 
-const urlN8N = "https://n8n-production-2651.up.railway.app/webhook/chat"; // Webhook principal ChatBot TuClima
+const urlN8N = "/api/chat-ia/"; // Proxy Django → n8n (con secreto servidor)
 const djangoUserId = "{{ user.username|escapejs }}"; // Usuario autenticado de Django
 const _tcStorageKey = djangoUserId ? `chatSessionId_${djangoUserId}` : "chatSessionId";
 let sessionId = localStorage.getItem(_tcStorageKey) || (djangoUserId ? `${djangoUserId}_${generateUUID().slice(0,8)}` : generateUUID());
@@ -3244,7 +3244,8 @@ async function enviarMensaje() {
 
         const respuesta = await fetch(urlN8N, {
             method: "POST",
-            body: formData 
+            credentials: "include",
+            body: formData
         });
 
         const datos = await respuesta.json();
