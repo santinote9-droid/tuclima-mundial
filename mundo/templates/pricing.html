@@ -237,9 +237,10 @@
         </div>
 
         <p style="color:#94a3b8;font-size:0.88rem;line-height:1.7;margin:18px 0 24px;">
-            Los <strong style="color:#a5b4fc;">tokens son créditos digitales</strong> que usa la IA para procesar y responder tus consultas.
-            Cada vez que hacés una pregunta, la IA lee tu consulta, el historial de la conversación y los datos del clima en tiempo real — todo eso consume tokens.
-            Una vez que los tokens del día se agotan, se renuevan automáticamente a la mañana siguiente.
+            Los <strong style="color:#a5b4fc;">tokens son créditos diarios</strong> para la IA (Gemini 3.1 Pro: chat, Excel, informes y visión).
+            Se <strong style="color:#e2e8f0;">recargan cada día</strong> según tu plan; lo no usado <strong style="color:#e2e8f0;">no se acumula</strong>.
+            Cuando se agotan, el chat y las herramientas de IA se <strong style="color:#f87171;">cortan hasta el día siguiente</strong> (o hasta que subas de plan).
+            Los cupos están calibrados para que el uso intensivo no supere el valor de tu suscripción.
         </p>
 
         <!-- Tabla de costos -->
@@ -262,7 +263,7 @@
                     <span style="font-weight:700;font-size:0.88rem;">Generar documento</span>
                 </div>
                 <div style="font-size:1.6rem;font-weight:900;color:#f59e0b;line-height:1;">{{ costos.CHAT_HEAVY|default:5000|floatformat:0 }}</div>
-                <div style="font-size:0.7rem;color:#64748b;margin-top:3px;">tokens por operación</div>
+                <div style="font-size:0.7rem;color:#64748b;margin-top:3px;">tokens por operación · ≈ 2 chats</div>
                 <div style="font-size:0.73rem;color:#475569;margin-top:8px;line-height:1.5;">Exportar Excel, crear informe en Google Docs o reporte BI.</div>
             </div>
 
@@ -272,29 +273,34 @@
                     <span style="font-weight:700;font-size:0.88rem;">Analizar archivo</span>
                 </div>
                 <div style="font-size:1.6rem;font-weight:900;color:#a855f7;line-height:1;">{{ costos.ANALISIS_ARCHIVO|default:10000|floatformat:0 }}</div>
-                <div style="font-size:0.7rem;color:#64748b;margin-top:3px;">tokens por archivo</div>
+                <div style="font-size:0.7rem;color:#64748b;margin-top:3px;">tokens por archivo · ≈ 3 chats</div>
                 <div style="font-size:0.73rem;color:#475569;margin-top:8px;line-height:1.5;">Subir CSV, JSON o Excel para que la IA lo interprete y genere análisis.</div>
             </div>
 
         </div>
 
         <!-- Equivalencias por plan -->
-        <div style="font-size:0.78rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">¿Cuántas consultas por día incluye cada plan?</div>
+        <div style="font-size:0.78rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">Uso máximo por día (si usás solo ese tipo)</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;">
 
             {% for plan in planes_tokens %}
             <div style="background:{{ plan.icono_fa.bg }};border:1px solid {{ plan.icono_fa.color }}33;border-radius:14px;padding:14px 12px;text-align:center;">
-                <div style="font-size:0.75rem;font-weight:800;color:{{ plan.icono_fa.color }};margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em;">{{ plan.nombre }}</div>
-                <div style="font-size:0.78rem;color:#94a3b8;line-height:2.2;">
+                <div style="font-size:0.75rem;font-weight:800;color:{{ plan.icono_fa.color }};margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">{{ plan.nombre }}</div>
+                <div style="font-size:0.68rem;color:#64748b;margin-bottom:10px;">${{ plan.variantes.0.precio|floatformat:0 }} USD/mes</div>
+                <div style="font-size:0.78rem;color:#94a3b8;line-height:2.1;">
                     <div>
                         <i class="fas fa-comment-dots" style="color:#60a5fa;margin-right:4px;"></i>
-                        ~<strong style="color:#e2e8f0;">{% widthratio plan.tokens_dia 3000 1 %}</strong> chats/día
+                        hasta <strong style="color:#e2e8f0;font-size:1.05rem;">{% widthratio plan.tokens_dia 3000 1 %}</strong> chats/día
                     </div>
                     <div>
-                        <i class="fas fa-file-export" style="color:#f59e0b;margin-right:4px;"></i>
-                        ~<strong style="color:#e2e8f0;">{% widthratio plan.tokens_dia 5000 1 %}</strong> reportes/día
+                        <i class="fas fa-file-excel" style="color:#f59e0b;margin-right:4px;"></i>
+                        o ~<strong style="color:#e2e8f0;">{% widthratio plan.tokens_dia 5000 1 %}</strong> Excel/informes
                     </div>
-                    <div style="font-size:0.7rem;color:#475569;margin-top:4px;">{{ plan.tokens_dia }} tokens/día</div>
+                    <div>
+                        <i class="fas fa-file-upload" style="color:#a855f7;margin-right:4px;"></i>
+                        o ~<strong style="color:#e2e8f0;">{% widthratio plan.tokens_dia 10000 1 %}</strong> archivos
+                    </div>
+                    <div style="font-size:0.7rem;color:#475569;margin-top:6px;">{{ plan.tokens_dia|floatformat:0 }} tokens/día · se mezclan</div>
                 </div>
             </div>
             {% endfor %}
@@ -303,8 +309,10 @@
 
         <div style="margin-top:20px;background:rgba(99,102,241,.06);border:1px dashed rgba(99,102,241,.2);border-radius:10px;padding:12px 16px;font-size:0.8rem;color:#64748b;line-height:1.7;">
             <i class="fas fa-lightbulb" style="color:#f59e0b;margin-right:6px;"></i>
-            <strong style="color:#94a3b8;">Ejemplo real:</strong> Un productor agropecuario que consulta el clima mañana y tarde, genera un reporte semanal y un Excel de balance hídrico usará aproximadamente
-            <strong style="color:#a5b4fc;">2 chats + 1 reporte = 11,000 tokens</strong> en un día — el plan <strong style="color:#a5b4fc;">Starter</strong> lo cubre cómodamente.
+            <strong style="color:#94a3b8;">Ejemplo real:</strong> 2 chats + 1 Excel/informe ≈
+            <strong style="color:#a5b4fc;">11.000 tokens</strong> en el día.
+            El plan <strong style="color:#a5b4fc;">Starter</strong> (24.000/día ≈ 8 chats) lo cubre; si necesitás más Excel e informes seguidos, mirá <strong style="color:#a5b4fc;">Plus</strong> o superior.
+            Podés combinar chats, Excel y archivos dentro del mismo cupo diario.
         </div>
 
     </div>
@@ -321,11 +329,17 @@
             <div class="tok-name">{{ plan.nombre }}</div>
             <div class="tok-tnum">{{ plan.tokens_dia|floatformat:0 }}</div>
             <div class="tok-tlbl">tokens / día</div>
+            <div style="font-size:0.82rem;color:#94a3b8;margin:-4px 0 10px;line-height:1.45;">
+                hasta <strong style="color:#e2e8f0;">{% widthratio plan.tokens_dia 3000 1 %}</strong> chats/día
+                <span style="color:#475569;">·</span>
+                ~{% widthratio plan.tokens_dia 5000 1 %} Excel/informes
+            </div>
             <div class="tok-desc">{{ plan.descripcion }}</div>
 
             <ul class="tok-feats">
                 <li><i class="fas fa-check-circle fi"></i> Acceso a los 4 modos Pro</li>
-                <li><i class="fas fa-robot fi"></i> IA Gemini incluida</li>
+                <li><i class="fas fa-robot fi"></i> IA Gemini 3.1 Pro</li>
+                <li><i class="fas fa-rotate fi"></i> Recarga diaria · sin acumular</li>
                 <li><i class="fas fa-database fi fi-db"></i> Memoria IA por modo</li>
                 <li><i class="fas fa-file-upload fi fi-mem"></i> Análisis de archivos</li>
             </ul>
@@ -368,7 +382,8 @@
 
     <div class="tok-footer">
         <i class="fas fa-info-circle" style="color:#6366f1;margin-right:5px;"></i>
-        Todos los planes incluyen <b>acceso completo a los 4 modos Pro</b> y <b>IA Gemini</b>.<br>
+        Todos los planes incluyen <b>acceso completo a los 4 modos Pro</b> e <b>IA Gemini 3.1 Pro</b>.<br>
+        Los tokens se <b>recargan cada día</b>; al agotarse, la IA se corta hasta el día siguiente.<br>
         Precios en <b>USD</b>. Cobro internacional con tarjeta o PayPal (Lemon Squeezy).<br>
         La <b>Memoria IA por modo</b> guarda el contexto de tus conversaciones — configurable en Mi Cuenta.<br>
         ¿Dudas? <a href="mailto:climapro00@gmail.com">climapro00@gmail.com</a>
@@ -429,10 +444,29 @@
                         <i class="fas fa-microchip" style="color:#818cf8;margin-right:8px;width:16px;"></i>
                         Tokens IA / día
                     </td>
-                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;color:#f59e0b;font-weight:700;">42,000</td>
-                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #334155;background:rgba(99,102,241,.04);color:#3b82f6;font-weight:700;">75,000</td>
-                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;color:#a855f7;font-weight:700;">150,000</td>
-                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid #1e293b;color:#eab308;font-weight:700;">300,000</td>
+                    {% for plan in planes_tokens %}
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid {% if plan.popular %}#334155{% else %}#1e293b{% endif %};{% if plan.popular %}background:rgba(99,102,241,.04);{% endif %}color:{{ plan.icono_fa.color }};font-weight:700;">{{ plan.tokens_dia|floatformat:0 }}</td>
+                    {% endfor %}
+                </tr>
+                <!-- Chats / día -->
+                <tr>
+                    <td style="padding:13px 18px;color:#94a3b8;border-bottom:1px solid #1e293b;">
+                        <i class="fas fa-comment-dots" style="color:#60a5fa;margin-right:8px;width:16px;"></i>
+                        Chats IA / día (máx.)
+                    </td>
+                    {% for plan in planes_tokens %}
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid {% if plan.popular %}#334155{% else %}#1e293b{% endif %};{% if plan.popular %}background:rgba(99,102,241,.04);{% endif %}color:{{ plan.icono_fa.color }};font-weight:700;">~{% widthratio plan.tokens_dia 3000 1 %}</td>
+                    {% endfor %}
+                </tr>
+                <!-- Excel / informes -->
+                <tr style="background:rgba(255,255,255,.02);">
+                    <td style="padding:13px 18px;color:#94a3b8;border-bottom:1px solid #1e293b;">
+                        <i class="fas fa-file-excel" style="color:#f59e0b;margin-right:8px;width:16px;"></i>
+                        Excel / informes / día (máx.)
+                    </td>
+                    {% for plan in planes_tokens %}
+                    <td style="text-align:center;padding:13px 12px;border-bottom:1px solid {% if plan.popular %}#334155{% else %}#1e293b{% endif %};{% if plan.popular %}background:rgba(99,102,241,.04);{% endif %}color:#94a3b8;font-weight:600;">~{% widthratio plan.tokens_dia 5000 1 %}</td>
+                    {% endfor %}
                 </tr>
                 <!-- Sectores -->
                 <tr>

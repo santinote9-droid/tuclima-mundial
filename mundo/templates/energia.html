@@ -1782,10 +1782,27 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
   <script>
   function tcDzDrop_energia(e){e.preventDefault();var dz=document.getElementById('tc-dz-energia');dz.style.borderColor='rgba(251,191,36,0.3)';dz.style.background='rgba(15,23,42,0.6)';var f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))tcDzSend_energia(f);}
   function tcDzFile_energia(inp){if(inp.files[0])tcDzSend_energia(inp.files[0]);}
-  function tcDzSend_energia(file){
+  async function tcDzSend_energia(file){
     document.getElementById('tc-dz-idle-energia').style.display='none';
     document.getElementById('tc-dz-loading-energia').style.display='block';
     document.getElementById('tc-dz-result-energia').style.display='none';
+    try {
+      const okTok = await fetch('/api/tokens/consumir/', {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({tipo:'CHAT_N8N', descripcion:'Vision IA energia'})
+      });
+      if (okTok.status === 402 || !okTok.ok) {
+        document.getElementById('tc-dz-loading-energia').style.display='none';
+        document.getElementById('tc-dz-idle-energia').style.display='block';
+        if (typeof mostrarLimiteIA === 'function') mostrarLimiteIA();
+        return;
+      }
+    } catch(e) {
+      document.getElementById('tc-dz-loading-energia').style.display='none';
+      document.getElementById('tc-dz-idle-energia').style.display='block';
+      return;
+    }
     var fd=new FormData();
     fd.append('chatInput','Analizá esta imagen de mi panel solar o turbina eólica y reportá el estado, suciedad, sombras o daños visibles que afecten la generación.');
     fd.append('sessionId',sessionId);
@@ -2559,18 +2576,31 @@ document.addEventListener("DOMContentLoaded", function() {
 
 // 2. ENVÍO DE MENSAJES Y ARCHIVOS
 // --- VERIFICACIÓN DE TOKENS ANTES DE CADA MENSAJE ---
-async function verificarTokens() {
+async function verificarTokens(descripcion) {
+    // Descuenta tokens en el servidor; si no hay saldo, corta el uso.
     try {
-        const r = await fetch('/api/tokens/saldo/', { credentials: 'include' });
-        if (!r.ok) return true;
-        const data = await r.json();
-        const costoChat = (data.costos && data.costos.CHAT_N8N) || 3000;
-        if (data.tokens_disponibles < costoChat) {
+        const r = await fetch('/api/tokens/consumir/', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tipo: 'CHAT_N8N',
+                descripcion: descripcion || 'Chat IA energia',
+            }),
+        });
+        if (r.status === 402) {
+            mostrarLimiteIA();
+            return false;
+        }
+        if (!r.ok) {
             mostrarLimiteIA();
             return false;
         }
         return true;
-    } catch (e) { return true; }
+    } catch (e) {
+        mostrarLimiteIA();
+        return false;
+    }
 }
 
 function mostrarLimiteIA() {

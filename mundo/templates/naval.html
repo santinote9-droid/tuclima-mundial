@@ -1978,10 +1978,27 @@
   <script>
   function tcDzDrop_naval(e){e.preventDefault();var dz=document.getElementById('tc-dz-naval');dz.style.borderColor='rgba(96,165,250,0.3)';dz.style.background='rgba(15,23,42,0.6)';var f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))tcDzSend_naval(f);}
   function tcDzFile_naval(inp){if(inp.files[0])tcDzSend_naval(inp.files[0]);}
-  function tcDzSend_naval(file){
+  async function tcDzSend_naval(file){
     document.getElementById('tc-dz-idle-naval').style.display='none';
     document.getElementById('tc-dz-loading-naval').style.display='block';
     document.getElementById('tc-dz-result-naval').style.display='none';
+    try {
+      const okTok = await fetch('/api/tokens/consumir/', {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({tipo:'CHAT_N8N', descripcion:'Vision IA naval'})
+      });
+      if (okTok.status === 402 || !okTok.ok) {
+        document.getElementById('tc-dz-loading-naval').style.display='none';
+        document.getElementById('tc-dz-idle-naval').style.display='block';
+        if (typeof mostrarLimiteIA === 'function') mostrarLimiteIA();
+        return;
+      }
+    } catch(e) {
+      document.getElementById('tc-dz-loading-naval').style.display='none';
+      document.getElementById('tc-dz-idle-naval').style.display='block';
+      return;
+    }
     var fd=new FormData();
     fd.append('chatInput','Analizá esta imagen del estado del mar, radar o condición náutica y dame tu evaluación operacional para navegación.');
     fd.append('sessionId',sessionId);
@@ -3075,18 +3092,31 @@ document.getElementById("file-input").addEventListener("change", function() {
 
 // 2. ENVÍO DE MENSAJES Y ARCHIVOS
 // --- VERIFICACIÓN DE TOKENS ANTES DE CADA MENSAJE ---
-async function verificarTokens() {
+async function verificarTokens(descripcion) {
+    // Descuenta tokens en el servidor; si no hay saldo, corta el uso.
     try {
-        const r = await fetch('/api/tokens/saldo/', { credentials: 'include' });
-        if (!r.ok) return true;
-        const data = await r.json();
-        const costoChat = (data.costos && data.costos.CHAT_N8N) || 3000;
-        if (data.tokens_disponibles < costoChat) {
+        const r = await fetch('/api/tokens/consumir/', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tipo: 'CHAT_N8N',
+                descripcion: descripcion || 'Chat IA naval',
+            }),
+        });
+        if (r.status === 402) {
+            mostrarLimiteIA();
+            return false;
+        }
+        if (!r.ok) {
             mostrarLimiteIA();
             return false;
         }
         return true;
-    } catch (e) { return true; }
+    } catch (e) {
+        mostrarLimiteIA();
+        return false;
+    }
 }
 
 function mostrarLimiteIA() {

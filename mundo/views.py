@@ -4044,6 +4044,53 @@ def api_saldo_tokens(request):
     })
 
 
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def api_consumir_tokens(request):
+    """
+    Reserva/descuenta tokens antes de llamar a la IA (chat sectorial, visión, etc.).
+    Body JSON: { "tipo": "CHAT_N8N", "descripcion": "opcional" }
+    """
+    from .models import COSTO_TOKENS
+
+    try:
+        data = json.loads(request.body or '{}')
+    except (json.JSONDecodeError, TypeError):
+        data = {}
+
+    tipo = (data.get('tipo') or 'CHAT_N8N').strip().upper()
+    if tipo not in COSTO_TOKENS:
+        return JsonResponse({'error': 'tipo_invalido', 'tipos': list(COSTO_TOKENS.keys())}, status=400)
+
+    costo = COSTO_TOKENS[tipo]
+    descripcion = (data.get('descripcion') or f'Uso IA ({tipo})')[:255]
+    perfil = request.user.perfil
+
+    if not perfil.tiene_tokens(costo):
+        return JsonResponse({
+            'error': 'tokens_insuficientes',
+            'mensaje': f'No tenés créditos suficientes ({costo:,} requeridos).',
+            'tokens_disponibles': perfil.tokens_disponibles,
+            'costo': costo,
+        }, status=402)
+
+    if not perfil.descontar_tokens(costo, descripcion):
+        return JsonResponse({
+            'error': 'tokens_insuficientes',
+            'mensaje': f'No tenés créditos suficientes ({costo:,} requeridos).',
+            'tokens_disponibles': perfil.tokens_disponibles,
+            'costo': costo,
+        }, status=402)
+
+    return JsonResponse({
+        'ok': True,
+        'costo': costo,
+        'tokens_disponibles': perfil.tokens_disponibles,
+        'tokens_diarios_limite': perfil.tokens_diarios_limite,
+    })
+
+
 @login_required
 def admin_recargar_tokens(request):
     """
@@ -4084,7 +4131,8 @@ PLANES_TOKENS = [
     {
         'id':          'starter',
         'nombre':      'Starter',
-        'tokens_dia':  42_000,  # ~14 mensajes/día (chat normal)
+        # Techo API ~$20/mes (Gemini 3.1 Pro ≈ $0.08/chat) → 8 chats/día
+        'tokens_dia':  24_000,
         'icono':       '⚡',
         'icono_fa':    {'fa': 'bolt',   'color': '#f59e0b', 'color2': '#fb923c', 'bg': 'rgba(245,158,11,.12)'},
         'popular':     False,
@@ -4098,7 +4146,8 @@ PLANES_TOKENS = [
     {
         'id':          'plus',
         'nombre':      'Plus',
-        'tokens_dia':  75_000,  # ~25 mensajes/día (chat normal)
+        # Techo API ~$35/mes → 14 chats/día
+        'tokens_dia':  42_000,
         'icono':       '🚀',
         'icono_fa':    {'fa': 'rocket', 'color': '#3b82f6', 'color2': '#818cf8', 'bg': 'rgba(59,130,246,.12)'},
         'popular':     True,
@@ -4112,7 +4161,8 @@ PLANES_TOKENS = [
     {
         'id':          'pro_ia',
         'nombre':      'Pro IA',
-        'tokens_dia':  150_000, # ~50 mensajes/día (chat normal)
+        # Techo API ~$75/mes → 30 chats/día
+        'tokens_dia':  90_000,
         'icono':       '💎',
         'icono_fa':    {'fa': 'gem',    'color': '#a855f7', 'color2': '#ec4899', 'bg': 'rgba(168,85,247,.12)'},
         'popular':     False,
@@ -4126,7 +4176,8 @@ PLANES_TOKENS = [
     {
         'id':          'power',
         'nombre':      'Power',
-        'tokens_dia':  300_000, # ~100 mensajes/día (chat normal)
+        # Techo API ~$150/mes → 60 chats/día
+        'tokens_dia':  180_000,
         'icono':       '🌟',
         'icono_fa':    {'fa': 'star',   'color': '#eab308', 'color2': '#f59e0b', 'bg': 'rgba(234,179,8,.12)'},
         'popular':     False,

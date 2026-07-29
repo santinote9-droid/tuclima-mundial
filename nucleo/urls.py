@@ -103,6 +103,7 @@ urlpatterns = [
 
     # Sistema de Tokens IA
     path('api/tokens/saldo/', views.api_saldo_tokens, name='api_saldo_tokens'),
+    path('api/tokens/consumir/', views.api_consumir_tokens, name='api_consumir_tokens'),
     path('api/tokens/recargar/', views.admin_recargar_tokens, name='admin_recargar_tokens'),
     path('recargar-tokens/', views.recargar_tokens_view, name='recargar_tokens'),
     path('activar-plan/', views.seleccionar_pago_tokens, name='seleccionar_pago_tokens'),

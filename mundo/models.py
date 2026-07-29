@@ -89,13 +89,14 @@ class PerfilUsuario(models.Model):
             # Puede tener plan de tokens sin suscripción clásica
             pass
         t = self.tokens_diarios_limite or 0
-        if t >= 300_000:
+        # Umbrales alineados a PLANES_TOKENS (Gemini 3.1 Pro, techo ≈ precio)
+        if t >= 180_000:
             return 'power'
-        if t >= 150_000:
+        if t >= 90_000:
             return 'pro_ia'
-        if t >= 75_000:
-            return 'plus'
         if t >= 42_000:
+            return 'plus'
+        if t >= 24_000:
             return 'starter'
         return 'free'
 
@@ -175,24 +176,45 @@ class PerfilUsuario(models.Model):
         """Verifica si el usuario tiene suficientes tokens para una operación."""
         if self.user.is_staff or self.user.is_superuser:
             return True  # Admin: acceso ilimitado sin restricciones
+        if self.fecha_vencimiento_tokens and self.fecha_vencimiento_tokens < timezone.now():
+            return False  # Plan vencido: cortar uso aunque quede saldo
         self._reset_diario_si_necesario()
         return self.tokens_disponibles >= costo
 
     def descontar_tokens(self, costo, descripcion):
-        """Descuenta tokens y registra el uso en el historial."""
+        """
+        Descuenta tokens de forma atómica y registra el uso.
+        Retorna True si se descontó; False si no había saldo suficiente.
+        """
+        from django.db import transaction
+        from django.db.models import F
+
         if self.user.is_staff or self.user.is_superuser:
-            return  # Admin: no se descuentan tokens
+            return True  # Admin: no se descuentan tokens
+
         self._reset_diario_si_necesario()
-        self.tokens_disponibles -= costo
-        self.tokens_usados_total += costo
-        self.save(update_fields=['tokens_disponibles', 'tokens_usados_total'])
-        HistorialTokens.objects.create(
-            usuario=self.user,
-            tipo='USO',
-            cantidad=-costo,
-            descripcion=descripcion,
-            tokens_restantes=self.tokens_disponibles,
-        )
+        with transaction.atomic():
+            updated = (
+                PerfilUsuario.objects
+                .filter(pk=self.pk, tokens_disponibles__gte=costo)
+                .update(
+                    tokens_disponibles=F('tokens_disponibles') - costo,
+                    tokens_usados_total=F('tokens_usados_total') + costo,
+                )
+            )
+            if not updated:
+                self.refresh_from_db(fields=['tokens_disponibles'])
+                return False
+
+            self.refresh_from_db(fields=['tokens_disponibles', 'tokens_usados_total'])
+            HistorialTokens.objects.create(
+                usuario=self.user,
+                tipo='USO',
+                cantidad=-costo,
+                descripcion=descripcion,
+                tokens_restantes=self.tokens_disponibles,
+            )
+        return True
 
     def recargar_tokens(self, cantidad, descripcion='Recarga manual'):
         """Suma tokens al saldo actual (uso admin, no cambia el límite diario)."""
@@ -489,22 +511,18 @@ class FeedbackIA(models.Model):
 # ==========================================
 
 # Costos por operación (en créditos internos)
-# Referencia real: Gemini cobra ~$1.25-$2.50 por millón de tokens
-#   · Consulta simple (clima actual):          ~3,000 tokens reales
-#   · Consulta con memoria + tools:            ~4,000 tokens reales
-#   · Consulta pesada (Excel, Docs, BI):       ~5,000 tokens reales
-#   · Análisis de archivo + IA completo:      ~10,000 tokens reales
+# Gemini 3.1 Pro (~$2/M input, $12/M output + thinking).
+# Cupos diarios calibrados a techo API ≈ precio del plan (CHAT_N8N ≈ $0.08).
 COSTO_TOKENS = {
-    'CHAT_N8N':           3_000,   # Consulta al chat IA (con memoria y tools)
+    'CHAT_N8N':           3_000,   # Consulta al chat IA (con memoria y tools) ≈ $0.08
     'CHAT_SIMPLE':        2_000,   # Consulta rápida sin tools externas
-    'CHAT_HEAVY':         5_000,   # Generación de Excel, Docs o reporte BI
-    'ANALISIS_ARCHIVO':  10_000,   # Procesar archivo + análisis IA completo
-    'DEVORADOR_REPORTE': 10_000,   # Devorador de Reportes: archivo PDF + análisis sectorial Gemini
+    'CHAT_HEAVY':         5_000,   # Generación de Excel, Docs o reporte BI ≈ $0.15–0.25
+    'ANALISIS_ARCHIVO':  10_000,   # Procesar archivo + análisis IA completo ≈ $0.25–0.40
+    'DEVORADOR_REPORTE': 10_000,   # Devorador de Reportes PDF + Gemini
 }
 
-# Tokens diarios incluidos en la suscripción Pro ($20/mes)
-# Equivale a ~14 chats/día al nivel Starter
-TOKENS_DIARIOS_SUSCRIPCION = 42_000
+# Legacy suscripción Pro → cupo Starter (techo API ~$20/mes)
+TOKENS_DIARIOS_SUSCRIPCION = 24_000
 
 
 class HistorialTokens(models.Model):

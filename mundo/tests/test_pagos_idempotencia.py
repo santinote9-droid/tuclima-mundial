@@ -95,7 +95,7 @@ class TestLsWebhookIdempotencia(TestCase):
         self.assertEqual(r2.status_code, 200)
 
         self.user.perfil.refresh_from_db()
-        self.assertEqual(self.user.perfil.tokens_diarios_limite, 42_000)
+        self.assertEqual(self.user.perfil.tokens_diarios_limite, 24_000)
         self.assertEqual(
             HistorialTokens.objects.filter(
                 usuario=self.user,
@@ -156,7 +156,7 @@ class TestMpWebhookYRetornoIdempotencia(TestCase):
             self.assertEqual(rr.status_code, 200)
 
         self.user.perfil.refresh_from_db()
-        self.assertEqual(self.user.perfil.tokens_diarios_limite, 75_000)
+        self.assertEqual(self.user.perfil.tokens_diarios_limite, 42_000)
         self.assertEqual(
             HistorialTokens.objects.filter(
                 usuario=self.user,
