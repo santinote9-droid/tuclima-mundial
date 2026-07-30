@@ -392,8 +392,8 @@
       "parameters": {
         "resource": "message",
         "operation": "send",
-        "sendTo": "={{ $('Get many rows').item.json.email }}",
-        "subject": "=TuClima — Reporte diario para {{ $('Get many rows').item.json.nombre || 'vos' }}",
+        "sendTo": "={{ $('Get many rows (test)').isExecuted ? $('Get many rows (test)').item.json.email : $('Get many rows').item.json.email }}",
+        "subject": "=TuClima — Reporte diario para {{ ($('Get many rows (test)').isExecuted ? $('Get many rows (test)').item.json.nombre : $('Get many rows').item.json.nombre) || 'vos' }}",
         "emailType": "text",
         "message": "={{ $json.output || $json.text || JSON.stringify($json) }}",
         "options": {
