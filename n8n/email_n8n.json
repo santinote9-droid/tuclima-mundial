@@ -23,7 +23,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "Genera un reporte del clima actual para {{ $json.ubicacion }}. El usuario se llama {{ $json.nombre }} y trabaja en {{ $json.trabajo }}. El reporte debe ser útil para su trabajo, breve, motivador y con recomendaciones. ",
+        "text": "Genera un reporte del clima actual para {{ $json.ubicacion }}. El usuario se llama {{ $json.nombre }} y trabaja en {{ $json.trabajo }}. El reporte debe ser útil para su trabajo, breve, motivador y con recomendaciones. Usá las herramientas de clima si hace falta. NO envíes correos: el sistema enviará tu respuesta automáticamente por email.",
         "options": {
           "maxIterations": 3
         }
@@ -390,18 +390,21 @@
     },
     {
       "parameters": {
-        "descriptionType": "manual",
-        "toolDescription": "Úsala SOLO cuando el usuario pida explícitamente enviar un correo, reporte o notificación. Debes generar el contenido del correo basado en la conversación o los datos del clima.",
+        "resource": "message",
+        "operation": "send",
         "sendTo": "={{ $('Get many rows').item.json.email }}",
-        "subject": "Tu Reporte Diario",
-        "message": "={{ $fromAI(\"mensaje\") }}",
-        "options": {}
+        "subject": "=TuClima — Reporte diario para {{ $('Get many rows').item.json.nombre || 'vos' }}",
+        "emailType": "text",
+        "message": "={{ $json.output || $json.text || JSON.stringify($json) }}",
+        "options": {
+          "appendAttribution": false
+        }
       },
-      "type": "n8n-nodes-base.gmailTool",
-      "typeVersion": 2.2,
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
       "position": [
         912,
-        256
+        0
       ],
       "id": "2d1d8cdb-8e90-4957-b490-246e73e00841",
       "name": "enviar_correo",
@@ -514,12 +517,12 @@
         ]
       ]
     },
-    "enviar_correo": {
-      "ai_tool": [
+    "AI Agent": {
+      "main": [
         [
           {
-            "node": "AI Agent",
-            "type": "ai_tool",
+            "node": "enviar_correo",
+            "type": "main",
             "index": 0
           }
         ]
