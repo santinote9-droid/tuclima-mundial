@@ -6,7 +6,7 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "0 7 * * *"
+              "expression": "0 * * * *"
             }
           ]
         }
@@ -366,10 +366,10 @@
           "conditions": [
             {
               "id": "20058325-178b-447b-abc1-86edb70393a9",
-              "leftValue": "={{ $json.hora_preferida }}",
-              "rightValue": "={{ $now.setZone($json.zona_horaria).hour }}",
+              "leftValue": "={{ Number($json.hora_preferida) }}",
+              "rightValue": "={{ $now.setZone(($json.zona_horaria && String($json.zona_horaria).trim()) ? String($json.zona_horaria).trim() : 'America/Argentina/Buenos_Aires').hour }}",
               "operator": {
-                "type": "string",
+                "type": "number",
                 "operation": "equals"
               }
             }
