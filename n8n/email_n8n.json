@@ -526,6 +526,10 @@
       ]
     }
   },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Argentina/Buenos_Aires"
+  },
   "pinData": {},
   "meta": {
     "templateCredsSetupCompleted": true,
