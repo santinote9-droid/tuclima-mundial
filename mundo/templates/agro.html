@@ -472,10 +472,10 @@
 
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/themes/dark-unica.js"></script>
-    <script src="https://code.highcharts.com/modules/exporting.js"></script>
-    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highcharts@11.4.8/highcharts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highcharts@11.4.8/themes/dark-unica.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highcharts@11.4.8/modules/exporting.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highcharts@11.4.8/modules/export-data.js"></script>
 
     <style>
         /* ================================================= */
@@ -498,7 +498,8 @@
             color: var(--text-main); 
             font-family: 'Poppins', sans-serif; 
             margin: 0; 
-            padding-bottom: 80px; /* Espacio para scroll */
+            padding-bottom: 80px;
+            overflow-x: hidden;
         }
 
         /* SCROLLBAR PERSONALIZADA */
@@ -513,15 +514,17 @@
             background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border);
-            padding: 15px 30px;
+            padding: 12px 24px;
             display: flex; justify-content: space-between; align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
             box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         }
 
-        .brand-box { display: flex; align-items: center; gap: 12px; }
+        .brand-box { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
         .brand-title { 
             font-family: 'JetBrains Mono', monospace; 
-            font-size: 1.5em; font-weight: 700; color: #fff; letter-spacing: -1px; 
+            font-size: 1.25em; font-weight: 700; color: #fff; letter-spacing: -1px; 
         }
         .brand-title span { color: var(--accent); }
         .badge-pro { 
@@ -542,7 +545,7 @@
         /* ================================================= */
         .agro-grid {
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); 
+            grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); 
             gap: 25px; 
             margin-bottom: 40px;
         }
@@ -727,13 +730,21 @@
            Desktop intacto. Breakpoints: 900px (tablet) | 600px (móvil) | 420px (pequeño)
         ============================================================ */
 
+        @media (max-width: 1100px) {
+            .tc-hdr-lbl { display: none; }
+        }
+
         /* ---- TABLET (≤ 900px) ---- */
         @media (max-width: 900px) {
             .dashboard-container { padding: 20px 15px; }
-            .header-eng { padding: 12px 20px; }
-            .brand-title { font-size: 1.25em; }
-            .agro-grid { gap: 16px; margin-bottom: 25px; }
-            .modal-content { padding: 28px 24px; max-height: 94vh; }
+            .header-eng { padding: 12px 16px; }
+            .brand-title { font-size: 1.1em; }
+            .agro-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 16px;
+                margin-bottom: 25px;
+            }
+            .modal-content { padding: 28px 24px; max-height: 94vh; width: min(920px, calc(100% - 24px)); }
             .forecast-scroll { -webkit-overflow-scrolling: touch; }
         }
 
@@ -757,10 +768,10 @@
             }
             .forecast-scroll::-webkit-scrollbar { display: none; }
             .day-card { min-width: 115px; padding: 12px 8px; }
-            /* Modal: usar border-box para que padding no desborde */
+            /* Modal: sin 100vw (evita scroll horizontal) */
             .modal-content { 
                 padding: 16px !important;
-                width: calc(100vw - 24px) !important;
+                width: calc(100% - 16px) !important;
                 max-width: none !important;
                 box-sizing: border-box !important;
                 max-height: 92vh;
@@ -783,7 +794,8 @@
             .chat-input-area button { padding: 10px 12px !important; font-size: 12px !important; }
             /* Chart container del chat: sin desbordamiento */
             #chart-container { margin: 0 !important; border-radius: 0 !important; }
-            #chart-container canvas, #climatChart { max-width: 100% !important; height: auto !important; }
+            #chart-container .chart-canvas-wrap { height: 280px; position: relative; }
+            #chart-container canvas, #climatChart { max-width: 100% !important; width: 100% !important; height: 100% !important; }
             #chart-tabs { padding: 10px 10px 0 !important; }
             /* Highcharts balance hídrico dentro del modal */
             #container-agro { height: 240px !important; }
@@ -814,40 +826,36 @@
 {% include 'partials/_nav_secciones.html' with tc_activo='agro' %}
 <header class="header-eng">
         <div class="brand-box">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5a4 4 0 0 1 5.66 0"/><path d="M10 10a2 2 0 0 1 2.83 0"/></svg>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5a4 4 0 0 1 5.66 0"/><path d="M10 10a2 2 0 0 1 2.83 0"/></svg>
             <div class="brand-title">AGRO <span>INTELLIGENCE</span></div>
             <span class="badge-pro">PRO</span>
         </div>
-        
-        <div style="display: flex; align-items: center; gap: 20px;">
-            
-            <div style="text-align: right; font-family: 'JetBrains Mono'; font-size: 0.8em; color: #64748b; line-height: 1.2;">
-                <div style="display:flex; align-items:center; gap:5px; justify-content: flex-end;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                    LAT: {{ lat|floatformat:4 }}
-                </div>
-                <div>LON: {{ lon|floatformat:4 }}</div>
-            </div>
 
-            <div style="display: flex; gap: 10px;">
-                <button id="tc-btn-cabina" onclick="tcToggleCabina()" title="Modo Cabina — alto contraste solar" style="background:#1e293b; border:1px solid #334155; color:#94a3b8; padding:8px 12px; border-radius:6px; cursor:pointer; transition:0.2s; display:flex; align-items:center; gap:6px;" onmouseover="this.style.borderColor='#facc15'; this.style.color='#facc15';" onmouseout="if(!this.classList.contains('tc-cabina-on')){this.style.borderColor='#334155'; this.style.color='#94a3b8';}">                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-                    <span style="font-family:'JetBrains Mono'; font-size:0.8em;">CABINA</span>
+        {% include 'partials/_sector_location_search.html' with tc_sector='agro' %}
+
+        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <button id="tc-btn-chat" type="button" onclick="tcOpenChatModal()" title="Abrir TuClima IA" style="background:#1e293b; border:1px solid #334155; color:#94a3b8; padding:8px 10px; border-radius:6px; cursor:pointer; transition:0.2s; display:flex; align-items:center; gap:6px;" onmouseover="this.style.borderColor='#818cf8'; this.style.color='#a5b4fc';" onmouseout="if(!this.classList.contains('tc-chat-open')){this.style.borderColor='#334155'; this.style.color='#94a3b8';}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/></svg>
+                    <span class="tc-hdr-lbl" style="font-family:'JetBrains Mono'; font-size:0.75em;">CHAT IA</span>
+                </button>
+                <button id="tc-btn-cabina" onclick="tcToggleCabina()" title="Modo Cabina — alto contraste solar" style="background:#1e293b; border:1px solid #334155; color:#94a3b8; padding:8px 10px; border-radius:6px; cursor:pointer; transition:0.2s; display:flex; align-items:center; gap:6px;" onmouseover="this.style.borderColor='#facc15'; this.style.color='#facc15';" onmouseout="if(!this.classList.contains('tc-cabina-on')){this.style.borderColor='#334155'; this.style.color='#94a3b8';}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                    <span class="tc-hdr-lbl" style="font-family:'JetBrains Mono'; font-size:0.75em;">CABINA</span>
                 </button>
 
-                <button onclick="copiarReporte()" title="Copiar Resumen al Portapapeles" style="background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.borderColor='#3b82f6'; this.style.color='#fff'" onmouseout="this.style.borderColor='#334155'; this.style.color='#94a3b8'">
+                <button onclick="copiarReporte()" title="Copiar Resumen al Portapapeles" style="background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 8px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.borderColor='#3b82f6'; this.style.color='#fff'" onmouseout="this.style.borderColor='#334155'; this.style.color='#94a3b8'">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-                    <span style="font-family:'JetBrains Mono'; font-size:0.8em;">COPIAR</span>
+                    <span class="tc-hdr-lbl" style="font-family:'JetBrains Mono'; font-size:0.75em;">COPIAR</span>
                 </button>
 
-                <button onclick="window.print()" title="Imprimir / Guardar PDF" style="background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.borderColor='#4ade80'; this.style.color='#fff'" onmouseout="this.style.borderColor='#334155'; this.style.color='#94a3b8'">
+                <button onclick="window.print()" title="Imprimir / Guardar PDF" style="background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 8px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;" onmouseover="this.style.borderColor='#4ade80'; this.style.color='#fff'" onmouseout="this.style.borderColor='#334155'; this.style.color='#94a3b8'">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                    <span style="font-family:'JetBrains Mono'; font-size:0.8em;">PDF</span>
+                    <span class="tc-hdr-lbl" style="font-family:'JetBrains Mono'; font-size:0.75em;">PDF</span>
                 </button>
                 
                 <a href="/?lat={{ lat }}&lon={{ lon }}" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 8px; border-radius: 6px; display: flex; align-items: center;" title="Salir">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                 </a>
-            </div>
         </div>
     </header>
     <script>
@@ -1592,9 +1600,13 @@
         const modal = document.getElementById(id);
         if(modal) {
             modal.style.display = 'flex';
-            // TRUCO CLAVE: Si el gráfico ya existe, obligarlo a ajustarse al tamaño del modal
-            if (chartAgro) {
-                setTimeout(() => { chartAgro.reflow(); }, 10);
+            // Highcharts no dibuja bien en un modal display:none: recrear/reflow al abrir
+            if (id === 'modGraph') {
+                setTimeout(function () {
+                    try { renderChart(true); } catch (e) { console.error(e); }
+                }, 80);
+            } else if (chartAgro) {
+                setTimeout(function () { try { chartAgro.reflow(); } catch (e) {} }, 50);
             }
             if (window.tcInteractivoAlAbrir) window.tcInteractivoAlAbrir(id);
         } else {
@@ -1618,7 +1630,7 @@
     // 2. DIBUJAR GRÁFICO (Con protección anti-errores)
     // ------------------------------------------
     var _tcAgroReintentos = 0;
-    function renderChart() {
+    function renderChart(forceRecreate) {
         // Guarda: Highcharts debe estar disponible
         if (typeof Highcharts === 'undefined') {
             _tcAgroReintentos++;
@@ -1626,19 +1638,42 @@
                 // Después de ~10s dejamos de reintentar en silencio y avisamos.
                 var cont = document.getElementById('container-agro');
                 if (cont) {
-                    cont.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#f87171; font-size:0.85rem; text-align:center; padding:20px;">No se pudo cargar la librería de gráficos (Highcharts). Revisá tu conexión o si algún bloqueador de contenido está impidiendo la carga de code.highcharts.com, y volvé a intentar.</div>';
+                    cont.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#f87171; font-size:0.85rem; text-align:center; padding:20px;">No se pudo cargar la librería de gráficos (Highcharts). Revisá tu conexión o bloqueadores, y volvé a intentar.</div>';
                 }
                 return;
             }
-            setTimeout(renderChart, 500);
+            setTimeout(function () { renderChart(forceRecreate); }, 500);
             return;
         }
+
+        var contEl = document.getElementById('container-agro');
+        if (!contEl) return;
+
+        // Si el modal está oculto, no dibujar aún (queda en blanco con tamaño 0)
+        var modalGraph = document.getElementById('modGraph');
+        var modalHidden = modalGraph && window.getComputedStyle(modalGraph).display === 'none';
+        if (modalHidden && !forceRecreate) {
+            return;
+        }
+
         // Datos básicos (protegidos)
         const labels = {{ grafico_agro.fechas|default:"[]"|safe }};
         const dataLluvia = {{ grafico_agro.lluvia|default:"[]"|safe }};
         const dataEto = {{ grafico_agro.eto|default:"[]"|safe }};
 
         try {
+        if ((!labels || !labels.length) && (!dataLluvia || !dataLluvia.length)) {
+            contEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:0.9rem;text-align:center;padding:20px;">Sin datos de balance hídrico para graficar. Recargá la página o probá otra ubicación.</div>';
+            return;
+        }
+
+        // Destruir instancia previa (reflow no alcanza si se creó con el modal cerrado)
+        if (chartAgro) {
+            try { chartAgro.destroy(); } catch (e) {}
+            chartAgro = null;
+        }
+        contEl.innerHTML = '';
+
         // Balance neto calculado: lluvia - ETo
         const dataBalance = dataLluvia.map((v, i) => parseFloat(((v || 0) - (dataEto[i] || 0)).toFixed(1)));
 
@@ -1738,12 +1773,13 @@
     // 3. INICIAR TODO
     // ------------------------------------------
     document.addEventListener("DOMContentLoaded", function() {
-        renderChart(); // Dibujar al cargar
+        // No dibujar al cargar: el modal está oculto y Highcharts queda en blanco.
+        // Se dibuja al abrir modGraph (openModal).
 
         // Sincronizar con Weglot (si existe)
         if (typeof Weglot !== 'undefined') {
-            Weglot.on('initialized', renderChart);
-            Weglot.on('languageChanged', renderChart);
+            Weglot.on('initialized', function () { renderChart(true); });
+            Weglot.on('languageChanged', function () { renderChart(true); });
         }
     });
 
@@ -2573,9 +2609,20 @@ Generado por TuClima Pro - www.tuclima.com
 <script>
 function enviarAccionRapida(txt) {
     var inp = document.getElementById('user-input');
-    if (inp) { inp.value = txt; if(typeof enviarMensaje === 'function') enviarMensaje(); }
+    if (inp) {
+        inp.value = txt;
+        if (typeof tcOpenChatModal === 'function') tcOpenChatModal();
+        if (typeof enviarMensaje === 'function') enviarMensaje();
+    }
 }
 </script>
+{% include 'partials/_chat_modal.html' %}
+<div id="tc-chat-modal" class="tc-chat-modal" aria-hidden="true" role="dialog" aria-label="TuClima IA">
+    <div class="tc-chat-modal-backdrop" onclick="tcCloseChatModal()"></div>
+    <div class="tc-chat-modal-panel">
+        <button type="button" class="tc-chat-modal-close" onclick="tcCloseChatModal()" title="Cerrar chat" aria-label="Cerrar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
 <div class="chat-container">
     <div class="chat-header">
         <h3>
@@ -2670,10 +2717,12 @@ function enviarAccionRapida(txt) {
         </button>
     </div>
     <div id="chart-tabs" style="display: flex; gap: 10px; padding: 15px 20px 0 20px; overflow-x: auto;"></div>
-    <div style="padding: 20px;">
+    <div class="chart-canvas-wrap" style="padding: 20px; height: 280px; position: relative;">
         <canvas id="climatChart" width="400" height="200"></canvas>
     </div>
 </div>
+    </div><!-- /.tc-chat-modal-panel -->
+</div><!-- /#tc-chat-modal -->
 
 <script>
     // --- CONFIGURACIÓN AGRO INTELLIGENCE PRO ---
@@ -2691,7 +2740,6 @@ localStorage.setItem(_tcStorageKey, sessionId);
 function processMarkdown(text) {
     if (!text) return text;
     
-    // 0. Proteger etiquetas <a> ya presentes para no corromper URLs con markdown
     const htmlLinks = [];
     text = text.replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, (match) => {
         const idx = htmlLinks.length;
@@ -2699,45 +2747,31 @@ function processMarkdown(text) {
         return '\x00LINK_' + idx + '\x00';
     });
     
-    // Procesar elementos markdown en orden (importante el orden)
-    
-    // 1. Código inline (backticks)
     text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
     
-    // 2. Negritas (**texto** o __texto__)
+    text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, (m, label, url) => {
+        const idx = htmlLinks.length;
+        htmlLinks.push('<a href="' + url + '" target="_blank" rel="noopener" class="download-link">' + label + '</a>');
+        return '\x00LINK_' + idx + '\x00';
+    });
+    
     text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     text = text.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-    
-    // 3. Cursivas (*texto* o _texto_)
     text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-    text = text.replace(/_([^_]+)_/g, '<em>$1</em>');
     
-    // 4. Títulos
     text = text.replace(/^### (.+$)/gim, '<h3>$1</h3>');
     text = text.replace(/^## (.+$)/gim, '<h2>$1</h2>');
     text = text.replace(/^# (.+$)/gim, '<h1>$1</h1>');
     
-    // 5. Links [texto](url) - pero preservamos los links ya procesados
-    text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)(?![^<]*<\/a>)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-    
-    // 6. Listas con viñetas (bullet points)
     text = text.replace(/^[•*] (.+$)/gim, '<li>$1</li>');
+    text = text.replace(/(<li>.*?<\/li>\s*)+/gs, (match) => '<ul>' + match + '</ul>');
     
-    // Envolver listas consecutivas en <ul> (no codicioso para evitar fagocitar párrafos intermedios)
-    text = text.replace(/(<li>.*?<\/li>\s*)+/gs, (match) => {
-        return '<ul>' + match + '</ul>';
-    });
-    
-    // 7. Saltos de línea simples a <br>
     text = text.replace(/\n/g, '<br>');
-    
-    // 8. Limpiar <br> fantasma pegados a elementos de bloque
     text = text.replace(/<\/(h[1-3]|ul|ol|li)><br>/g, '</$1>');
     text = text.replace(/<br><(h[1-3]|ul|ol|li)>/g, '<$1>');
     
-    // 9. Restaurar etiquetas <a> originales
     htmlLinks.forEach((link, idx) => {
-        text = text.replace('\x00LINK_' + idx + '\x00', link);
+        text = text.split('\x00LINK_' + idx + '\x00').join(link);
     });
     
     return text;
@@ -3225,20 +3259,22 @@ async function enviarMensaje() {
         formData.append("userId", djangoUserId);
         formData.append("sector", "agro");
         if (archivo) {
+            // Siempre como binario data00 (n8n Switch + Vision lo leen así)
+            formData.append("data00", archivo);
             if (archivo.type.startsWith('image/')) {
+                formData.append("imageMimeType", archivo.type);
+                formData.append("imageName", archivo.name);
+                formData.append("hasImage", "1");
+                // Base64 de respaldo por si el webhook no mapea el binary
                 await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = () => {
                         formData.append("imageBase64", reader.result.split(',')[1]);
-                        formData.append("imageMimeType", archivo.type);
-                        formData.append("imageName", archivo.name);
                         resolve();
                     };
                     reader.onerror = reject;
                     reader.readAsDataURL(archivo);
                 });
-            } else {
-                formData.append("data00", archivo);
             }
         }
 
@@ -3248,22 +3284,33 @@ async function enviarMensaje() {
             body: formData
         });
 
-        const datos = await respuesta.json();
+        const rawResp = await respuesta.text();
+        let datos = null;
+        try { datos = rawResp ? JSON.parse(rawResp) : null; } catch (e) { datos = null; }
+        if (!datos || typeof datos !== 'object') {
+            throw new Error('La IA no devolvió una respuesta válida. Revisá N8N_WEBHOOK_SECRET y que n8n esté activo.');
+        }
+        if (datos.error && !datos.output) {
+            throw new Error(String(datos.error));
+        }
         
         // --- PROCESAMIENTO DE RESPUESTA IA ---
-        // --- PROCESAMIENTO DE RESPUESTA IA (DENTRO DE TU FUNCION enviarMensaje) ---
-        let respuestaIA = datos.output || "Procesado correctamente.";
+        let respuestaIA = datos.output || datos.texto_limpio || datos.error || "Procesado correctamente.";
+        // chart_block dedicado (n8n) si el agente omitió el bloque en el texto
+        if (datos.chart_block && String(datos.chart_block).includes('[MOSTRAR_GRAFICO]')
+            && !respuestaIA.includes('[MOSTRAR_GRAFICO]')) {
+            respuestaIA = respuestaIA.trim() + '\n\n' + String(datos.chart_block).trim();
+        }
         
         // Detectamos si mandó un gráfico ANTES de limpiar el texto
-        let tieneGrafico = respuestaIA.includes('[MOSTRAR_GRAFICO]');
+        let tieneGrafico = respuestaIA.includes('[MOSTRAR_GRAFICO]')
+            || !!(datos.chart_block && String(datos.chart_block).includes('[MOSTRAR_GRAFICO]'));
+        const pidioGrafico = /gr[aá]fico|dashboard|visualiz|m[oó]dulo\s*bi/i.test(texto || '');
 
         // MAGIA VISUAL: Ocultamos todo el bloque técnico para que el usuario solo lea el reporte limpio
         let textoVisible = respuestaIA.replace(/\[MOSTRAR_GRAFICO\][\s\S]*/i, "").trim();
         
-        const respuestaIAConLinks = textoVisible.replace(
-            /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-            '<a href="$2" target="_blank" class="download-link">$1</a>'
-        );
+        const respuestaIAConLinks = textoVisible;
 
         // Eliminar animación de espera
         const typingDiv = document.getElementById(typingId);
@@ -3272,13 +3319,20 @@ async function enviarMensaje() {
         // Procesar markdown y añadir el mensaje de IA (sin procesar links dobles)
         addBotMessage(respuestaIAConLinks);
         
-        // Disparar el gráfico si existe
-        if (tieneGrafico) {
-            const chartData = extractChartData(datos);
+        // Disparar gráfico: bloque BI, o síntesis desde el informe si pediste gráfico
+        if (tieneGrafico || pidioGrafico) {
             setTimeout(() => {
-                toggleChart(true); 
-                createSampleChart(chartData); 
-            }, 500); 
+                Promise.resolve(window.tcProcessChatGrafico
+                    ? window.tcProcessChatGrafico(datos, respuestaIA)
+                    : (createSampleChart(extractChartData(datos)) && (toggleChart(true), true))
+                ).then(ok => {
+                    if (!ok && typeof addBotMessage === 'function') {
+                        addBotMessage(tieneGrafico
+                            ? 'Recibí la marca de gráfico pero no pude dibujarlo. Probá de nuevo o tocá el ícono de gráfico.'
+                            : '⚠️ La IA no envió el bloque de datos del gráfico. Pedí de nuevo: "generá el gráfico con el módulo BI" (tiene que incluir el bloque [MOSTRAR_GRAFICO]).');
+                    }
+                });
+            }, 300);
         }
         
         fileInput.value = ""; 
@@ -3303,7 +3357,7 @@ async function enviarMensaje() {
                 <path d="M15 9l-6 6"/>
                 <path d="M9 9l6 6"/>
             </svg>
-            <div style="flex: 1;">⚠️ Error de conexión o procesamiento. Por favor, inténtalo de nuevo.</div>
+            <div style="flex: 1;">⚠️ ${error?.message || "Error de conexión o procesamiento. Por favor, inténtalo de nuevo."}</div>
         `;
         chatBox.appendChild(errorDiv);
         console.error(error); // Para que veas el error real en F12
@@ -3319,7 +3373,15 @@ async function enviarMensaje() {
 function toggleChart(forceShow = false) {
     const container = document.getElementById('chart-container');
     const chatContainer = document.querySelector('.chat-container');
-    if (forceShow || container.style.display === 'none') {
+    if (!container) return;
+    const isHidden = container.style.display === 'none' || !container.style.display || getComputedStyle(container).display === 'none';
+    if (forceShow || isHidden) {
+        if (!forceShow && !window.myChart) {
+            if (typeof addBotMessage === 'function') {
+                addBotMessage('Pedí un gráfico al asistente (por ejemplo: "generá un gráfico del clima") y lo muestro acá.');
+            }
+            return;
+        }
         container.style.display = 'block';
         setTimeout(() => container.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     } else {
@@ -3380,10 +3442,14 @@ function extractChartData(aiResponse) {
 
 // OVERRIDE: Parser mejorado — acepta key=value y mapea alias de nombres que genera la IA
 extractChartData = function(aiResponse) {
-    const fullOutput = aiResponse.output || aiResponse.texto_limpio || "";
+    const fullOutput = aiResponse.chart_block || aiResponse.output || aiResponse.texto_limpio || "";
     const _gm = fullOutput.match(/\[MOSTRAR_GRAFICO\]([\s\S]*)$/i);
     if (!_gm) return null;
     const bloque = _gm[1].trim();
+    if (bloque.indexOf('{') >= 0 && typeof window.tcParseChartJsonBlock === 'function') {
+        const fromJson = window.tcParseChartJsonBlock(bloque);
+        if (fromJson) return fromJson;
+    }
     const ALIAS = {
         chart_type:'type', labels:'etiquetas', horas:'etiquetas', fechas:'etiquetas', periodos:'etiquetas', turnos:'etiquetas',
         nubosidad_porcentaje:'nubosidad', cobertura_nube:'nubosidad', nubosidad_oktas:'nubosidad',
@@ -3399,12 +3465,18 @@ extractChartData = function(aiResponse) {
     for (const linea of bloque.split('\n')) {
         const t = linea.trim();
         if (!t || t.startsWith('#') || t.startsWith('//')) continue;
-        const sep = t.search(/[=:]/);
+        // Solo el primer : o = (preservar horas 12:00 en el valor)
+        const sepColon = t.indexOf(':');
+        const sepEq = t.indexOf('=');
+        let sep = -1;
+        if (sepColon >= 0 && sepEq >= 0) sep = Math.min(sepColon, sepEq);
+        else sep = sepColon >= 0 ? sepColon : sepEq;
         if (sep === -1) continue;
-        let key = t.slice(0, sep).trim().toLowerCase().replace(/[\s\-]+/g, '_');
-        const raw = t.slice(sep + 1).trim();
+        let key = t.slice(0, sep).trim().toLowerCase().replace(/["'`]/g, '').replace(/[\s\-]+/g, '_');
+        const raw = t.slice(sep + 1).trim(); // resto intacto
         if (!key || !raw) continue;
         key = ALIAS[key] || key;
+        if (['max','min','data','datos','value','values','total','status','message','ok','success','error'].includes(key)) continue;
         let parsed;
         try { parsed = JSON.parse(raw); }
         catch {
@@ -3418,16 +3490,19 @@ extractChartData = function(aiResponse) {
         resultado[key] = Array.isArray(parsed) ? parsed : [parsed];
     }
     if (Array.isArray(resultado.type)) resultado.type = resultado.type[0] || 'line';
-    return resultado;
+    const _hasSeries = Object.entries(resultado).some(([k, v]) =>
+        k !== 'etiquetas' && k !== 'type' && Array.isArray(v) && v.length >= 2 && typeof v[0] === 'number'
+    );
+    return _hasSeries ? resultado : null;
 };
 
 // 3. FUNCIÓN DEL DASHBOARD INTERACTIVO (Chart.js)
 function createSampleChart(chartData = null) {
-    if (!chartData) return;
+    if (!chartData) return false;
 
     const ctx = document.getElementById('climatChart').getContext('2d');
     const tabsContainer = document.getElementById('chart-tabs');
-    if (!tabsContainer) return; 
+    if (!tabsContainer) return false;
     
     tabsContainer.innerHTML = ''; 
 
@@ -3476,20 +3551,24 @@ function createSampleChart(chartData = null) {
     // Variables dinámicas: si la IA usó nombres propios no contemplados en allVariables
     if (chartData) {
         const _knownKeys = new Set(allVariables.map(v => v.key));
-        const _skipKeys = new Set(['type', 'etiquetas', 'titulo', '_titulo']);
+        const _skipKeys = new Set(['type', 'etiquetas', 'titulo', '_titulo', 'region', 'puerto', 'ubicacion', 'cultivo', 'aeropuerto_origen', 'aeropuerto_destino', 'serie', 'series', 'fase_lunar', 'condiciones_mar', 'condiciones_atmosfericas', 'tipo_energia', 'suelo', 'trabajo', 'nombre', 'email', 'max', 'min', 'data', 'datos', 'value', 'values', 'total', 'status', 'message', 'ok', 'success', 'error']);
+        Object.keys(chartData).forEach(k => {
+            if (_skipKeys.has(String(k).toLowerCase())) delete chartData[k];
+        });
         const _dynColors = ['#06b6d4','#f59e0b','#10b981','#f43f5e','#a855f7','#fbbf24','#3b82f6'];
         let _dynIdx = 0;
         for (const [_k, _v] of Object.entries(chartData)) {
-            if (_knownKeys.has(_k) || _skipKeys.has(_k)) continue;
-            if (!Array.isArray(_v) || _v.length === 0 || _v[0] === null || typeof _v[0] === 'string') continue;
+            if (_knownKeys.has(_k) || _skipKeys.has(_k) || _skipKeys.has(String(_k).toLowerCase())) continue;
+            if (!Array.isArray(_v) || _v.length < 2 || typeof _v[0] !== 'number') continue;
             allVariables.push({ key: _k, label: _k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), color: _dynColors[_dynIdx++ % _dynColors.length] });
         }
     }
 
     const variablesDisponibles = allVariables.filter(v => 
         chartData[v.key] !== undefined && 
-        chartData[v.key].length > 0 && 
-        chartData[v.key][0] !== null
+        Array.isArray(chartData[v.key]) &&
+        chartData[v.key].length >= 2 && 
+        typeof chartData[v.key][0] === 'number'
     );
 
     // Eliminar duplicado de dirección de viento (viento_direccion y direccion_viento)
@@ -3500,16 +3579,15 @@ function createSampleChart(chartData = null) {
         variablesFiltradas = variablesDisponibles.filter(v => v.key !== 'viento_direccion');
     }
     
-    if (variablesFiltradas.length === 0) return;
+    if (variablesFiltradas.length === 0) return false;
 
     const labels = chartData.etiquetas || ['Actual'];
     let tituloUbicacion = chartData.region || chartData.puerto || chartData.aeropuerto_origen || chartData.ubicacion || 'Reporte';
-    
-    // 🧡 LIMPIEZA ANTI-BASURA: Sacamos comillas y cortamos si la IA metió un párrafo entero
-    tituloUbicacion = tituloUbicacion.replace(/["']/g, '').trim(); 
+    if (Array.isArray(tituloUbicacion)) tituloUbicacion = tituloUbicacion[0];
+    tituloUbicacion = String(tituloUbicacion == null ? 'Reporte' : tituloUbicacion).replace(/["']/g, '').trim() || 'Reporte';
     if (tituloUbicacion.length > 35) {
-        // Cortamos en la primera coma, punto, o simplemente a los 30 caracteres
-        tituloUbicacion = tituloUbicacion.split(/(?:\n|,|\.)/)[0].substring(0, 35) + '...'; 
+        tituloUbicacion = tituloUbicacion.split(/[,.]/)[0].substring(0, 35) + '...';
+        if (tituloUbicacion.length > 35) tituloUbicacion = tituloUbicacion.substring(0, 35) + '...';
     }
 
     function drawChart(variableConfig) {
@@ -3607,6 +3685,7 @@ function createSampleChart(chartData = null) {
     });
 
     drawChart(variablesFiltradas[0]);
+    return true;
 }
 
 // ==========================================

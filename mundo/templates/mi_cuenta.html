@@ -4,575 +4,1168 @@
 
 {% block extra_head %}
 <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            background: #0f172a;
-            color: #fff;
-            font-family: 'Segoe UI', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 40px 20px;
-        }
-        .container { max-width: 560px; width: 100%; }
+    :root {
+        --bg: #0b1220;
+        --bg2: #0f172a;
+        --card: rgba(15, 23, 42, 0.72);
+        --card-solid: #111827;
+        --border: #1e293b;
+        --border-soft: rgba(51, 65, 85, 0.7);
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --dim: #64748b;
+        --accent: #38bdf8;
+        --accent2: #6366f1;
+        --ok: #4ade80;
+        --warn: #fbbf24;
+        --danger: #f87171;
+        --mono: 'JetBrains Mono', 'Consolas', ui-monospace, monospace;
+    }
 
-        .card {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid #1e293b;
-            border-radius: 18px;
-            padding: 32px;
-            margin-bottom: 20px;
-        }
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 24px;
-            border-bottom: 1px solid #1e293b;
-            padding-bottom: 16px;
-        }
-        .card-header .icon {
-            width: 48px; height: 48px;
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.3rem;
-        }
-        h2 { font-size: 1.1rem; font-weight: 700; }
-        .subtitle { color: #64748b; font-size: 0.82rem; margin-top: 2px; }
+    *, *::before, *::after { box-sizing: border-box; }
 
-        /* Estado de suscripción */
-        .status-badge {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600;
-        }
-        .status-active   { background: rgba(34,197,94,0.12); border: 1px solid #16a34a; color: #4ade80; }
-        .status-inactive { background: rgba(239,68,68,0.12); border: 1px solid #dc2626; color: #f87171; }
-        .info-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 0; border-bottom: 1px solid #1e293b; font-size: 0.9rem;
-        }
-        .info-row:last-child { border-bottom: none; }
-        .info-label { color: #64748b; }
-        .info-value { font-weight: 600; }
+    html { overflow-x: hidden; }
+    body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        overflow-x: hidden;
+        background:
+            radial-gradient(1200px 500px at 10% -10%, rgba(56, 189, 248, 0.12), transparent 55%),
+            radial-gradient(900px 420px at 90% 0%, rgba(99, 102, 241, 0.12), transparent 50%),
+            linear-gradient(180deg, var(--bg) 0%, var(--bg2) 45%, #0a101c 100%);
+    }
 
-        /* Toggle switch */
-        .toggle-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 16px 0; border-bottom: 1px solid #1e293b;
-        }
-        .toggle-row:last-child { border-bottom: none; }
-        .toggle-label { font-size: 0.9rem; }
-        .toggle-desc  { font-size: 0.78rem; color: #64748b; margin-top: 3px; }
+    .mc-wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 20px 56px;
+    }
 
-        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 27px; flex-shrink: 0; }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; inset: 0;
-            background: #1e293b; border-radius: 27px;
-            transition: .3s; border: 1px solid #334155;
-        }
-        .slider:before {
-            content: ""; position: absolute;
-            width: 19px; height: 19px; border-radius: 50%;
-            background: #64748b; bottom: 3px; left: 4px;
-            transition: .3s;
-        }
-        input:checked + .slider { background: #16a34a; border-color: #22c55e; }
-        input:checked + .slider:before { background: #fff; transform: translateX(23px); }
+    /* ── Header ── */
+    .mc-top {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 14px 0;
+        margin-bottom: 8px;
+        background: rgba(11, 18, 32, 0.82);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
+    }
+    .mc-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        color: var(--text);
+        font-weight: 800;
+        letter-spacing: 0.02em;
+    }
+    .mc-brand span { color: var(--accent); }
+    .mc-brand-mark {
+        width: 34px; height: 34px;
+        border-radius: 10px;
+        display: grid; place-items: center;
+        background: rgba(56, 189, 248, 0.12);
+        border: 1px solid rgba(56, 189, 248, 0.28);
+        color: var(--accent);
+    }
+    .mc-top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .mc-link-btn {
+        display: inline-flex; align-items: center; gap: 7px;
+        padding: 10px 14px; border-radius: 9px;
+        border: 1px solid var(--border);
+        background: rgba(30, 41, 59, 0.55);
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.84rem;
+        font-weight: 600;
+        transition: 0.18s ease;
+        min-height: 40px;
+    }
+    .mc-link-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-        .btn-save {
-            width: 100%; padding: 14px; border: none; border-radius: 12px;
-            background: linear-gradient(135deg, #3b82f6, #6366f1);
-            color: #fff; font-size: 1rem; font-weight: 700;
-            cursor: pointer; margin-top: 8px; transition: opacity .2s;
-        }
-        .btn-save:hover { opacity: 0.88; }
+    /* ── Toast ── */
+    .mc-toast {
+        display: flex; align-items: center; gap: 10px;
+        margin: 14px 0 0;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: rgba(74, 222, 128, 0.1);
+        border: 1px solid rgba(74, 222, 128, 0.35);
+        color: var(--ok);
+        font-size: 0.88rem;
+        animation: mcFade 0.35s ease both;
+    }
 
-        .btn-link {
-            display: inline-block; color: #3b82f6; text-decoration: none;
-            font-size: 0.88rem; font-weight: 600;
-        }
-        .btn-link:hover { text-decoration: underline; }
-        .back-link {
-            text-align: center; margin-top: 10px;
-        }
-        .notice {
-            background: #1e293b; border: 1px solid #334155;
-            border-radius: 10px; padding: 12px 16px;
-            font-size: 0.82rem; color: #94a3b8; margin-top: 16px;
-            display: flex; gap: 10px; align-items: flex-start;
-        }
-        .notice i { color: #3b82f6; flex-shrink: 0; margin-top: 2px; }
+    /* ── Hero ── */
+    .mc-hero {
+        margin-top: 22px;
+        padding: 28px;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        background:
+            linear-gradient(135deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.9)),
+            linear-gradient(180deg, rgba(56, 189, 248, 0.05), transparent);
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 22px;
+        align-items: center;
+        animation: mcFadeUp 0.45s ease both;
+    }
+    .mc-hero-main { display: flex; gap: 18px; align-items: center; min-width: 0; }
+    .mc-avatar {
+        width: 64px; height: 64px; flex-shrink: 0;
+        border-radius: 18px;
+        display: grid; place-items: center;
+        font-size: 1.5rem; font-weight: 800;
+        background: linear-gradient(145deg, rgba(56,189,248,0.2), rgba(99,102,241,0.25));
+        border: 1px solid rgba(56,189,248,0.35);
+        color: #e0f2fe;
+        font-family: var(--mono);
+    }
+    .mc-hero h1 {
+        margin: 0;
+        font-size: 1.55rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
+    .mc-hero .mc-email {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 0.9rem;
+    }
+    .mc-meta-row {
+        display: flex; flex-wrap: wrap; gap: 8px;
+        margin-top: 14px;
+    }
+    .mc-chip {
+        display: inline-flex; align-items: center; gap: 7px;
+        padding: 6px 11px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        border: 1px solid var(--border);
+        background: rgba(15, 23, 42, 0.65);
+        color: var(--muted);
+    }
+    .mc-chip strong { color: var(--text); font-weight: 700; }
+    .mc-chip.ok { color: var(--ok); border-color: rgba(74,222,128,0.35); background: rgba(74,222,128,0.08); }
+    .mc-chip.warn { color: var(--warn); border-color: rgba(251,191,36,0.35); background: rgba(251,191,36,0.08); }
+    .mc-chip.danger { color: var(--danger); border-color: rgba(248,113,113,0.35); background: rgba(248,113,113,0.08); }
+    .mc-chip.plan { color: #a5b4fc; border-color: rgba(99,102,241,0.4); background: rgba(99,102,241,0.1); }
+    .mc-hero-cta { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+    .mc-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 11px 16px;
+        border-radius: 11px;
+        border: 1px solid transparent;
+        font-weight: 700;
+        font-size: 0.9rem;
+        text-decoration: none;
+        cursor: pointer;
+        transition: 0.18s ease;
+        font-family: inherit;
+    }
+    .mc-btn-primary {
+        background: linear-gradient(135deg, #2563eb, #4f46e5);
+        color: #fff;
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.22);
+    }
+    .mc-btn-primary:hover { filter: brightness(1.08); }
+    .mc-btn-ghost {
+        background: rgba(30, 41, 59, 0.7);
+        border-color: var(--border);
+        color: var(--muted);
+    }
+    .mc-btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .mc-btn-warn {
+        background: rgba(251, 191, 36, 0.12);
+        border-color: rgba(251, 191, 36, 0.35);
+        color: var(--warn);
+    }
+    .mc-btn-warn:hover { background: rgba(251, 191, 36, 0.2); }
+    .mc-btn-block { width: 100%; }
 
-        @media (max-width: 520px) {
-            body { padding: 20px 12px; }
-            .card { padding: 20px 16px; }
-            .grid-2col { grid-template-columns: 1fr !important; }
-        }
-    </style>
+    /* ── Banner renovación ── */
+    .mc-banner {
+        margin-top: 16px;
+        padding: 16px 18px;
+        border-radius: 14px;
+        border: 1px solid rgba(251, 191, 36, 0.35);
+        background: linear-gradient(90deg, rgba(251,191,36,0.1), rgba(15,23,42,0.4));
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 16px;
+        align-items: center;
+        animation: mcFadeUp 0.5s ease 0.05s both;
+    }
+    .mc-banner h3 {
+        margin: 0 0 4px;
+        font-size: 0.98rem;
+        color: var(--warn);
+    }
+    .mc-banner p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.86rem;
+        line-height: 1.45;
+    }
+    .mc-banner-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 0;
+        width: 100%;
+        max-width: 280px;
+    }
+    .mc-toggle-inline {
+        display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        font-size: 0.82rem; color: var(--muted);
+    }
+
+    /* Toggle */
+    .toggle-switch { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+        position: absolute; cursor: pointer; inset: 0;
+        background: #1e293b; border-radius: 27px;
+        transition: .25s; border: 1px solid #334155;
+    }
+    .slider:before {
+        content: ""; position: absolute;
+        width: 18px; height: 18px; border-radius: 50%;
+        background: #64748b; bottom: 3px; left: 3px;
+        transition: .25s;
+    }
+    input:checked + .slider { background: #15803d; border-color: #22c55e; }
+    input:checked + .slider:before { background: #fff; transform: translateX(20px); }
+
+    /* ── KPIs ── */
+    .mc-kpis {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+        gap: 12px;
+        animation: mcFadeUp 0.5s ease 0.1s both;
+    }
+    .mc-kpi {
+        padding: 18px 16px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        transition: transform 0.18s ease, border-color 0.18s ease;
+        min-width: 0;
+    }
+    .mc-kpi:hover {
+        transform: translateY(-2px);
+        border-color: rgba(56, 189, 248, 0.35);
+    }
+    .mc-kpi-label {
+        display: flex; align-items: center; gap: 8px;
+        color: var(--dim);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 10px;
+    }
+    .mc-kpi-value {
+        font-family: var(--mono);
+        font-size: 1.55rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+    }
+    .mc-kpi-sub {
+        margin-top: 6px;
+        color: var(--dim);
+        font-size: 0.78rem;
+    }
+    .mc-bar {
+        margin-top: 10px;
+        height: 7px;
+        border-radius: 99px;
+        background: #1e293b;
+        overflow: hidden;
+    }
+    .mc-bar > i {
+        display: block;
+        height: 100%;
+        border-radius: 99px;
+        background: linear-gradient(90deg, #22d3ee, #6366f1);
+        max-width: 100%;
+    }
+    .mc-bar.warn > i { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+    .mc-bar.danger > i { background: linear-gradient(90deg, #f87171, #ef4444); }
+
+    /* ── Panels / grid ── */
+    .mc-grid {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 14px;
+        align-items: start;
+    }
+    .mc-stack { display: flex; flex-direction: column; gap: 14px; }
+    .mc-panel {
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        overflow: hidden;
+    }
+    .mc-panel-h {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(2, 6, 23, 0.35);
+    }
+    .mc-panel-h .left {
+        display: flex; align-items: center; gap: 12px; min-width: 0;
+    }
+    .mc-ico {
+        width: 38px; height: 38px; flex-shrink: 0;
+        border-radius: 11px;
+        display: grid; place-items: center;
+        border: 1px solid var(--border-soft);
+        background: rgba(30, 41, 59, 0.7);
+        color: var(--accent);
+    }
+    .mc-ico.amber { color: var(--warn); background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.25); }
+    .mc-ico.green { color: var(--ok); background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.25); }
+    .mc-ico.violet { color: #a78bfa; background: rgba(167,139,250,0.08); border-color: rgba(167,139,250,0.25); }
+    .mc-ico.cyan { color: #22d3ee; background: rgba(34,211,238,0.08); border-color: rgba(34,211,238,0.25); }
+    .mc-ico.red { color: var(--danger); background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.25); }
+    .mc-panel-h h2 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+    .mc-panel-h p {
+        margin: 2px 0 0;
+        color: var(--dim);
+        font-size: 0.78rem;
+    }
+    .mc-panel-b { padding: 18px; }
+
+    .mc-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 0;
+        border-bottom: 1px solid rgba(30, 41, 59, 0.9);
+        font-size: 0.9rem;
+    }
+    .mc-row:last-child { border-bottom: none; }
+    .mc-row .lbl { color: var(--dim); }
+    .mc-row .val { font-weight: 700; font-family: var(--mono); font-size: 0.88rem; }
+
+    .mc-note {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: rgba(30, 41, 59, 0.55);
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.45;
+        display: flex; gap: 10px; align-items: flex-start;
+    }
+    .mc-note i { color: var(--accent); margin-top: 2px; }
+
+    /* Table */
+    .mc-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table.mc-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.82rem;
+    }
+    table.mc-table th {
+        text-align: left;
+        color: var(--dim);
+        font-weight: 700;
+        padding: 8px 6px;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+    table.mc-table td {
+        padding: 9px 6px;
+        border-bottom: 1px solid rgba(30,41,59,0.7);
+        color: #cbd5e1;
+        vertical-align: middle;
+    }
+    table.mc-table tr:last-child td { border-bottom: none; }
+    .tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+    }
+    .tag-uso { color: #fca5a5; background: rgba(248,113,113,0.12); }
+    .tag-recarga { color: #86efac; background: rgba(74,222,128,0.12); }
+    .tag-bono { color: #c4b5fd; background: rgba(167,139,250,0.12); }
+    .sector-AGRO { color: #4ade80; background: rgba(74,222,128,0.12); }
+    .sector-NAVAL { color: #60a5fa; background: rgba(96,165,250,0.12); }
+    .sector-AEREO { color: #a78bfa; background: rgba(167,139,250,0.12); }
+    .sector-ENERGIA { color: #fbbf24; background: rgba(251,191,36,0.12); }
+
+    .mc-empty {
+        text-align: center;
+        padding: 28px 12px;
+        color: var(--dim);
+        font-size: 0.88rem;
+        line-height: 1.5;
+    }
+
+    .mc-quick {
+        display: grid;
+        gap: 8px;
+    }
+    .mc-quick a {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(15, 23, 42, 0.55);
+        color: var(--text);
+        text-decoration: none;
+        transition: 0.18s ease;
+    }
+    .mc-quick a:hover { border-color: rgba(56,189,248,0.4); }
+    .mc-quick .q-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .mc-quick .q-left i { width: 18px; text-align: center; color: var(--accent); }
+    .mc-quick .q-title { font-weight: 700; font-size: 0.88rem; }
+    .mc-quick .q-sub { color: var(--dim); font-size: 0.75rem; margin-top: 2px; }
+    .mc-lock {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--dim);
+        border: 1px solid var(--border);
+        padding: 3px 8px;
+        border-radius: 999px;
+        white-space: nowrap;
+    }
+
+    .mc-ub-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 11px 0;
+        border-bottom: 1px solid rgba(30,41,59,0.9);
+    }
+    .mc-ub-row:last-child { border-bottom: none; }
+    .mc-ub-name { font-weight: 700; font-size: 0.9rem; }
+    .mc-ub-meta { color: var(--dim); font-size: 0.78rem; margin-top: 2px; font-family: var(--mono); }
+    .mc-icon-btn {
+        background: rgba(248,113,113,0.08);
+        border: 1px solid rgba(248,113,113,0.25);
+        color: var(--danger);
+        border-radius: 8px;
+        padding: 7px 10px;
+        cursor: pointer;
+    }
+
+    .mc-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    .mc-input, .mc-select {
+        width: 100%;
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 9px;
+        padding: 10px 12px;
+        color: var(--text);
+        font-size: 0.88rem;
+        outline: none;
+        font-family: inherit;
+    }
+    .mc-input:focus, .mc-select:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(56,189,248,0.12);
+    }
+    .mc-label {
+        display: block;
+        color: var(--dim);
+        font-size: 0.8rem;
+        margin-bottom: 6px;
+        font-weight: 600;
+    }
+    .mc-sector-pills {
+        display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 16px;
+    }
+    .mc-sector-pills label {
+        display: inline-flex; align-items: center; gap: 7px;
+        cursor: pointer;
+        background: rgba(30,41,59,0.6);
+        border: 1px solid #334155;
+        border-radius: 9px;
+        padding: 8px 12px;
+        font-size: 0.84rem;
+        color: var(--muted);
+        transition: 0.15s;
+    }
+    .mc-sector-pills label:has(input:checked) {
+        border-color: rgba(99,102,241,0.5);
+        color: #a5b4fc;
+        background: rgba(99,102,241,0.1);
+    }
+    .mc-sector-pills input { accent-color: #6366f1; width: 14px; height: 14px; }
+
+    .mc-footer {
+        margin-top: 28px;
+        text-align: center;
+        color: var(--dim);
+        font-size: 0.82rem;
+    }
+    .mc-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+    @keyframes mcFade {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes mcFadeUp {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive: tablet ≤900 | móvil ≤600 */
+    @media (max-width: 900px) {
+        .mc-hero { grid-template-columns: 1fr; }
+        .mc-hero-cta { flex-direction: row; flex-wrap: wrap; }
+        .mc-hero-cta .mc-btn { flex: 1; min-width: min(140px, 100%); }
+        .mc-kpis { grid-template-columns: 1fr 1fr; }
+        .mc-grid { grid-template-columns: 1fr; }
+        .mc-banner { grid-template-columns: 1fr; }
+        .mc-banner-form { max-width: none; }
+    }
+    @media (max-width: 600px) {
+        .mc-wrap { padding: 0 12px 40px; }
+        .mc-top { padding: 12px 0; }
+        .mc-hero { padding: 20px 16px; }
+        .mc-hero-main { align-items: flex-start; flex-wrap: wrap; }
+        .mc-hero h1 { font-size: 1.3rem; }
+        .mc-form-grid { grid-template-columns: 1fr; }
+        .mc-kpis { grid-template-columns: 1fr; gap: 8px; }
+        .mc-kpi-value { font-size: 1.3rem; }
+        .mc-link-btn { min-height: 44px; }
+        .mc-btn { min-height: 44px; }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
+{% with inicial=user.username|default:"U"|slice:":1"|upper %}
+<div class="mc-wrap">
+
+    <header class="mc-top">
+        <a class="mc-brand" href="/">
+            <div class="mc-brand-mark"><i class="fas fa-cloud-sun"></i></div>
+            TuClima <span>Cuenta</span>
+        </a>
+        <div class="mc-top-actions">
+            <a class="mc-link-btn" href="/pricing/"><i class="fas fa-tags"></i> Planes</a>
+            <a class="mc-link-btn" href="/"><i class="fas fa-arrow-left"></i> Inicio</a>
+        </div>
+    </header>
 
     {% if guardado %}
-    <div style="background:rgba(16,185,129,.12); border:1px solid #16a34a; border-radius:12px; padding:12px 20px; margin-bottom:18px; color:#34d399; font-size:.88rem; display:flex; align-items:center; gap:10px;">
-        <i class="fas fa-check-circle"></i> Preferencias guardadas correctamente.
-    </div>
+    <div class="mc-toast"><i class="fas fa-check-circle"></i> Preferencias guardadas correctamente.</div>
     {% endif %}
 
-    <!-- ── Estado de suscripción ── -->
-    <div class="card">
-        <div class="card-header">
-            <div class="icon" style="background:rgba(99,102,241,0.15); color:#818cf8;">
-                <i class="fas fa-circle-user"></i>
-            </div>
-            <div>
-                <h2>{{ user.username }}</h2>
-                <div class="subtitle">{{ user.email|default:"(sin email)" }}</div>
+    <!-- Hero -->
+    <section class="mc-hero">
+        <div class="mc-hero-main">
+            <div class="mc-avatar">{{ inicial }}</div>
+            <div style="min-width:0;">
+                <h1>{{ user.username }}</h1>
+                <div class="mc-email">{{ user.email|default:"(sin email)" }}</div>
+                <div class="mc-meta-row">
+                    {% if perfil.suscripcion_activa %}
+                        {% if mostrar_aviso_renovacion %}
+                            <span class="mc-chip warn"><i class="fas fa-circle" style="font-size:0.45rem;"></i> Por vencer</span>
+                        {% else %}
+                            <span class="mc-chip ok"><i class="fas fa-circle" style="font-size:0.45rem;"></i> Activa</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="mc-chip danger"><i class="fas fa-circle" style="font-size:0.45rem;"></i> Inactiva</span>
+                    {% endif %}
+
+                    <span class="mc-chip plan"><i class="fas fa-gem"></i> Plan <strong>{{ plan_label }}</strong></span>
+
+                    <span class="mc-chip">
+                        <i class="fas fa-calendar"></i>
+                        Vence
+                        <strong>
+                            {% if perfil.fecha_vencimiento %}
+                                {{ perfil.fecha_vencimiento|date:"d/m/Y" }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+                    </span>
+
+                    {% if dias_restantes != None %}
+                    <span class="mc-chip {% if dias_restantes <= 7 %}warn{% endif %}">
+                        <i class="fas fa-hourglass-half"></i>
+                        {% if dias_restantes == 0 %}
+                            Vence hoy
+                        {% else %}
+                            Quedan <strong>{{ dias_restantes }}</strong> días
+                        {% endif %}
+                    </span>
+                    {% endif %}
+                </div>
             </div>
         </div>
-
-        <div class="info-row">
-            <span class="info-label">Estado</span>
+        <div class="mc-hero-cta">
             {% if perfil.suscripcion_activa %}
-                <span class="status-badge status-active"><i class="fas fa-circle" style="font-size:.55rem;"></i>Activa</span>
+                <a class="mc-btn mc-btn-primary" href="/pricing/#tokens"><i class="fas fa-rotate"></i> Renovar / upgrade</a>
             {% else %}
-                <span class="status-badge status-inactive"><i class="fas fa-circle" style="font-size:.55rem;"></i>Inactiva</span>
+                <a class="mc-btn mc-btn-primary" href="/pricing/"><i class="fas fa-bolt"></i> Activar plan</a>
+            {% endif %}
+            <a class="mc-btn mc-btn-ghost" href="/pricing/"><i class="fas fa-eye"></i> Ver planes</a>
+        </div>
+    </section>
+
+    <!-- Banner renovación -->
+    {% if mostrar_aviso_renovacion %}
+    <section class="mc-banner">
+        <div>
+            <h3><i class="fas fa-bell"></i> Renovación próxima</h3>
+            <p>
+                Tu acceso vence el <strong style="color:#fde68a;">{{ perfil.fecha_vencimiento|date:"d/m/Y" }}</strong>
+                ({% if dias_restantes == 0 %}hoy{% else %}en {{ dias_restantes }} día{{ dias_restantes|pluralize:"s" }}{% endif %}).
+                Activá el recordatorio para recibir un email 5 días antes con el link de renovación.
+            </p>
+        </div>
+        <form method="POST" class="mc-banner-form">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="preferencias">
+            <div class="mc-toggle-inline">
+                <span>Recordatorio por email</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="renovacion_automatica"
+                           {% if perfil.renovacion_automatica %}checked{% endif %}
+                           onchange="this.form.submit()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <a class="mc-btn mc-btn-warn mc-btn-block" href="/pricing/#tokens"><i class="fas fa-arrow-right"></i> Renovar ahora</a>
+        </form>
+    </section>
+    {% endif %}
+
+    <!-- KPIs -->
+    <section class="mc-kpis">
+        <div class="mc-kpi">
+            <div class="mc-kpi-label"><i class="fas fa-coins"></i> Tokens hoy</div>
+            <div class="mc-kpi-value" style="color:#a5b4fc;">{{ tokens_disponibles|floatformat:0 }}</div>
+            <div class="mc-kpi-sub">
+                {% if tokens_limite %}
+                    de {{ tokens_limite|floatformat:0 }} diarios
+                {% else %}
+                    Sin plan diario activo
+                {% endif %}
+            </div>
+        </div>
+        <div class="mc-kpi">
+            <div class="mc-kpi-label"><i class="fas fa-chart-pie"></i> Uso del día</div>
+            <div class="mc-kpi-value">{% if tokens_limite %}{{ tokens_pct }}%{% else %}—{% endif %}</div>
+            <div class="mc-kpi-sub">
+                {% if tokens_limite %}
+                    {{ tokens_usados_hoy|floatformat:0 }} usados
+                {% else %}
+                    Sin límite diario
+                {% endif %}
+            </div>
+            {% if tokens_limite %}
+            <div class="mc-bar {% if tokens_pct >= 90 %}danger{% elif tokens_pct >= 70 %}warn{% endif %}">
+                <i style="width:{{ tokens_pct }}%;"></i>
+            </div>
             {% endif %}
         </div>
-        <div class="info-row">
-            <span class="info-label">Plan</span>
-            <span class="info-value">
-                {% if perfil.plan_tipo == 'anual' %}Anual — $200 USD/año{% else %}Mensual — $20 USD/mes{% endif %}
-            </span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Vencimiento</span>
-            <span class="info-value">
-                {% if perfil.fecha_vencimiento %}
-                    {{ perfil.fecha_vencimiento|date:"d/m/Y" }}
+        <div class="mc-kpi">
+            <div class="mc-kpi-label"><i class="fas fa-calendar-check"></i> Días restantes</div>
+            <div class="mc-kpi-value" style="color:{% if dias_restantes != None and dias_restantes <= 7 %}var(--warn){% else %}var(--ok){% endif %};">
+                {% if dias_restantes != None %}{{ dias_restantes }}{% else %}—{% endif %}
+            </div>
+            <div class="mc-kpi-sub">
+                {% if dias_restantes_tokens != None %}
+                    Tokens: {{ dias_restantes_tokens }} días
                 {% else %}
-                    —
+                    Plan de acceso
                 {% endif %}
-            </span>
-        </div>
-
-        {% if not perfil.suscripcion_activa %}
-        <a href="/pricing/" class="btn-link" style="display:block; text-align:center; margin-top:18px; padding:12px; background:rgba(59,130,246,0.1); border:1px solid #3b82f6; border-radius:10px;">
-            <i class="fas fa-arrow-right"></i> Ver planes y suscribirme
-        </a>
-        {% endif %}
-    </div>
-
-    <!-- ── Preferencias ── -->
-    <div class="card">
-        <div class="card-header">
-            <div class="icon" style="background:rgba(34,197,94,0.1); color:#4ade80;">
-                <i class="fas fa-sliders"></i>
-            </div>
-            <div>
-                <h2>Preferencias</h2>
-                <div class="subtitle">Controlá cómo querés gestionar tu suscripción</div>
             </div>
         </div>
+        <div class="mc-kpi">
+            <div class="mc-kpi-label"><i class="fas fa-wave-square"></i> Anomalías</div>
+            <div class="mc-kpi-value" style="color:var(--warn);">
+                {% if dias_historial > 0 %}{{ anomalias_count }}{% else %}—{% endif %}
+            </div>
+            <div class="mc-kpi-sub">
+                {% if dias_historial > 0 %}
+                    Últimos {{ dias_historial }} días
+                {% else %}
+                    Requiere Starter+
+                {% endif %}
+            </div>
+        </div>
+    </section>
 
-        <form method="POST">
-            {% csrf_token %}
-            <div class="toggle-row">
-                <div>
-                    <div class="toggle-label"><strong>Recordatorio de renovación</strong></div>
-                    <div class="toggle-desc">
-                        Recibís un email 5 días antes del vencimiento con tu link de renovación.
-                        <br>Si lo desactivás, el pago siempre será manual.
+    <div class="mc-grid">
+        <!-- LEFT -->
+        <div class="mc-stack">
+
+            <!-- Tokens -->
+            <section class="mc-panel">
+                <div class="mc-panel-h">
+                    <div class="left">
+                        <div class="mc-ico"><i class="fas fa-brain"></i></div>
+                        <div>
+                            <h2>Uso de tokens IA</h2>
+                            <p>Saldo diario y costos por operación</p>
+                        </div>
                     </div>
                 </div>
-                <label class="toggle-switch" style="margin-left:20px;">
-                    <input type="checkbox" name="renovacion_automatica"
-                           {% if perfil.renovacion_automatica %}checked{% endif %}>
-                    <span class="slider"></span>
-                </label>
-            </div>
+                <div class="mc-panel-b">
+                    {% if plan_tokens %}
+                    <div class="mc-note" style="margin-top:0; margin-bottom:14px; border-color:rgba(74,222,128,0.3); background:rgba(74,222,128,0.06);">
+                        <i class="fas fa-check-circle" style="color:var(--ok);"></i>
+                        <span>Plan activo: <strong style="color:var(--ok);">{{ plan_tokens.limite_dia|floatformat:0 }} tokens/día</strong> · vence {{ plan_tokens.vencimiento }}</span>
+                    </div>
+                    {% endif %}
 
-            <div class="notice">
-                <i class="fas fa-info-circle"></i>
-                <span>El cobro automático sin intervención requiere una tarjeta guardada (próximamente). Por ahora, el recordatorio te manda un link para que vos decidas renovar.</span>
-            </div>
+                    {% if tokens_limite %}
+                    <div class="mc-bar {% if tokens_pct >= 90 %}danger{% elif tokens_pct >= 70 %}warn{% endif %}" style="height:10px; margin-bottom:6px;">
+                        <i style="width:{{ tokens_pct }}%;"></i>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; color:var(--dim); font-size:0.78rem; margin-bottom:12px; font-family:var(--mono);">
+                        <span>{{ tokens_usados_hoy|floatformat:0 }} usados</span>
+                        <span>{{ tokens_disponibles|floatformat:0 }} libres</span>
+                    </div>
+                    {% endif %}
 
-            <br>
-            <button type="submit" class="btn-save">
-                <i class="fas fa-save"></i> Guardar preferencias
-            </button>
-        </form>
-    </div>
+                    <div class="mc-row">
+                        <span class="lbl">Disponibles hoy</span>
+                        <span class="val" style="color:#a5b4fc;">{{ tokens_disponibles|floatformat:0 }}</span>
+                    </div>
+                    <div class="mc-row">
+                        <span class="lbl">Usados (histórico)</span>
+                        <span class="val">{{ perfil.tokens_usados_total|floatformat:0 }}</span>
+                    </div>
+                    <div class="mc-row">
+                        <span class="lbl">Chat IA</span>
+                        <span class="val">{{ costos.CHAT_N8N|floatformat:0 }} créditos</span>
+                    </div>
+                    <div class="mc-row">
+                        <span class="lbl">Análisis de archivo</span>
+                        <span class="val">{{ costos.ANALISIS_ARCHIVO|floatformat:0 }} créditos</span>
+                    </div>
 
-    <!-- ── Alertas Proactivas ── -->
-    <div class="card">
-        <div class="card-header">
-            <div class="icon" style="background:rgba(239,68,68,0.1); color:#f87171;">
-                <i class="fas fa-bell-concierge"></i>
-            </div>
-            <div>
-                <h2>Alertas Proactivas</h2>
-                <div class="subtitle">Reporte climático diario por email para tu sector</div>
-            </div>
-        </div>
+                    <a class="mc-btn mc-btn-ghost mc-btn-block" style="margin-top:14px;" href="/pricing/#tokens">
+                        <i class="fas fa-bolt"></i> Ver planes de tokens
+                    </a>
+                </div>
+            </section>
 
-        {% if guardado %}<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:8px 14px;color:#34d399;font-size:.83rem;margin-bottom:14px;"><i class="fas fa-check-circle"></i> Preferencias guardadas</div>{% endif %}
-
-        {% if puede_alertas %}
-        <form method="POST">
-            {% csrf_token %}
-            <input type="hidden" name="accion" value="alertas">
-
-            <div class="toggle-row">
-                <div>
-                    <div class="toggle-label"><strong>Activar reporte diario</strong></div>
-                    <div class="toggle-desc">
-                        Recibís un email en tu horario con el resumen climático.
-                        Cuando hay condiciones críticas aparece una <b style="color:#f87171;">⚠️ alerta</b> con acciones concretas.
+            <!-- Historial créditos -->
+            <section class="mc-panel">
+                <div class="mc-panel-h">
+                    <div class="left">
+                        <div class="mc-ico amber"><i class="fas fa-clock-rotate-left"></i></div>
+                        <div>
+                            <h2>Historial de créditos</h2>
+                            <p>Últimos 20 movimientos</p>
+                        </div>
                     </div>
                 </div>
-                <label class="toggle-switch" style="margin-left:20px;">
-                    <input type="checkbox" name="alertas_activas" {% if perfil.alertas_activas %}checked{% endif %}>
-                    <span class="slider"></span>
-                </label>
-            </div>
+                <div class="mc-panel-b">
+                    {% if historial %}
+                    <div class="mc-table-wrap">
+                        <table class="mc-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Tipo</th>
+                                    <th>Descripción</th>
+                                    <th style="text-align:right;">Créditos</th>
+                                    <th style="text-align:right;">Saldo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for mov in historial %}
+                                <tr>
+                                    <td style="color:var(--dim); white-space:nowrap; font-family:var(--mono); font-size:0.78rem;">{{ mov.fecha|date:"d/m H:i" }}</td>
+                                    <td>
+                                        {% if mov.tipo == 'USO' %}
+                                            <span class="tag tag-uso">USO</span>
+                                        {% elif mov.tipo == 'RECARGA' %}
+                                            <span class="tag tag-recarga">RECARGA</span>
+                                        {% else %}
+                                            <span class="tag tag-bono">BONO</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ mov.descripcion|truncatechars:36 }}</td>
+                                    <td style="text-align:right; font-weight:700; font-family:var(--mono); color:{% if mov.cantidad < 0 %}var(--danger){% else %}var(--ok){% endif %};">
+                                        {% if mov.cantidad > 0 %}+{% endif %}{{ mov.cantidad|floatformat:0 }}
+                                    </td>
+                                    <td style="text-align:right; color:var(--dim); font-family:var(--mono);">{{ mov.tokens_restantes|floatformat:0 }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="mc-empty">Todavía no hay movimientos de créditos.</div>
+                    {% endif %}
+                </div>
+            </section>
 
-            <div style="margin:20px 0 10px; color:#94a3b8; font-size:0.78rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">Sectores a monitorear</div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;">
-                {% for s, label, icon in sectores_alertas %}
-                <label style="display:flex; align-items:center; gap:7px; cursor:pointer;
-                              background:rgba(30,41,59,0.6);
-                              border:1px solid {% if s in perfil.alertas_sectores %}rgba(99,102,241,0.5){% else %}#334155{% endif %};
-                              border-radius:8px; padding:8px 14px; font-size:0.85rem;
-                              color:{% if s in perfil.alertas_sectores %}#a5b4fc{% else %}#94a3b8{% endif %};
-                              transition:all 0.2s;">
-                    <input type="checkbox" name="alertas_sectores" value="{{ s }}"
-                           {% if s in perfil.alertas_sectores %}checked{% endif %}
-                           style="accent-color:#6366f1; width:15px; height:15px;">
-                    {{ icon }} {{ label }}
-                </label>
-                {% endfor %}
-            </div>
-
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px;" class="grid-2col">
-                <div>
-                    <label style="display:block; color:#94a3b8; font-size:0.82rem; margin-bottom:6px;">📍 Ciudad / Localidad</label>
-                    <div style="display:flex; gap:6px; align-items:center;">
-                        <input type="text" name="ubicacion_nombre" id="ubicacion_nombre_input"
-                               value="{{ perfil.ubicacion_nombre }}"
-                               placeholder="Ej: Buenos Aires, Rosario..."
-                               style="flex:1; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:9px 12px; color:#f1f5f9; font-size:0.9rem; box-sizing:border-box; outline:none;"
-                               maxlength="100">
-                        <button type="button" id="btn-detectar-ubicacion"
-                                onclick="detectarUbicacion()"
-                                title="Detectar mi ubicación automáticamente"
-                                style="flex-shrink:0; background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.35); border-radius:8px; padding:9px 11px; color:#818cf8; cursor:pointer; font-size:0.85rem; white-space:nowrap; transition:all 0.2s;"
-                                onmouseover="this.style.background='rgba(99,102,241,0.3)'"
-                                onmouseout="this.style.background='rgba(99,102,241,0.15)'">
-                            📍 Detectar
+            <!-- Recordatorio (siempre visible si no está el banner) -->
+            {% if not mostrar_aviso_renovacion %}
+            <section class="mc-panel">
+                <div class="mc-panel-h">
+                    <div class="left">
+                        <div class="mc-ico green"><i class="fas fa-sliders"></i></div>
+                        <div>
+                            <h2>Recordatorio de renovación</h2>
+                            <p>Email 5 días antes del vencimiento</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mc-panel-b">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion" value="preferencias">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:16px;">
+                            <div>
+                                <div style="font-weight:700; font-size:0.92rem;">Recordatorio por email</div>
+                                <div style="color:var(--dim); font-size:0.8rem; margin-top:4px; line-height:1.4;">
+                                    Si lo desactivás, la renovación queda 100% manual.
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" name="renovacion_automatica"
+                                       {% if perfil.renovacion_automatica %}checked{% endif %}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="mc-note">
+                            <i class="fas fa-info-circle"></i>
+                            <span>El cobro automático con tarjeta guardada llega próximamente. Por ahora el recordatorio te manda el link para renovar vos.</span>
+                        </div>
+                        <button type="submit" class="mc-btn mc-btn-primary mc-btn-block" style="margin-top:14px;">
+                            <i class="fas fa-save"></i> Guardar preferencias
                         </button>
+                    </form>
+                </div>
+            </section>
+            {% endif %}
+        </div>
+
+        <!-- RIGHT -->
+        <div class="mc-stack">
+
+            <!-- Anomalías -->
+            <section class="mc-panel">
+                <div class="mc-panel-h">
+                    <div class="left">
+                        <div class="mc-ico amber"><i class="fas fa-chart-line"></i></div>
+                        <div>
+                            <h2>Historial de anomalías</h2>
+                            <p>
+                                {% if dias_historial > 0 %}
+                                    Últimos {{ dias_historial }} días · {{ anomalias_count }} registro{{ anomalias_count|pluralize:"s" }}
+                                {% else %}
+                                    Disponible desde Starter
+                                {% endif %}
+                            </p>
+                        </div>
                     </div>
-                    <div id="ubicacion-estado" style="font-size:0.75rem; margin-top:5px; min-height:16px;"></div>
                 </div>
-                <div>
-                    <label style="display:block; color:#94a3b8; font-size:0.82rem; margin-bottom:6px;">🕐 Hora de envío (arg)</label>
-                    <select name="hora_alerta"
-                            style="width:100%; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:9px 12px; color:#f1f5f9; font-size:0.9rem; box-sizing:border-box; outline:none;">
-                        {% for h in horas_alerta %}
-                        <option value="{{ h }}" {% if perfil.hora_alerta == h %}selected{% endif %}>{{ h }}:00 hs</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-
-            <div style="background:rgba(99,102,241,0.05); border:1px dashed rgba(99,102,241,0.2); border-radius:8px; padding:10px 14px; font-size:0.8rem; color:#64748b; margin-bottom:18px;">
-                <i class="fas fa-info-circle" style="color:#6366f1; margin-right:6px;"></i>
-                El email lo envía n8n + Gemini AI directamente a {{ user.email }}. Disponible con suscripción activa.
-            </div>
-
-            <button type="submit" class="btn-save"
-                    style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.35); color:#f87171;">
-                <i class="fas fa-bell"></i> Guardar alertas
-            </button>
-        </form>
-        {% else %}
-        <!-- Alertas bloqueadas: requiere plan Pro IA o Power -->
-        <div style="text-align:center; padding:28px 16px;">
-            <div style="font-size:2.4rem; margin-bottom:12px;">🔔</div>
-            <div style="color:#f1f5f9; font-weight:700; font-size:1.05rem; margin-bottom:8px;">Alertas Proactivas</div>
-            <div style="color:#64748b; font-size:0.88rem; margin-bottom:20px; max-width:320px; margin-left:auto; margin-right:auto; line-height:1.6;">
-                Recibí reportes climáticos diarios por email con análisis IA para tu sector. Disponible desde el plan <strong style="color:#a78bfa;">Pro IA</strong>.
-            </div>
-            <a href="/pricing/" style="display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg,#7c3aed,#4f46e5); color:#fff; padding:10px 22px; border-radius:10px; text-decoration:none; font-weight:600; font-size:0.9rem; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                <i class="fas fa-arrow-up"></i> Mejorar plan
-            </a>
-            <div style="margin-top:14px; color:#475569; font-size:0.78rem;">Tu plan actual: <strong style="color:#94a3b8; text-transform:capitalize;">{{ plan_nivel }}</strong></div>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- ── Tokens IA ── -->
-    <div class="card">
-        <div class="card-header">
-            <div class="icon" style="background:rgba(99,102,241,0.12); color:#818cf8;">
-                <i class="fas fa-brain"></i>
-            </div>
-            <div>
-                <h2>Tokens IA</h2>
-                <div class="subtitle">Tu saldo de créditos para usar la IA</div>
-            </div>
-        </div>
-
-        {% if plan_tokens %}
-        <div style="background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.3); border-radius:10px; padding:10px 16px; margin-bottom:14px; color:#34d399; font-size:.85rem;">
-            <i class="fas fa-check-circle"></i>
-            Plan activo: <b>{{ plan_tokens.limite_dia|floatformat:0 }} tokens/día</b> &nbsp;·&nbsp; Vence {{ plan_tokens.vencimiento }}
-        </div>
-        {% endif %}
-
-        <div class="info-row">
-            <span class="info-label">Disponibles hoy</span>
-            <span class="info-value" style="color:#a5b4fc; font-size:1.2rem;">{{ tokens_disponibles|floatformat:0 }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Costo Chat IA</span>
-            <span class="info-value">{{ costos.CHAT_N8N|floatformat:0 }} créditos</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Costo Análisis</span>
-            <span class="info-value">{{ costos.ANALISIS_ARCHIVO|floatformat:0 }} créditos</span>
-        </div>
-
-        <a href="/pricing/#tokens" class="btn-link" style="display:block; text-align:center; margin-top:16px; padding:12px; background:rgba(99,102,241,0.1); border:1px solid #6366f1; border-radius:10px;">
-            <i class="fas fa-bolt"></i> Ver planes de tokens
-        </a>
-    </div>
-
-    <!-- ── Historial de uso ── -->
-    {% if historial %}
-    <div class="card">
-        <div class="card-header">
-            <div class="icon" style="background:rgba(245,158,11,0.12); color:#fbbf24;">
-                <i class="fas fa-clock-rotate-left"></i>
-            </div>
-            <div>
-                <h2>Historial de créditos</h2>
-                <div class="subtitle">Últimos 20 movimientos</div>
-            </div>
-        </div>
-
-        <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse; font-size:0.83rem;">
-            <thead>
-                <tr style="border-bottom:1px solid #1e293b; color:#64748b; text-align:left;">
-                    <th style="padding:8px 6px; font-weight:600;">Fecha</th>
-                    <th style="padding:8px 6px; font-weight:600;">Tipo</th>
-                    <th style="padding:8px 6px; font-weight:600;">Descripción</th>
-                    <th style="padding:8px 6px; font-weight:600; text-align:right;">Créditos</th>
-                    <th style="padding:8px 6px; font-weight:600; text-align:right;">Saldo</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for mov in historial %}
-                <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                    <td style="padding:8px 6px; color:#94a3b8; white-space:nowrap;">{{ mov.fecha|date:"d/m H:i" }}</td>
-                    <td style="padding:8px 6px;">
-                        {% if mov.tipo == 'USO' %}
-                            <span style="color:#f87171; font-size:0.78rem; font-weight:600;">USO</span>
-                        {% elif mov.tipo == 'RECARGA' %}
-                            <span style="color:#4ade80; font-size:0.78rem; font-weight:600;">RECARGA</span>
+                <div class="mc-panel-b">
+                    {% if dias_historial > 0 %}
+                        {% if anomalias_recientes %}
+                        <div class="mc-table-wrap">
+                            <table class="mc-table">
+                                <thead>
+                                    <tr>
+                                        <th>Sector</th>
+                                        <th>Fecha</th>
+                                        <th>Ubicación</th>
+                                        <th style="text-align:right;">Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for a in anomalias_recientes %}
+                                    <tr>
+                                        <td><span class="tag sector-{{ a.sector }}">{{ a.sector }}</span></td>
+                                        <td style="font-family:var(--mono); font-size:0.78rem; color:var(--dim);">{{ a.fecha_registro|date:"d/m H:i" }}</td>
+                                        <td>{{ a.ubicacion|truncatechars:22 }}</td>
+                                        <td style="text-align:right; font-family:var(--mono); font-weight:700;">{{ a.valor_principal|floatformat:2 }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <a class="mc-btn mc-btn-ghost mc-btn-block" style="margin-top:14px;" href="/historial-anomalias/">
+                            <i class="fas fa-chart-bar"></i> Ver historial completo
+                        </a>
                         {% else %}
-                            <span style="color:#a5b4fc; font-size:0.78rem; font-weight:600;">BONO</span>
+                        <div class="mc-empty">
+                            Sin anomalías registradas en los últimos {{ dias_historial }} días.
+                            <div style="margin-top:12px;">
+                                <a class="mc-btn mc-btn-ghost" href="/historial-anomalias/">Abrir historial</a>
+                            </div>
+                        </div>
                         {% endif %}
-                    </td>
-                    <td style="padding:8px 6px; color:#cbd5e1;">{{ mov.descripcion|truncatechars:40 }}</td>
-                    <td style="padding:8px 6px; text-align:right; font-weight:700;
-                               color:{% if mov.cantidad < 0 %}#f87171{% else %}#4ade80{% endif %}">
-                        {% if mov.cantidad > 0 %}+{% endif %}{{ mov.cantidad|floatformat:0 }}
-                    </td>
-                    <td style="padding:8px 6px; text-align:right; color:#94a3b8;">{{ mov.tokens_restantes|floatformat:0 }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-        </div>
-    </div>
-    {% endif %}
-
-    <div class="back-link">
-        <a href="/" class="btn-link">&larr; Volver al inicio</a>
-    </div>
-
-    <!-- ── Mis Ubicaciones ── -->
-    <div class="card" style="margin-top:20px;">
-        <div class="card-header">
-            <div class="icon" style="background:rgba(16,185,129,0.1); color:#34d399;">
-                <i class="fas fa-location-dot"></i>
-            </div>
-            <div>
-                <h2>Mis Ubicaciones</h2>
-                <div class="subtitle">Guardá puntos geográficos para acceso rápido</div>
-            </div>
-        </div>
-
-        {% if ubicaciones %}
-        <div id="lista-ubicaciones" style="margin-bottom:18px;">
-            {% for ub in ubicaciones %}
-            <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #1e293b; font-size:0.88rem;" id="ub-row-{{ ub.id }}">
-                <div>
-                    <span style="font-weight:600; color:#f1f5f9;">{{ ub.nombre }}</span>
-                    {% if ub.es_principal %}<span style="background:rgba(99,102,241,0.15); color:#a5b4fc; font-size:0.72rem; border-radius:6px; padding:2px 7px; margin-left:8px;">Principal</span>{% endif %}
-                    <div style="color:#64748b; font-size:0.78rem; margin-top:2px;">{{ ub.lat|floatformat:3 }}, {{ ub.lon|floatformat:3 }}{% if ub.sector %} · {{ ub.sector }}{% endif %}</div>
+                    {% else %}
+                    <div class="mc-empty">
+                        El historial de anomalías requiere al menos el plan Starter.
+                        <div style="margin-top:12px;">
+                            <a class="mc-btn mc-btn-primary" href="/pricing/"><i class="fas fa-arrow-up"></i> Mejorar plan</a>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
-                <button onclick="eliminarUbicacion({{ ub.id }})" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); border-radius:8px; padding:6px 12px; color:#f87171; cursor:pointer; font-size:0.8rem;">
-                    <i class="fas fa-trash-alt"></i>
+            </section>
+
+            <!-- Ubicaciones -->
+            <section class="mc-panel">
+                <div class="mc-panel-h">
+                    <div class="left">
+                        <div class="mc-ico green"><i class="fas fa-location-dot"></i></div>
+                        <div>
+                            <h2>Mis ubicaciones</h2>
+                            <p>Puntos guardados para acceso rápido</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mc-panel-b">
+                    {% if plan_nivel == 'free' %}
+                    <div class="mc-empty">
+                        Requiere al menos el plan Starter.
+                        <div style="margin-top:12px;">
+                            <a class="mc-btn mc-btn-primary" href="/pricing/">Mejorar plan</a>
+                        </div>
+                    </div>
+                    {% else %}
+                        {% if ubicaciones %}
+                        <div id="lista-ubicaciones" style="margin-bottom:12px;">
+                            {% for ub in ubicaciones %}
+                            <div class="mc-ub-row" id="ub-row-{{ ub.id }}">
+                                <div>
+                                    <div class="mc-ub-name">
+                                        {{ ub.nombre }}
+                                        {% if ub.es_principal %}<span class="tag tag-bono" style="margin-left:6px;">Principal</span>{% endif %}
+                                    </div>
+                                    <div class="mc-ub-meta">{{ ub.lat|floatformat:3 }}, {{ ub.lon|floatformat:3 }}{% if ub.sector %} · {{ ub.sector }}{% endif %}</div>
+                                </div>
+                                <button type="button" class="mc-icon-btn" onclick="eliminarUbicacion({{ ub.id }})" title="Eliminar">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if limite_ubicaciones != None %}
+                        <div style="font-size:0.78rem; color:var(--dim); margin-bottom:12px;">
+                            {{ ubicaciones.count }} / {{ limite_ubicaciones }} ubicación(es)
+                        </div>
+                        {% endif %}
+
+                        {% if limite_ubicaciones == None or ubicaciones.count < limite_ubicaciones %}
+                        <div id="form-nueva-ubicacion">
+                            <div class="mc-form-grid" style="margin-bottom:10px;">
+                                <input id="ub-nombre" class="mc-input" type="text" placeholder="Nombre (ej: Campo La Pampa)" maxlength="100">
+                                <input id="ub-sector" class="mc-input" type="text" placeholder="Sector (agro/naval/aereo/energia)">
+                            </div>
+                            <div class="mc-form-grid" style="margin-bottom:12px;">
+                                <input id="ub-lat" class="mc-input" type="number" step="any" placeholder="Latitud" min="-90" max="90">
+                                <input id="ub-lon" class="mc-input" type="number" step="any" placeholder="Longitud" min="-180" max="180">
+                            </div>
+                            <div id="ub-error" style="color:var(--danger); font-size:0.82rem; margin-bottom:8px; display:none;"></div>
+                            <button type="button" onclick="guardarUbicacion()" class="mc-btn mc-btn-ghost mc-btn-block" style="border-color:rgba(74,222,128,0.3); color:var(--ok);">
+                                <i class="fas fa-plus-circle"></i> Agregar ubicación
+                            </button>
+                        </div>
+                        {% else %}
+                        <div class="mc-note">
+                            <i class="fas fa-lock"></i>
+                            <span>Alcanzaste el límite de tu plan ({{ limite_ubicaciones }}). <a href="/pricing/" style="color:var(--accent);">Mejorar plan</a></span>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- Accesos rápidos -->
+            <section class="mc-panel">
+                <div class="mc-panel-h">
+                    <div class="left">
+                        <div class="mc-ico violet"><i class="fas fa-th-large"></i></div>
+                        <div>
+                            <h2>Accesos rápidos</h2>
+                            <p>Herramientas según tu plan</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mc-panel-b">
+                    <div class="mc-quick">
+                        <a href="{% if puede_alertas %}#mc-alertas{% else %}/pricing/{% endif %}">
+                            <div class="q-left">
+                                <i class="fas fa-bell"></i>
+                                <div>
+                                    <div class="q-title">Alertas proactivas</div>
+                                    <div class="q-sub">Reporte climático diario por email</div>
+                                </div>
+                            </div>
+                            {% if not puede_alertas %}<span class="mc-lock">Pro IA+</span>{% else %}<i class="fas fa-chevron-right" style="color:var(--dim);"></i>{% endif %}
+                        </a>
+                        <a href="{% if puede_reportes %}/mis-reportes/{% else %}/pricing/{% endif %}">
+                            <div class="q-left">
+                                <i class="fas fa-calendar-check"></i>
+                                <div>
+                                    <div class="q-title">Reportes automáticos</div>
+                                    <div class="q-sub">Envíos periódicos con análisis IA</div>
+                                </div>
+                            </div>
+                            {% if not puede_reportes %}<span class="mc-lock">Pro IA+</span>{% else %}<i class="fas fa-chevron-right" style="color:var(--dim);"></i>{% endif %}
+                        </a>
+                        <a href="{% if puede_api_key %}/mi-api-key/{% else %}/pricing/{% endif %}">
+                            <div class="q-left">
+                                <i class="fas fa-key"></i>
+                                <div>
+                                    <div class="q-title">API Key personal</div>
+                                    <div class="q-sub">{% if api_key_obj and api_key_obj.activa %}Key activa{% else %}Integraciones externas{% endif %}</div>
+                                </div>
+                            </div>
+                            {% if not puede_api_key %}<span class="mc-lock">Plus+</span>{% else %}<i class="fas fa-chevron-right" style="color:var(--dim);"></i>{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Alertas proactivas (full width) -->
+    <section class="mc-panel" id="mc-alertas" style="margin-top:14px;">
+        <div class="mc-panel-h">
+            <div class="left">
+                <div class="mc-ico red"><i class="fas fa-bell-concierge"></i></div>
+                <div>
+                    <h2>Alertas proactivas</h2>
+                    <div class="subtitle" style="color:var(--dim); font-size:0.78rem; margin-top:2px;">Reporte climático diario por email para tu sector</div>
+                </div>
+            </div>
+        </div>
+        <div class="mc-panel-b">
+            {% if puede_alertas %}
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="alertas">
+
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; padding-bottom:14px; border-bottom:1px solid var(--border); margin-bottom:16px;">
+                    <div>
+                        <div style="font-weight:700;">Activar reporte diario</div>
+                        <div style="color:var(--dim); font-size:0.8rem; margin-top:4px; line-height:1.4; max-width:520px;">
+                            Recibís un email en tu horario con el resumen. Si hay condiciones críticas, aparece una alerta con acciones concretas.
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="alertas_activas" {% if perfil.alertas_activas %}checked{% endif %}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div style="color:var(--dim); font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">Sectores a monitorear</div>
+                <div class="mc-sector-pills">
+                    {% for s, label, icon in sectores_alertas %}
+                    <label>
+                        <input type="checkbox" name="alertas_sectores" value="{{ s }}"
+                               {% if s in perfil.alertas_sectores %}checked{% endif %}>
+                        <i class="fas fa-{{ icon }}"></i> {{ label }}
+                    </label>
+                    {% endfor %}
+                </div>
+
+                <div class="mc-form-grid" style="margin-bottom:14px;">
+                    <div>
+                        <label class="mc-label" for="ubicacion_nombre_input">Ciudad / localidad</label>
+                        <div style="display:flex; gap:6px;">
+                            <input type="text" name="ubicacion_nombre" id="ubicacion_nombre_input" class="mc-input"
+                                   value="{{ perfil.ubicacion_nombre }}"
+                                   placeholder="Ej: Buenos Aires, Rosario..."
+                                   maxlength="100">
+                            <button type="button" id="btn-detectar-ubicacion" onclick="detectarUbicacion()"
+                                    class="mc-btn mc-btn-ghost" title="Detectar mi ubicación"
+                                    style="white-space:nowrap;">
+                                <i class="fas fa-location-crosshairs"></i> Detectar
+                            </button>
+                        </div>
+                        <div id="ubicacion-estado" style="font-size:0.75rem; margin-top:5px; min-height:16px;"></div>
+                    </div>
+                    <div>
+                        <label class="mc-label" for="hora_alerta">Hora de envío (Argentina)</label>
+                        <select name="hora_alerta" id="hora_alerta" class="mc-select">
+                            {% for h in horas_alerta %}
+                            <option value="{{ h }}" {% if perfil.hora_alerta == h %}selected{% endif %}>{{ h }}:00 hs</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mc-note" style="margin-top:0; margin-bottom:14px;">
+                    <i class="fas fa-info-circle"></i>
+                    <span>El email lo envía n8n + Gemini directamente a {{ user.email|default:"tu correo" }}.</span>
+                </div>
+
+                <button type="submit" class="mc-btn mc-btn-primary">
+                    <i class="fas fa-bell"></i> Guardar alertas
                 </button>
+            </form>
+            {% else %}
+            <div class="mc-empty">
+                Disponible desde el plan <strong style="color:#a78bfa;">Pro IA</strong>.
+                Tu plan actual: <strong style="color:var(--muted);">{{ plan_label }}</strong>
+                <div style="margin-top:14px;">
+                    <a class="mc-btn mc-btn-primary" href="/pricing/"><i class="fas fa-arrow-up"></i> Mejorar plan</a>
+                </div>
             </div>
-            {% endfor %}
+            {% endif %}
         </div>
-        {% endif %}
+    </section>
 
-        {% if limite_ubicaciones != None %}
-        <div style="font-size:0.78rem; color:#64748b; margin-bottom:14px;">
-            {{ ubicaciones.count }} / {{ limite_ubicaciones }} ubicación(es) usada(s)
-        </div>
-        {% endif %}
-
-        {% if limite_ubicaciones == None or ubicaciones.count < limite_ubicaciones %}
-        <div id="form-nueva-ubicacion">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;" class="grid-2col">
-                <input id="ub-nombre" type="text" placeholder="Nombre (ej: Campo La Pampa)" maxlength="100"
-                       style="background:#1e293b; border:1px solid #334155; border-radius:8px; padding:9px 12px; color:#f1f5f9; font-size:0.88rem; outline:none;">
-                <input id="ub-sector" type="text" placeholder="Sector (agro/naval/aereo/energia)"
-                       style="background:#1e293b; border:1px solid #334155; border-radius:8px; padding:9px 12px; color:#f1f5f9; font-size:0.88rem; outline:none;">
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;" class="grid-2col">
-                <input id="ub-lat" type="number" step="any" placeholder="Latitud (ej: -34.6)" min="-90" max="90"
-                       style="background:#1e293b; border:1px solid #334155; border-radius:8px; padding:9px 12px; color:#f1f5f9; font-size:0.88rem; outline:none;">
-                <input id="ub-lon" type="number" step="any" placeholder="Longitud (ej: -58.4)" min="-180" max="180"
-                       style="background:#1e293b; border:1px solid #334155; border-radius:8px; padding:9px 12px; color:#f1f5f9; font-size:0.88rem; outline:none;">
-            </div>
-            <div id="ub-error" style="color:#f87171; font-size:0.82rem; margin-bottom:8px; display:none;"></div>
-            <button onclick="guardarUbicacion()"
-                    style="width:100%; padding:12px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.3); border-radius:10px; color:#34d399; font-weight:700; cursor:pointer; font-size:0.9rem;">
-                <i class="fas fa-plus-circle"></i> Agregar ubicación
-            </button>
-        </div>
-        {% else %}
-        <div class="notice">
-            <i class="fas fa-lock"></i>
-            <span>Alcanzaste el límite de tu plan ({{ limite_ubicaciones }} ubicaciones). <a href="/pricing/" class="btn-link">Mejorar plan</a></span>
-        </div>
-        {% endif %}
-
-        {% if plan_nivel == 'free' %}
-        <div style="text-align:center; padding:20px 0;">
-            <div style="color:#64748b; font-size:0.88rem; margin-bottom:14px;">Requiere al menos el plan Starter</div>
-            <a href="/pricing/" style="background:linear-gradient(135deg,#3b82f6,#6366f1); color:#fff; padding:10px 22px; border-radius:10px; text-decoration:none; font-weight:600; font-size:0.88rem;">Mejorar plan</a>
-        </div>
-        {% endif %}
+    <div class="mc-footer">
+        <a href="/">&larr; Volver al inicio</a>
     </div>
-
-    <!-- ── Historial de Anomalías ── -->
-    {% if dias_historial > 0 %}
-    <div class="card" style="margin-top:20px;">
-        <div class="card-header">
-            <div class="icon" style="background:rgba(245,158,11,0.1); color:#fbbf24;">
-                <i class="fas fa-chart-mixed"></i>
-            </div>
-            <div>
-                <h2>Historial de Anomalías</h2>
-                <div class="subtitle">Últimos {{ dias_historial }} días de datos sectoriales</div>
-            </div>
-        </div>
-        <p style="color:#94a3b8; font-size:0.88rem; margin-bottom:18px; line-height:1.6;">
-            Visualizá y comparás los datos climáticos que se procesaron en tus sectores. El sistema detecta automáticamente patrones y valores atípicos.
-        </p>
-        <a href="/historial-anomalias/"
-           style="display:block; text-align:center; padding:12px; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.25); border-radius:10px; color:#fbbf24; text-decoration:none; font-weight:700; font-size:0.9rem;">
-            <i class="fas fa-chart-bar"></i> Ver historial de anomalías
-        </a>
-    </div>
-    {% endif %}
-
-    <!-- ── Reportes Programados ── -->
-    <div class="card" style="margin-top:20px;">
-        <div class="card-header">
-            <div class="icon" style="background:rgba(139,92,246,0.1); color:#a78bfa;">
-                <i class="fas fa-calendar-check"></i>
-            </div>
-            <div>
-                <h2>Reportes Automáticos</h2>
-                <div class="subtitle">Recibí reportes climáticos periódicos por email</div>
-            </div>
-        </div>
-
-        {% if puede_reportes %}
-        <p style="color:#94a3b8; font-size:0.88rem; margin-bottom:16px; line-height:1.6;">
-            Configurá envíos automáticos de análisis IA para tu sector favorito.
-        </p>
-        <a href="/mis-reportes/"
-           style="display:block; text-align:center; padding:12px; background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.25); border-radius:10px; color:#a78bfa; text-decoration:none; font-weight:700; font-size:0.9rem;">
-            <i class="fas fa-cog"></i> Gestionar reportes programados
-        </a>
-        {% else %}
-        <div style="text-align:center; padding:20px 0;">
-            <div style="font-size:2rem; margin-bottom:10px;">📅</div>
-            <div style="color:#64748b; font-size:0.88rem; margin-bottom:14px; line-height:1.5;">
-                Reportes automáticos disponibles desde el plan <strong style="color:#a78bfa;">Pro IA</strong>.<br>
-                Tu plan actual: <strong style="color:#94a3b8; text-transform:capitalize;">{{ plan_nivel }}</strong>
-            </div>
-            <a href="/pricing/" style="background:linear-gradient(135deg,#7c3aed,#4f46e5); color:#fff; padding:10px 22px; border-radius:10px; text-decoration:none; font-weight:600; font-size:0.88rem;">
-                <i class="fas fa-arrow-up"></i> Mejorar plan
-            </a>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- ── API Key Personal ── -->
-    <div class="card" style="margin-top:20px;">
-        <div class="card-header">
-            <div class="icon" style="background:rgba(6,182,212,0.1); color:#22d3ee;">
-                <i class="fas fa-code"></i>
-            </div>
-            <div>
-                <h2>API Key Personal</h2>
-                <div class="subtitle">Integrá tus datos en herramientas externas</div>
-            </div>
-        </div>
-
-        {% if puede_api_key %}
-        <p style="color:#94a3b8; font-size:0.88rem; margin-bottom:16px; line-height:1.6;">
-            Usá tu API key para conectar TuClima a Power BI, scripts o dashboards propios.
-        </p>
-        <a href="/mi-api-key/"
-           style="display:block; text-align:center; padding:12px; background:rgba(6,182,212,0.08); border:1px solid rgba(6,182,212,0.25); border-radius:10px; color:#22d3ee; text-decoration:none; font-weight:700; font-size:0.9rem;">
-            <i class="fas fa-key"></i> {% if api_key_obj and api_key_obj.activa %}Ver / gestionar API key{% else %}Generar API key{% endif %}
-        </a>
-        {% else %}
-        <div style="text-align:center; padding:20px 0;">
-            <div style="font-size:2rem; margin-bottom:10px;">🔑</div>
-            <div style="color:#64748b; font-size:0.88rem; margin-bottom:14px; line-height:1.5;">
-                API key personal disponible desde el plan <strong style="color:#22d3ee;">Plus</strong>.<br>
-                Tu plan actual: <strong style="color:#94a3b8; text-transform:capitalize;">{{ plan_nivel }}</strong>
-            </div>
-            <a href="/pricing/" style="background:linear-gradient(135deg,#0891b2,#0e7490); color:#fff; padding:10px 22px; border-radius:10px; text-decoration:none; font-weight:600; font-size:0.88rem;">
-                <i class="fas fa-arrow-up"></i> Mejorar plan
-            </a>
-        </div>
-        {% endif %}
-    </div>
-
 </div>
+{% endwith %}
 
 <script>
-// --- Geolocalización reutilizando el mismo localStorage de home.html ---
 (function autocompletarDesdeLocalStorage() {
     const input = document.getElementById('ubicacion_nombre_input');
-    if (!input || input.value.trim()) return; // ya tiene valor guardado en BD
+    if (!input || input.value.trim()) return;
     try {
         const raw = localStorage.getItem('ultimaUbicacion');
         if (!raw) return;
@@ -582,17 +1175,18 @@
             input.value = ub.ciudad;
             const estado = document.getElementById('ubicacion-estado');
             if (estado) {
-                estado.textContent = '📍 Completado desde tu última sesión en TuClima';
+                estado.textContent = 'Completado desde tu última sesión en TuClima';
                 estado.style.color = '#818cf8';
             }
         }
-    } catch(e) {}
+    } catch (e) {}
 })();
 
 async function detectarUbicacion() {
-    const btn    = document.getElementById('btn-detectar-ubicacion');
-    const input  = document.getElementById('ubicacion_nombre_input');
+    const btn = document.getElementById('btn-detectar-ubicacion');
+    const input = document.getElementById('ubicacion_nombre_input');
     const estado = document.getElementById('ubicacion-estado');
+    if (!btn || !input || !estado) return;
 
     if (!navigator.geolocation) {
         estado.textContent = 'Tu navegador no soporta geolocalización.';
@@ -601,34 +1195,31 @@ async function detectarUbicacion() {
     }
 
     btn.disabled = true;
-    btn.textContent = '⏳ Detectando...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     estado.textContent = '';
 
     navigator.geolocation.getCurrentPosition(
-        async function(position) {
+        async function (position) {
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
 
-            // 1. Intentar obtener ciudad desde el localStorage de home (ya geocodificado)
             try {
                 const raw = localStorage.getItem('ultimaUbicacion');
                 if (raw) {
                     const ub = JSON.parse(raw);
                     const dist = Math.abs(ub.lat - lat) + Math.abs(ub.lon - lon);
                     const diasTranscurridos = (Date.now() - (ub.timestamp || 0)) / (1000 * 60 * 60 * 24);
-                    // Si el GPS coincide con la ubicación guardada (< 0.5° ≈ ~50km) y es reciente
                     if (dist < 0.5 && diasTranscurridos < 7 && ub.ciudad && ub.ciudad !== 'Ubicación guardada') {
                         input.value = ub.ciudad;
-                        estado.textContent = `✓ ${ub.ciudad}`;
+                        estado.textContent = ub.ciudad;
                         estado.style.color = '#4ade80';
                         btn.disabled = false;
-                        btn.textContent = '📍 Detectar';
+                        btn.innerHTML = '<i class="fas fa-location-crosshairs"></i> Detectar';
                         return;
                     }
                 }
-            } catch(e) {}
+            } catch (e) {}
 
-            // 2. Fallback: Nominatim reverse geocoding (mismo que usa home.html internamente)
             try {
                 const r = await fetch(
                     `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=es`,
@@ -637,47 +1228,49 @@ async function detectarUbicacion() {
                 const data = await r.json();
                 const addr = data.address || {};
                 const ciudad = addr.city || addr.town || addr.village || addr.county || addr.state || '';
-                const pais   = addr.country_code ? addr.country_code.toUpperCase() : '';
+                const pais = addr.country_code ? addr.country_code.toUpperCase() : '';
                 const nombre = ciudad ? (pais ? `${ciudad}, ${pais}` : ciudad) : (data.display_name || '').split(',')[0].trim();
                 if (nombre) {
                     input.value = nombre;
-                    // Guardar en localStorage por si home.html lo necesita luego
                     localStorage.setItem('ultimaUbicacion', JSON.stringify({ lat, lon, ciudad: nombre, timestamp: Date.now() }));
-                    estado.textContent = `✓ ${nombre}`;
+                    estado.textContent = nombre;
                     estado.style.color = '#4ade80';
                 } else {
                     estado.textContent = 'No se reconoció la ciudad. Ingresala manualmente.';
                     estado.style.color = '#f87171';
                 }
-            } catch(e) {
+            } catch (e) {
                 estado.textContent = 'Error de red. Ingresá la ciudad manualmente.';
                 estado.style.color = '#f87171';
             }
             btn.disabled = false;
-            btn.textContent = '📍 Detectar';
+            btn.innerHTML = '<i class="fas fa-location-crosshairs"></i> Detectar';
         },
-        function(err) {
-            const msgs = { 1: 'Permiso denegado. Ingresá la ciudad manualmente.', 2: 'No se pudo determinar la posición.', 3: 'Tiempo de espera agotado.' };
+        function (err) {
+            const msgs = {
+                1: 'Permiso denegado. Ingresá la ciudad manualmente.',
+                2: 'No se pudo determinar la posición.',
+                3: 'Tiempo de espera agotado.'
+            };
             estado.textContent = msgs[err.code] || 'No se pudo detectar la ubicación.';
             estado.style.color = '#f87171';
             btn.disabled = false;
-            btn.textContent = '📍 Detectar';
+            btn.innerHTML = '<i class="fas fa-location-crosshairs"></i> Detectar';
         },
         { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
     );
 }
 
-// ── Multi-ubicación ──────────────────────────────
 function getCsrfToken() {
     return document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('csrftoken='))?.split('=')[1] || '';
 }
 
 async function guardarUbicacion() {
     const nombre = document.getElementById('ub-nombre').value.trim();
-    const lat    = parseFloat(document.getElementById('ub-lat').value);
-    const lon    = parseFloat(document.getElementById('ub-lon').value);
+    const lat = parseFloat(document.getElementById('ub-lat').value);
+    const lon = parseFloat(document.getElementById('ub-lon').value);
     const sector = document.getElementById('ub-sector').value.trim().toLowerCase();
-    const errEl  = document.getElementById('ub-error');
+    const errEl = document.getElementById('ub-error');
 
     errEl.style.display = 'none';
     if (!nombre) { errEl.textContent = 'El nombre es obligatorio.'; errEl.style.display = 'block'; return; }
@@ -692,7 +1285,7 @@ async function guardarUbicacion() {
         const data = await resp.json();
         if (!resp.ok) { errEl.textContent = data.error || 'Error al guardar.'; errEl.style.display = 'block'; return; }
         location.reload();
-    } catch(e) {
+    } catch (e) {
         errEl.textContent = 'Error de red. Reintentá.'; errEl.style.display = 'block';
     }
 }
@@ -709,7 +1302,7 @@ async function eliminarUbicacion(pk) {
             const row = document.getElementById(`ub-row-${pk}`);
             if (row) row.remove();
         }
-    } catch(e) {}
+    } catch (e) {}
 }
 </script>
 {% endblock %}

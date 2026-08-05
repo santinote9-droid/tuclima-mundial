@@ -39,7 +39,7 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-2.0-flash",
+        "modelName": "models/gemini-3.5-flash",
         "options": {
           "maxOutputTokens": 800
         }

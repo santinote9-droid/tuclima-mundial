@@ -5,30 +5,44 @@
 {% block extra_head %}
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet">
     <style>
+        html { overflow-x: hidden; }
         body {
             background-color: #020617;
             color: #94a3b8;
             font-family: 'Segoe UI', sans-serif;
             margin: 0; padding: 40px 20px;
             line-height: 1.8;
+            overflow-x: hidden;
         }
         .container { max-width: 800px; margin: 0 auto; }
         
-        h1 { color: #fff; font-family: 'Orbitron', sans-serif; border-bottom: 2px solid #38bdf8; padding-bottom: 20px; margin-bottom: 40px; }
+        h1 {
+            color: #fff; font-family: 'Orbitron', sans-serif;
+            border-bottom: 2px solid #38bdf8; padding-bottom: 20px; margin-bottom: 40px;
+            font-size: clamp(1.25rem, 4vw, 2rem);
+        }
         h2 { color: #38bdf8; font-family: 'Orbitron', sans-serif; margin-top: 40px; font-size: 1.2em; }
-        p { margin-bottom: 20px; text-align: justify; }
+        p { margin-bottom: 20px; text-align: left; overflow-wrap: anywhere; }
         
         .btn-back {
-            display: inline-block; margin-bottom: 30px; 
+            display: inline-flex; align-items: center; justify-content: center;
+            margin-bottom: 30px; min-height: 44px;
             color: #38bdf8; text-decoration: none; border: 1px solid #38bdf8;
-            padding: 8px 20px; border-radius: 4px; transition: 0.3s;
+            padding: 10px 20px; border-radius: 4px; transition: 0.3s;
+            box-sizing: border-box;
         }
         .btn-back:hover { background: #38bdf8; color: #000; }
 
-        @media (max-width: 480px) {
-            body { padding: 24px 14px; }
-            h1 { font-size: 1.3rem; }
+        /* Responsive: tablet ≤900 | móvil ≤600 */
+        @media (max-width: 900px) {
+            body { padding: 28px 16px; }
+            h2 { font-size: 1.1em; margin-top: 32px; }
+        }
+        @media (max-width: 600px) {
+            body { padding: 20px 14px 48px; }
+            h1 { padding-bottom: 14px; margin-bottom: 28px; }
             h2 { font-size: 1rem; }
+            .btn-back { width: 100%; text-align: center; }
         }
     </style>
 {% endblock %}

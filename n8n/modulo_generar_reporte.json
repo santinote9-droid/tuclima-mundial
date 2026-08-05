@@ -2,29 +2,6 @@
   "nodes": [
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "86507b8e-5339-4a2c-a4af-9dd4859ea48b",
-              "name": "link_descarga",
-              "value": "=https://drive.google.com/file/d/{{ $json.id }}/view",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        496,
-        -16
-      ],
-      "id": "9a8ce404-a7b0-4667-a5f7-9f30bcf4b336",
-      "name": "Edit Fields"
-    },
-    {
-      "parameters": {
         "workflowInputs": {
           "values": [
             {
@@ -36,30 +13,59 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        -48,
-        -16
+        64,
+        32
       ],
-      "id": "40401fca-2641-4644-90b7-7412c511e5e1",
+      "id": "07f5517a-d850-4432-914d-ec1ddd3a6b90",
       "name": "Execute Workflow Trigger",
       "executeOnce": false,
       "retryOnFail": false
     },
     {
       "parameters": {
-        "jsCode": "const htmlContent = $('Execute Workflow Trigger').first().json.contenido_reporte;\n\nreturn {\n  json: {},\n  binary: {\n    data: {\n      data: Buffer.from(htmlContent).toString('base64'),\n      mimeType: 'application/msword', // Le decimos a Google que es un Word\n      fileName: 'Reporte_TuClima.doc' // Le ponemos extensión de documento\n    }\n  }\n};"
+        "assignments": {
+          "assignments": [
+            {
+              "id": "86507b8e-5339-4a2c-a4af-9dd4859ea48b",
+              "name": "link_descarga",
+              "value": "=https://docs.google.com/document/d/{{ $('Capturar File ID').item.json.file_id }}/edit?usp=sharing",
+              "type": "string"
+            },
+            {
+              "id": "msg-resp-001",
+              "name": "mensaje_respuesta",
+              "value": "=✅ Reporte listo:\n\n[Abrir reporte TuClima](https://docs.google.com/document/d/{{ $('Capturar File ID').item.json.file_id }}/edit?usp=sharing)",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        976,
+        32
+      ],
+      "id": "a2f74923-f25b-4080-b4a0-b3172b27cdbe",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const trigger = $('Execute Workflow Trigger').first().json || {};\nlet htmlContent = trigger.contenido_reporte || trigger.html || trigger.texto || trigger.output || '';\nhtmlContent = String(htmlContent || '').trim();\n\n// Limpiar LaTeX crudo de Gemini\nhtmlContent = htmlContent.replace(/\\$([^$]+)\\$/g, (_, inner) => String(inner)\n  .replace(/\\\\%/g, '%')\n  .replace(/\\\\circ/g, '°')\n  .replace(/\\\\text\\{([^}]*)\\}/g, '$1')\n  .replace(/\\\\mathrm\\{([^}]*)\\}/g, '$1')\n  .replace(/\\\\sim/g, '~')\n  .replace(/\\\\times/g, '×')\n  .replace(/\\\\,/g, ' ')\n  .replace(/[{}]/g, '')\n  .replace(/\\^/g, '')\n  .replace(/\\\\/g, '')\n);\n\nif (!htmlContent || htmlContent.length < 20) {\n  htmlContent = '<h1>Reporte TuClima</h1><p>No se recibio contenido suficiente del analisis. Pedi el PDF de nuevo.</p>';\n}\n\n// Si viene markdown/texto plano, convertir a HTML simple\nif (!/<\\s*(h1|h2|p|table|div|html|body)\\b/i.test(htmlContent)) {\n  const esc = htmlContent\n    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')\n    .replace(/\\n/g, '<br/>');\n  htmlContent = '<h1>Reporte TuClima IA</h1><div>' + esc + '</div>';\n}\n\n// Documento HTML completo → Google Docs lo importa bien al convertir\nconst docHtml = '<!DOCTYPE html><html><head><meta charset=\"utf-8\">'\n  + '<title>Reporte TuClima</title>'\n  + '<style>body{font-family:Arial,sans-serif;line-height:1.45;color:#111;max-width:800px;margin:24px auto;padding:0 16px}'\n  + 'h1{font-size:22px;border-bottom:2px solid #1e3a8a;padding-bottom:8px}h2{font-size:16px;color:#1e3a8a;margin-top:22px}'\n  + 'table{border-collapse:collapse;width:100%;margin:12px 0}th,td{border:1px solid #cbd5e1;padding:8px;text-align:left;font-size:13px}'\n  + 'th{background:#e2e8f0}strong{color:#0f172a}</style></head><body>'\n  + htmlContent.replace(/^[\\s\\S]*?<body[^>]*>/i, '').replace(/<\\/body>[\\s\\S]*$/i, '')\n  + '</body></html>';\n\nconst stamp = new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14);\n// .doc + msword: Drive convierte a Google Doc (preview legible, no codigo fuente)\nreturn [{\n  json: { _ok: true, _stamp: stamp },\n  binary: {\n    data: {\n      data: Buffer.from(docHtml, 'utf8').toString('base64'),\n      mimeType: 'application/msword',\n      fileName: 'Reporte_TuClima_' + stamp + '.doc',\n      fileExtension: 'doc'\n    }\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        144,
-        -16
+        224,
+        32
       ],
-      "id": "1c28dec6-653e-4e7f-a751-213a7164b328",
+      "id": "f2b136be-3991-416a-9f29-b4f67132c3e0",
       "name": "Code in JavaScript"
     },
     {
       "parameters": {
-        "name": "=Reporte_TuClima_{{$now.format(\"yyyyMMdd_HHmm\")}}.html",
+        "name": "=Reporte_TuClima_{{$now.format(\"yyyyMMdd_HHmm\")}}",
         "driveId": {
           "__rl": true,
           "mode": "list",
@@ -71,22 +77,84 @@
           "value": "root",
           "cachedResultName": "/ (Root folder)"
         },
-        "options": {}
+        "options": {
+          "convertToGoogleDocument": true
+        }
       },
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        304,
-        -16
+        464,
+        32
       ],
-      "id": "2e740596-e23c-404d-9f34-564aeedfe4a2",
+      "id": "3bc54f51-1d35-4a04-8ec8-db54b75591d7",
       "name": "Upload file",
       "credentials": {
         "googleDriveOAuth2Api": {
           "id": "we4YRUOwdSylabXV",
           "name": "Google Drive account"
         }
-      }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "capture-file-id-001",
+              "name": "file_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        608,
+        32
+      ],
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "name": "Capturar File ID"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $json.file_id }}/permissions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"role\": \"reader\", \"type\": \"anyone\"}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        32
+      ],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Share File (Public)",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "we4YRUOwdSylabXV",
+          "name": "Google Drive account"
+        }
+      },
+      "continueOnFail": true
     }
   ],
   "connections": {
@@ -116,6 +184,28 @@
       "main": [
         [
           {
+            "node": "Capturar File ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Capturar File ID": {
+      "main": [
+        [
+          {
+            "node": "Share File (Public)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share File (Public)": {
+      "main": [
+        [
+          {
             "node": "Edit Fields",
             "type": "main",
             "index": 0
@@ -128,5 +218,6 @@
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "19ee95c84ac845adb5e56f055bd53b79a0e674016338a7de7b71fc1ecea83ccf"
-  }
+  },
+  "name": "Modulo_Generar_Reporte"
 }

@@ -1,413 +1,700 @@
 {% extends 'base.html' %}
 
-{% block title %}Soporte | TuClima{% endblock %}
+{% block title %}Centro de Ayuda | TuClima{% endblock %}
 
 {% block extra_head %}
 <meta name="google" content="notranslate">
-    <meta name="weglot-exclude" content="TuClima, .notranslate, [translate='no'], title">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<meta name="weglot-exclude" content="TuClima, .notranslate, [translate='no'], title">
 <style>
-        /* ESTILO GENERAL */
-        body { font-family: 'Poppins', sans-serif; background-color: #0f172a; color: #e2e8f0; margin: 0; }
-        
-        /* HEADER */
-        .header { background: #1e293b; padding: 20px 40px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
-        .brand.notranslate, .brand[translate="no"], .brand { text-decoration: none; font-size: 1.5rem; font-weight: bold; color: white; display: flex; align-items: center; gap: 10px; }
-        .brand.notranslate span, .brand[translate="no"] span, .brand span { color: #3b82f6; } /* Azul TuClima */
-        .brand.notranslate i, .brand[translate="no"] i, .brand i { color: #38bdf8; font-size: 1.3em; }
+    :root {
+        --bg: #0b1220;
+        --bg2: #0f172a;
+        --card: rgba(15, 23, 42, 0.75);
+        --border: #1e293b;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --dim: #64748b;
+        --accent: #38bdf8;
+        --accent2: #6366f1;
+        --ok: #4ade80;
+        --warn: #fbbf24;
+        --pink: #f472b6;
+    }
 
-        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
-        /* FAQ */
-        .faq-section h2 { color: #fff; border-bottom: 2px solid #3b82f6; display: inline-block; padding-bottom: 10px; margin-bottom: 30px; }
-        .faq-item { background: #1e293b; border: 1px solid #334155; border-radius: 8px; margin-bottom: 15px; overflow: hidden; }
-        .faq-question { padding: 15px; cursor: pointer; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
-        .faq-question:hover { background: #2d3b4e; }
-        .faq-answer { padding: 15px; color: #94a3b8; font-size: 0.95em; line-height: 1.6; display: none; border-top: 1px solid #334155; background: #0f172a; }
-        
-        /* FORMULARIO */
-        .contact-box { background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #3b82f6; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        
-        select, textarea, input { width: 100%; background: #0f172a; border: 1px solid #475569; color: #fff; padding: 12px; border-radius: 6px; font-family: inherit; box-sizing: border-box; margin-bottom: 15px; }
-        .btn-submit { width: 100%; background: #3b82f6; color: white; font-weight: bold; padding: 12px; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-        .btn-submit:hover { background: #2563eb; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
-    </style>
+    html { overflow-x: hidden; }
+    body {
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        color: var(--text);
+        min-height: 100vh;
+        overflow-x: hidden;
+        background:
+            radial-gradient(1100px 480px at 8% -12%, rgba(56,189,248,0.14), transparent 55%),
+            radial-gradient(900px 420px at 92% 0%, rgba(99,102,241,0.12), transparent 50%),
+            linear-gradient(180deg, var(--bg) 0%, var(--bg2) 45%, #0a101c 100%);
+    }
+
+    /* Header */
+    .ah-top {
+        position: sticky; top: 0; z-index: 40;
+        display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        padding: 14px 28px;
+        background: rgba(11, 18, 32, 0.85);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
+    }
+    .ah-brand {
+        display: flex; align-items: center; gap: 10px;
+        text-decoration: none; color: var(--text);
+        font-weight: 800; font-size: 1.15rem; letter-spacing: 0.02em;
+    }
+    .ah-brand span { color: var(--accent); }
+    .ah-brand-mark {
+        width: 34px; height: 34px; border-radius: 10px;
+        display: grid; place-items: center;
+        background: rgba(56,189,248,0.12);
+        border: 1px solid rgba(56,189,248,0.3);
+        color: var(--accent);
+    }
+    .ah-brand-mark svg { width: 18px; height: 18px; }
+    .ah-back {
+        display: inline-flex; align-items: center; gap: 7px;
+        padding: 8px 14px; border-radius: 999px;
+        border: 1px solid #334155; color: var(--muted);
+        text-decoration: none; font-size: 0.84rem; font-weight: 600;
+        transition: 0.18s;
+    }
+    .ah-back:hover { border-color: var(--accent); color: var(--accent); }
+    .ah-back svg { width: 14px; height: 14px; }
+
+    .ah-wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px 56px; }
+
+    /* Hero */
+    .ah-hero {
+        margin-top: 28px;
+        padding: 32px 28px;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        background:
+            linear-gradient(135deg, rgba(30,41,59,0.8), rgba(15,23,42,0.92)),
+            linear-gradient(180deg, rgba(56,189,248,0.06), transparent);
+        animation: ahUp 0.4s ease both;
+    }
+    .ah-hero h1 {
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: 8px;
+        display: flex; align-items: center; gap: 12px;
+    }
+    .ah-hero h1 svg { width: 28px; height: 28px; color: var(--accent); flex-shrink: 0; }
+    .ah-hero p {
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1.55;
+        max-width: 560px;
+    }
+    .ah-pills {
+        display: flex; flex-wrap: wrap; gap: 8px;
+        margin-top: 18px;
+    }
+    .ah-pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 6px 12px; border-radius: 999px;
+        font-size: 0.78rem; font-weight: 700;
+        border: 1px solid var(--border);
+        background: rgba(15,23,42,0.65);
+        color: var(--muted);
+        text-decoration: none;
+        transition: 0.15s;
+    }
+    .ah-pill:hover { border-color: rgba(56,189,248,0.4); color: var(--accent); }
+    .ah-pill svg { width: 13px; height: 13px; }
+
+    /* Grid */
+    .ah-grid {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 16px;
+        align-items: start;
+        animation: ahUp 0.45s ease 0.05s both;
+    }
+
+    .ah-panel {
+        border-radius: 18px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        overflow: hidden;
+    }
+    .ah-panel-h {
+        display: flex; align-items: center; gap: 12px;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(2,6,23,0.35);
+    }
+    .ah-ico {
+        width: 38px; height: 38px; border-radius: 11px;
+        display: grid; place-items: center; flex-shrink: 0;
+        border: 1px solid rgba(56,189,248,0.25);
+        background: rgba(56,189,248,0.08);
+        color: var(--accent);
+    }
+    .ah-ico.pink {
+        color: var(--pink);
+        background: rgba(244,114,182,0.08);
+        border-color: rgba(244,114,182,0.25);
+    }
+    .ah-ico svg { width: 18px; height: 18px; }
+    .ah-panel-h h2 { font-size: 1.05rem; font-weight: 700; margin: 0; }
+    .ah-panel-h p { margin: 2px 0 0; color: var(--dim); font-size: 0.78rem; }
+    .ah-panel-b { padding: 16px 18px 20px; }
+
+    /* FAQ accordion */
+    .faq-item {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 8px;
+        background: rgba(15,23,42,0.55);
+        overflow: hidden;
+        transition: border-color 0.15s;
+    }
+    .faq-item.is-open { border-color: rgba(56,189,248,0.35); }
+    .faq-item:last-child { margin-bottom: 0; }
+    .faq-q {
+        width: 100%;
+        display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        padding: 14px 16px;
+        background: transparent;
+        border: none;
+        color: var(--text);
+        font: inherit;
+        font-weight: 600;
+        font-size: 0.92rem;
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .faq-q:hover { background: rgba(30,41,59,0.55); }
+    .faq-chev {
+        width: 28px; height: 28px; flex-shrink: 0;
+        border-radius: 8px;
+        display: grid; place-items: center;
+        background: rgba(30,41,59,0.8);
+        border: 1px solid #334155;
+        color: var(--dim);
+        transition: transform 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .faq-chev svg { width: 14px; height: 14px; }
+    .faq-item.is-open .faq-chev {
+        transform: rotate(180deg);
+        color: var(--accent);
+        border-color: rgba(56,189,248,0.35);
+    }
+    .faq-a {
+        display: none;
+        padding: 0 16px 16px;
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.6;
+        border-top: 1px solid transparent;
+    }
+    .faq-item.is-open .faq-a {
+        display: block;
+        border-top-color: var(--border);
+        padding-top: 14px;
+    }
+    .faq-a strong { color: #e2e8f0; }
+    .faq-a a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .faq-a a:hover { text-decoration: underline; }
+
+    /* Support form */
+    .ah-form label {
+        display: block;
+        color: var(--dim);
+        font-size: 0.8rem;
+        font-weight: 700;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .ah-form select,
+    .ah-form textarea {
+        width: 100%;
+        background: #0f172a;
+        border: 1px solid #334155;
+        color: var(--text);
+        padding: 11px 12px;
+        border-radius: 10px;
+        font-family: inherit;
+        font-size: 0.92rem;
+        margin-bottom: 14px;
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .ah-form select:focus,
+    .ah-form textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(56,189,248,0.12);
+    }
+    .ah-form textarea { resize: vertical; min-height: 120px; }
+    .ah-btn {
+        width: 100%;
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 13px 16px;
+        border: none; border-radius: 12px;
+        background: linear-gradient(135deg, #2563eb, #4f46e5);
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        font-family: inherit;
+        transition: filter 0.15s;
+        box-shadow: 0 8px 24px rgba(37,99,235,0.22);
+    }
+    .ah-btn:hover { filter: brightness(1.08); }
+    .ah-btn svg { width: 16px; height: 16px; }
+
+    .ah-success {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: rgba(74,222,128,0.1);
+        border: 1px solid rgba(74,222,128,0.35);
+        color: var(--ok);
+        font-size: 0.88rem;
+        display: flex; align-items: flex-start; gap: 10px;
+        cursor: pointer;
+    }
+    .ah-success svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
+
+    .ah-note {
+        margin-top: 18px;
+        padding: 14px;
+        border-radius: 12px;
+        background: rgba(56,189,248,0.05);
+        border: 1px dashed rgba(56,189,248,0.3);
+        color: var(--muted);
+        font-size: 0.84rem;
+        line-height: 1.5;
+        text-align: center;
+    }
+    .ah-note strong {
+        color: var(--accent);
+        display: inline-flex; align-items: center; gap: 6px;
+        justify-content: center;
+    }
+    .ah-note svg { width: 14px; height: 14px; }
+
+    /* Topics / quick links */
+    .ah-topics {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+        gap: 12px;
+        animation: ahUp 0.5s ease 0.08s both;
+    }
+    .ah-topic {
+        padding: 18px 16px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        text-decoration: none;
+        color: var(--text);
+        transition: transform 0.18s, border-color 0.18s;
+    }
+    .ah-topic:hover {
+        transform: translateY(-2px);
+        border-color: rgba(56,189,248,0.4);
+    }
+    .ah-topic .t-ico {
+        width: 36px; height: 36px; border-radius: 10px;
+        display: grid; place-items: center;
+        margin-bottom: 12px;
+        border: 1px solid var(--border);
+        background: rgba(30,41,59,0.7);
+    }
+    .ah-topic .t-ico svg { width: 18px; height: 18px; }
+    .ah-topic h3 { font-size: 0.92rem; font-weight: 700; margin-bottom: 4px; }
+    .ah-topic p { color: var(--dim); font-size: 0.78rem; line-height: 1.4; }
+
+    /* Architecture */
+    .ah-arch {
+        margin-top: 28px;
+        animation: ahUp 0.5s ease 0.1s both;
+    }
+    .ah-arch-title {
+        display: flex; align-items: center; gap: 10px;
+        font-size: 1.2rem; font-weight: 800;
+        margin-bottom: 14px;
+    }
+    .ah-arch-title svg { width: 24px; height: 24px; color: var(--accent); }
+    .ah-cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+    .ah-card {
+        padding: 24px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: var(--card);
+    }
+    .ah-card h3 {
+        display: flex; align-items: center; gap: 10px;
+        font-size: 1.05rem; font-weight: 700;
+        margin-bottom: 12px;
+    }
+    .ah-card h3 svg { width: 20px; height: 20px; flex-shrink: 0; }
+    .ah-card p, .ah-card li {
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+    .ah-card ul {
+        list-style: none;
+        margin-top: 12px;
+        display: flex; flex-direction: column; gap: 8px;
+    }
+    .ah-card li {
+        display: flex; gap: 8px; align-items: flex-start;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: rgba(15,23,42,0.55);
+        border: 1px solid rgba(30,41,59,0.9);
+    }
+    .ah-card li svg {
+        width: 14px; height: 14px; flex-shrink: 0;
+        margin-top: 3px; color: var(--ok);
+    }
+    .ah-card li strong { color: #e2e8f0; }
+
+    .ah-footer {
+        margin-top: 32px;
+        text-align: center;
+        color: var(--dim);
+        font-size: 0.82rem;
+    }
+    .ah-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+    @keyframes ahUp {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive: tablet ≤900 | móvil ≤600 */
+    @media (max-width: 900px) {
+        .ah-grid { grid-template-columns: 1fr; }
+        .ah-topics { grid-template-columns: 1fr 1fr; }
+        .ah-cards { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+        .ah-top { padding: 12px 14px; flex-wrap: wrap; }
+        .ah-wrap { padding: 0 12px 40px; }
+        .ah-hero { padding: 22px 16px; }
+        .ah-topics { grid-template-columns: 1fr; }
+        .ah-panel-h h2 { font-weight: 700; }
+        .ah-btn { font-weight: 700; min-height: 44px; }
+        .ah-topic h3 { font-weight: 700; }
+        .ah-card h3 { font-weight: 700; }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="header">
-        <a href="/" class="brand notranslate" translate="no" data-wg-notranslate style="font-weight: bold; font-size: 1.5rem; color: white; text-decoration: none;">
-            <i class="fas fa-cloud"></i>
-            <span data-wg-notranslate class="notranslate" translate="no" style="color: white; white-space: nowrap;">TuClima</span>
+<header class="ah-top">
+    <a href="/" class="ah-brand notranslate" translate="no">
+        <span class="ah-brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+        </span>
+        TuClima <span>Ayuda</span>
+    </a>
+    <a href="/" class="ah-back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Volver al inicio
+    </a>
+</header>
+
+<div class="ah-wrap">
+
+    <section class="ah-hero">
+        <h1>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Centro de Ayuda
+        </h1>
+        <p>Respuestas rápidas sobre planes, tokens, sectores profesionales y soporte. Si no encontrás lo que buscás, escribinos.</p>
+        <div class="ah-pills">
+            <a class="ah-pill" href="#faq">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                FAQ
+            </a>
+            <a class="ah-pill" href="#soporte">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                Contacto
+            </a>
+            <a class="ah-pill" href="#arquitectura">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>
+                Tecnología
+            </a>
+            <a class="ah-pill" href="/pricing/">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Planes
+            </a>
+            <a class="ah-pill" href="/mi-cuenta/">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Mi cuenta
+            </a>
+        </div>
+    </section>
+
+    <section class="ah-topics">
+        <a class="ah-topic" href="#faq-planes">
+            <div class="t-ico" style="color:#a5b4fc;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+            <h3>Planes y acceso</h3>
+            <p>Free, Starter, Plus, Pro IA y Power</p>
         </a>
-        <a href="/" style="color: #cbd5e1; text-decoration: none; font-size: 0.9em; border: 1px solid #475569; padding: 8px 15px; border-radius: 20px; transition:0.3s;">⬅ Volver al Inicio</a>
-    </div>
+        <a class="ah-topic" href="#faq-tokens">
+            <div class="t-ico" style="color:#fbbf24;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 8v8"/><path d="M8 12h8"/></svg></div>
+            <h3>Tokens IA</h3>
+            <p>Cómo se consumen y recargan</p>
+        </a>
+        <a class="ah-topic" href="#faq-sectores">
+            <div class="t-ico" style="color:#4ade80;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/></svg></div>
+            <h3>Sectores PRO</h3>
+            <p>Agro, Naval, Aéreo y Energía</p>
+        </a>
+        <a class="ah-topic" href="#soporte">
+            <div class="t-ico" style="color:#f472b6;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+            <h3>Escribinos</h3>
+            <p>Bugs, ideas o problemas de cuenta</p>
+        </a>
+    </section>
 
-    <!-- SECCIÓN SUPERIOR: Grid de 2 columnas -->
-    <div class="top-section">
-        <div class="top-grid">
-            <!-- Columna Izquierda: Preguntas Frecuentes -->
-            <div class="faq-col">
-                <h2 class="faq-title">Preguntas Frecuentes</h2>
-                <div class="faq-list">
-                    <div class="faq-item">
-                        <div class="faq-question" onclick="toggleFaq(this)">¿Qué incluye el Modo Gratuito? <span>▼</span></div>
-                        <div class="faq-answer">
-                            El Plan Gratuito te da acceso total al <strong>Panel General</strong> (pronóstico local, temperatura actual, alertas y previsión a 7 días). <br><br>
-                            Los modos especializados (<strong>Agro, Naval, Aéreo y Energía</strong>) contienen herramientas técnicas avanzadas y requieren una suscripción Profesional.
-                        </div>
+    <div class="ah-grid" id="faq">
+        <section class="ah-panel">
+            <div class="ah-panel-h">
+                <div class="ah-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </div>
+                <div>
+                    <h2>Preguntas frecuentes</h2>
+                    <p>Tocá una pregunta para expandirla</p>
+                </div>
+            </div>
+            <div class="ah-panel-b">
+                <div class="faq-item" id="faq-planes">
+                    <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+                        ¿Qué incluye el modo gratuito?
+                        <span class="faq-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg></span>
+                    </button>
+                    <div class="faq-a">
+                        El plan Free da acceso al <strong>Panel General</strong>: pronóstico local, temperatura actual, alertas y previsión a 7 días.
+                        Los modos especializados (<strong>Agro, Naval, Aéreo y Energía</strong>) requieren un plan profesional (Starter o superior).
                     </div>
-                    <div class="faq-item">
-                        <div class="faq-question" onclick="toggleFaq(this)">¿De dónde salen los datos? <span>▼</span></div>
-                        <div class="faq-answer"><span class="notranslate">TuClima</span> utiliza conexiones satelitales en tiempo real (APIs Open-Meteo y NOAA) para garantizar precisión global.</div>
+                </div>
+
+                <div class="faq-item">
+                    <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+                        ¿En qué se diferencian los planes?
+                        <span class="faq-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg></span>
+                    </button>
+                    <div class="faq-a">
+                        <strong>Starter</strong>: 1 sector + cupo diario de tokens.<br>
+                        <strong>Plus</strong>: todos los sectores, Excel, API key y más historial.<br>
+                        <strong>Pro IA / Power</strong>: alertas proactivas, reportes automáticos y mayor cupo de IA.<br>
+                        Detalle completo en <a href="/pricing/">Planes</a> o en <a href="/mi-cuenta/">Mi cuenta</a>.
                     </div>
-                    <div class="faq-item">
-                        <div class="faq-question" onclick="toggleFaq(this)">Encontré un error en un mapa... <span>▼</span></div>
-                        <div class="faq-answer">Por favor, repórtalo usando el formulario de la derecha seleccionando "Reportar Error Técnico". Tu feedback nos ayuda a mejorar.</div>
+                </div>
+
+                <div class="faq-item" id="faq-tokens">
+                    <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+                        ¿Cómo funcionan los tokens de IA?
+                        <span class="faq-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg></span>
+                    </button>
+                    <div class="faq-a">
+                        Cada consulta al chat o análisis de archivo consume créditos del cupo diario de tu plan.
+                        El saldo se recarga a medianoche (hora del servidor). Podés ver uso e historial en <a href="/mi-cuenta/">Mi cuenta</a>.
+                        Si llegás al límite, la IA se pausa hasta la próxima recarga o un upgrade de plan.
                     </div>
-                    <div class="faq-item">
-                        <div class="faq-question" onclick="toggleFaq(this)">
-                            ¿Puedo usar <span class="notranslate" translate="no">TuClima</span> en mi celular? <span>▼</span>
-                        </div>
-                        <div class="faq-answer">
-                            ¡Sí! <span class="notranslate" translate="no">TuClima</span> es una PWA (Aplicación Web Progresiva). Puedes acceder desde cualquier navegador móvil y se adaptará a tu pantalla.
-                        </div>
+                </div>
+
+                <div class="faq-item" id="faq-sectores">
+                    <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+                        ¿Qué ofrecen los sectores profesionales?
+                        <span class="faq-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg></span>
+                    </button>
+                    <div class="faq-a">
+                        Paneles técnicos con variables específicas: humedad de suelo y GDD (Agro), oleaje y Beaufort (Naval), METAR y E6B (Aéreo), irradiancia y eólica (Energía), más chat IA contextual.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+                        ¿De dónde salen los datos meteorológicos?
+                        <span class="faq-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg></span>
+                    </button>
+                    <div class="faq-a">
+                        <span class="notranslate">TuClima</span> consulta APIs en tiempo real (principalmente <strong>Open-Meteo</strong> y fuentes satelitales/marinas asociadas) y aplica cálculos propios para indicadores sectoriales.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+                        ¿Puedo usar TuClima en el celular?
+                        <span class="faq-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg></span>
+                    </button>
+                    <div class="faq-a">
+                        Sí. <span class="notranslate" translate="no">TuClima</span> es una PWA: funciona en el navegador móvil y se adapta a pantallas chicas. En muchos equipos podés “Agregar a inicio” como app.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+                        Encontré un error o dato raro. ¿Qué hago?
+                        <span class="faq-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg></span>
+                    </button>
+                    <div class="faq-a">
+                        Usá el formulario de soporte con motivo <strong>Reportar error técnico</strong>. Incluí sector, ubicación (lat/lon) y hora aproximada: nos acelera la revisión.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+                        ¿Cómo renuevo o cancelo mi plan?
+                        <span class="faq-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg></span>
+                    </button>
+                    <div class="faq-a">
+                        Renová desde <a href="/pricing/">Planes</a> o el CTA de <a href="/mi-cuenta/">Mi cuenta</a>.
+                        Podés activar un recordatorio por email 5 días antes del vencimiento. El cobro automático con tarjeta guardada está en camino; hoy la renovación se confirma con el link de pago.
                     </div>
                 </div>
             </div>
-            <!-- Columna Derecha: Centro de Soporte -->
-            <div class="support-col">
-                <div class="support-box">
-                    <h3>
-                        <svg style="width:24px; height:24px; color: #f472b6;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                        Centro de Soporte
-                    </h3>
-                    <p>Dudas, sugerencias o problemas técnicos. Te leemos.</p>
-                    <form action="/enviar-reporte/" method="POST">
-                        {% csrf_token %}
-                        <label>Motivo</label>
-                        <select name="tipo_reporte">
-                            <option value="IDEA"> Sugerencia General</option>
-                            <option value="BUG"> Reportar Error Técnico</option>
-                            <option value="CUENTA"> Problema con mi Cuenta</option>
-                            <option value="OTRO"> Otro</option>
-                        </select>
-                        <label>Mensaje</label>
-                        <textarea name="mensaje_reporte" rows="5" placeholder="Describe tu consulta..." required></textarea>
-                        <button type="submit" class="btn-submit">ENVIAR</button>
-                    </form>
-                    {% if mostrar_exito %}
-                    <div onclick="this.style.display='none'" class="success-msg">
-                        ✅ ¡Mensaje Recibido! El equipo de TuClima te responderá pronto.
-                    </div>
-                    {% endif %}
-                    <div class="feedback-box">
-                        <strong>
-                            <svg style="width:16px; height:16px; vertical-align: middle; margin-right: 4px; margin-bottom: 2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path></svg>
-                            Tu opinión es combustible.
-                        </strong> Este proyecto está en constante evolución. Si detectas un error en los cálculos o tienes una idea, utiliza el formulario de arriba.
-                    </div>
+        </section>
+
+        <section class="ah-panel" id="soporte">
+            <div class="ah-panel-h">
+                <div class="ah-ico pink" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                </div>
+                <div>
+                    <h2>Centro de soporte</h2>
+                    <p>Dudas, sugerencias o problemas técnicos</p>
                 </div>
             </div>
-        </div>
+            <div class="ah-panel-b">
+                <form class="ah-form" action="/enviar-reporte/" method="POST">
+                    {% csrf_token %}
+                    <label for="tipo_reporte">Motivo</label>
+                    <select name="tipo_reporte" id="tipo_reporte">
+                        <option value="IDEA">Sugerencia general</option>
+                        <option value="BUG">Reportar error técnico</option>
+                        <option value="CUENTA">Problema con mi cuenta</option>
+                        <option value="OTRO">Otro</option>
+                    </select>
+                    <label for="mensaje_reporte">Mensaje</label>
+                    <textarea name="mensaje_reporte" id="mensaje_reporte" rows="5" placeholder="Contanos qué pasó, en qué sector y con qué ubicación..." required></textarea>
+                    <button type="submit" class="ah-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        Enviar mensaje
+                    </button>
+                </form>
+
+                {% if mostrar_exito %}
+                <div class="ah-success" onclick="this.style.display='none'" role="status">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <span>Mensaje recibido. El equipo de <span class="notranslate">TuClima</span> te responderá pronto. Tocá para cerrar.</span>
+                </div>
+                {% endif %}
+
+                <div class="ah-note">
+                    <strong>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/></svg>
+                        Tu opinión suma
+                    </strong>
+                    <div style="margin-top:6px;">Este proyecto evoluciona con feedback real. Si ves un cálculo raro o tenés una idea, usá el formulario.</div>
+                </div>
+            </div>
+        </section>
     </div>
 
-    <!-- SECCIÓN INFERIOR: Arquitectura del Proyecto -->
-    <div class="bottom-section">
-        <h2 class="arch-title">
-            <svg style="width:28px; height:28px; color: #38bdf8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
-            Arquitectura del Proyecto
+    <section class="ah-arch" id="arquitectura">
+        <h2 class="ah-arch-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+            Arquitectura del proyecto
         </h2>
-        <div class="cards-row">
-            <div class="card">
+        <div class="ah-cards">
+            <article class="ah-card">
                 <h3>
-                    <svg style="width:20px; height:20px; color: #facc15;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    El Equipo
+                    <svg style="color:var(--warn);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    El equipo
                 </h3>
                 <p>
-                    Somos un equipo de desarrollo vinculado al ámbito académico (UBA), enfocados en la intersección entre la <strong>Meteorología, la Física y la Ciencia de Datos</strong>. 
-                    <br><br>
-                    Nuestro objetivo es democratizar el acceso a datos climáticos complejos, transformando variables crudas de satélites en paneles de control intuitivos para la toma de decisiones críticas (Agro, Naval, Aeronáutica y Energías Renovables).
+                    Somos un equipo de desarrollo vinculado al ámbito académico (UBA), en la intersección entre
+                    <strong style="color:#e2e8f0;">Meteorología, Física y Ciencia de Datos</strong>.
                 </p>
-            </div>
-            <div class="card">
+                <p style="margin-top:10px;">
+                    El objetivo: transformar variables satelitales y modelos numéricos en paneles claros para decisiones en Agro, Naval, Aeronáutica y Energía.
+                </p>
+            </article>
+            <article class="ah-card">
                 <h3>
-                    <svg style="width:20px; height:20px; color: #22c55e;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-                    Stack Tecnológico
+                    <svg style="color:var(--ok);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                    Stack tecnológico
                 </h3>
-                <p>
-                    Este sistema no utiliza "widgets" prefabricados. Todo el motor de cálculo es propio:
-                </p>
+                <p>Motor de cálculo propio — no widgets prefabricados:</p>
                 <ul>
-                    <li><strong>Backend:</strong> Python + Django (Cálculo Físico).</li>
-                    <li><strong>Fuentes de Datos:</strong> Open-Meteo API, NASA ADS, ArXiv API.</li>
-                    <li><strong>Frontend:</strong> HTML5 + Chart.js (Renderizado vectorial).</li>
-                    <li><strong>Física:</strong> Ecuaciones reales de termodinámica.</li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span><strong>Backend:</strong> Python + Django</span>
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span><strong>Datos:</strong> Open-Meteo, APIs satelitales/marinas</span>
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span><strong>IA:</strong> n8n + Gemini (chat, reportes, visión)</span>
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span><strong>Frontend:</strong> HTML + Highcharts / Chart.js</span>
+                    </li>
                 </ul>
-            </div>
+            </article>
         </div>
+    </section>
+
+    <div class="ah-footer">
+        <a href="/">Volver al inicio</a>
+        &nbsp;·&nbsp;
+        <a href="/mi-cuenta/">Mi cuenta</a>
+        &nbsp;·&nbsp;
+        <a href="/pricing/">Planes</a>
     </div>
+</div>
 
-    <script>
-        function toggleFaq(element) {
-            var answer = element.nextElementSibling;
-            if (answer.style.display === "block") {
-                answer.style.display = "none";
-                var spans = element.querySelectorAll('span');
-                if (spans.length > 1) {
-                    spans[1].innerText = "▼";
-                } else {
-                    spans[0].innerText = "▼";
-                }
-            } else {
-                answer.style.display = "block";
-                var spans = element.querySelectorAll('span');
-                if (spans.length > 1) {
-                    spans[1].innerText = "▲";
-                } else {
-                    spans[0].innerText = "▲";
-                }
-            }
-        }
-    </script>
-    <style>
-        .header {
-            background: #1e293b;
-            padding: 20px 40px;
-            border-bottom: 1px solid #334155;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .brand { color: #fff; font-weight: bold; font-size: 1.4em; text-decoration: none; letter-spacing: 1px;}
-        .brand span { color: #3b82f6; }
+<script>
+function toggleFaq(btn) {
+    var item = btn.closest('.faq-item');
+    if (!item) return;
+    var opening = !item.classList.contains('is-open');
+    item.classList.toggle('is-open', opening);
+    btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
+}
 
-        /* SECCIÓN SUPERIOR */
-        .top-section {
-            margin: 40px auto 0 auto;
-            max-width: 1100px;
-            padding: 0 20px;
-        }
-        .top-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            align-items: flex-start;
-        }
-        .faq-col {
-            background: #1e293b;
-            border-radius: 16px;
-            border: 1px solid #334155;
-            padding: 30px 25px;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-        .faq-title {
-            color: #fff;
-            border-bottom: 2px solid #3b82f6;
-            padding-bottom: 10px;
-            margin-bottom: 30px;
-            font-size: 1.3em;
-        }
-        .faq-list .faq-item {
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            overflow: hidden;
-        }
-        .faq-question {
-            padding: 15px;
-            cursor: pointer;
-            font-weight: 600;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .faq-question:hover { background: #2d3b4e; }
-        .faq-answer {
-            padding: 15px;
-            color: #94a3b8;
-            font-size: 0.95em;
-            line-height: 1.6;
-            display: none;
-            border-top: 1px solid #334155;
-            background: #1e293b;
-        }
-        .support-col {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-        .support-box {
-            background: #1e293b;
-            border-radius: 16px;
-            border: 1px solid #3b82f6;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            padding: 30px;
-            margin-top: 0;
-            color: #cbd5e1;
-        }
-        .support-box h3 {
-            margin-top: 0;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .support-box p {
-            color: #94a3b8;
-            font-size: 0.9em;
-            margin-bottom: 20px;
-        }
-        .support-box label {
-            display: block;
-            margin-bottom: 5px;
-            color: #cbd5e1;
-            font-size: 0.9em;
-        }
-        .support-box select,
-        .support-box textarea,
-        .support-box input {
-            width: 100%;
-            background: #0f172a;
-            border: 1px solid #475569;
-            color: #fff;
-            padding: 12px;
-            border-radius: 6px;
-            font-family: inherit;
-            box-sizing: border-box;
-            margin-bottom: 15px;
-        }
-        .btn-submit {
-            width: 100%;
-            background: #3b82f6;
-            color: white;
-            font-weight: bold;
-            padding: 12px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-submit:hover { background: #2563eb; }
-        .success-msg {
-            position: relative;
-            background: #22c55e;
-            color: white;
-            padding: 15px 30px;
-            border-radius: 50px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            z-index: 4000;
-            cursor: pointer;
-            animation: fadeIn 0.5s;
-            margin-top: 20px;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-        .feedback-box {
-            margin-top: 30px;
-            background: rgba(56, 189, 248, 0.05);
-            border: 1px dashed #38bdf8;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            color: #cbd5e1;
-            font-size: 0.9em;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .feedback-box strong {
-            color: #38bdf8;
-        }
-
-        /* SECCIÓN INFERIOR */
-        .bottom-section {
-            max-width: 1200px;
-            margin: 50px auto 0 auto;
-            padding: 0 20px 40px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 40px;
-        }
-        .arch-title {
-            color: #fff;
-            margin-bottom: 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            justify-content: flex-start;
-            font-size: 1.3em;
-        }
-        .cards-row {
-            display: flex;
-            gap: 40px;
-            flex-wrap: wrap;
-        }
-        .card {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 16px;
-            padding: 30px;
-            flex: 1 1 300px;
-            min-width: 280px;
-            color: #cbd5e1;
-            box-sizing: border-box;
-        }
-        .card h3 {
-            color: #cbd5e1;
-            font-size: 1.1em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 0;
-        }
-        .card p, .card ul {
-            color: #94a3b8;
-            font-size: 0.95em;
-            line-height: 1.6;
-        }
-        .card ul {
-            padding-left: 20px;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        @media (max-width: 1000px) {
-            .top-grid, .cards-row {
-                grid-template-columns: 1fr;
-                flex-direction: column;
-            }
-            .top-grid {
-                display: flex;
-                flex-direction: column;
-                gap: 30px;
-            }
-            .cards-row {
-                gap: 20px;
-            }
-        }
-        @media (max-width: 768px) {
-            .top-section, .bottom-section {
-                padding: 0 10px;
-            }
-            .faq-col, .support-col, .support-box, .card {
-                padding: 18px;
-            }
-            .cards-row {
-                gap: 20px;
-            }
-        }
-        @media (max-width: 480px) {
-            .header { padding: 14px 16px; }
-            .faq-title, .arch-title { font-size: 1.1em; }
-            .faq-col, .support-box, .card { padding: 14px; }
-            .top-section { margin-top: 20px; }
-        }
-    </style>
+// Abrir FAQ si llegamos con hash (#faq-tokens, etc.)
+(function () {
+    var hash = (location.hash || '').replace('#', '');
+    if (!hash) return;
+    var el = document.getElementById(hash);
+    if (!el) return;
+    if (el.classList.contains('faq-item')) {
+        el.classList.add('is-open');
+        var btn = el.querySelector('.faq-q');
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+})();
+</script>
 {% endblock %}

@@ -5,11 +5,13 @@
 {% block extra_head %}
 <style>
         *, *::before, *::after { box-sizing: border-box; }
+        html { overflow-x: hidden; }
         body {
             background: #0f172a; color: #fff;
             font-family: 'Segoe UI', system-ui, sans-serif;
             display: flex; justify-content: center; align-items: flex-start;
             min-height: 100vh; margin: 0; padding: 30px 16px;
+            overflow-x: hidden;
         }
         .container { max-width: 480px; width: 100%; }
         .back-link { display: inline-flex; align-items: center; gap: 7px; color: #64748b; text-decoration: none; font-size: .85rem; margin-bottom: 22px; transition: color .2s; }
@@ -67,18 +69,29 @@
         .cancel-link { display: block; text-align: center; color: #475569; text-decoration: none; font-size: .82rem; margin-top: 20px; }
         .cancel-link:hover { color: #94a3b8; }
 
-        @media (max-width: 520px) {
-            body { padding: 20px 12px; }
-            .plan-badge { flex-wrap: wrap; gap: 10px; }
+        @media (max-width: 900px) {
+            body { padding: 24px 16px 40px; }
+            .ls-card { padding: 24px 20px; }
+        }
+        @media (max-width: 600px) {
+            body { padding: 18px 12px 36px; }
+            .plan-badge { flex-wrap: wrap; gap: 10px; padding: 14px 16px; }
             .plan-badge .price { width: 100%; text-align: left; }
             .plan-badge .price .amount { font-size: 1.35rem; }
             .ls-card { padding: 20px 16px; }
-            .btn-ls   { padding: 13px 16px; font-size: 0.9rem; }
+            .btn-ls, .btn-paypal-direct, .btn-mp-checkout, .btn-confirm {
+                padding: 14px 16px;
+                font-size: 0.95rem;
+                min-height: 48px;
+            }
             .ls-trust { gap: 7px; }
+            .other-toggle { min-height: 48px; }
+            .val { flex-wrap: wrap; gap: 8px; }
         }
-        @media (max-width: 380px) {
+        @media (max-width: 400px) {
             .plan-badge { padding: 12px 14px; }
             .plan-badge .icon-wrap { width: 40px; height: 40px; font-size: 1.1rem; }
+            .plan-badge .info h3 { font-size: .95rem; }
         }
     </style>
 {% endblock %}

@@ -6,23 +6,36 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         /* FONDO ESPACIAL AZUL (Igual que el 404) */
+        html { overflow-x: hidden; }
         body {
             background-color: #000000;
             background-image: radial-gradient(circle at 50% 50%, #0f172a 0%, #000 90%);
             color: #e2e8f0;
             font-family: 'Segoe UI', sans-serif;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            padding: 24px 16px;
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
-        h1 { font-family: 'Orbitron', sans-serif; font-size: 5em; margin: 0; color: #38bdf8; text-shadow: 0 0 30px rgba(56, 189, 248, 0.3); }
-        h2 { font-family: 'Orbitron', sans-serif; font-size: 1.5em; margin: 10px 0 20px 0; color: #cbd5e1; letter-spacing: 2px; text-transform: uppercase; }
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2.8rem, 12vw, 5em);
+            margin: 0; color: #38bdf8;
+            text-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+        }
+        h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1rem, 3.5vw, 1.5em);
+            margin: 10px 0 20px 0; color: #cbd5e1;
+            letter-spacing: 2px; text-transform: uppercase;
+        }
         
         /* ICONO DE TORMENTA DIGITAL */
         .weather-icon-container {
@@ -68,13 +81,18 @@
         .btn-home {
             margin-top: 30px;
             text-decoration: none;
-            padding: 12px 30px;
+            padding: 14px 30px;
             border: 1px solid #38bdf8;
             color: #38bdf8;
             font-family: 'Orbitron', sans-serif;
             border-radius: 50px;
             transition: 0.3s;
             background: rgba(56, 189, 248, 0.05);
+            min-height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
         }
         .btn-home:hover {
             background: #38bdf8;
@@ -91,12 +109,17 @@
             96% { opacity: 1; } 
         }
 
-        @media (max-width: 480px) {
-            h1 { font-size: 3.5em; }
-            h2 { font-size: 1rem; letter-spacing: 1px; }
-            .terminal-box { padding: 12px 14px; font-size: 0.78rem; width: 95%; }
+        /* Responsive: tablet ≤900 | móvil ≤600 */
+        @media (max-width: 900px) {
+            .weather-icon-container { width: 100px; height: 100px; }
+            .terminal-box { width: min(100%, 420px); }
+        }
+        @media (max-width: 600px) {
+            h2 { letter-spacing: 1px; }
+            .terminal-box { padding: 12px 14px; font-size: 0.78rem; width: 100%; box-sizing: border-box; }
             .weather-icon-container { width: 90px; height: 90px; }
             .weather-icon-container svg.cloud { width: 75px; height: 60px; }
+            .btn-home { width: min(100%, 280px); }
         }
     </style>
 {% endblock %}

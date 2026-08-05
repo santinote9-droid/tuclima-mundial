@@ -450,11 +450,11 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/themes/dark-unica.js"></script>
-    <script src="https://code.highcharts.com/modules/exporting.js"></script>
-    <script src="https://code.highcharts.com/modules/export-data.js"></script>
-    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highcharts@11.4.8/highcharts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highcharts@11.4.8/themes/dark-unica.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highcharts@11.4.8/modules/exporting.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highcharts@11.4.8/modules/export-data.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highcharts@11.4.8/modules/accessibility.js"></script>
 
     <style>
         /* ============================================================= */
@@ -499,7 +499,7 @@
             background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 80%);
             background-attachment: fixed;
             min-height: 100vh;
-            overflow-x: hidden; /* Evita scroll horizontal indeseado */
+            overflow-x: hidden;
         }
 
         /* Scrollbar Personalizada (Estilo Cyberpunk/Naval) */
@@ -517,12 +517,14 @@
             background: rgba(2, 6, 23, 0.98);
             backdrop-filter: blur(15px);
             border-bottom: 2px solid var(--accent-cyan);
-            padding: 15px 40px;
+            padding: 12px 28px;
             display: flex; justify-content: space-between; align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
             box-shadow: 0 4px 50px rgba(6, 182, 212, 0.1);
         }
 
-        .brand-container { display: flex; align-items: center; gap: 15px; }
+        .brand-container { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
         
         /* Animación del Radar en el Logo */
         .brand-logo svg { 
@@ -535,11 +537,17 @@
 
         .brand-text { 
             font-family: 'JetBrains Mono', monospace; 
-            font-size: 1.8rem; 
+            font-size: 1.35rem; 
             font-weight: 800; 
             color: #fff; 
             letter-spacing: -1px; 
             text-transform: uppercase;
+        }
+        @media (max-width: 1200px) {
+            .btn-action { font-size: 0; gap: 0; padding: 8px 10px; }
+            .btn-action svg { margin: 0; }
+            .btn-logout { font-size: 0; padding: 8px 10px; }
+            .btn-logout::before { content: '✕'; font-size: 0.85rem; }
         }
         .brand-text span { color: var(--accent-cyan); }
         
@@ -557,14 +565,7 @@
         }
 
         /* Panel de Operaciones (Derecha) */
-        .ops-controls { display: flex; align-items: center; gap: 20px; }
-
-        .coords-display {
-            font-family: 'JetBrains Mono'; font-size: 0.85rem; color: var(--accent-cyan); 
-            text-align: right; line-height: 1.4;
-            border-right: 1px solid #334155; padding-right: 20px; margin-right: 10px;
-        }
-        .coords-display span { color: var(--text-muted); font-weight: normal; }
+        .ops-controls { display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap; }
 
         /* Estilos de Botones Globales */
         .btn-action {
@@ -840,24 +841,27 @@
 
         /* ---- TABLET (≤ 900px) ---- */
         @media (max-width: 900px) {
-            .dashboard-grid { padding: 20px 15px; gap: 20px; }
+            .dashboard-grid {
+                padding: 20px 15px;
+                gap: 16px;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
             .instrument-card { padding: 20px; min-height: 200px; }
             .value-primary { font-size: 2.8rem; }
-            .visibility-strip { padding: 18px 20px; margin: 0 auto 25px auto; }
-            .modal-box { padding: 30px 25px; }
+            .visibility-strip { padding: 18px 16px; margin: 0 auto 25px auto; max-width: 100%; box-sizing: border-box; }
+            .modal-box { padding: 28px 22px; width: min(920px, calc(100% - 24px)); box-sizing: border-box; }
+            .nav-header { padding: 12px 16px; gap: 10px; }
+            .analysis-deck { padding: 0 15px; }
         }
 
         /* ---- MÓVIL (≤ 600px) ---- */
         @media (max-width: 600px) {
-            .nav-header { flex-wrap: wrap; padding: 10px 15px; gap: 8px; }
-            .brand-container { flex: 1 1 auto; }
+            .nav-header { flex-wrap: wrap; padding: 10px 12px; gap: 8px; }
+            .brand-container { flex: 1 1 auto; min-width: 0; }
             .brand-text { font-size: 1.3rem; }
-            /* Ocultar coordenadas en móvil — liberar espacio */
-            .coords-display { display: none !important; }
-            /* Botones header: envolver en vez de salir de pantalla */
             .ops-controls { gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: 100%; }
             .btn-action, .btn-calc, .btn-logout { padding: 7px 10px; font-size: 0.75rem; }
-            .dashboard-grid { padding: 12px 10px; gap: 10px; }
+            .dashboard-grid { padding: 12px 10px; gap: 10px; grid-template-columns: 1fr; }
             .instrument-card { padding: 16px 14px !important; min-height: 170px; }
             .value-primary { font-size: 2.2rem !important; }
             .value-secondary { font-size: 0.95rem; }
@@ -879,7 +883,8 @@
             .chat-input-area button { padding: 10px 12px !important; font-size: 12px !important; }
             /* Chart container del chat: sin desbordamiento */
             #chart-container { margin: 0 !important; border-radius: 0 !important; }
-            #chart-container canvas, #climatChart { max-width: 100% !important; height: auto !important; }
+            #chart-container .chart-canvas-wrap { height: 280px; position: relative; }
+            #chart-container canvas, #climatChart { max-width: 100% !important; width: 100% !important; height: 100% !important; }
             #chart-tabs { padding: 10px 10px 0 !important; }
             /* Highcharts: quitar override CSS que conflicta con analysis-panel overflow:hidden */
             /* Los heights se ajustan directamente en el HTML */
@@ -908,19 +913,22 @@
 <header class="nav-header">
         <div class="brand-container">
             <div class="brand-logo">
-                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
             </div>
             <div class="brand-text">NAVAL <span>COMMAND</span> <span class="badge-version">PRO</span></div>
         </div>
 
+        {% include 'partials/_sector_location_search.html' with tc_sector='naval' %}
+
         <div class="ops-controls">
-            <div class="coords-display">
-                <span>LAT:</span> {{ lat|floatformat:4 }} <br> <span>LON:</span> {{ lon|floatformat:4 }}
-            </div>
-            
             <button class="btn-action btn-calc" onclick="openModal('modConverter')">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="8" y1="18" x2="8" y2="18"/><line x1="12" y1="18" x2="12" y2="18"/><line x1="16" y1="18" x2="16" y2="18"/></svg>
                 CALCULADORA
+            </button>
+
+            <button id="tc-btn-chat" type="button" class="btn-action" onclick="tcOpenChatModal()" title="Abrir TuClima IA">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/></svg>
+                CHAT IA
             </button>
 
             <button id="tc-btn-cabina" class="btn-action" onclick="tcToggleCabina()" title="Modo Cabina — alto contraste solar">
@@ -1105,7 +1113,7 @@
                 TENDENCIA 24 HORAS (OLAS VS VIENTO)
             </div>
             
-            <div id="navalChart" style="width:100%; height:300px;"></div>
+            <div id="navalChart" style="width:100%; height:360px; padding: 0 8px;"></div>
         
         </div>
     </div>
@@ -1669,8 +1677,30 @@
         function renderNavalChart() {
             // Datos seguros desde Django
             const fechas = {{ grafico_naval.fechas|default:"[]"|safe }};
-            const olas = {{ grafico_naval.olas|default:"[]"|safe }};
-            const vientos = {{ grafico_naval.viento|default:"[]"|safe }};
+            const olasRaw = {{ grafico_naval.olas|default:"[]"|safe }};
+            const vientosRaw = {{ grafico_naval.viento|default:"[]"|safe }};
+
+            // Normalizar / alinear series (evita descuadre si longitudes difieren)
+            const n = Math.min(fechas.length, olasRaw.length, vientosRaw.length);
+            const categorias = fechas.slice(0, n);
+            const olas = olasRaw.slice(0, n).map(function(v) {
+                var x = Number(v);
+                return isFinite(x) ? Math.round(x * 100) / 100 : 0;
+            });
+            const vientos = vientosRaw.slice(0, n).map(function(v) {
+                var x = Number(v);
+                return isFinite(x) ? Math.round(x * 10) / 10 : 0;
+            });
+
+            var maxOla = olas.reduce(function(a, b) { return Math.max(a, b); }, 0);
+            var maxViento = vientos.reduce(function(a, b) { return Math.max(a, b); }, 0);
+            // Escalas con cero común + softMax legible (evita ejes 0.008… y viento arrancando en 1)
+            var softMaxOlas = maxOla < 0.4
+                ? Math.max(0.5, Math.ceil(maxOla * 10) / 10 + 0.1)
+                : Math.max(2.5, Math.ceil(maxOla * 10) / 10 + 0.3);
+            var softMaxViento = maxViento < 10
+                ? Math.max(10, Math.ceil(maxViento) + 1)
+                : Math.max(25, Math.ceil(maxViento * 1.1));
 
             // Textos por defecto (ESPAÑOL PURO)
             let tOlas = "Altura de Ola";
@@ -1686,9 +1716,21 @@
                 if (document.getElementById('txt-axis-viento')) tAxisViento = document.getElementById('txt-axis-viento').innerText;
             } catch(e) { console.log("Usando textos base Naval"); }
 
+            if (chartNaval) {
+                try { chartNaval.destroy(); } catch (e) {}
+                chartNaval = null;
+            }
+
             // Configuración Highcharts
             chartNaval = Highcharts.chart('navalChart', {
-                chart: { backgroundColor: 'transparent', style: { fontFamily: 'Rajdhani' }, type: 'column' },
+                chart: {
+                    backgroundColor: 'transparent',
+                    style: { fontFamily: 'Rajdhani' },
+                    type: 'column',
+                    alignTicks: true,
+                    spacing: [16, 24, 12, 16],
+                    animation: false
+                },
                 exporting: {
                     enabled: true,
                     chartOptions: { chart: { backgroundColor: '#020617' } },
@@ -1696,15 +1738,31 @@
                 },
                 title: { text: '' },
                 xAxis: {
-                    categories: fechas,
+                    categories: categorias,
                     lineColor: '#1e3a8a',
-                    labels: { style: { color: '#94a3b8', fontFamily: 'JetBrains Mono' } }
+                    tickLength: 0,
+                    labels: {
+                        style: { color: '#94a3b8', fontFamily: 'JetBrains Mono', fontSize: '11px' },
+                        step: categorias.length > 12 ? 2 : 1,
+                        rotation: 0,
+                        autoRotation: false
+                    }
                 },
                 yAxis: [{
-                    title: { text: tAxisOlas, style: { color: '#06b6d4' } },
-                    gridLineColor: '#1e3a8a',
-                    labels: { style: { color: '#06b6d4' } },
-                    plotBands: [{
+                    min: 0,
+                    softMax: softMaxOlas,
+                    tickAmount: 5,
+                    alignTicks: true,
+                    title: { text: tAxisOlas, style: { color: '#06b6d4' }, margin: 12 },
+                    gridLineColor: 'rgba(30,58,138,0.55)',
+                    labels: {
+                        style: { color: '#06b6d4', fontFamily: 'JetBrains Mono', fontSize: '11px' },
+                        formatter: function() {
+                            var v = this.value;
+                            return (v >= 1 || v === 0) ? Highcharts.numberFormat(v, 1) : Highcharts.numberFormat(v, 2);
+                        }
+                    },
+                    plotBands: softMaxOlas >= 1.2 ? [{
                         from: 0, to: 1.0,
                         color: 'rgba(34,211,238,0.04)',
                         label: { text: 'Mar llana', style: { color: '#22d3ee', fontSize: '9px' }, align: 'right', x: -4 }
@@ -1713,11 +1771,15 @@
                         color: 'rgba(250,204,21,0.04)',
                         label: { text: 'Precaución', style: { color: '#facc15', fontSize: '9px' }, align: 'right', x: -4 }
                     }, {
-                        from: 2.5, to: 20,
+                        from: 2.5, to: Math.max(softMaxOlas, 3),
                         color: 'rgba(239,68,68,0.04)',
                         label: { text: 'Puerto cerrado', style: { color: '#ef4444', fontSize: '9px' }, align: 'right', x: -4 }
+                    }] : [{
+                        from: 0, to: softMaxOlas,
+                        color: 'rgba(34,211,238,0.03)',
+                        label: { text: 'Mar calmado', style: { color: '#22d3ee', fontSize: '9px' }, align: 'right', x: -4 }
                     }],
-                    plotLines: [{
+                    plotLines: softMaxOlas >= 1.2 ? [{
                         value: 1.0,
                         color: '#facc15',
                         width: 1,
@@ -1730,12 +1792,20 @@
                         dashStyle: 'ShortDash',
                         zIndex: 3,
                         label: { text: 'Límite 2.5m', style: { color: '#ef4444', fontSize: '10px' }, align: 'right', x: -4 }
-                    }]
+                    }] : []
                 }, {
-                    title: { text: tAxisViento, style: { color: '#facc15' } },
+                    min: 0,
+                    softMax: softMaxViento,
+                    tickAmount: 5,
+                    alignTicks: true,
+                    title: { text: tAxisViento, style: { color: '#facc15' }, margin: 12 },
                     opposite: true,
-                    labels: { style: { color: '#facc15' } },
-                    plotLines: [{
+                    gridLineWidth: 0,
+                    labels: {
+                        style: { color: '#facc15', fontFamily: 'JetBrains Mono', fontSize: '11px' },
+                        formatter: function() { return Highcharts.numberFormat(this.value, 0); }
+                    },
+                    plotLines: softMaxViento >= 12 ? [{
                         value: 11,
                         color: '#facc15',
                         width: 1,
@@ -1749,36 +1819,61 @@
                         dashStyle: 'Dot',
                         zIndex: 3,
                         label: { text: 'F6 crítico', style: { color: '#ef4444', fontSize: '9px' }, align: 'left', x: 4 }
-                    }]
+                    }] : []
                 }],
-                legend: { itemStyle: { color: '#e2e8f0' } },
+                legend: {
+                    itemStyle: { color: '#e2e8f0' },
+                    align: 'center',
+                    verticalAlign: 'bottom',
+                    margin: 8
+                },
                 tooltip: {
                     shared: true,
-                    backgroundColor: 'rgba(15,23,42,0.9)',
+                    backgroundColor: 'rgba(15,23,42,0.95)',
                     style: { color: '#fff' },
                     borderColor: '#06b6d4',
                     formatter: function() {
                         var s = '<b style="color:#e2e8f0;">' + this.x + '</b>';
-                        this.points.forEach(function(p) { s += '<br/><span style="color:' + p.color + ';">●</span> ' + p.series.name + ': <b>' + p.y + '</b>'; });
+                        this.points.forEach(function(p) {
+                            var unidad = p.series.options.customUnit || '';
+                            var val = (p.series.index === 0)
+                                ? Highcharts.numberFormat(p.y, 2)
+                                : Highcharts.numberFormat(p.y, 1);
+                            s += '<br/><span style="color:' + p.color + ';">●</span> ' + p.series.name + ': <b>' + val + unidad + '</b>';
+                        });
                         return s;
                     }
+                },
+                plotOptions: {
+                    column: {
+                        borderRadius: 2,
+                        groupPadding: 0.12,
+                        pointPadding: 0.05,
+                        maxPointWidth: 28
+                    },
+                    series: { animation: false }
                 },
                 series: [{
                     name: tOlas,
                     data: olas.map(function(v) {
                         return { y: v, color: v >= 2.5 ? '#ef4444' : v >= 1.0 ? '#facc15' : '#22d3ee' };
                     }),
-                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderColor: 'rgba(255,255,255,0.12)',
                     borderWidth: 1,
-                    yAxis: 0
+                    yAxis: 0,
+                    customUnit: ' m',
+                    zIndex: 1
                 }, {
                     name: tViento,
                     type: 'spline',
                     data: vientos,
                     color: '#facc15',
                     dashStyle: 'ShortDot',
+                    lineWidth: 2.5,
                     yAxis: 1,
-                    marker: { enabled: false }
+                    customUnit: ' kt',
+                    marker: { enabled: false },
+                    zIndex: 2
                 }],
                 credits: { enabled: false }
             });
@@ -1795,7 +1890,7 @@
                         console.error('Highcharts no se pudo cargar tras varios intentos.');
                         ['navalChart', 'navalChart7d'].forEach(function(id) {
                             var el = document.getElementById(id);
-                            if (el) el.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#f87171; font-size:0.85rem; text-align:center; padding:20px;">No se pudo cargar la librería de gráficos (Highcharts). Revisá tu conexión o si algún bloqueador de contenido está impidiendo la carga de code.highcharts.com.</div>';
+                            if (el) el.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#f87171; font-size:0.85rem; text-align:center; padding:20px;">No se pudo cargar la librería de gráficos (Highcharts). Revisá tu conexión o bloqueadores.</div>';
                         });
                         return;
                     }
@@ -1831,14 +1926,21 @@
                     labels: { style: { color: '#94a3b8', fontFamily: 'JetBrains Mono', fontSize: '11px' } }
                 },
                 yAxis: [{
+                    min: 0,
+                    softMax: Math.max(2.5, Math.max.apply(null, olasMax.concat([0])) * 1.15),
+                    tickAmount: 5,
                     title: { text: 'Ola máx (m)', style: { color: '#06b6d4', fontSize: '11px' } },
                     gridLineColor: '#1e3a8a',
                     labels: { style: { color: '#06b6d4' } },
                     plotLines: [{ value: 1.0, color: '#facc15', width: 1, dashStyle: 'ShortDash', zIndex: 3 },
                                 { value: 2.5, color: '#ef4444', width: 1.5, dashStyle: 'ShortDash', zIndex: 3 }]
                 }, {
+                    min: 0,
+                    softMax: Math.max(25, Math.max.apply(null, vientoMax.concat([0])) * 1.1),
+                    tickAmount: 5,
                     title: { text: 'Viento máx (kt)', style: { color: '#facc15', fontSize: '11px' } },
                     opposite: true,
+                    gridLineWidth: 0,
                     labels: { style: { color: '#facc15' } }
                 }],
                 legend: { itemStyle: { color: '#e2e8f0', fontSize: '11px' } },
@@ -2550,9 +2652,20 @@
 <script>
 function enviarAccionRapida(txt) {
     var inp = document.getElementById('user-input');
-    if (inp) { inp.value = txt; if(typeof enviarMensaje === 'function') enviarMensaje(); }
+    if (inp) {
+        inp.value = txt;
+        if (typeof tcOpenChatModal === 'function') tcOpenChatModal();
+        if (typeof enviarMensaje === 'function') enviarMensaje();
+    }
 }
 </script>
+{% include 'partials/_chat_modal.html' %}
+<div id="tc-chat-modal" class="tc-chat-modal" aria-hidden="true" role="dialog" aria-label="TuClima IA">
+    <div class="tc-chat-modal-backdrop" onclick="tcCloseChatModal()"></div>
+    <div class="tc-chat-modal-panel">
+        <button type="button" class="tc-chat-modal-close" onclick="tcCloseChatModal()" title="Cerrar chat" aria-label="Cerrar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
 <div class="chat-container">
     <div class="chat-header">
         <h3>
@@ -2643,10 +2756,12 @@ function enviarAccionRapida(txt) {
         </button>
     </div>
     <div id="chart-tabs" style="display: flex; gap: 10px; padding: 15px 20px 0 20px; overflow-x: auto;"></div>
-    <div style="padding: 20px;">
+    <div class="chart-canvas-wrap" style="padding: 20px; height: 280px; position: relative;">
         <canvas id="climatChart" width="400" height="200"></canvas>
     </div>
 </div>
+    </div><!-- /.tc-chat-modal-panel -->
+</div><!-- /#tc-chat-modal -->
 
 <script>
     // --- CONFIGURACIÓN NAVAL INTELLIGENCE PRO ---
@@ -2675,7 +2790,6 @@ function generateUUID() {
 function processMarkdown(text) {
     if (!text) return text;
     
-    // 0. Proteger etiquetas <a> ya presentes para no corromper URLs con markdown
     const htmlLinks = [];
     text = text.replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, (match) => {
         const idx = htmlLinks.length;
@@ -2683,45 +2797,31 @@ function processMarkdown(text) {
         return '\x00LINK_' + idx + '\x00';
     });
     
-    // Procesar elementos markdown en orden (importante el orden)
-    
-    // 1. Código inline (backticks)
     text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
     
-    // 2. Negritas (**texto** o __texto__)
+    text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, (m, label, url) => {
+        const idx = htmlLinks.length;
+        htmlLinks.push('<a href="' + url + '" target="_blank" rel="noopener" class="download-link">' + label + '</a>');
+        return '\x00LINK_' + idx + '\x00';
+    });
+    
     text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     text = text.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-    
-    // 3. Cursivas (*texto* o _texto_)
     text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-    text = text.replace(/_([^_]+)_/g, '<em>$1</em>');
     
-    // 4. Títulos
     text = text.replace(/^### (.+$)/gim, '<h3>$1</h3>');
     text = text.replace(/^## (.+$)/gim, '<h2>$1</h2>');
     text = text.replace(/^# (.+$)/gim, '<h1>$1</h1>');
     
-    // 5. Links [texto](url) - pero preservamos los links ya procesados
-    text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)(?![^<]*<\/a>)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-    
-    // 6. Listas con viñetas (bullet points)
     text = text.replace(/^[•*] (.+$)/gim, '<li>$1</li>');
+    text = text.replace(/(<li>.*?<\/li>\s*)+/gs, (match) => '<ul>' + match + '</ul>');
     
-    // Envolver listas consecutivas en <ul> (no codicioso para evitar fagocitar párrafos intermedios)
-    text = text.replace(/(<li>.*?<\/li>\s*)+/gs, (match) => {
-        return '<ul>' + match + '</ul>';
-    });
-    
-    // 7. Saltos de línea simples a <br>
     text = text.replace(/\n/g, '<br>');
-    
-    // 8. Limpiar <br> fantasma pegados a elementos de bloque
     text = text.replace(/<\/(h[1-3]|ul|ol|li)><br>/g, '</$1>');
     text = text.replace(/<br><(h[1-3]|ul|ol|li)>/g, '<$1>');
     
-    // 9. Restaurar etiquetas <a> originales
     htmlLinks.forEach((link, idx) => {
-        text = text.replace('\x00LINK_' + idx + '\x00', link);
+        text = text.split('\x00LINK_' + idx + '\x00').join(link);
     });
     
     return text;
@@ -3178,20 +3278,20 @@ async function enviarMensaje() {
         formData.append("userId", djangoUserId);
         formData.append("sector", "naval");
         if (archivo) {
+            formData.append("data00", archivo);
             if (archivo.type.startsWith('image/')) {
+                formData.append("imageMimeType", archivo.type);
+                formData.append("imageName", archivo.name);
+                formData.append("hasImage", "1");
                 await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = () => {
                         formData.append("imageBase64", reader.result.split(',')[1]);
-                        formData.append("imageMimeType", archivo.type);
-                        formData.append("imageName", archivo.name);
                         resolve();
                     };
                     reader.onerror = reject;
                     reader.readAsDataURL(archivo);
                 });
-            } else {
-                formData.append("data00", archivo);
             }
         }
 
@@ -3201,22 +3301,31 @@ async function enviarMensaje() {
             body: formData
         });
 
-        const datos = await respuesta.json();
+        const rawResp = await respuesta.text();
+        let datos = null;
+        try { datos = rawResp ? JSON.parse(rawResp) : null; } catch (e) { datos = null; }
+        if (!datos || typeof datos !== 'object') {
+            throw new Error('La IA no devolvió una respuesta válida. Revisá N8N_WEBHOOK_SECRET y que n8n esté activo.');
+        }
+        if (datos.error && !datos.output) {
+            throw new Error(String(datos.error));
+        }
         
         // --- PROCESAMIENTO DE RESPUESTA IA ---
-        // --- PROCESAMIENTO DE RESPUESTA IA (DENTRO DE TU FUNCION enviarMensaje) ---
-        let respuestaIA = datos.output || "Procesado correctamente.";
+        let respuestaIA = datos.output || datos.texto_limpio || datos.error || "Procesado correctamente.";
+        if (datos.chart_block && String(datos.chart_block).includes('[MOSTRAR_GRAFICO]')
+            && !respuestaIA.includes('[MOSTRAR_GRAFICO]')) {
+            respuestaIA = respuestaIA.trim() + '\n\n' + String(datos.chart_block).trim();
+        }
         
-        // Detectamos si mandó un gráfico ANTES de limpiar el texto
-        let tieneGrafico = respuestaIA.includes('[MOSTRAR_GRAFICO]');
+        let tieneGrafico = respuestaIA.includes('[MOSTRAR_GRAFICO]')
+            || !!(datos.chart_block && String(datos.chart_block).includes('[MOSTRAR_GRAFICO]'));
+        const pidioGrafico = /gr[aá]fico|dashboard|visualiz|m[oó]dulo\s*bi/i.test(texto || '');
 
         // MAGIA VISUAL: Ocultamos todo el bloque técnico para que el usuario solo lea el reporte limpio
         let textoVisible = respuestaIA.replace(/\[MOSTRAR_GRAFICO\][\s\S]*/i, "").trim();
         
-        const respuestaIAConLinks = textoVisible.replace(
-            /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-            '<a href="$2" target="_blank" class="download-link">$1</a>'
-        );
+        const respuestaIAConLinks = textoVisible;
 
         // Eliminar animación de espera
         const typingDiv = document.getElementById(typingId);
@@ -3225,13 +3334,19 @@ async function enviarMensaje() {
         // Imprimir el mensaje limpio en el chat usando la nueva función
         addBotMessage(respuestaIAConLinks);
         
-        // Disparar el gráfico si existe
-        if (tieneGrafico) {
-            const chartData = extractChartData(datos); // Extraemos los datos del JSON original
+        if (tieneGrafico || pidioGrafico) {
             setTimeout(() => {
-                toggleChart(true); 
-                createSampleChart(chartData); 
-            }, 500); 
+                Promise.resolve(window.tcProcessChatGrafico
+                    ? window.tcProcessChatGrafico(datos, respuestaIA)
+                    : (createSampleChart(extractChartData(datos)) && (toggleChart(true), true))
+                ).then(ok => {
+                    if (!ok && typeof addBotMessage === 'function') {
+                        addBotMessage(tieneGrafico
+                            ? 'Recibí la marca de gráfico pero no pude dibujarlo. Probá de nuevo o tocá el ícono de gráfico.'
+                            : '⚠️ La IA no envió el bloque de datos del gráfico. Pedí de nuevo: "generá el gráfico con el módulo BI" (tiene que incluir el bloque [MOSTRAR_GRAFICO]).');
+                    }
+                });
+            }, 300);
         }
         
         fileInput.value = ""; 
@@ -3239,7 +3354,7 @@ async function enviarMensaje() {
         // Eliminar animación de espera
         const typingDiv = document.getElementById(typingId);
         if (typingDiv) typingDiv.remove();
-        const errorMsg = addBotMessage('⚠️ Error de conexión o procesamiento.');
+        const errorMsg = addBotMessage('⚠️ ' + (error?.message || 'Error de conexión o procesamiento.'));
         errorMsg.style.color = 'red';
         console.error(error); // Para que veas el error real en F12
     }
@@ -3254,7 +3369,15 @@ async function enviarMensaje() {
 function toggleChart(forceShow = false) {
     const container = document.getElementById('chart-container');
     const chatContainer = document.querySelector('.chat-container');
-    if (forceShow || container.style.display === 'none') {
+    if (!container) return;
+    const isHidden = container.style.display === 'none' || !container.style.display || getComputedStyle(container).display === 'none';
+    if (forceShow || isHidden) {
+        if (!forceShow && !window.myChart) {
+            if (typeof addBotMessage === 'function') {
+                addBotMessage('Pedí un gráfico al asistente (por ejemplo: "generá un gráfico del clima") y lo muestro acá.');
+            }
+            return;
+        }
         container.style.display = 'block';
         setTimeout(() => container.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     } else {
@@ -3314,10 +3437,14 @@ function extractChartData(aiResponse) {
 
 // OVERRIDE: Parser mejorado — acepta key=value y mapea alias de nombres que genera la IA
 extractChartData = function(aiResponse) {
-    const fullOutput = aiResponse.output || aiResponse.texto_limpio || "";
+    const fullOutput = aiResponse.chart_block || aiResponse.output || aiResponse.texto_limpio || "";
     const _gm = fullOutput.match(/\[MOSTRAR_GRAFICO\]([\s\S]*)$/i);
     if (!_gm) return null;
     const bloque = _gm[1].trim();
+    if (bloque.indexOf('{') >= 0 && typeof window.tcParseChartJsonBlock === 'function') {
+        const fromJson = window.tcParseChartJsonBlock(bloque);
+        if (fromJson) return fromJson;
+    }
     const ALIAS = {
         chart_type:'type', labels:'etiquetas', horas:'etiquetas', fechas:'etiquetas', periodos:'etiquetas', turnos:'etiquetas',
         nubosidad_porcentaje:'nubosidad', cobertura_nube:'nubosidad', nubosidad_oktas:'nubosidad',
@@ -3333,12 +3460,18 @@ extractChartData = function(aiResponse) {
     for (const linea of bloque.split('\n')) {
         const t = linea.trim();
         if (!t || t.startsWith('#') || t.startsWith('//')) continue;
-        const sep = t.search(/[=:]/);
+        // Solo el primer : o = (preservar horas 12:00 en el valor)
+        const sepColon = t.indexOf(':');
+        const sepEq = t.indexOf('=');
+        let sep = -1;
+        if (sepColon >= 0 && sepEq >= 0) sep = Math.min(sepColon, sepEq);
+        else sep = sepColon >= 0 ? sepColon : sepEq;
         if (sep === -1) continue;
-        let key = t.slice(0, sep).trim().toLowerCase().replace(/[\s\-]+/g, '_');
-        const raw = t.slice(sep + 1).trim();
+        let key = t.slice(0, sep).trim().toLowerCase().replace(/["'`]/g, '').replace(/[\s\-]+/g, '_');
+        const raw = t.slice(sep + 1).trim(); // resto intacto
         if (!key || !raw) continue;
         key = ALIAS[key] || key;
+        if (['max','min','data','datos','value','values','total','status','message','ok','success','error'].includes(key)) continue;
         let parsed;
         try { parsed = JSON.parse(raw); }
         catch {
@@ -3352,16 +3485,19 @@ extractChartData = function(aiResponse) {
         resultado[key] = Array.isArray(parsed) ? parsed : [parsed];
     }
     if (Array.isArray(resultado.type)) resultado.type = resultado.type[0] || 'line';
-    return resultado;
+    const _hasSeries = Object.entries(resultado).some(([k, v]) =>
+        k !== 'etiquetas' && k !== 'type' && Array.isArray(v) && v.length >= 2 && typeof v[0] === 'number'
+    );
+    return _hasSeries ? resultado : null;
 };
 
 // 3. FUNCIÓN DEL DASHBOARD INTERACTIVO (Chart.js)
 function createSampleChart(chartData = null) {
-    if (!chartData) return;
+    if (!chartData) return false;
 
     const ctx = document.getElementById('climatChart').getContext('2d');
     const tabsContainer = document.getElementById('chart-tabs');
-    if (!tabsContainer) return; 
+    if (!tabsContainer) return false;
     
     tabsContainer.innerHTML = ''; 
 
@@ -3410,12 +3546,15 @@ function createSampleChart(chartData = null) {
     // Variables dinámicas: si la IA usó nombres propios no contemplados en allVariables
     if (chartData) {
         const _knownKeys = new Set(allVariables.map(v => v.key));
-        const _skipKeys = new Set(['type', 'etiquetas', 'titulo', '_titulo']);
+        const _skipKeys = new Set(['type', 'etiquetas', 'titulo', '_titulo', 'region', 'puerto', 'ubicacion', 'cultivo', 'aeropuerto_origen', 'aeropuerto_destino', 'serie', 'series', 'fase_lunar', 'condiciones_mar', 'condiciones_atmosfericas', 'tipo_energia', 'suelo', 'trabajo', 'nombre', 'email', 'max', 'min', 'data', 'datos', 'value', 'values', 'total', 'status', 'message', 'ok', 'success', 'error']);
+        Object.keys(chartData).forEach(k => {
+            if (_skipKeys.has(String(k).toLowerCase())) delete chartData[k];
+        });
         const _dynColors = ['#06b6d4','#f59e0b','#10b981','#f43f5e','#a855f7','#fbbf24','#3b82f6'];
         let _dynIdx = 0;
         for (const [_k, _v] of Object.entries(chartData)) {
-            if (_knownKeys.has(_k) || _skipKeys.has(_k)) continue;
-            if (!Array.isArray(_v) || _v.length === 0 || _v[0] === null || typeof _v[0] === 'string') continue;
+            if (_knownKeys.has(_k) || _skipKeys.has(_k) || _skipKeys.has(String(_k).toLowerCase())) continue;
+            if (!Array.isArray(_v) || _v.length < 2 || typeof _v[0] !== 'number') continue;
             allVariables.push({ key: _k, label: _k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), color: _dynColors[_dynIdx++ % _dynColors.length] });
         }
     }
@@ -3423,8 +3562,9 @@ function createSampleChart(chartData = null) {
     // Evitar duplicados de viento_direccion/direccion_viento
     const variablesDisponibles = allVariables.filter(v => {
         const hasData = chartData[v.key] !== undefined && 
-                        chartData[v.key].length > 0 && 
-                        chartData[v.key][0] !== null;
+                        Array.isArray(chartData[v.key]) &&
+                        chartData[v.key].length >= 2 && 
+                        typeof chartData[v.key][0] === 'number';
         
         // Si es direccion_viento y ya existe viento_direccion, saltar
         if (v.key === 'direccion_viento' && chartData['viento_direccion'] !== undefined && 
@@ -3435,16 +3575,15 @@ function createSampleChart(chartData = null) {
         return hasData;
     });
 
-    if (variablesDisponibles.length === 0) return;
+    if (variablesDisponibles.length === 0) return false;
 
     const labels = chartData.etiquetas || ['Actual'];
     let tituloUbicacion = chartData.region || chartData.puerto || chartData.aeropuerto_origen || chartData.ubicacion || 'Reporte';
-    
-    // 🧡 LIMPIEZA ANTI-BASURA: Sacamos comillas y cortamos si la IA metió un párrafo entero
-    tituloUbicacion = tituloUbicacion.replace(/["']/g, '').trim(); 
+    if (Array.isArray(tituloUbicacion)) tituloUbicacion = tituloUbicacion[0];
+    tituloUbicacion = String(tituloUbicacion == null ? 'Reporte' : tituloUbicacion).replace(/["']/g, '').trim() || 'Reporte';
     if (tituloUbicacion.length > 35) {
-        // Cortamos en la primera coma, punto, o simplemente a los 30 caracteres
-        tituloUbicacion = tituloUbicacion.split(/(?:\n|,|\.)/)[0].substring(0, 35) + '...'; 
+        tituloUbicacion = tituloUbicacion.split(/[,.]/)[0].substring(0, 35) + '...';
+        if (tituloUbicacion.length > 35) tituloUbicacion = tituloUbicacion.substring(0, 35) + '...';
     }
 
     function drawChart(variableConfig) {
@@ -3542,6 +3681,7 @@ function createSampleChart(chartData = null) {
     });
 
     drawChart(variablesDisponibles[0]);
+    return true;
 }
 </script>
 {% include 'partials/_modal_interactivo.html' %}

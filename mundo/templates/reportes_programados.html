@@ -4,92 +4,206 @@
 
 {% block extra_head %}
 <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            background: #0f172a; color: #f1f5f9;
-            font-family: 'Segoe UI', sans-serif;
-            min-height: 100vh; padding: 32px 20px;
-        }
-        .container { max-width: 640px; margin: 0 auto; }
-        h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
-        .subtitle { color: #64748b; font-size: 0.88rem; margin-bottom: 28px; }
+    :root {
+        --bg: #0b1220;
+        --card: rgba(15, 23, 42, 0.75);
+        --border: #1e293b;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --dim: #64748b;
+        --accent: #a78bfa;
+        --ok: #4ade80;
+        --danger: #f87171;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { overflow-x: hidden; }
+    body {
+        background:
+            radial-gradient(900px 400px at 15% -10%, rgba(167,139,250,0.12), transparent 55%),
+            linear-gradient(180deg, var(--bg), #0f172a 50%, #0a101c);
+        color: var(--text);
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        min-height: 100vh;
+        padding: 32px 20px 48px;
+        overflow-x: hidden;
+    }
+    .container { max-width: 640px; margin: 0 auto; }
 
-        .card {
-            background: rgba(255,255,255,0.03); border: 1px solid #1e293b;
-            border-radius: 16px; padding: 26px; margin-bottom: 20px;
-        }
-        .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 18px; color: #a78bfa; }
+    .page-title {
+        display: flex; align-items: center; gap: 12px;
+        font-size: 1.4rem; font-weight: 800; margin-bottom: 6px;
+    }
+    .page-title .ico {
+        width: 40px; height: 40px; border-radius: 12px;
+        display: grid; place-items: center;
+        background: rgba(167,139,250,0.12);
+        border: 1px solid rgba(167,139,250,0.3);
+        color: var(--accent);
+    }
+    .page-title .ico svg { width: 20px; height: 20px; }
+    .subtitle { color: var(--dim); font-size: 0.88rem; margin-bottom: 28px; line-height: 1.45; }
 
-        .reporte-row {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 0; border-bottom: 1px solid #1e293b; gap: 12px;
-        }
-        .reporte-row:last-child { border-bottom: none; }
-        .reporte-info { flex: 1; }
-        .reporte-sector { font-weight: 700; font-size: 0.9rem; }
-        .reporte-meta { color: #64748b; font-size: 0.78rem; margin-top: 3px; }
-        .activo-badge { background: rgba(34,197,94,0.12); color: #4ade80; padding: 3px 9px; border-radius: 10px; font-size: 0.72rem; font-weight: 700; }
-        .inactivo-badge { background: rgba(100,116,139,0.12); color: #94a3b8; padding: 3px 9px; border-radius: 10px; font-size: 0.72rem; font-weight: 700; }
+    .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 16px;
+    }
+    .card-title {
+        display: flex; align-items: center; gap: 10px;
+        font-size: 1rem; font-weight: 700; margin-bottom: 18px; color: var(--accent);
+    }
+    .card-title svg { width: 18px; height: 18px; flex-shrink: 0; }
 
-        label { display: block; color: #94a3b8; font-size: 0.82rem; margin-bottom: 6px; margin-top: 14px; }
+    .reporte-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 14px 0; border-bottom: 1px solid var(--border); gap: 12px;
+    }
+    .reporte-row:last-child { border-bottom: none; }
+    .reporte-info { flex: 1; min-width: 0; }
+    .reporte-sector {
+        font-weight: 700; font-size: 0.9rem;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .sector-ico {
+        width: 28px; height: 28px; border-radius: 8px;
+        display: grid; place-items: center; flex-shrink: 0;
+        border: 1px solid transparent;
+    }
+    .sector-ico svg { width: 14px; height: 14px; }
+    .sector-agro { color: #4ade80; background: rgba(74,222,128,0.1); border-color: rgba(74,222,128,0.25); }
+    .sector-naval { color: #22d3ee; background: rgba(34,211,238,0.1); border-color: rgba(34,211,238,0.25); }
+    .sector-aereo { color: #60a5fa; background: rgba(96,165,250,0.1); border-color: rgba(96,165,250,0.25); }
+    .sector-energia { color: #fbbf24; background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.25); }
+
+    .reporte-meta {
+        color: var(--dim); font-size: 0.78rem; margin-top: 5px;
+        display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;
+    }
+    .reporte-meta span {
+        display: inline-flex; align-items: center; gap: 5px;
+    }
+    .reporte-meta svg { width: 12px; height: 12px; opacity: 0.85; }
+
+    .activo-badge { background: rgba(34,197,94,0.12); color: var(--ok); padding: 3px 9px; border-radius: 10px; font-size: 0.72rem; font-weight: 700; }
+    .inactivo-badge { background: rgba(100,116,139,0.12); color: var(--muted); padding: 3px 9px; border-radius: 10px; font-size: 0.72rem; font-weight: 700; }
+
+    label { display: block; color: var(--muted); font-size: 0.82rem; margin-bottom: 6px; margin-top: 14px; font-weight: 600; }
+    input[type=text], input[type=email], input[type=number], select {
+        width: 100%; background: #0f172a; border: 1px solid #334155;
+        border-radius: 9px; padding: 10px 12px; color: var(--text); font-size: 0.9rem; outline: none;
+        font-family: inherit;
+    }
+    input:focus, select:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(167,139,250,0.15);
+    }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr)); gap: 12px; }
+
+    .btn-submit {
+        width: 100%; padding: 13px; border: none; border-radius: 12px;
+        background: linear-gradient(135deg, #7c3aed, #4f46e5);
+        color: #fff; font-size: 0.95rem; font-weight: 700;
+        cursor: pointer; margin-top: 20px; transition: opacity 0.2s;
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        font-family: inherit;
+    }
+    .btn-submit:hover { opacity: 0.9; }
+    .btn-submit svg { width: 16px; height: 16px; }
+    .btn-delete {
+        background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25);
+        border-radius: 8px; padding: 10px; color: var(--danger);
+        cursor: pointer; display: grid; place-items: center;
+        min-width: 44px; min-height: 44px; flex-shrink: 0;
+    }
+    .btn-delete svg { width: 16px; height: 16px; }
+    .error-msg {
+        background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25);
+        border-radius: 10px; padding: 11px 14px; color: var(--danger);
+        font-size: 0.85rem; margin-bottom: 16px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .error-msg svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .vacio { text-align: center; padding: 32px 16px; color: var(--dim); font-size: 0.88rem; }
+    .vacio svg { width: 36px; height: 36px; display: block; margin: 0 auto 10px; color: #334155; }
+    .back-link { text-align: center; margin-top: 14px; }
+    .back-link a {
+        color: #38bdf8; text-decoration: none; font-size: 0.88rem; font-weight: 600;
+        display: inline-flex; align-items: center; gap: 6px;
+    }
+    .back-link a:hover { text-decoration: underline; }
+    .back-link svg { width: 14px; height: 14px; }
+
+    /* Responsive: tablet ≤900 | móvil ≤600 */
+    @media (max-width: 900px) {
+        body { padding: 24px 16px 48px; }
+        .reporte-row { flex-wrap: wrap; gap: 10px; }
+    }
+    @media (max-width: 600px) {
+        body { padding: 20px 12px 40px; }
+        .card { padding: 18px 14px; }
+        .grid-2 { grid-template-columns: 1fr; }
+        .page-title { font-size: 1.2rem; }
         input[type=text], input[type=email], input[type=number], select {
-            width: 100%; background: #1e293b; border: 1px solid #334155;
-            border-radius: 8px; padding: 9px 12px; color: #f1f5f9; font-size: 0.9rem; outline: none;
+            font-size: 16px; min-height: 44px;
         }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-        .btn-submit {
-            width: 100%; padding: 13px; border: none; border-radius: 12px;
-            background: linear-gradient(135deg, #7c3aed, #4f46e5);
-            color: #fff; font-size: 0.95rem; font-weight: 700;
-            cursor: pointer; margin-top: 20px; transition: opacity 0.2s;
-        }
-        .btn-submit:hover { opacity: 0.88; }
-        .btn-delete {
-            background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25);
-            border-radius: 8px; padding: 7px 13px; color: #f87171;
-            cursor: pointer; font-size: 0.82rem; white-space: nowrap;
-        }
-        .error-msg { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; padding: 10px 14px; color: #f87171; font-size: 0.85rem; margin-bottom: 16px; }
-        .vacio { text-align: center; padding: 28px; color: #475569; font-size: 0.88rem; }
-        .back-link { text-align: center; margin-top: 10px; }
-        .back-link a { color: #3b82f6; text-decoration: none; font-size: 0.88rem; font-weight: 600; }
-        .back-link a:hover { text-decoration: underline; }
-
-        @media (max-width: 520px) {
-            .container { padding: 0; }
-            .card { padding: 18px 14px; }
-            .grid-2 { grid-template-columns: 1fr; }
-            .reporte-row { flex-wrap: wrap; gap: 8px; }
-            .reporte-meta { font-size: 0.72rem; }
-        }
-    </style>
+        .btn-submit { min-height: 48px; }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="container">
 
-    <h1><i class="fas fa-clock" style="color:#a78bfa; margin-right:10px;"></i>Reportes Automáticos</h1>
+    <h1 class="page-title">
+        <span class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </span>
+        Reportes Automáticos
+    </h1>
     <p class="subtitle">Enviá análisis climáticos IA a tu email en forma periódica</p>
 
     {% if error %}
-    <div class="error-msg"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+    <div class="error-msg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        {{ error }}
+    </div>
     {% endif %}
 
-    <!-- Lista de reportes existentes -->
     <div class="card">
-        <div class="card-title"><i class="fas fa-list"></i> Mis reportes activos</div>
+        <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+            Mis reportes activos
+        </div>
         {% if reportes %}
             {% for rep in reportes %}
             <div class="reporte-row">
                 <div class="reporte-info">
                     <div class="reporte-sector">
-                        {% if rep.sector == 'agro' %}🌱{% elif rep.sector == 'naval' %}⚓{% elif rep.sector == 'aereo' %}✈️{% elif rep.sector == 'energia' %}⚡{% endif %}
+                        {% if rep.sector == 'agro' %}
+                        <span class="sector-ico sector-agro" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5a4 4 0 0 1 5.66 0"/></svg></span>
+                        {% elif rep.sector == 'naval' %}
+                        <span class="sector-ico sector-naval" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></svg></span>
+                        {% elif rep.sector == 'aereo' %}
+                        <span class="sector-ico sector-aereo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg></span>
+                        {% elif rep.sector == 'energia' %}
+                        <span class="sector-ico sector-energia" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
+                        {% endif %}
                         {{ rep.get_sector_display }} — {{ rep.get_frecuencia_display }}
                     </div>
                     <div class="reporte-meta">
-                        📧 {{ rep.email_efectivo }} &nbsp;·&nbsp; 🕐 {{ rep.hora_envio }}:00 UTC
-                        {% if rep.ultimo_envio %}&nbsp;·&nbsp; Último envío: {{ rep.ultimo_envio|date:"d/m H:i" }}{% endif %}
+                        <span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                            {{ rep.email_efectivo }}
+                        </span>
+                        <span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            {{ rep.hora_envio }}:00 UTC
+                        </span>
+                        {% if rep.ultimo_envio %}
+                        <span>Último envío: {{ rep.ultimo_envio|date:"d/m H:i" }}</span>
+                        {% endif %}
                     </div>
                 </div>
                 <span class="{% if rep.activo %}activo-badge{% else %}inactivo-badge{% endif %}">
@@ -99,35 +213,42 @@
                     {% csrf_token %}
                     <input type="hidden" name="accion" value="eliminar">
                     <input type="hidden" name="pk" value="{{ rep.id }}">
-                    <button type="submit" class="btn-delete"><i class="fas fa-trash-alt"></i></button>
+                    <button type="submit" class="btn-delete" title="Eliminar" aria-label="Eliminar reporte">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
                 </form>
             </div>
             {% endfor %}
         {% else %}
-            <div class="vacio"><i class="fas fa-inbox" style="font-size:1.8rem; display:block; margin-bottom:8px; color:#334155;"></i>Todavía no tenés reportes programados.</div>
+            <div class="vacio">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+                Todavía no tenés reportes programados.
+            </div>
         {% endif %}
     </div>
 
-    <!-- Formulario nuevo reporte -->
     <div class="card">
-        <div class="card-title"><i class="fas fa-plus-circle"></i> Agregar reporte</div>
+        <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            Agregar reporte
+        </div>
         <form method="POST">
             {% csrf_token %}
             <input type="hidden" name="accion" value="crear">
 
             <div class="grid-2">
                 <div>
-                    <label>Sector</label>
-                    <select name="sector">
-                        <option value="agro">🌱 Agropecuario</option>
-                        <option value="naval">⚓ Naval</option>
-                        <option value="aereo">✈️ Aéreo</option>
-                        <option value="energia">⚡ Energía</option>
+                    <label for="sector">Sector</label>
+                    <select name="sector" id="sector">
+                        <option value="agro">Agropecuario</option>
+                        <option value="naval">Naval</option>
+                        <option value="aereo">Aéreo</option>
+                        <option value="energia">Energía</option>
                     </select>
                 </div>
                 <div>
-                    <label>Frecuencia</label>
-                    <select name="frecuencia">
+                    <label for="frecuencia">Frecuencia</label>
+                    <select name="frecuencia" id="frecuencia">
                         <option value="diario">Diario</option>
                         <option value="semanal">Semanal</option>
                         <option value="mensual">Mensual</option>
@@ -137,23 +258,27 @@
 
             <div class="grid-2">
                 <div>
-                    <label>Hora de envío (UTC 0–23)</label>
-                    <input type="number" name="hora_envio" min="0" max="23" value="8">
+                    <label for="hora_envio">Hora de envío (UTC 0–23)</label>
+                    <input type="number" name="hora_envio" id="hora_envio" min="0" max="23" value="8">
                 </div>
                 <div>
-                    <label>Email destino (opcional)</label>
-                    <input type="email" name="email_destino" placeholder="Dejar vacío = tu email">
+                    <label for="email_destino">Email destino (opcional)</label>
+                    <input type="email" name="email_destino" id="email_destino" placeholder="Dejar vacío = tu email">
                 </div>
             </div>
 
             <button type="submit" class="btn-submit">
-                <i class="fas fa-plus"></i> Programar reporte
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Programar reporte
             </button>
         </form>
     </div>
 
     <div class="back-link">
-        <a href="/mi-cuenta/"><i class="fas fa-arrow-left"></i> Volver a mi cuenta</a>
+        <a href="/mi-cuenta/">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Volver a mi cuenta
+        </a>
     </div>
 
 </div>

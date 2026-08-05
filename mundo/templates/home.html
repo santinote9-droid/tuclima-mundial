@@ -36,6 +36,7 @@
             min-height: 100vh;
             overflow-x: hidden;
         }
+        /* padding-bottom del bottom-nav se aplica en @media ≤900px */
 
         .main-container {
             max-width: 1200px;
@@ -309,7 +310,7 @@
         }
         #sidebar-overlay.active { display: block; }
 
-        /* ---- Bottom Navigation Bar (solo visible en móvil vía @media) ---- */
+        /* ---- Bottom Navigation Bar (tablet + móvil vía @media ≤900) ---- */
         #bottom-nav {
             display: none;
             position: fixed;
@@ -340,10 +341,11 @@
             color: #475569;
             flex: 1;
             padding: 4px 2px;
+            min-width: 0;
             transition: color 0.2s, opacity 0.2s;
             -webkit-tap-highlight-color: transparent;
         }
-        .bnav-item svg { width: 20px; height: 20px; stroke-width: 2; }
+        .bnav-item svg { width: 20px; height: 20px; stroke-width: 2; flex-shrink: 0; }
         .bnav-item span { font-size: 0.58em; font-weight: 600; letter-spacing: 0.3px; }
         .bnav-inicio  { color: #38bdf8 !important; }
         .bnav-agro    { color: #4ade80 !important; opacity: 0.65; }
@@ -355,11 +357,11 @@
         .bnav-aereo:active, .bnav-energia:active,
         .bnav-cuenta:active { opacity: 1; }
 
-        /* Botón flotante Mi Cuenta (escritorio + móvil) */
+        /* Botón flotante Mi Cuenta */
         #btn-mi-cuenta {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: calc(16px + env(safe-area-inset-top, 0px));
+            right: 16px;
             z-index: 10000;
             display: flex;
             align-items: center;
@@ -381,287 +383,557 @@
             border-color: rgba(165,180,252,0.75);
         }
         #btn-mi-cuenta svg { width: 16px; height: 16px; stroke-width: 2; flex-shrink: 0; }
-        /* En móvil pequeño: solo icono */
-        @media (max-width: 480px) {
-            #btn-mi-cuenta .btn-cuenta-label { display: none; }
-            #btn-mi-cuenta { padding: 9px 12px; }
+
+        /* ---- Layout classes (evitan pelear con inline) ---- */
+        .top-chrome {
+            position: fixed;
+            top: calc(16px + env(safe-area-inset-top, 0px));
+            left: 16px;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: calc(100% - 140px);
+        }
+        .btn-menu {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(0, 210, 255, 0.5);
+            color: #00d2ff;
+            font-size: 1.5em;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .badge-pro {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            white-space: nowrap;
+        }
+        .badge-pro-dot {
+            width: 10px;
+            height: 10px;
+            background: #00d2ff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00d2ff;
+            flex-shrink: 0;
+        }
+        .badge-pro-label { display: inline; }
+        .badge-pro-short { display: none; }
+        .top-spacer { height: 80px; width: 100%; flex-shrink: 0; }
+
+        .buscador {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 30px 20px;
+            width: 100%;
+            max-width: 800px;
+            box-sizing: border-box;
+        }
+        .buscador-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            align-items: center;
+            width: 100%;
+            max-width: 600px;
+        }
+        .buscador-row form {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            width: 100%;
+            min-width: 0;
+        }
+        .buscador-row input[name="ciudad"] {
+            flex: 1;
+            min-width: 0;
+            padding: 14px 24px;
+            border-radius: 25px;
+            border: 1.5px solid rgba(56, 189, 248, 0.6);
+            outline: none;
+            font-size: 1.1em;
+            background: rgba(15, 23, 42, 0.8);
+            color: white;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(56, 189, 248, 0.1);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            box-sizing: border-box;
+        }
+        .btn-search,
+        .btn-gps {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            border: 2px solid #ffffff;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 8px 30px rgba(30, 64, 175, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+            padding: 0;
+        }
+        .btn-gps {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
+            box-shadow: 0 8px 30px rgba(30, 58, 138, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1);
+        }
+
+        #btnToggleCoords {
+            display: none;
+            width: 100%;
+            text-align: center;
+        }
+        #btnToggleCoords .btn-toggle-coords {
+            background: rgba(15,23,42,0.7);
+            border: 1px solid rgba(56,189,248,0.4);
+            color: #38bdf8;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #contenedorCoordenadas {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .form-coords {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            width: 100%;
+            max-width: 700px;
+            flex-wrap: wrap;
+        }
+        .form-coords .btn-coords-go {
+            margin-left: 0;
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            border: 2px solid #ffffff;
+            padding: 12px 30px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            box-shadow: 0 6px 25px rgba(30, 64, 175, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .seccion-horas {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+        #graficoHoras {
+            margin-top: 20px;
+            width: 100% !important;
+            max-width: 100%;
+        }
+
+        .detalle-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 0 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .detalle-card {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 20px;
+            width: 250px;
+            max-width: 100%;
+            text-align: left;
+            box-sizing: border-box;
+        }
+        .detalle-card.detalle-alerta {
+            background: rgba(0,0,0,0.4);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 25px 20px;
+        }
+
+        .paper-card {
+            background: rgba(10, 10, 20, 0.8);
+            border-left: 4px solid #a29bfe;
+            padding: 20px;
+            border-radius: 10px;
+            width: 350px;
+            max-width: 100%;
+            text-align: left;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+        #papers-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            min-height: 200px;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .dev-band {
+            background: rgba(15, 23, 42, 0.9);
+            color: #94a3b8;
+            text-align: center;
+            padding: 12px 16px;
+            font-size: 0.85em;
+            font-weight: 500;
+            border-top: 1px solid rgba(56, 189, 248, 0.2);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+            backdrop-filter: blur(10px);
+            margin: 60px 0 20px 0;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         /* ============================================================
-           RESPONSIVE — Desktop se mantiene intacto.
-           Todo lo que está aquí abajo sólo afecta 
-           tablets (≤ 900px) y móviles (≤ 600px).
+           RESPONSIVE — Desktop intacto.
+           Tablet ≤900px | Móvil ≤600px
            ============================================================ */
 
-        /* ---- TABLET (≤ 900px) ---- */
         @media (max-width: 900px) {
-
-            /* bg-layer usa position:fixed, funciona bien en iOS sin override */
-
-            /* Ocultar barra de usuario (está en sidebar) */
             .user-info { display: none !important; }
 
-            /* Tarjeta principal: quitar min-width fijo */
-            .card {
-                min-width: unset !important;
-                max-width: 96% !important;
-                width: 96% !important;
+            #bottom-nav { display: block; }
+            body {
+                padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+            }
+
+            .top-chrome {
+                top: calc(12px + env(safe-area-inset-top, 0px));
+                left: 12px;
+                gap: 8px;
+                max-width: calc(100% - 72px);
+            }
+            .btn-menu { padding: 8px 12px; font-size: 1.35em; }
+            .badge-pro { padding: 8px 12px; gap: 8px; font-size: 0.9em; }
+            .badge-pro-label { display: none; }
+            .badge-pro-short { display: inline; color: #ffcc00; font-weight: 700; }
+            .top-spacer { height: 64px; }
+
+            #btn-mi-cuenta {
+                top: calc(12px + env(safe-area-inset-top, 0px));
+                right: 12px;
+            }
+            #btn-mi-cuenta .btn-cuenta-label { display: none; }
+            #btn-mi-cuenta { padding: 9px 12px; }
+
+            .main-container {
+                padding: 12px 12px 0;
+                width: 100%;
+                max-width: 100%;
                 box-sizing: border-box;
             }
 
-            /* Detalles: 2 columnas */
+            .card {
+                min-width: 0;
+                max-width: 100%;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .buscador {
+                padding: 16px 8px;
+                margin-bottom: 24px;
+                gap: 14px;
+            }
+            .buscador-row { gap: 8px; }
+            .btn-search, .btn-gps { width: 52px; height: 52px; }
+            .btn-search svg, .btn-gps svg { width: 22px; height: 22px; }
+
+            .form-coords {
+                gap: 16px;
+                flex-wrap: wrap;
+            }
+            .coord-input-container { width: 180px; }
+
             .detalle-grid {
-                gap: 14px !important;
-                padding: 0 12px !important;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 14px;
+                padding: 0 12px;
             }
-            .detalle-grid > div {
-                width: calc(50% - 7px) !important;
-                box-sizing: border-box !important;
+            .detalle-card {
+                width: auto;
+                max-width: none;
             }
 
-            /* Papers: 2 columnas */
             .paper-card {
-                width: calc(50% - 10px) !important;
-                min-width: 240px !important;
-                box-sizing: border-box !important;
+                width: calc(50% - 10px);
+                min-width: 0;
             }
 
-            /* Noticias: 2 columnas en tablet */
+            .seccion-noticias-home { padding: 0 8px; }
             .contenedor-noticias {
-                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-                padding: 15px !important;
-                gap: 15px !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                padding: 4px 0;
+                gap: 14px;
             }
 
-            /* ── Carrusel horario tablet: ítems más amplios, scroll táctil ── */
             .seccion-horas {
-                padding: 20px 14px !important;
-                border-radius: 16px !important;
-                max-width: 100% !important;
+                padding: 20px 14px;
+                border-radius: 16px;
+                max-width: 100%;
             }
             .carrusel-horas {
-                padding: 14px 12px !important;
-                gap: 10px !important;
-                scrollbar-width: none !important;
+                padding: 14px 12px;
+                gap: 10px;
+                scrollbar-width: none;
             }
-            .carrusel-horas::-webkit-scrollbar { display: none !important; height: 0 !important; }
+            .carrusel-horas::-webkit-scrollbar { display: none; height: 0; }
             .contenedor-dias {
-                scrollbar-width: none !important;
+                padding: 14px 10px;
+                gap: 10px;
+                justify-content: flex-start;
+                scrollbar-width: none;
             }
-            .contenedor-dias::-webkit-scrollbar { display: none !important; height: 0 !important; }
-            .carrusel-arrow { display: flex !important; }
+            .contenedor-dias::-webkit-scrollbar { display: none; height: 0; }
+            .carrusel-arrow { display: flex; }
             .item-hora {
-                min-width: 78px !important;
-                padding: 12px 8px !important;
-                border-radius: 16px !important;
+                min-width: 78px;
+                padding: 12px 8px;
+                border-radius: 16px;
             }
-            .icono-hora { width: 42px !important; height: 42px !important; }
+            .icono-hora { width: 42px; height: 42px; }
+            .tarjeta-dia {
+                width: 110px;
+                min-height: 150px;
+                padding: 10px 6px;
+            }
+            .icono-chico { width: 48px; height: 48px; }
 
-            /* ── Títulos de sección: centrar en tablet ── */
-            .main-container h2 {
-                text-align: center !important;
-                margin-left: 0 !important;
-                padding-left: 12px !important;
-                padding-right: 12px !important;
-                justify-content: center !important;
+            .main-container h2,
+            .seccion-noticias-home h2 {
+                text-align: center;
+                margin-left: 0;
+                padding-left: 12px;
+                padding-right: 12px;
+                justify-content: center;
+            }
+            .noticias-home-sub {
+                margin-left: 0;
+                text-align: center;
             }
 
-            /* ── Footer: 2 columnas en tablet (769-900px) ── */
+            .sunblock {
+                gap: 28px;
+                padding: 12px 14px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
             .footer-content {
-                grid-template-columns: repeat(2, 1fr) !important;
-                gap: 28px !important;
-                padding: 0 18px !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 28px;
+                padding: 0 18px;
+            }
+            .site-footer {
+                width: 100%;
+                margin-left: 0;
+                margin-right: 0;
             }
         }
 
-        /* ---- MÓVIL (≤ 600px) ---- */
         @media (max-width: 600px) {
+            h1 { font-size: 1.8em; }
+            h2 { font-size: 1.15em; }
+            .dato-grande { font-size: 2.8em; }
+            .icono-principal { width: 96px; height: 96px; }
 
-            /* Tipografía */
-            h1 { font-size: 1.8em !important; }
-            h2 { font-size: 1.15em !important; }
-            .dato-grande { font-size: 2.8em !important; }
-
-            /* Contenedor principal: padding mínimo */
             .main-container {
-                padding: 8px 8px 0 8px !important;
-                width: 100% !important;
+                padding: 8px 8px 0;
             }
 
-            /* Tarjeta principal: ancho total */
             .card {
-                min-width: unset !important;
-                max-width: 100% !important;
-                width: 100% !important;
-                padding: 18px 14px !important;
-                box-sizing: border-box;
+                padding: 18px 14px;
             }
 
-            /* Buscador ciudad: row con input + botón GPS */
             .buscador {
-                padding: 12px 0 !important;
-                gap: 10px !important;
+                padding: 12px 0;
+                gap: 10px;
             }
-            .buscador > div:first-child {
-                width: 100% !important;
+            .buscador-row input[name="ciudad"] {
+                font-size: 16px;
+                padding: 11px 14px;
             }
-            .buscador input[name="ciudad"] {
-                font-size: 0.9em !important;
-                padding: 11px 14px !important;
+            .btn-search, .btn-gps {
+                width: 48px;
+                height: 48px;
             }
+            .btn-search svg, .btn-gps svg { width: 20px; height: 20px; }
 
-            /* Coordenadas: ocultas por defecto en móvil, toggle las muestra */
-            #contenedorCoordenadas {
-                display: none;
-            }
+            #contenedorCoordenadas { display: none; }
+            #contenedorCoordenadas.is-open { display: flex; }
+            #btnToggleCoords { display: block; }
 
-            /* Mostrar botón toggle sólo en móvil */
-            #btnToggleCoords {
-                display: block !important;
-            }
-
-            /* En móvil: formulario coords en columna */
-            #formCoordenadas {
-                flex-direction: column !important;
-                align-items: center !important;
-                gap: 14px !important;
+            .form-coords {
+                flex-direction: column;
+                align-items: center;
+                gap: 14px;
             }
             .coord-input-container {
-                width: 100% !important;
-                max-width: 260px !important;
+                width: 100%;
+                max-width: 260px;
+            }
+            .form-coords .btn-coords-go {
+                width: 100%;
+                max-width: 260px;
+                margin-left: 0;
             }
 
-            /* Amanecer / Atardecer */
             .sunblock {
-                gap: 20px !important;
-                padding: 12px 8px !important;
-                justify-content: center !important;
+                gap: 20px;
+                padding: 12px 8px;
             }
 
-            /* Calendario pronóstico: tarjetas más small */
             .contenedor-dias {
-                padding: 10px 6px !important;
-                gap: 6px !important;
-                justify-content: flex-start !important;
+                padding: 10px 6px;
+                gap: 6px;
             }
             .tarjeta-dia {
-                width: 90px !important;
-                min-height: 138px !important;
-                padding: 8px 4px !important;
+                width: 90px;
+                min-height: 138px;
+                padding: 8px 4px;
             }
-            .icono-chico { width: 38px !important; height: 38px !important; }
+            .icono-chico { width: 38px; height: 38px; }
 
-            /* ── Carrusel horario móvil: scroll sin barra, ítems touch-friendly ── */
             .seccion-horas {
-                padding: 14px 10px !important;
-                border-radius: 14px !important;
+                padding: 14px 10px;
+                border-radius: 14px;
             }
             .carrusel-horas {
-                gap: 8px !important;
-                padding: 12px 10px !important;
-                scrollbar-width: none !important;
-                -webkit-overflow-scrolling: touch;
-            }
-            .carrusel-horas::-webkit-scrollbar {
-                display: none !important;
-                height: 0 !important;
+                gap: 8px;
+                padding: 12px 10px;
             }
             .item-hora {
-                min-width: 70px !important;
-                padding: 10px 5px !important;
-                border-radius: 14px !important;
+                min-width: 70px;
+                padding: 10px 5px;
+                border-radius: 14px;
             }
-            .icono-hora { width: 36px !important; height: 36px !important; }
-            .carrusel-arrow { display: flex !important; }
+            .icono-hora { width: 36px; height: 36px; }
 
-            /* Detalles: 2 columnas en móvil */
             .detalle-grid {
-                display: grid !important;
-                grid-template-columns: 1fr 1fr !important;
-                flex-direction: unset !important;
-                align-items: unset !important;
-                padding: 0 8px !important;
-                gap: 8px !important;
+                grid-template-columns: 1fr 1fr;
+                padding: 0 8px;
+                gap: 8px;
             }
-            .detalle-grid > div {
-                width: auto !important;
-                max-width: 100% !important;
-                box-sizing: border-box !important;
-                padding: 12px 10px !important;
-            }
+            .detalle-card { padding: 12px 10px; }
 
-            /* Papers: 1 columna */
             .paper-card {
-                width: calc(100vw - 32px) !important;
-                max-width: 100% !important;
-                box-sizing: border-box !important;
+                width: 100%;
+                max-width: 100%;
             }
             #papers-container {
-                flex-direction: column !important;
-                align-items: center !important;
-                padding: 8px !important;
-                gap: 10px !important;
+                flex-direction: column;
+                align-items: stretch;
+                padding: 8px;
+                gap: 10px;
             }
-
-            /* Noticias: 1 columna */
-            .contenedor-noticias {
-                grid-template-columns: 1fr !important;
-                padding: 8px !important;
-                gap: 12px !important;
-            }
-            .tarjeta-noticia-mejorada { min-height: unset !important; height: auto !important; }
-
-            /* ── Noticias: reducir imagen en móvil ── */
-            .foto-noticia-mejorada { height: 130px !important; }
-
-            /* ── Paper cards: eliminar altura fija del resumen ── */
             .paper-card p {
-                height: auto !important;
-                max-height: 80px !important;
+                height: auto;
+                max-height: 80px;
             }
 
-            /* ── Títulos de sección: centrar en móvil ── */
+            .contenedor-noticias {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .tarjeta-noticia-mejorada {
+                min-height: 0;
+                height: auto;
+            }
+            .noticia-media { height: 120px; }
+
             .main-container h2 {
-                text-align: center !important;
-                margin-left: 0 !important;
-                padding-left: 10px !important;
-                padding-right: 10px !important;
-                justify-content: center !important;
-                font-size: 1.1em !important;
+                font-size: 1.1em;
+                padding-left: 10px;
+                padding-right: 10px;
             }
 
-            /* Footer: centrar todo */
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 28px;
+                padding: 0 15px;
+            }
             .footer-bottom {
-                flex-direction: column !important;
-                text-align: center !important;
-                gap: 10px !important;
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+                padding: 20px 15px 0;
             }
             .legal-links {
-                flex-direction: row !important;
-                flex-wrap: wrap !important;
-                justify-content: center !important;
-                gap: 12px !important;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 12px;
             }
-            .site-footer {
-                padding: 36px 0 20px 0 !important;
-            }
+            .site-footer { padding: 36px 0 20px; }
 
-            /* Separadores: menos margen en móvil */
-            .main-container hr {
-                margin: 24px 0 !important;
-            }
+            .main-container hr { margin: 24px 0; }
+            #graficoHoras { max-height: 180px; }
 
-            /* Gráfico: limitar altura en móvil */
-            #graficoHoras { max-height: 180px !important; }
+            input[type="text"],
+            input[type="number"] { font-size: 16px; }
 
-            /* Inputs: evitar zoom automático en iOS (requiere >= 16px) */
-            input[type="text"], input[type="number"] { font-size: 16px !important; }
-
-            /* Bottom nav: mostrar en móvil */
-            #bottom-nav { display: block !important; }
-
-            /* Espaciado inferior para no quedar oculto detrás del bottom nav */
-            body { padding-bottom: 68px !important; }
+            .bnav-item span { font-size: 0.52em; }
+            .dev-band { margin: 36px 0 12px; padding: 10px 12px; }
         }
 
     </style>
@@ -781,38 +1053,16 @@
 </a>
 {% endif %}
 
-<div style="position: fixed; top: 20px; left: 20px; z-index: 10000; display: flex; align-items: center; gap: 15px;">
-        
-        <button onclick="toggleMenu()" style="
-            background: rgba(0, 0, 0, 0.6); 
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(0, 210, 255, 0.5); 
-            color: #00d2ff; 
-            font-size: 1.5em; 
-            padding: 10px 15px; 
-            border-radius: 10px; 
-            cursor: pointer; 
-            transition: 0.3s;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);">
-            ☰
-        </button>
-
+<div class="top-chrome">
+        <button type="button" class="btn-menu" onclick="toggleMenu()" aria-label="Abrir menú">☰</button>
 {% if user.is_authenticated and user.perfil.suscripcion_activa %}
-    <div class="notranslate" style="
-        background: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(5px);
-        padding: 10px 20px;
-        border-radius: 30px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        font-weight: bold;
-        color: #fff;
-        display: flex; align-items: center; gap: 10px;
-        box-shadow: 0 0 15px rgba(0,0,0,0.5);">
-        
-        <div style="width: 10px; height: 10px; background: #00d2ff; border-radius: 50%; box-shadow: 0 0 10px #00d2ff;"></div>
-        TuClima <span style="color: #ffcc00;">PRO</span>
+    <div class="badge-pro notranslate" title="TuClima PRO">
+        <div class="badge-pro-dot"></div>
+        <span class="badge-pro-label">TuClima <span style="color: #ffcc00;">PRO</span></span>
+        <span class="badge-pro-short">PRO</span>
     </div>
-{% endif %} </div>
+{% endif %}
+</div>
 
     <div id="sidebar-overlay" onclick="toggleMenu()"></div>
 
@@ -1070,22 +1320,20 @@
         }
     </script>
 
-    <div style="height: 80px;"></div>    
-    
-    <div class="buscador" style="display: flex; flex-direction: column; justify-content: center; gap: 20px; align-items: center; margin-bottom: 40px; padding: 30px 20px; width: 100%; max-width: 800px;">
-        
-        <!-- Buscador Principal (actual) -->
-        <div style="display: flex; justify-content: center; gap: 12px; align-items: center; width: 100%; max-width: 600px;">
-            <form id="busquedaForm" action="" method="get" style="display: flex; gap: 12px; align-items: center; width: 100%;">
-            <input type="text" name="ciudad" placeholder="Buscar ciudad..." required 
-               style="flex: 1; padding: 14px 24px; border-radius: 25px; border: 1.5px solid rgba(56, 189, 248, 0.6); outline: none; font-size: 1.1em; background: rgba(15, 23, 42, 0.8); color: white; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(56, 189, 248, 0.1); transition: all 0.3s ease; backdrop-filter: blur(10px);" onfocus="this.style.borderColor='#38bdf8'; this.style.boxShadow='0 4px 25px rgba(56, 189, 248, 0.4), inset 0 0 15px rgba(56, 189, 248, 0.2)'" onblur="this.style.borderColor='rgba(56, 189, 248, 0.6)'; this.style.boxShadow='0 4px 20px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(56, 189, 248, 0.1)';">
-            <button type="submit" style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); border: 2px solid #ffffff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 8px 30px rgba(30, 64, 175, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1); transition: all 0.3s ease; flex-shrink: 0; position: relative; overflow: hidden;" onmouseover="this.style.transform='scale(1.1) translateY(-2px)'; this.style.boxShadow='0 12px 40px rgba(30, 64, 175, 0.6), 0 4px 15px rgba(255, 255, 255, 0.2)'; this.style.borderColor='#f8fafc';" onmouseout="this.style.transform='scale(1) translateY(0)'; this.style.boxShadow='0 8px 30px rgba(30, 64, 175, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1)'; this.style.borderColor='#ffffff';">
+    <div class="top-spacer" aria-hidden="true"></div>
+
+    <div class="buscador">
+        <div class="buscador-row">
+            <form id="busquedaForm" action="" method="get">
+            <input type="text" name="ciudad" placeholder="Buscar ciudad..." required
+               onfocus="this.style.borderColor='#38bdf8'; this.style.boxShadow='0 4px 25px rgba(56, 189, 248, 0.4), inset 0 0 15px rgba(56, 189, 248, 0.2)'" onblur="this.style.borderColor='rgba(56, 189, 248, 0.6)'; this.style.boxShadow='0 4px 20px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(56, 189, 248, 0.1)';">
+            <button type="submit" class="btn-search" aria-label="Buscar ciudad" onmouseover="this.style.transform='scale(1.1) translateY(-2px)'; this.style.boxShadow='0 12px 40px rgba(30, 64, 175, 0.6), 0 4px 15px rgba(255, 255, 255, 0.2)'; this.style.borderColor='#f8fafc';" onmouseout="this.style.transform='scale(1) translateY(0)'; this.style.boxShadow='0 8px 30px rgba(30, 64, 175, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1)'; this.style.borderColor='#ffffff';">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="#ffffff" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1 0 6.65 6.65a7.5 7.5 0 0 0 10.6 10.6z"/></svg>
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%); transform: translateX(-100%); transition: transform 0.6s ease;"></div>
             </button>
             </form>
-            
-            <button id="btnGPS" onclick="usarGPSAsincrono()" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%); border: 2px solid #ffffff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 8px 30px rgba(30, 58, 138, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1); transition: all 0.3s ease; flex-shrink: 0; position: relative; overflow: hidden;" title="Mi Ubicación Actual" onmouseover="this.style.transform='scale(1.1) translateY(-2px)'; this.style.boxShadow='0 12px 40px rgba(30, 58, 138, 0.6), 0 4px 15px rgba(255, 255, 255, 0.2)'; this.style.borderColor='#f8fafc';" onmouseout="this.style.transform='scale(1) translateY(0)'; this.style.boxShadow='0 8px 30px rgba(30, 58, 138, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1)'; this.style.borderColor='#ffffff';">
+
+            <button type="button" id="btnGPS" class="btn-gps" onclick="usarGPSAsincrono()" title="Mi Ubicación Actual" aria-label="Usar GPS" onmouseover="this.style.transform='scale(1.1) translateY(-2px)'; this.style.boxShadow='0 12px 40px rgba(30, 58, 138, 0.6), 0 4px 15px rgba(255, 255, 255, 0.2)'; this.style.borderColor='#f8fafc';" onmouseout="this.style.transform='scale(1) translateY(0)'; this.style.boxShadow='0 8px 30px rgba(30, 58, 138, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1)'; this.style.borderColor='#ffffff';">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="#ffffff" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
@@ -1192,15 +1440,15 @@
         </style>
 
         <!-- Toggle para mostrar/ocultar buscador de coordenadas en móvil -->
-        <div id="btnToggleCoords" style="display:none; width:100%; text-align:center;">
-            <button type="button" onclick="toggleCoordenadas()" style="background: rgba(15,23,42,0.7); border: 1px solid rgba(56,189,248,0.4); color: #38bdf8; padding: 8px 18px; border-radius: 20px; font-size: 0.85em; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+        <div id="btnToggleCoords">
+            <button type="button" class="btn-toggle-coords" onclick="toggleCoordenadas()">
                 <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7.05 11.5 7.72 12.06a.5.5 0 0 0 .56 0C12.95 21.5 20 15.4 20 10a8 8 0 0 0-8-8z"/></svg>
                 <span id="lblToggleCoords">Buscar por coordenadas</span>
             </button>
         </div>
 
-        <div id="contenedorCoordenadas" style="display: flex; justify-content: center; width: 100%; margin-top: 20px;">
-    <form method="get" id="formCoordenadas" onsubmit="return buscarCoordenadas(event)" style="display: flex; align-items: center; justify-content: center; gap: 40px; width: 100%; max-width: 700px; flex-wrap: nowrap;">
+        <div id="contenedorCoordenadas">
+    <form method="get" id="formCoordenadas" class="form-coords" onsubmit="return buscarCoordenadas(event)">
         
         <div class="coord-input-container">
             <input type="number" step="any" name="lat" id="latInput" placeholder="Latitud" required 
@@ -1244,8 +1492,8 @@
             </div>
         </div>
 
-        <button type="button" onclick="buscarCoordenadas(event)" style="margin-left: 15px; background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); border: 2px solid #ffffff; padding: 12px 30px; border-radius: 20px; cursor: pointer; font-weight: 600; color: white; transition: all 0.3s ease; font-size: 1em; box-shadow: 0 6px 25px rgba(30, 64, 175, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; overflow: hidden;" 
-            onmouseover="this.style.transform='translateY(-3px) scale(1.08)'; this.style.boxShadow='0 10px 35px rgba(30, 64, 175, 0.6), 0 4px 15px rgba(255, 255, 255, 0.2)'; this.style.borderColor='#f8fafc';" 
+        <button type="button" class="btn-coords-go" onclick="buscarCoordenadas(event)" aria-label="Buscar por coordenadas"
+            onmouseover="this.style.transform='translateY(-3px) scale(1.08)'; this.style.boxShadow='0 10px 35px rgba(30, 64, 175, 0.6), 0 4px 15px rgba(255, 255, 255, 0.2)'; this.style.borderColor='#f8fafc';"
             onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 6px 25px rgba(30, 64, 175, 0.4), 0 2px 10px rgba(255, 255, 255, 0.1)'; this.style.borderColor='#ffffff';">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#ffffff" stroke-width="2.8" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%); transform: translateX(-100%); transition: transform 0.6s ease;"></div>
@@ -1253,6 +1501,7 @@
 
     </form>
 </div>
+</div><!-- /buscador -->
 
    <script>
         let cargandoDatos = false;
@@ -1589,9 +1838,16 @@
         function toggleCoordenadas() {
             const c = document.getElementById('contenedorCoordenadas');
             const lbl = document.getElementById('lblToggleCoords');
-            const visible = c.style.display !== 'none';
-            c.style.display = visible ? 'none' : 'flex';
-            if (lbl) lbl.textContent = visible ? 'Buscar por coordenadas' : 'Ocultar coordenadas';
+            if (!c) return;
+            const isMobile = window.matchMedia('(max-width: 600px)').matches;
+            if (isMobile) {
+                const open = c.classList.toggle('is-open');
+                if (lbl) lbl.textContent = open ? 'Ocultar coordenadas' : 'Buscar por coordenadas';
+            } else {
+                c.classList.remove('is-open');
+                c.style.display = '';
+                if (lbl) lbl.textContent = 'Buscar por coordenadas';
+            }
         }
 
         // 6. MANEJO DE FORMULARIOS Y FLECHAS
@@ -1771,7 +2027,7 @@
 
     <br>
 
-    <div class="seccion-horas" style="width: 100%; max-width: 1000px; margin: 0 auto; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); padding: 30px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.5);">
+    <div class="seccion-horas">
         <h3 id="tituloHoras" style="color: #00d2ff; margin-bottom: 20px; text-align: center; font-size: 1.3em;">Pronóstico por Horas (HOY)</h3>
         
         <div class="carrusel-wrapper" id="wrapperHoras">
@@ -1810,7 +2066,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
         </div>{# /carrusel-wrapper #}
-        <canvas id="graficoHoras" style="margin-top: 20px;"></canvas>
+        <canvas id="graficoHoras"></canvas>
     </div>
 
     <br><br><hr style="border-color: #aaa; margin: 40px 0; opacity: 0.5;">
@@ -1821,10 +2077,10 @@
         </svg>
         Detalles y Precauciones
     </h2>
-    
-    <div class="detalle-grid" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 0 20px; max-width: 1200px; margin: 0 auto;">
-        
-        <div id="card-uv" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; width: 250px; text-align: left;">
+
+    <div class="detalle-grid">
+
+        <div id="card-uv" class="detalle-card">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                 <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/clear-day.svg" style="width: 30px; height: 30px;">
                 <div style="color: #ccc; font-size: 0.9em;">ÍNDICE UV MÁXIMO</div>
@@ -1852,7 +2108,7 @@
             </div>
         </div>
 
-        <div style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; width: 250px; text-align: left;">
+        <div class="detalle-card">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                 <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/cloudy.svg" style="width: 30px; height: 30px;">
                 <div style="color: #ccc; font-size: 0.9em;">FORMACIÓN DE NUBES</div>
@@ -1864,7 +2120,7 @@
             </div>
         </div>
 
-        <div style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; width: 250px; text-align: left;">
+        <div class="detalle-card">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
                 <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/fog.svg" style="width: 25px; height: 25px;">
                 <div style="color: #ccc; font-size: 0.9em;">VISIBILIDAD</div>
@@ -1878,7 +2134,7 @@
             <div id="val-presion" style="font-size: 1.5em; font-weight: bold; color: #00d2ff;">{{ presion|floatformat:1 }} hPa</div>
         </div>
 
-        <div id="card-alerta" style="background: rgba(0,0,0,0.4); border: 2px solid {{ alerta_color }}; padding: 25px 20px; border-radius: 20px; width: 250px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 0 20px {{ alerta_color }}40;">
+        <div id="card-alerta" class="detalle-card detalle-alerta" style="border: 2px solid {{ alerta_color }}; box-shadow: 0 0 20px {{ alerta_color }}40;">
     
     <div style="color: {{ alerta_color }}; margin-bottom: 15px;">
         
@@ -1912,7 +2168,7 @@
     </div>
 </div>
 
-<div id="card-anomalia" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; width: 250px; text-align: left; position: relative; overflow: hidden;">
+<div id="card-anomalia" class="detalle-card" style="position: relative; overflow: hidden;">
     
     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
         <svg style="width: 24px; height: 24px; color: #cbd5e1;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/><path d="M12 2v2"/><path d="M12 14v.01"/><path d="M20 10h2"/><path d="M20 14h2"/><path d="M2 10h2"/><path d="M2 14h2"/></svg>
@@ -1963,262 +2219,384 @@
     </div>
 
     <br><br><hr style="border-color: #aaa; margin: 40px 0; opacity: 0.5;">
-    
-    <h2 style="color: #ffcc00; text-align: left; margin-left: 20px; text-shadow: 1px 1px 2px black; display: flex; align-items: center; gap: 10px;">
-        <svg style="width:28px; height:28px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
-        Alertas y Noticias Globales
-    </h2>
 
-    <div class="contenedor-noticias" id="noticias-container" style="display: flex; justify-content: center; align-items: center; min-height: 200px; max-width: 1200px; margin: 0 auto;">
-        <div style="text-align: center; color: #94a3b8;">
-            <svg style="width:40px; height:40px; animation: spin 2s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-            <p>Cargando noticias meteorológicas recientes...</p>
+    <section class="seccion-noticias-home" aria-labelledby="titulo-noticias-home">
+        <div class="noticias-home-head">
+            <h2 id="titulo-noticias-home">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
+                Alertas y Noticias
+            </h2>
+            <p class="noticias-home-sub">Actualizaciones climáticas y ambientales recientes</p>
         </div>
-    </div>
+
+        <div class="contenedor-noticias is-loading" id="noticias-container" role="status">
+            <div class="noticias-estado">
+                <svg class="noticias-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                <p>Cargando noticias meteorológicas…</p>
+            </div>
+        </div>
+    </section>
 
     <style>
-        @keyframes spin {
+        .seccion-noticias-home {
+            max-width: 1200px;
+            margin: 0 auto 48px;
+            padding: 0 16px;
+        }
+        .noticias-home-head {
+            margin: 0 4px 8px;
+        }
+        .noticias-home-head h2 {
+            color: #ffcc00;
+            text-align: left;
+            text-shadow: 1px 1px 2px rgba(0,0,0,.55);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 0 6px;
+            font-size: 1.45rem;
+        }
+        .noticias-home-head h2 svg {
+            width: 28px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+        .noticias-home-sub {
+            margin: 0 0 12px 38px;
+            color: #94a3b8;
+            font-size: 0.92rem;
+        }
+        @keyframes noticias-spin {
             to { transform: rotate(360deg); }
         }
-        
+        @keyframes noticias-fade-up {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         .contenedor-noticias {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+            padding: 4px 0 8px;
             max-width: 1200px;
             margin: 0 auto;
+            align-items: stretch;
+            justify-content: initial;
+            width: 100%;
+            box-sizing: border-box;
         }
-        
+        @media (max-width: 900px) {
+            .contenedor-noticias {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 14px;
+            }
+            .noticias-home-sub { margin-left: 0; text-align: center; }
+        }
+        @media (max-width: 600px) {
+            .contenedor-noticias {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .tarjeta-noticia-mejorada { min-height: 0; height: auto; }
+            .noticia-media { height: 120px; }
+        }
+        .contenedor-noticias.is-loading,
+        .contenedor-noticias.is-empty,
+        .contenedor-noticias.is-error {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 180px;
+        }
+        .noticias-estado {
+            text-align: center;
+            color: #94a3b8;
+            grid-column: 1 / -1;
+            padding: 28px 16px;
+        }
+        .noticias-estado p { margin: 10px 0 0; }
+        .noticias-estado.is-error { color: #f87171; }
+        .noticias-spin {
+            width: 36px;
+            height: 36px;
+            animation: noticias-spin 1.4s linear infinite;
+        }
         .tarjeta-noticia-mejorada {
-            background: #1e293b;
-            border-radius: 15px;
+            background: linear-gradient(165deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+            border-radius: 14px;
             overflow: hidden;
             text-align: left;
-            transition: transform 0.3s, box-shadow 0.3s;
-            border: 1px solid rgba(56, 189, 248, 0.2);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+            border: 1px solid rgba(56, 189, 248, 0.18);
             display: flex;
             flex-direction: column;
-            height: 100%;
-            min-height: 480px;
+            min-height: 0;
+            animation: noticias-fade-up 0.45s ease both;
         }
-        
         .tarjeta-noticia-mejorada:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(56, 189, 248, 0.2);
-            border-color: rgba(56, 189, 248, 0.5);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+            border-color: rgba(56, 189, 248, 0.45);
         }
-        
+        .noticia-media {
+            position: relative;
+            width: 100%;
+            height: 132px;
+            background:
+                radial-gradient(ellipse at 30% 20%, rgba(56, 189, 248, 0.28), transparent 55%),
+                linear-gradient(135deg, #0f172a, #1e293b 55%, #0c4a6e);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
         .foto-noticia-mejorada {
             width: 100%;
-            height: 160px;
-            background: linear-gradient(135deg, #00d2ff, #0f172a);
+            height: 100%;
             object-fit: cover;
             display: block;
         }
-        
-        .contenido-nota {
-            padding: 15px;
+        .noticia-media-fallback {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #38bdf8;
+        }
+        .noticia-media-fallback svg {
+            width: 42px;
+            height: 42px;
+            opacity: 0.85;
+        }
+        .noticia-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(15, 23, 42, 0.78);
+            color: #7dd3fc;
+            border: 1px solid rgba(125, 211, 252, 0.35);
+            padding: 3px 9px;
+            border-radius: 999px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .tarjeta-noticia-mejorada .contenido-nota {
+            padding: 14px 16px 16px;
             flex: 1;
             display: flex;
             flex-direction: column;
+            gap: 8px;
         }
-        
-        .contenido-nota > * {
-            margin: 0;
-        }
-        
-        .noticia-titulo {
-            color: #fff;
-            font-size: 0.95em;
-            line-height: 1.3;
+        .noticia-fuente {
+            font-size: 0.72rem;
+            background: rgba(56, 189, 248, 0.16);
+            color: #7dd3fc;
+            padding: 3px 9px;
+            border-radius: 6px;
+            display: inline-block;
             font-weight: 600;
-            margin: 10px 0;
-            flex-shrink: 0;
-        }
-        
-        .noticia-descripcion {
-            font-size: 0.85em;
-            color: #cbd5e1;
-            line-height: 1.4;
-            flex: 1;
+            width: fit-content;
+            max-width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .noticia-titulo {
+            color: #f8fafc;
+            font-size: 0.95rem;
+            line-height: 1.35;
+            font-weight: 600;
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .noticia-descripcion {
+            font-size: 0.84rem;
+            color: #cbd5e1;
+            line-height: 1.45;
+            margin: 0;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             line-clamp: 2;
             -webkit-box-orient: vertical;
-            margin-bottom: 12px;
+            overflow: hidden;
+            flex: 1;
         }
-        
         .noticia-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
             margin-top: auto;
+            gap: 8px;
+        }
+        .noticia-fecha {
+            font-size: 0.74rem;
+            color: #94a3b8;
+        }
+        .btn-leer-noticia {
+            background: transparent;
+            border: 1px solid #38bdf8;
+            color: #38bdf8;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s ease, color 0.2s ease;
+            width: fit-content;
+        }
+        .btn-leer-noticia:hover {
+            background: rgba(56, 189, 248, 0.12);
+            color: #e0f2fe;
+        }
+        .btn-leer-noticia svg {
+            width: 12px;
+            height: 12px;
         }
     </style>
 
     <script>
-        function formatearFecha(fecha) {
-            const ahora = new Date();
-            const fechaNoticia = new Date(fecha);
-            const diferencia = Math.floor((ahora - fechaNoticia) / 1000);
-            
-            if (diferencia < 60) return 'Hace unos segundos';
-            if (diferencia < 3600) return `Hace ${Math.floor(diferencia / 60)} min`;
-            if (diferencia < 86400) return `Hace ${Math.floor(diferencia / 3600)} h`;
-            if (diferencia < 604800) return `Hace ${Math.floor(diferencia / 86400)} días`;
-            
-            return fechaNoticia.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-        }
-        
-        function esNoticiaMeteorologia(titulo, descripcion) {
-            const contenido = (titulo + ' ' + descripcion).toLowerCase();
-            
-            // Diccionario ampliado: Clima + Medio Ambiente
-            const palabrasClave = [
-                'clima', 'meteorolog', 'temperatura', 'lluvia', 'nieve', 'tormenta', 
-                'viento', 'granizo', 'huracán', 'ciclón', 'presión', 'humedad', 
-                'pronóstico', 'frente frío', 'onda de calor', 'fenómeno', 'precipitación', 
-                'alerta', 'temporal', 'desastre natural', 'inundación', 'sequía', 'atmósfera',
-                // Nuevas ambientales:
-                'medio ambiente', 'cambio climático', 'calentamiento global', 'ecología',
-                'contaminación', 'emisiones', 'incendios forestales', 'deforestación',
-                'fenómeno del niño', 'fenómeno de la niña', 'capa de ozono'
-            ];
-            
-            // También agregamos "palabras prohibidas" para descartar falsos positivos 
-            // (ej: "clima político", "tormenta de críticas", "lluvia de inversiones")
-            const palabrasProhibidas = ['clima político', 'lluvia de críticas', 'lluvia de inversiones', 'tormenta política', 'fútbol', 'deportes', 'espectáculos'];
-            
-            const tienePalabraClave = palabrasClave.some(palabra => contenido.includes(palabra));
-            const tienePalabraProhibida = palabrasProhibidas.some(palabra => contenido.includes(palabra));
-            
-            return tienePalabraClave && !tienePalabraProhibida;
-        }
-        
-        async function cargarNoticias() {
-            const container = document.getElementById('noticias-container');
-            console.log('📡 Solicitando noticias a Django Backend...');
+        (function () {
+            const ICONO_CLIMA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="8" y1="20" x2="8.01" y2="20"/><line x1="12" y1="18" x2="12.01" y2="18"/><line x1="12" y1="22" x2="12.01" y2="22"/><line x1="16" y1="16" x2="16.01" y2="16"/><line x1="16" y1="20" x2="16.01" y2="20"/></svg>';
 
-            try {
-                // Ahora le pedimos las noticias a TU propio servidor (Sin CORS)
-                const response = await fetch('/api/noticias/');
-                
-                if (!response.ok) throw new Error('Error en el servidor Django');
-                
-                const data = await response.json();
-                
-                if (!data.success) throw new Error(data.error);
-                
-                let noticias = data.items;
-                
-                // Filtramos usando tu función
-                noticias = noticias.filter(nota => esNoticiaMeteorologia(nota.title, nota.description));
-                
-                if (noticias.length === 0) {
-                    container.innerHTML = '<p style="color: #94a3b8; text-align: center; padding: 40px; grid-column: 1/-1;">No se encontraron noticias ambientales recientes.</p>';
-                    return;
-                }
-                
-                // Preparar contenedor
-                container.innerHTML = '';
-                container.style.display = 'grid';
-                container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
-                container.style.gap = '20px';
-                container.style.padding = '20px';
-                container.style.maxWidth = '1200px';
-                container.style.margin = '0 auto';
-                
-                // Dibujar tarjetas
-                noticias.slice(0, 6).forEach((nota, index) => {
-                    const tarjeta = document.createElement('div');
-                    tarjeta.className = 'tarjeta-noticia-mejorada';
-                    tarjeta.style.animation = `fadeInUp 0.5s ease forwards`;
-                    tarjeta.style.animationDelay = `${index * 0.1}s`;
-                    
-                    let imagenURL = '';
-                    let tieneImagen = false;
-                    const imgMatch = nota.description.match(/<img[^>]+src="([^">]+)"/);
-                    if (imgMatch && imgMatch[1]) {
-                        imagenURL = imgMatch[1];
-                        tieneImagen = true;
+            function escapeHtml(valor) {
+                return String(valor ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function formatearFecha(fecha) {
+                if (!fecha) return '';
+                const fechaNoticia = new Date(fecha);
+                if (Number.isNaN(fechaNoticia.getTime())) return '';
+                const diferencia = Math.floor((Date.now() - fechaNoticia.getTime()) / 1000);
+                if (diferencia < 60) return 'Hace unos segundos';
+                if (diferencia < 3600) return `Hace ${Math.floor(diferencia / 60)} min`;
+                if (diferencia < 86400) return `Hace ${Math.floor(diferencia / 3600)} h`;
+                if (diferencia < 604800) return `Hace ${Math.floor(diferencia / 86400)} días`;
+                return fechaNoticia.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+            }
+
+            function normalizarTexto(texto) {
+                return String(texto || '')
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '');
+            }
+
+            function esNoticiaMeteorologia(titulo, descripcion) {
+                const contenido = normalizarTexto(`${titulo || ''} ${descripcion || ''}`);
+                const claves = [
+                    'clima', 'meteorolog', 'temperatura', 'lluvia', 'nieve', 'tormenta',
+                    'viento', 'granizo', 'huracan', 'ciclon', 'presion', 'humedad',
+                    'pronostico', 'frente frio', 'ola de calor', 'onda de calor', 'fenomeno',
+                    'precipitacion', 'alerta', 'temporal', 'desastre', 'inundacion', 'sequia',
+                    'atmosfera', 'ambiente', 'cambio climatico', 'calentamiento', 'ecologia',
+                    'contaminacion', 'emisiones', 'incendio', 'deforestacion', 'el nino',
+                    'la nina', 'ozono', 'smn', 'senamhi'
+                ];
+                const prohibidas = [
+                    'clima politico', 'lluvia de criticas', 'lluvia de inversiones',
+                    'tormenta politica', 'futbol', 'deportes', 'espectaculos'
+                ];
+                const ok = claves.some((p) => contenido.includes(p));
+                const ban = prohibidas.some((p) => contenido.includes(p));
+                return ok && !ban;
+            }
+
+            function mostrarEstado(container, mensaje, tipo) {
+                container.className = `contenedor-noticias is-${tipo}`;
+                container.innerHTML = `<div class="noticias-estado${tipo === 'error' ? ' is-error' : ''}"><p>${escapeHtml(mensaje)}</p></div>`;
+            }
+
+            async function cargarNoticias() {
+                const container = document.getElementById('noticias-container');
+                if (!container) return;
+
+                container.className = 'contenedor-noticias is-loading';
+                container.innerHTML = `
+                    <div class="noticias-estado">
+                        <svg class="noticias-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        <p>Cargando noticias meteorológicas…</p>
+                    </div>`;
+
+                try {
+                    const response = await fetch('/api/noticias/', { headers: { Accept: 'application/json' } });
+                    if (!response.ok) throw new Error('Error en el servidor');
+
+                    const data = await response.json();
+                    if (!data.success) throw new Error(data.error || 'Respuesta inválida');
+
+                    let noticias = Array.isArray(data.items) ? data.items : [];
+                    const filtradas = noticias.filter((n) => esNoticiaMeteorologia(n.title, n.description));
+                    // Si el filtro deja vacío (p. ej. títulos atípicos), mostramos el feed crudo
+                    noticias = filtradas.length ? filtradas : noticias;
+
+                    if (!noticias.length) {
+                        mostrarEstado(container, 'No se encontraron noticias ambientales recientes.', 'empty');
+                        return;
                     }
-                    
-                    let textoLimpio = nota.description.replace(/<[^>]*>?/gm, '').trim();
-                    if(textoLimpio.length > 120) textoLimpio = textoLimpio.substring(0, 120) + '...';
-                    
-                    const contenidoVisual = tieneImagen ? 
-                        `<img src="${imagenURL}" alt="Noticia" class="foto-noticia-mejorada" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div style="display: none; width: 100%; height: 100%; background: linear-gradient(135deg, #0f172a, #1e293b); align-items: center; justify-content: center; flex-direction: column; color: #38bdf8; font-size: 1.2em;">
-                            <div style="font-size: 2em; margin-bottom: 8px;">🌦️</div>
-                            <div style="font-weight: 600; text-align: center;">Meteorología</div>
-                        </div>` :
-                        `<div style="width: 100%; height: 100%; background: linear-gradient(135deg, #0f172a, #1e293b); display: flex; align-items: center; justify-content: center; flex-direction: column; color: #38bdf8; font-size: 1.2em;">
-                            <div style="font-size: 2em; margin-bottom: 8px;">🌦️</div>
-                            <div style="font-weight: 600; text-align: center;">Meteorología</div>
-                        </div>`;
-                    
-                    tarjeta.innerHTML = `
-                        <div style="position: relative; width: 100%; height: 160px; background: linear-gradient(135deg, #0f172a, #1e293b); overflow: hidden;">
-                            ${contenidoVisual}
-                            <div style="position: absolute; top: 10px; right: 10px; background: rgba(255, 152, 0, 0.9); color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.7em; font-weight: bold;">
-                                🌦️ CLIMA
-                            </div>
-                        </div>
-                        <div class="contenido-nota">
-                            <div style="font-size: 0.75em; background: rgba(56, 189, 248, 0.25); color: #38bdf8; padding: 4px 10px; border-radius: 4px; display: inline-block; margin-bottom: 10px; font-weight: 600;">
-                                ${nota.source}
-                            </div>
-                            <h3 class="noticia-titulo">${nota.title}</h3>
-                            <p class="noticia-descripcion">${textoLimpio}</p>
-                            <div class="noticia-footer">
-                                <span style="font-size: 0.75em; color: #94a3b8;">${formatearFecha(nota.pubDate)}</span>
-                                <span style="font-size: 0.7em; color: #38bdf8; background: rgba(56, 189, 248, 0.15); padding: 2px 6px; border-radius: 3px;">LIVE</span>
-                            </div>
-                            <a href="${nota.link}" target="_blank" rel="noopener noreferrer" style="background: transparent; border: 1px solid #00d2ff; color: #00d2ff; padding: 6px 12px; border-radius: 20px; margin-top: 10px; cursor: pointer; font-size: 0.8em; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: 0.3s; width: fit-content;" onmouseover="this.style.background='rgba(0, 210, 255, 0.1)'" onmouseout="this.style.background='transparent'">
-                                Leer más <svg style="width:12px; height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </a>
-                        </div>
-                    `;
-                    container.appendChild(tarjeta);
-                });
-                
-                console.log(`✅ Noticias cargadas exitosamente desde Django`);
-                
-            } catch (error) {
-                console.error('❌ Error interno:', error);
-                container.innerHTML = '<p style="color: #ef4444; text-align: center; padding: 40px; grid-column: 1/-1;">Error procesando noticias en el servidor propio.</p>';
-            }
-        }
 
-        // Agregar animación fadeInUp
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(20px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
+                    container.className = 'contenedor-noticias';
+                    container.removeAttribute('role');
+                    container.innerHTML = '';
+
+                    noticias.slice(0, 6).forEach((nota, index) => {
+                        const titulo = (nota.title || '').trim() || 'Sin título';
+                        const fuente = (nota.source || 'Google News').trim();
+                        const resumen = (nota.description || '').trim();
+                        const link = (nota.link || '#').trim();
+                        const imagen = (nota.image || '').trim();
+
+                        const media = imagen
+                            ? `<img src="${escapeHtml(imagen)}" alt="" class="foto-noticia-mejorada" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';var f=this.nextElementSibling;if(f)f.hidden=false;"><div class="noticia-media-fallback" hidden>${ICONO_CLIMA}</div>`
+                            : `<div class="noticia-media-fallback">${ICONO_CLIMA}</div>`;
+
+                        const tarjeta = document.createElement('article');
+                        tarjeta.className = 'tarjeta-noticia-mejorada';
+                        tarjeta.style.animationDelay = `${index * 0.08}s`;
+                        tarjeta.innerHTML = `
+                            <div class="noticia-media">
+                                ${media}
+                                <span class="noticia-badge">Clima</span>
+                            </div>
+                            <div class="contenido-nota">
+                                <span class="noticia-fuente">${escapeHtml(fuente)}</span>
+                                <h3 class="noticia-titulo">${escapeHtml(titulo)}</h3>
+                                ${resumen ? `<p class="noticia-descripcion">${escapeHtml(resumen)}</p>` : ''}
+                                <div class="noticia-footer">
+                                    <span class="noticia-fecha">${escapeHtml(formatearFecha(nota.pubDate))}</span>
+                                    <a class="btn-leer-noticia" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">
+                                        Leer más
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(tarjeta);
+                    });
+                } catch (error) {
+                    console.error('Error cargando noticias:', error);
+                    mostrarEstado(container, 'No pudimos cargar las noticias ahora. Probá de nuevo en unos minutos.', 'error');
                 }
             }
-        `;
-        document.head.appendChild(style);
-        
-        // Cargar noticias al iniciar
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', cargarNoticias);
-        } else {
-            cargarNoticias();
-        }
-        
-        // Actualizar noticias cada 30 minutos
-        setInterval(cargarNoticias, 30 * 60 * 1000);
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', cargarNoticias);
+            } else {
+                cargarNoticias();
+            }
+            setInterval(cargarNoticias, 30 * 60 * 1000);
+        })();
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -2313,7 +2691,7 @@
         <span style="font-size: 0.5em; background: #6c5ce7; padding: 2px 8px; border-radius: 10px; color: white;">ArXiv API</span>
     </h2>
     
-    <div id="papers-container" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; min-height: 200px; align-items: center; max-width: 1200px; margin: 0 auto;">
+    <div id="papers-container">
         <div style="text-align: center; color: #94a3b8;">
             <svg style="width:40px; height:40px; animation: spin 2s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
             <p>Cargando papers meteorológicos de ArXiv...</p>
@@ -2353,16 +2731,15 @@
                     const pdfLink = paper.link.replace('/abs/', '/pdf/') + '.pdf';
                     
                     const tarjeta = document.createElement('div');
-                    tarjeta.classList.add('paper-card');
-                    tarjeta.classList.add('paper-card');
-                    tarjeta.style.cssText = 'background: rgba(10, 10, 20, 0.8); border-left: 4px solid #a29bfe; padding: 20px; border-radius: 10px; width: 350px; text-align: left; transition: transform 0.3s, box-shadow 0.3s; animation: fadeInUp 0.5s ease forwards; cursor: pointer; box-sizing: border-box;';
+                    tarjeta.className = 'paper-card';
+                    tarjeta.style.animation = 'fadeInUp 0.5s ease forwards';
                     tarjeta.style.animationDelay = `${index * 0.1}s`;
-                    
+
                     tarjeta.addEventListener('mouseenter', () => {
                         tarjeta.style.transform = 'translateY(-5px)';
                         tarjeta.style.boxShadow = '0 8px 20px rgba(162, 155, 254, 0.3)';
                     });
-                    
+
                     tarjeta.addEventListener('mouseleave', () => {
                         tarjeta.style.transform = 'translateY(0)';
                         tarjeta.style.boxShadow = 'none';
@@ -2507,13 +2884,14 @@
     
     html, body {
         margin: 0;
-        padding: 0;
         width: 100%;
         overflow-x: hidden;
         position: relative;
     }
+    html { padding: 0; }
+    /* No resetear padding-bottom del body: lo usa el bottom-nav en ≤900px */
 
-    /* CSS DEL FOOTER CORREGIDO PARA OCUPAR TODO EL ANCHO Y ESTAR CENTRADO */
+    /* Footer full-bleed (fuera de .main-container) */
     .site-footer {
         background-color: #020617;
         border-top: 1px solid rgba(56, 189, 248, 0.3);
@@ -2522,24 +2900,24 @@
         font-family: 'Segoe UI', sans-serif;
         color: #94a3b8;
         font-size: 0.9em;
-        width: 100vw;
-        margin-left: calc(-50vw + 50%);
-        margin-right: calc(-50vw + 50%);
+        width: 100%;
         box-sizing: border-box;
         clear: both;
         position: relative;
-        left: 0;
-        right: 0;
     }
 
     .footer-content {
         max-width: 1400px;
-        margin: 0 auto;
+        margin: 0 auto 50px;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 40px;
-        margin-bottom: 50px;
-        padding: 0 20px;
+        padding: 0 28px;
+        align-items: start;
+    }
+
+    .footer-col {
+        min-width: 0;
     }
 
     /* BARRA INFERIOR LEGAL */
@@ -2560,7 +2938,7 @@
     .footer-col h4 {
         color: #fff;
         font-family: 'Orbitron', sans-serif;
-        margin-bottom: 25px;
+        margin: 0 0 25px 0;
         font-size: 1.0em;
         letter-spacing: 1px;
         border-bottom: 2px solid rgba(56, 189, 248, 0.3);
@@ -2630,50 +3008,10 @@
         color: #38bdf8;
     }
 
-    @media (max-width: 768px) {
-        .footer-content {
-            grid-template-columns: 1fr;
-            gap: 28px;
-            padding: 0 15px;
-        }
-
-        .footer-bottom { 
-            flex-direction: column; 
-            text-align: center;
-            padding: 20px 15px 0 15px;
-            gap: 10px;
-        }
-
-        .legal-links { 
-            flex-direction: row;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 14px;
-        }
-    }
 </style>
 
     <!-- Etiqueta de desarrollo arriba del footer -->
-    <div style="
-        background: rgba(15, 23, 42, 0.9);
-        color: #94a3b8;
-        text-align: center;
-        padding: 12px 0;
-        font-size: 0.85em;
-        font-weight: 500;
-        border-top: 1px solid rgba(56, 189, 248, 0.2);
-        border-bottom: 1px solid rgba(56, 189, 248, 0.2);
-        backdrop-filter: blur(10px);
-        margin: 60px 0 20px 0;
-        width: 100vw;
-        margin-left: calc(-50vw + 50%);
-        margin-right: calc(-50vw + 50%);
-        box-sizing: border-box;
-        clear: both;
-        position: relative;
-        left: 0;
-        right: 0;
-    ">
+    <div class="dev-band">
         Desarrollado con Django, Open-Meteo y ArXiv | TuClima
     </div>
 

@@ -65,6 +65,7 @@ urlpatterns = [
 
     # Endpoint para papers de arXiv
     path('api/papers/', api_papers, name='api_papers'),
+    path('api/ciencia/buscar/', views.api_ciencia_buscar, name='api_ciencia_buscar'),
 
     path('espacio/', views.meteorologia_espacial, name='espacio'),
 

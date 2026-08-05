@@ -5,9 +5,12 @@
 {% block extra_head %}
 <style>
         /* MISMOS ESTILOS QUE EL REGISTRO PARA COHERENCIA */
+        html { overflow-x: hidden; }
         body {
             background-color: #0f172a; color: #fff; font-family: 'Segoe UI', sans-serif;
             display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;
+            padding: 16px; box-sizing: border-box;
+            overflow-x: hidden;
             background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 80%);
         }
         .container { width: 100%; max-width: 400px; padding: 20px; }
@@ -38,13 +41,17 @@
         .bottom-link { text-align: center; margin-top: 25px; font-size: 0.9em; color: #94a3b8; }
         .bottom-link a { color: #22c55e; text-decoration: none; font-weight: bold; }
 
-        /* ── Responsive móvil ─────────────────────────────── */
-        @media (max-width: 480px) {
-            .container { padding: 12px; }
+        /* Responsive: tablet ≤900 | móvil ≤600 */
+        @media (max-width: 900px) {
+            .card { padding: 32px 24px; }
+        }
+        @media (max-width: 600px) {
+            body { align-items: flex-start; padding: 24px 12px 40px; }
+            .container { padding: 0; }
             .card { padding: 24px 18px; border-radius: 14px; }
             .brand { font-size: 1.5rem; margin-bottom: 20px; }
-            input { font-size: 16px !important; padding: 13px; } /* evita zoom en iOS */
-            button { padding: 13px; font-size: 0.95rem; }
+            input { font-size: 16px !important; padding: 14px; min-height: 48px; }
+            button { padding: 14px; font-size: 0.95rem; min-height: 48px; }
             h2 { font-size: 1rem; }
         }
     </style>

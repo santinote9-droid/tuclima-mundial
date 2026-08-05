@@ -4,101 +4,200 @@
 
 {% block extra_head %}
 <style>
-        body { background: #0f172a; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
-        .box { text-align: center; max-width: 900px; width: 100%; }
-        h2 { margin-bottom: 40px; font-size: 2.2rem; }
-        
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
-        
-        .option {
-            background: #1e293b; border: 2px solid #334155; border-radius: 20px;
-            padding: 40px 30px; cursor: pointer; text-decoration: none; color: #fff; transition: 0.3s;
-            display: flex; flex-direction: column; align-items: center;
-            position: relative; overflow: hidden;
+        * { box-sizing: border-box; }
+        html { overflow-x: hidden; }
+        body {
+            background: #0f172a;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 28px 20px;
+            overflow-x: hidden;
         }
-        
-        /* Efectos Hover */
+        .user-bar {
+            position: fixed;
+            top: calc(16px + env(safe-area-inset-top, 0px));
+            right: 16px;
+            z-index: 1000;
+            font-family: sans-serif;
+            font-size: .9rem;
+            max-width: calc(100% - 32px);
+        }
+        .box { text-align: center; max-width: 900px; width: 100%; }
+        h2 { margin: 0 0 40px; font-size: 2.2rem; }
+
+        .plan-chip {
+            display: inline-block;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 10px 20px;
+            margin-bottom: 24px;
+            font-size: 1rem;
+            color: #94a3b8;
+            max-width: 100%;
+        }
+        .plan-chip.anual {
+            background: #1e3a5f;
+            border-color: #3b82f6;
+            color: #60a5fa;
+        }
+        .plan-chip .save {
+            display: inline-block;
+            background: #16a34a;
+            color: #fff;
+            font-size: 0.72em;
+            font-weight: bold;
+            padding: 2px 9px;
+            border-radius: 20px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+            gap: 30px;
+        }
+
+        .option {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 20px;
+            padding: 40px 30px;
+            cursor: pointer;
+            text-decoration: none;
+            color: #fff;
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
         .option:hover { transform: translateY(-5px); background: #252f40; }
         .option-paypal:hover { border-color: #0070ba; }
         .option-bank:hover { border-color: #10b981; }
-        
-        /* Estilos de los Iconos */
+
         .icon-container { margin-bottom: 25px; }
-        
-        /* Icono PayPal (Azul Oficial) */
         .fa-paypal { font-size: 4rem; color: #0070ba; }
-        
-        /* Icono Banco (Verde Esmeralda) */
         .fa-university { font-size: 4rem; color: #10b981; }
-        
+        .fa-credit-card { font-size: 4rem; color: #00bcf2; }
+
         h3 { margin: 0 0 15px 0; font-size: 1.5rem; }
         p { color: #94a3b8; font-size: 0.95em; line-height: 1.5; margin-bottom: 30px; }
-        
-        .btn-go { 
-            padding: 12px 30px; border-radius: 10px; font-weight: bold; margin-top: auto; width: 100%; text-align: center; box-sizing: border-box; transition: 0.3s;
+
+        .btn-go {
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin-top: auto;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+            transition: 0.3s;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
         .btn-paypal { background: #0070ba; color: white; }
         .btn-paypal:hover { background: #005ea6; box-shadow: 0 0 20px rgba(0, 112, 186, 0.4); }
-        
         .btn-bank { background: #10b981; color: white; }
         .btn-bank:hover { background: #059669; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+        .btn-mp { background: #00bcf2; color: #000; }
 
-        /* ── Responsive ──────────────────────────────────── */
-        @media (max-width: 700px) {
-            body  { align-items: flex-start; padding: 24px 14px 40px; }
-            .box  { padding-top: 8px; }
-            h2    { font-size: 1.5rem; margin-bottom: 24px; }
-            /* grid a 1 columna */
-            .grid { grid-template-columns: 1fr; gap: 16px; }
-            .option { padding: 28px 20px; }
-            .fa-paypal, .fa-university { font-size: 3rem; }
-            h3    { font-size: 1.2rem; }
-            /* user-bar fijo: no sobrepone el contenido */
-            .user-bar { position: static; text-align: right; padding: 4px 0 16px; }
+        .sandbox-note {
+            background: #422006;
+            border: 1px solid #f97316;
+            border-radius: 10px;
+            padding: 12px 18px;
+            margin-bottom: 20px;
+            font-size: 0.88rem;
+            color: #fed7aa;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            text-align: left;
         }
-        @media (max-width: 400px) {
-            .option { padding: 22px 14px; }
-            h2     { font-size: 1.25rem; }
+
+        .footer-links {
+            margin-top: 28px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px 18px;
+            font-size: .9rem;
+        }
+        .footer-links a { text-decoration: none; font-weight: bold; }
+        .footer-links .sep { color: #334155; }
+
+        @media (max-width: 900px) {
+            body { align-items: flex-start; padding: 24px 16px 48px; }
+            h2 { font-size: 1.75rem; margin-bottom: 28px; }
+            .grid { gap: 18px; }
+            .option { padding: 28px 22px; }
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 16px 12px 40px; }
+            .user-bar {
+                position: static;
+                text-align: right;
+                padding: 0 0 14px;
+                width: 100%;
+                max-width: none;
+                font-size: .82rem;
+            }
+            h2 { font-size: 1.4rem; margin-bottom: 20px; }
+            .grid { grid-template-columns: 1fr; gap: 14px; }
+            .option { padding: 24px 16px; }
+            .fa-paypal, .fa-university, .fa-credit-card { font-size: 3rem; }
+            h3 { font-size: 1.2rem; }
+            .plan-chip { font-size: .9rem; padding: 10px 14px; }
+            .plan-chip .save { display: inline-block; margin: 6px 0 0; margin-left: 0; }
+            .sandbox-note { font-size: .8rem; flex-direction: column; gap: 6px; }
         }
     </style>
 {% endblock %}
 
 {% block content %}
-<div style="position: absolute; top: 20px; right: 20px; z-index: 1000; font-family: sans-serif;">
-        {% if user.is_authenticated %}
-            <span style="color: #94a3b8;">Hola,</span> 
-            <strong style="color: #fff;">{{ user.username }}</strong> 
-            <span style="margin: 0 10px; color: #334155;">|</span>
-            <a href="/logout/" style="color: #ef4444; text-decoration: none; font-weight: bold;">Salir <i class="fas fa-sign-out-alt"></i></a>
-        {% else %}
-            <a href="/login/" style="color: #3b82f6; text-decoration: none; font-weight: bold; background: rgba(15, 23, 42, 0.8); padding: 8px 15px; border-radius: 20px; border: 1px solid #3b82f6;">Ingresar</a>
-        {% endif %}
-    </div>
+<div class="user-bar">
+    {% if user.is_authenticated %}
+        <span style="color: #94a3b8;">Hola,</span>
+        <strong style="color: #fff;">{{ user.username }}</strong>
+        <span style="margin: 0 10px; color: #334155;">|</span>
+        <a href="/logout/" style="color: #ef4444; text-decoration: none; font-weight: bold;">Salir <i class="fas fa-sign-out-alt"></i></a>
+    {% else %}
+        <a href="/login/" style="color: #3b82f6; text-decoration: none; font-weight: bold; background: rgba(15, 23, 42, 0.8); padding: 8px 15px; border-radius: 20px; border: 1px solid #3b82f6;">Ingresar</a>
+    {% endif %}
+</div>
 
 <div class="box">
-        <!-- Badge de plan seleccionado -->
         {% if plan == 'anual' %}
-        <div style="display:inline-block; background:#1e3a5f; border:1px solid #3b82f6; border-radius:12px; padding:10px 24px; margin-bottom:24px; font-size:1rem; color:#60a5fa;">
+        <div class="plan-chip anual">
             Plan seleccionado: <strong>Anual</strong> &mdash; <strong style="color:#fff;">$200 USD</strong>
-            <span style="display:inline-block; background:#16a34a; color:#fff; font-size:0.72em; font-weight:bold; padding:2px 9px; border-radius:20px; margin-left:8px; vertical-align:middle;">Ahorrás $40</span>
+            <span class="save">Ahorrás $40</span>
         </div>
         {% else %}
-        <div style="display:inline-block; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:10px 24px; margin-bottom:24px; font-size:1rem; color:#94a3b8;">
+        <div class="plan-chip">
             Plan seleccionado: <strong style="color:#fff;">Mensual</strong> &mdash; <strong style="color:#fff;">$20 USD</strong>
         </div>
         {% endif %}
 
         {% if paypal_sandbox %}
-        <div style="background:#422006; border:1px solid #f97316; border-radius:10px; padding:12px 18px; margin-bottom:20px; font-size:0.88rem; color:#fed7aa; display:flex; align-items:center; gap:10px;">
-            <i class="fas fa-flask" style="color:#f97316; font-size:1.2rem;"></i>
+        <div class="sandbox-note">
+            <i class="fas fa-flask" style="color:#f97316; font-size:1.2rem; flex-shrink:0;"></i>
             <span><strong>PayPal en modo SANDBOX (pruebas).</strong> Los pagos con PayPal son simulados. Para producción, cambiar <code>PAYPAL_MODE=live</code> en el archivo <code>.env</code>.</span>
         </div>
         {% endif %}
         <h2>Selecciona tu método de pago seguro</h2>
         <div class="grid">
-            
-            <!-- PAYPAL: automático -->
+
             <a href="/pagar-paypal/?plan={{ plan }}" class="option option-paypal">
                 <div class="icon-container">
                     <i class="fab fa-paypal"></i>
@@ -111,14 +210,13 @@
             </a>
 
             {% if opciones_ar %}
-            <!-- MERCADOPAGO: solo Argentina -->
-            <a href="/pagar-mercadopago/?plan={{ plan }}" class="option" style="border-color:#334155;">
+            <a href="/pagar-mercadopago/?plan={{ plan }}" class="option">
                 <div class="icon-container">
-                    <i class="fas fa-credit-card" style="font-size:4rem; color:#00bcf2;"></i>
+                    <i class="fas fa-credit-card"></i>
                 </div>
                 <h3>MercadoPago</h3>
                 <p>Solo Argentina. Tarjeta, débito o saldo MP. <strong style="color:#4ade80">Activación inmediata.</strong></p>
-                <div class="btn-go" style="background:#00bcf2; color:#000;">
+                <div class="btn-go btn-mp">
                     {% if plan == 'anual' %}Pagar $200 USD con MP{% else %}Pagar $20 USD con MP{% endif %}
                 </div>
             </a>
@@ -134,9 +232,10 @@
             <a href="?plan={{ plan }}&amp;pais=XX" style="color:#64748b;text-decoration:none;">No estoy en Argentina — ocultar Mercado Pago</a>
         </p>
         {% endif %}
-        <br><br>
-        <a href="/pricing/" style="color:#64748b; text-decoration:none; font-weight:bold;">← Volver a los planes</a>
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        <a href="/mi-cuenta/" style="color:#3b82f6; text-decoration:none; font-weight:bold;"><i class="fas fa-user-circle"></i> Mi Cuenta</a>
+        <div class="footer-links">
+            <a href="/pricing/" style="color:#64748b;">← Volver a los planes</a>
+            <span class="sep">|</span>
+            <a href="/mi-cuenta/" style="color:#3b82f6;"><i class="fas fa-user-circle"></i> Mi Cuenta</a>
+        </div>
     </div>
 {% endblock %}

@@ -1,0 +1,237 @@
+{% comment %}
+  Buscador de ubicación para headers PRO.
+  Uso: {% include 'partials/_sector_location_search.html' with tc_sector='agro' %}
+  Acepta ciudad ("Los Andes") o coordenadas ("-34.58, -58.59") y GPS.
+{% endcomment %}
+<style>
+  .tc-loc-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 280px;
+    min-width: 200px;
+    max-width: 420px;
+    position: relative;
+    margin: 0 12px;
+  }
+  .tc-loc-search-form {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    position: relative;
+  }
+  .tc-loc-input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: #e2e8f0;
+    font-size: 0.8rem;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .tc-loc-input::placeholder { color: #64748b; }
+  .tc-loc-input:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+  }
+  .tc-loc-btn {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    background: #1e293b;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s;
+  }
+  .tc-loc-btn:hover {
+    border-color: #38bdf8;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.08);
+  }
+  .tc-loc-btn-go {
+    background: linear-gradient(135deg, #1e40af, #1e3a8a);
+    border-color: #3b82f6;
+    color: #fff;
+  }
+  .tc-loc-btn-go:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    border-color: #60a5fa;
+    color: #fff;
+  }
+  .tc-loc-drop {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 42px;
+    z-index: 13000;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+    max-height: 260px;
+    overflow-y: auto;
+  }
+  .tc-loc-drop.is-open { display: block; }
+  .tc-loc-opt {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    color: #e2e8f0;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(51,65,85,0.5);
+  }
+  .tc-loc-opt:last-child { border-bottom: none; }
+  .tc-loc-opt:hover { background: rgba(56, 189, 248, 0.1); color: #7dd3fc; }
+  .tc-loc-opt small { display: block; color: #64748b; font-size: 0.7rem; margin-top: 2px; }
+  .tc-loc-hint {
+    display: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: #64748b;
+    white-space: nowrap;
+  }
+  @media (max-width: 900px) {
+    .tc-loc-search { max-width: none; margin: 0; flex: 1 1 100%; order: 3; min-width: 0; }
+  }
+  @media (max-width: 600px) {
+    .tc-loc-input { font-size: 16px; /* evita zoom iOS */ }
+    .tc-loc-search { gap: 6px; }
+    .tc-loc-btn { width: 40px; height: 40px; }
+  }
+</style>
+
+<div class="tc-loc-search" id="tc-loc-search">
+  <form class="tc-loc-search-form" onsubmit="return tcSectorBuscar('{{ tc_sector|default:'agro'|escapejs }}', event)">
+    <input
+      type="text"
+      id="tc-loc-q"
+      class="tc-loc-input"
+      placeholder="Ciudad o {{ lat|floatformat:2 }}, {{ lon|floatformat:2 }}"
+      value=""
+      autocomplete="off"
+      aria-label="Buscar ubicación"
+    >
+    <button type="submit" class="tc-loc-btn tc-loc-btn-go" title="Buscar ubicación">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    </button>
+    <button type="button" class="tc-loc-btn" title="Usar mi ubicación GPS" onclick="tcSectorGPS('{{ tc_sector|default:'agro'|escapejs }}')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.5-7-11a7 7 0 1 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+    </button>
+    <div id="tc-loc-drop" class="tc-loc-drop" role="listbox"></div>
+  </form>
+</div>
+
+<script>
+(function () {
+  if (window._tcSectorLocReady) return;
+  window._tcSectorLocReady = true;
+
+  function go(sector, lat, lon) {
+    var s = String(sector || 'agro').replace(/[^a-z]/gi, '');
+    var la = Number(lat), lo = Number(lon);
+    if (isNaN(la) || isNaN(lo)) return;
+    try {
+      localStorage.setItem('ultimaUbicacion', JSON.stringify({ lat: la, lon: lo, timestamp: Date.now() }));
+    } catch (e) {}
+    window.location.href = '/' + s + '/?lat=' + la.toFixed(6) + '&lon=' + lo.toFixed(6);
+  }
+
+  function parseCoords(q) {
+    var m = String(q || '').trim().match(/^(-?\d+(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d+(?:[.,]\d+)?)$/);
+    if (!m) return null;
+    var lat = parseFloat(m[1].replace(',', '.'));
+    var lon = parseFloat(m[2].replace(',', '.'));
+    if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+    return { lat: lat, lon: lon };
+  }
+
+  function closeDrop() {
+    var d = document.getElementById('tc-loc-drop');
+    if (d) { d.classList.remove('is-open'); d.innerHTML = ''; }
+  }
+
+  function showResults(sector, results) {
+    var d = document.getElementById('tc-loc-drop');
+    if (!d) return;
+    if (!results.length) {
+      d.innerHTML = '<div style="padding:12px;color:#94a3b8;font-size:0.8rem;">Sin resultados</div>';
+      d.classList.add('is-open');
+      return;
+    }
+    d.innerHTML = results.map(function (r, i) {
+      var sub = [r.admin1, r.country].filter(Boolean).join(', ');
+      var label = (r.name || 'Ubicación') + (r.country_code ? ' (' + r.country_code + ')' : '');
+      return '<button type="button" class="tc-loc-opt" data-i="' + i + '">' +
+        label + (sub ? '<small>' + sub + '</small>' : '') + '</button>';
+    }).join('');
+    d.classList.add('is-open');
+    Array.prototype.forEach.call(d.querySelectorAll('.tc-loc-opt'), function (btn) {
+      btn.addEventListener('click', function () {
+        var r = results[Number(btn.getAttribute('data-i'))];
+        if (r) go(sector, r.latitude, r.longitude);
+      });
+    });
+  }
+
+  window.tcSectorBuscar = async function (sector, event) {
+    if (event && event.preventDefault) event.preventDefault();
+    var inp = document.getElementById('tc-loc-q');
+    var q = (inp && inp.value || '').trim();
+    if (!q) return false;
+
+    var coords = parseCoords(q);
+    if (coords) {
+      go(sector, coords.lat, coords.lon);
+      return false;
+    }
+
+    try {
+      var url = 'https://geocoding-api.open-meteo.com/v1/search?name=' +
+        encodeURIComponent(q) + '&count=6&language=es&format=json';
+      var res = await fetch(url);
+      var data = await res.json();
+      var results = data.results || [];
+      if (results.length === 1) {
+        go(sector, results[0].latitude, results[0].longitude);
+      } else {
+        showResults(sector, results);
+      }
+    } catch (e) {
+      alert('No se pudo buscar la ubicación. Revisá tu conexión.');
+    }
+    return false;
+  };
+
+  window.tcSectorGPS = function (sector) {
+    if (!navigator.geolocation) {
+      alert('Tu navegador no soporta GPS.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      function (pos) { go(sector, pos.coords.latitude, pos.coords.longitude); },
+      function () { alert('No se pudo obtener tu ubicación. Permití el acceso al GPS.'); },
+      { enableHighAccuracy: true, timeout: 12000 }
+    );
+  };
+
+  document.addEventListener('click', function (e) {
+    var box = document.getElementById('tc-loc-search');
+    if (box && !box.contains(e.target)) closeDrop();
+  });
+})();
+</script>

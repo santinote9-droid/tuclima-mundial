@@ -13,7 +13,7 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-2.0-flash",
+        "modelName": "models/gemini-3.5-flash",
         "options": {
           "maxOutputTokens": 2000
         }
@@ -149,7 +149,9 @@
           "id": "Ewe5h1U44UTbd2Qs",
           "name": "Google Service Account account"
         }
-      }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -207,6 +209,11 @@
       "main": [
         [
           {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          },
+          {
             "node": "Execute a SQL query",
             "type": "main",
             "index": 0
@@ -216,13 +223,7 @@
     },
     "Execute a SQL query": {
       "main": [
-        [
-          {
-            "node": "Edit Fields",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "When Executed by Another Workflow": {
@@ -252,5 +253,6 @@
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "19ee95c84ac845adb5e56f055bd53b79a0e674016338a7de7b71fc1ecea83ccf"
-  }
+  },
+  "name": "Naval_BI"
 }

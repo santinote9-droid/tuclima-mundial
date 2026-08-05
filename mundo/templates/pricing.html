@@ -5,6 +5,7 @@
 {% block extra_head %}
 <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { overflow-x: hidden; }
         body {
             background: #0f172a;
             color: #fff;
@@ -15,6 +16,7 @@
             align-items: center;
             background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
             padding: 60px 20px 80px;
+            overflow-x: hidden;
         }
         .page-w { max-width: 1100px; width: 100%; }
 
@@ -24,12 +26,20 @@
             font-size: 2.8rem; font-weight: 800;
             background: linear-gradient(90deg, #60a5fa, #c084fc);
             -webkit-background-clip: text; color: transparent;
+            background-clip: text;
             margin-bottom: 10px;
         }
         .page-header p { color: #94a3b8; font-size: 1.05rem; }
 
         /* ── User bar ── */
-        .user-bar { position: fixed; top: 20px; right: 20px; z-index: 1000; font-size: .92rem; }
+        .user-bar {
+            position: fixed;
+            top: calc(16px + env(safe-area-inset-top, 0px));
+            right: 16px;
+            z-index: 1000;
+            font-size: .92rem;
+            max-width: calc(100% - 32px);
+        }
 
         /* ── Token section ── */
         .tok-title-block { text-align: center; margin-bottom: 32px; }
@@ -56,7 +66,26 @@
         .daily-note b { color: #a5b4fc; }
 
         /* Plans grid */
-        .tok-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 24px; margin-bottom: 40px; }
+        .tok-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        /* Modos Pro cards */
+        #modos .modos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+            gap: 14px;
+        }
+        #comparativa .comp-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 0 -4px;
+            padding: 0 4px;
+        }
+        #comparativa .comp-table { min-width: 580px; }
 
         /* Plan card */
         .tok-card {
@@ -134,25 +163,52 @@
         .tok-footer b { color: #94a3b8; }
         .tok-footer a { color: #6366f1; text-decoration: none; }
 
-        /* Responsive */
-        @media (max-width: 640px) { .tok-grid { grid-template-columns: 1fr 1fr; gap: 14px; } .page-header h1 { font-size: 2rem; } }
-        @media (max-width: 400px) { .tok-grid { grid-template-columns: 1fr; } }
-
-        /* ── Responsive extra (móvil general) ─────────────────── */
-        @media (max-width: 700px) {
-            body { padding: 30px 12px 60px; }
-            .page-header h1 { font-size: 1.9rem; }
-            .page-header p  { font-size: 0.92rem; }
-            /* user-bar fijo: desplaza el contenido en móvil */
-            .user-bar { position: static; text-align: right; padding: 0 0 20px; }
-            /* saldo bar: columna */
-            .tok-saldo-bar { flex-direction: column; align-items: center; gap: 10px; }
-            /* tabs de planes: 2 columnas en lugar de fila única */
-            .plan-tabs { flex-wrap: wrap; justify-content: center; }
+        /* ── Responsive: tablet ≤900 | móvil ≤600 ── */
+        @media (max-width: 900px) {
+            body { padding: 48px 16px 72px; }
+            .page-header { margin-bottom: 40px; }
+            .page-header h1 { font-size: 2.2rem; }
+            .tok-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 16px;
+            }
+            #modos .modos-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .tok-card { padding: 22px 14px 18px; }
+            .tok-price { font-size: 1.9rem; }
+            .tok-footer { padding: 16px 18px; font-size: .78rem; }
         }
-        @media (max-width: 420px) {
-            .page-header h1 { font-size: 1.55rem; }
-            .tok-saldo-val  { font-size: 1.2rem; }
+
+        @media (max-width: 600px) {
+            body { padding: 24px 12px 56px; }
+            .page-header h1 { font-size: 1.7rem; }
+            .page-header p { font-size: 0.9rem; }
+            .user-bar {
+                position: static;
+                text-align: right;
+                padding: 0 0 16px;
+                font-size: .82rem;
+                width: 100%;
+                max-width: none;
+            }
+            .tok-title-block h2 { font-size: 1.45rem; }
+            .tok-saldo-bar { flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+            .tok-grid { grid-template-columns: 1fr; gap: 14px; }
+            #modos .modos-grid { grid-template-columns: 1fr; }
+            .tok-card { padding: 22px 16px 18px; }
+            .tok-tabs { flex-wrap: wrap; }
+            .tok-tab { min-width: 40%; font-size: .68rem; padding: 8px 4px; }
+            .tok-btn { padding: 14px 16px; font-size: .95rem; min-height: 48px; }
+            .tok-footer { text-align: left; line-height: 1.7; }
+            #comparativa h2 { font-size: 1.25rem !important; }
+            #comparativa .comp-table { font-size: .78rem; min-width: 520px; }
+        }
+
+        @media (max-width: 400px) {
+            .page-header h1 { font-size: 1.45rem; }
+            .tok-saldo-val { font-size: 1.2rem; }
+            .tok-tnum { font-size: 1.55rem; }
         }
     </style>
 {% endblock %}
@@ -206,7 +262,7 @@
             </p>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
+        <div class="modos-grid">
 
             <!-- Agro -->
             <div style="background:linear-gradient(165deg,rgba(74,222,128,.08),rgba(15,23,42,.9));border:1px solid rgba(74,222,128,.28);border-radius:18px;padding:20px 18px;">
@@ -521,8 +577,8 @@
             <p style="color:#64748b;font-size:.9rem;">Todo lo que incluye cada plan, de un vistazo</p>
         </div>
 
-        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-        <table style="width:100%;border-collapse:collapse;min-width:580px;font-size:.85rem;" class="comp-table">
+        <div class="comp-scroll">
+        <table style="width:100%;border-collapse:collapse;font-size:.85rem;" class="comp-table">
             <thead>
                 <tr>
                     <th style="text-align:left;padding:14px 18px;color:#475569;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid #1e293b;">Funcionalidad</th>

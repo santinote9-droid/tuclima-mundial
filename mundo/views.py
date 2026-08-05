@@ -37,6 +37,7 @@ import logging
 from dotenv import load_dotenv
 import urllib.request
 import xml.etree.ElementTree as ET
+import re
 
 
 # Cargar variables de entorno
@@ -215,67 +216,137 @@ def obtener_noticias_reales():
         return [{'titulo': 'Sin conexión', 'categoria': 'Error', 'imagen': '', 'resumen': 'Revise internet', 'link': '#'}]
 
 
-def obtener_papers_cientificos():
+def obtener_papers_cientificos(query=None, max_results=8):
+    """Papers de arXiv. Sin query: recientes ao-ph/geo-ph. Con query: búsqueda all:."""
     import logging
-    import time
-    import random
-    
-    url_arxiv = "https://export.arxiv.org/api/query?search_query=cat:physics.ao-ph+OR+cat:physics.geo-ph&start=0&max_results=6&sortBy=submittedDate&sortOrder=descending"
-    
-    # Papers de respaldo si falla ArXiv
+    from urllib.parse import quote_plus
+
+    q = (query or '').strip()
+    max_results = max(1, min(int(max_results or 8), 20))
+
+    if q:
+        # Búsqueda libre acotada a atmósfera / clima / geo
+        terms = quote_plus(q)
+        search = (
+            f"(all:{terms})+AND+"
+            f"(cat:physics.ao-ph+OR+cat:physics.geo-ph+OR+cat:physics.atm-clus"
+            f"+OR+cat:astro-ph.EP+OR+ti:{terms})"
+        )
+        sort = "relevance"
+    else:
+        search = "cat:physics.ao-ph+OR+cat:physics.geo-ph"
+        sort = "submittedDate"
+
+    url_arxiv = (
+        f"https://export.arxiv.org/api/query?search_query={search}"
+        f"&start=0&max_results={max_results}&sortBy={sort}&sortOrder=descending"
+    )
+
     papers_respaldo = [
         {
             'titulo': 'Climate Change Impact on Extreme Weather Events',
             'autor': 'IPCC Research',
             'resumen': 'Comprehensive analysis of climate change effects on extreme weather patterns across different geographical regions...',
             'link': 'https://arxiv.org/abs/2024.01001v1',
-            'fecha': '2024-02-12'
+            'fecha': '2024-02-12',
+            'fuente': 'arXiv',
         },
         {
             'titulo': 'Machine Learning Approaches for Weather Prediction',
             'autor': 'Climate AI Lab',
             'resumen': 'Novel machine learning techniques applied to meteorological forecasting with improved accuracy metrics...',
             'link': 'https://arxiv.org/abs/2024.01002v1',
-            'fecha': '2024-02-11'
+            'fecha': '2024-02-11',
+            'fuente': 'arXiv',
         },
         {
             'titulo': 'Atmospheric Dynamics and Climate Variability',
             'autor': 'Weather Research Institute',
             'resumen': 'Investigation of atmospheric circulation patterns and their relationship with climate variability indices...',
             'link': 'https://arxiv.org/abs/2024.01003v1',
-            'fecha': '2024-02-10'
-        }
+            'fecha': '2024-02-10',
+            'fuente': 'arXiv',
+        },
     ]
-    
+
     try:
         import feedparser
         feed = feedparser.parse(url_arxiv)
-        
-        if hasattr(feed, 'status') and feed.status == 429:
+
+        status = getattr(feed, 'status', 200)
+        if status == 429:
             logging.warning("ArXiv rate limit exceeded, using fallback papers")
-            return {'error': None, 'papers': papers_respaldo}
-        
-        if hasattr(feed, 'status') and feed.status != 200:
-            logging.error(f"arXiv API status: {feed.status}")
-            return {'error': None, 'papers': papers_respaldo}
-            
+            return {'error': None, 'papers': papers_respaldo, 'query': q}
+        if status and status >= 400:
+            logging.error(f"arXiv API status: {status}")
+            return {'error': None, 'papers': papers_respaldo, 'query': q}
+
         if not feed.entries:
             logging.error("arXiv API: No entries found, using fallback")
-            return {'error': None, 'papers': papers_respaldo}
-            
+            return {'error': None, 'papers': papers_respaldo if not q else [], 'query': q}
+
         papers = []
-        for entry in feed.entries[:6]:  # Limitar a máximo 6
+        for entry in feed.entries[:max_results]:
+            summary = (getattr(entry, 'summary', '') or '').strip()
+            # limpiar HTML básico del summary de arXiv
+            summary = re.sub(r'<[^>]+>', '', summary)
+            if len(summary) > 220:
+                summary = summary[:220].rstrip() + '…'
+            authors = getattr(entry, 'authors', None) or []
+            autor = authors[0].name if authors else 'Autor desconocido'
+            if len(authors) > 1:
+                autor = f"{autor} et al."
             papers.append({
-                'titulo': entry.title.strip(),
-                'autor': entry.authors[0].name if entry.authors else "Autor desconocido",
-                'resumen': entry.summary[:150].strip() + "...",
+                'titulo': entry.title.strip().replace('\n', ' '),
+                'autor': autor,
+                'resumen': summary,
                 'link': entry.link,
-                'fecha': entry.published[:10]
+                'fecha': (entry.published or '')[:10],
+                'fuente': 'arXiv',
             })
-        return {'error': None, 'papers': papers}
-    except Exception as e:
+        return {'error': None, 'papers': papers, 'query': q}
+    except Exception:
         logging.exception("Error al obtener papers de arXiv, usando fallback")
-        return {'error': None, 'papers': papers_respaldo}
+        return {'error': None, 'papers': papers_respaldo if not q else [], 'query': q}
+
+
+def obtener_noticias_busqueda(query=None, max_results=12):
+    """Noticias vía Google News RSS (clima / meteorología + query opcional)."""
+    from urllib.parse import quote_plus
+    q = (query or '').strip()
+    base = 'clima meteorologia ambiente'
+    search = f'{q} {base}' if q else 'clima argentina meteorologia'
+    url = (
+        f"https://news.google.com/rss/search?q={quote_plus(search)}"
+        f"&hl=es-419&gl=AR&ceid=AR:es-419"
+    )
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) TuClima/1.0'},
+        )
+        with urllib.request.urlopen(req, timeout=10) as response:
+            xml_data = response.read()
+        root = ET.fromstring(xml_data)
+        noticias = []
+        for item in root.findall('.//item')[:max_results]:
+            titulo = item.findtext('title', '') or ''
+            # Google suele appendear " - Fuente" al título
+            fuente = item.findtext('source', '') or ''
+            if ' - ' in titulo and not fuente:
+                partes = titulo.rsplit(' - ', 1)
+                titulo, fuente = partes[0], partes[1]
+            noticias.append({
+                'titulo': titulo,
+                'link': item.findtext('link', '') or '#',
+                'fecha': (item.findtext('pubDate', '') or '')[:25],
+                'fuente': fuente or 'Google News',
+                'resumen': re.sub(r'<[^>]+>', '', item.findtext('description', '') or '')[:180],
+            })
+        return {'error': None, 'noticias': noticias, 'query': q}
+    except Exception as e:
+        return {'error': str(e), 'noticias': [], 'query': q}
+
 
 # --- API para frontend: /api/papers/ ---
 from django.http import JsonResponse
@@ -284,9 +355,65 @@ from django.views.decorators.csrf import csrf_exempt
 @csrf_exempt
 def api_papers(request):
     if request.method == 'GET':
-        resultado = obtener_papers_cientificos()
+        q = request.GET.get('q', '').strip()
+        try:
+            n = int(request.GET.get('n', 8))
+        except (TypeError, ValueError):
+            n = 8
+        resultado = obtener_papers_cientificos(query=q or None, max_results=n)
         return JsonResponse(resultado)
     return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
+def api_ciencia_buscar(request):
+    """
+    Buscador unificado del Lab de Ciencia.
+    GET ?q=&tipo=papers|noticias|all
+    Devuelve resultados + links externos (Scholar, ADS, CONICET, UBA).
+    """
+    from urllib.parse import quote_plus
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+    q = (request.GET.get('q') or '').strip()[:120]
+    tipo = (request.GET.get('tipo') or 'all').lower()
+    if tipo not in ('papers', 'noticias', 'all', 'tesis'):
+        tipo = 'all'
+
+    papers, noticias = [], []
+    err = None
+
+    if tipo in ('papers', 'all', 'tesis'):
+        # tesis también consulta papers (arXiv) + links externos
+        res_p = obtener_papers_cientificos(query=q or None, max_results=10)
+        papers = res_p.get('papers') or []
+        err = res_p.get('error') or err
+
+    if tipo in ('noticias', 'all'):
+        res_n = obtener_noticias_busqueda(query=q or None, max_results=10)
+        noticias = res_n.get('noticias') or []
+        if res_n.get('error'):
+            err = res_n.get('error')
+
+    qq = quote_plus(q) if q else quote_plus('atmospheric physics climate')
+    externos = {
+        'scholar': f'https://scholar.google.com/scholar?q={qq}',
+        'arxiv': f'https://arxiv.org/search/?query={qq}&searchtype=all&source=header',
+        'nasa_ads': f'https://ui.adsabs.harvard.edu/search/q={qq}',
+        'conicet': f'https://ri.conicet.gov.ar/discover?query={qq}',
+        'uba_exactas': f'https://bibliotecadigital.exactas.uba.ar/search?query={qq}',
+        'snrd': f'https://cosecha.snrd.mincyt.gob.ar/?q={qq}',
+    }
+
+    return JsonResponse({
+        'ok': True,
+        'query': q,
+        'tipo': tipo,
+        'papers': papers,
+        'noticias': noticias,
+        'externos': externos,
+        'error': err,
+    })
 
 # --- CORRECCIÓN DE UBICACIÓN "CENTRO" ---
 # --- FUNCIÓN GPS CON FILTRO ANTI-"CENTRO" ---
@@ -1151,6 +1278,11 @@ def agro(request):
             'error': 'No se pudieron cargar los datos climáticos.',
             'lat': lat, 'lon': lon,
             'alertas_disparadas': {},
+            'grafico_agro': {
+                'fechas': '[]',
+                'lluvia': '[]',
+                'eto': '[]',
+            },
         }
 
     # Permisos de plan
@@ -1446,9 +1578,13 @@ def naval(request):
         raw_viento = [v if v is not None else 0.0 for v in raw_viento]
 
         # Cortar a próximas 24hs
-        graf_olas = raw_olas[idx:idx+24]
-        graf_viento = [round(v * 0.539957, 1) for v in raw_viento[idx:idx+24]]
-        graf_horas = [f"{(idx+i)%24}:00" for i in range(len(graf_olas))]
+        graf_olas = [round(float(v), 2) for v in raw_olas[idx:idx+24]]
+        graf_viento = [round(float(v) * 0.539957, 1) for v in raw_viento[idx:idx+24]]
+        # Alinear longitudes (APIs meteo/marina a veces difieren)
+        _n24 = min(len(graf_olas), len(graf_viento), 24)
+        graf_olas = graf_olas[:_n24]
+        graf_viento = graf_viento[:_n24]
+        graf_horas = [f"{(idx+i)%24:02d}:00" for i in range(_n24)]
 
         # 8. GRÁFICO 7 DÍAS (Pronóstico Extendido Naval)
         daily_m = res_m.get('daily', {})
@@ -4025,12 +4161,32 @@ def api_chat_ia(request):
     Proxy autenticado hacia el webhook /webhook/chat de n8n.
     Evita exponer el webhook público y envía X-N8N-Secret desde el servidor.
     """
-    n8n_base = getattr(settings, 'N8N_BASE_URL', '') or os.getenv(
-        'N8N_BASE_URL', 'https://n8n-production-2651.up.railway.app'
+    # Releer .env: el runserver no recarga settings si solo cambiaste el .env
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(override=True)
+    except Exception:
+        pass
+
+    n8n_base = (
+        os.getenv('N8N_BASE_URL', '')
+        or getattr(settings, 'N8N_BASE_URL', '')
+        or 'https://n8n-production-2651.up.railway.app'
     )
     n8n_base = n8n_base.rstrip('/')
     webhook_url = f"{n8n_base}/webhook/chat"
-    secret = getattr(settings, 'N8N_WEBHOOK_SECRET', '') or os.getenv('N8N_WEBHOOK_SECRET', '')
+    secret = (os.getenv('N8N_WEBHOOK_SECRET', '') or getattr(settings, 'N8N_WEBHOOK_SECRET', '') or '').strip()
+
+    if not secret:
+        logger.error('[CHAT IA] N8N_WEBHOOK_SECRET vacío — configurar en .env / Render')
+        return JsonResponse({
+            'error': 'n8n_secret_missing',
+            'output': (
+                'Falta N8N_WEBHOOK_SECRET en el entorno de Django. '
+                'Agregalo en tu .env local (y el mismo valor en Railway → Variables del servicio n8n), '
+                'guardá el archivo y reiniciá el servidor (Ctrl+C y de nuevo: python manage.py runserver).'
+            ),
+        }, status=503)
 
     # Campos de texto (FormData del front)
     data = {key: value for key, value in request.POST.items()}
@@ -4066,23 +4222,43 @@ def api_chat_ia(request):
         )
     except requests.exceptions.Timeout:
         logger.error('[CHAT IA] Timeout n8n user=%s', request.user.id)
-        return JsonResponse({'error': 'La IA tardó demasiado. Reintentá.'}, status=504)
+        return JsonResponse({'error': 'La IA tardó demasiado. Reintentá.', 'output': 'La IA tardó demasiado. Reintentá.'}, status=504)
     except requests.exceptions.RequestException as e:
         logger.error('[CHAT IA] Conexion n8n: %s', e)
-        return JsonResponse({'error': 'No se pudo conectar con la IA.'}, status=503)
+        return JsonResponse({'error': 'No se pudo conectar con la IA.', 'output': 'No se pudo conectar con la IA.'}, status=503)
 
+    raw = respuesta.content or b''
     content_type = respuesta.headers.get('Content-Type', 'application/json')
+
+    if not raw.strip():
+        logger.error(
+            '[CHAT IA] n8n respuesta vacía status=%s user=%s secret_len=%s',
+            respuesta.status_code, request.user.id, len(secret),
+        )
+        return JsonResponse({
+            'error': 'n8n_empty_response',
+            'output': (
+                'n8n respondió vacío (HTTP %s). Casi siempre el workflow crasheó antes de '
+                '"Respond to Webhook" (Code 2 / AI Agent / tool BI). Abrí la última ejecución '
+                'en n8n Railway, mirá el nodo en rojo, y reimportá chatbot_tuclima.json '
+                'si Code 2 no tiene el try/catch seguro.'
+            ) % respuesta.status_code,
+        }, status=502)
+
     if 'application/json' in content_type:
         try:
-            return JsonResponse(respuesta.json(), status=respuesta.status_code, safe=False)
+            payload = respuesta.json()
+            if isinstance(payload, dict) and not payload.get('output') and payload.get('error'):
+                payload.setdefault('output', str(payload['error']))
+            return JsonResponse(payload, status=respuesta.status_code, safe=False)
         except ValueError:
-            pass
+            logger.error('[CHAT IA] JSON inválido de n8n: %s', raw[:300])
+            return JsonResponse({
+                'error': 'n8n_invalid_json',
+                'output': 'La IA devolvió una respuesta inválida. Reintentá en unos segundos.',
+            }, status=502)
 
-    return HttpResponse(
-        respuesta.content,
-        status=respuesta.status_code,
-        content_type=content_type,
-    )
+    return HttpResponse(raw, status=respuesta.status_code, content_type=content_type)
 
 
 @login_required
@@ -5546,32 +5722,71 @@ def admin_toggle_renovacion(request):
 
 
 def obtener_noticias_clima(request):
-    # Usamos una búsqueda limpia
-    url = 'https://news.google.com/rss/search?q=clima+meteorologia+ambiente&hl=es-419&gl=AR'
-    
+    """Noticias climáticas para el home (Google News RSS, cache 15 min)."""
+    import html as html_lib
+    from urllib.parse import quote_plus
+
+    cache_key = 'api_noticias_clima_home_v2'
+    cached = django_cache.get(cache_key)
+    if cached is not None:
+        return JsonResponse(cached)
+
+    search = 'clima argentina OR meteorologia OR "alerta meteorologica" OR "cambio climatico"'
+    url = (
+        f'https://news.google.com/rss/search?q={quote_plus(search)}'
+        f'&hl=es-419&gl=AR&ceid=AR:es-419'
+    )
+
     try:
-        # Nos disfrazamos de navegador para que Google no nos bloquee
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-        with urllib.request.urlopen(req) as response:
+        req = urllib.request.Request(
+            url,
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) TuClima/1.0'},
+        )
+        with urllib.request.urlopen(req, timeout=12) as response:
             xml_data = response.read()
-        
-        # Leemos el XML nativo de Google
+
         root = ET.fromstring(xml_data)
         noticias = []
-        
-        for item in root.findall('.//item')[:20]: # Traemos las 20 más recientes
+
+        for item in root.findall('.//item')[:18]:
+            titulo = (item.findtext('title', '') or '').strip()
+            fuente = (item.findtext('source', '') or '').strip()
+            if ' - ' in titulo:
+                partes = titulo.rsplit(' - ', 1)
+                if not fuente or partes[1].strip().lower() == fuente.lower():
+                    titulo, fuente = partes[0].strip(), partes[1].strip() or fuente
+
+            raw_desc = item.findtext('description', '') or ''
+            img_match = re.search(
+                r'<img[^>]+src=["\']([^"\']+)["\']',
+                raw_desc,
+                re.IGNORECASE,
+            )
+            imagen = img_match.group(1) if img_match else ''
+
+            resumen = html_lib.unescape(re.sub(r'<[^>]+>', ' ', raw_desc))
+            resumen = re.sub(r'\s+', ' ', resumen).strip()
+            if fuente and resumen.lower().endswith(fuente.lower()):
+                resumen = resumen[: -len(fuente)].strip(' -·|')
+            if len(resumen) > 160:
+                resumen = resumen[:157].rstrip() + '…'
+
             noticias.append({
-                'title': item.findtext('title', ''),
-                'link': item.findtext('link', ''),
-                'pubDate': item.findtext('pubDate', ''),
-                'description': item.findtext('description', ''),
-                'source': item.findtext('source', 'Google News'),
+                'title': titulo,
+                'link': item.findtext('link', '') or '#',
+                'pubDate': item.findtext('pubDate', '') or '',
+                'description': resumen,
+                'image': imagen,
+                'source': fuente or 'Google News',
             })
-            
-        return JsonResponse({'success': True, 'items': noticias})
-    
+
+        payload = {'success': True, 'items': noticias}
+        django_cache.set(cache_key, payload, 900)
+        return JsonResponse(payload)
+
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+        logger.warning('obtener_noticias_clima falló: %s', e)
+        return JsonResponse({'success': False, 'error': str(e), 'items': []})
 
 
 def laboratorio(request):
@@ -5739,17 +5954,18 @@ def mi_cuenta(request):
             perfil.save(update_fields=['renovacion_automatica'])
         return redirect('/mi-cuenta/?guardado=1')
 
-    from .models import COSTO_TOKENS
+    from .models import COSTO_TOKENS, HistorialTokens
     perfil._reset_diario_si_necesario()
+    ahora = timezone.now()
+
     plan_tokens = None
     if (perfil.tokens_diarios_limite and perfil.fecha_vencimiento_tokens
-            and perfil.fecha_vencimiento_tokens > timezone.now()):
+            and perfil.fecha_vencimiento_tokens > ahora):
         plan_tokens = {
             'limite_dia': perfil.tokens_diarios_limite,
             'vencimiento': perfil.fecha_vencimiento_tokens.strftime('%d/%m/%Y'),
         }
 
-    from .models import HistorialTokens
     historial = (HistorialTokens.objects
                  .filter(usuario=request.user)
                  .order_by('-fecha')[:20])
@@ -5759,6 +5975,52 @@ def mi_cuenta(request):
     nivel = perfil.plan_nivel
     limite_ubicaciones = UbicacionGuardada.limite_para_plan(nivel)
 
+    PLAN_LABELS = {
+        'free': 'Free',
+        'starter': 'Starter',
+        'plus': 'Plus',
+        'pro_ia': 'Pro IA',
+        'power': 'Power',
+    }
+    plan_label = PLAN_LABELS.get(nivel, nivel.replace('_', ' ').title())
+
+    dias_restantes = None
+    if perfil.fecha_vencimiento:
+        delta = perfil.fecha_vencimiento - ahora
+        dias_restantes = max(0, delta.days) if delta.total_seconds() > 0 else 0
+
+    dias_restantes_tokens = None
+    if perfil.fecha_vencimiento_tokens:
+        delta_t = perfil.fecha_vencimiento_tokens - ahora
+        dias_restantes_tokens = max(0, delta_t.days) if delta_t.total_seconds() > 0 else 0
+
+    mostrar_aviso_renovacion = bool(
+        perfil.suscripcion_activa
+        and dias_restantes is not None
+        and dias_restantes <= 7
+    )
+
+    tokens_limite = perfil.tokens_diarios_limite or 0
+    tokens_disponibles = perfil.tokens_disponibles or 0
+    if tokens_limite > 0:
+        tokens_usados_hoy = max(0, tokens_limite - tokens_disponibles)
+        tokens_pct = min(100, round((tokens_usados_hoy / tokens_limite) * 100))
+    else:
+        tokens_usados_hoy = 0
+        tokens_pct = 0
+
+    dias_hist = perfil.dias_historial
+    anomalias_recientes = []
+    anomalias_count = 0
+    if dias_hist > 0:
+        desde_anom = ahora - timedelta(days=dias_hist)
+        qs_anom = DatoSectorial.objects.filter(
+            usuario_carga=request.user,
+            fecha_registro__gte=desde_anom,
+        ).order_by('-fecha_registro')
+        anomalias_count = qs_anom.count()
+        anomalias_recientes = list(qs_anom[:5])
+
     # API Key
     try:
         api_key_obj = request.user.api_key
@@ -5767,24 +6029,33 @@ def mi_cuenta(request):
 
     return render(request, 'mi_cuenta.html', {
         'perfil': perfil,
-        'plan_nivel': perfil.plan_nivel,
+        'plan_nivel': nivel,
+        'plan_label': plan_label,
         'puede_alertas': perfil.puede_alertas_proactivas,
         'plan_tokens': plan_tokens,
-        'tokens_disponibles': perfil.tokens_disponibles,
+        'tokens_disponibles': tokens_disponibles,
+        'tokens_limite': tokens_limite,
+        'tokens_usados_hoy': tokens_usados_hoy,
+        'tokens_pct': tokens_pct,
+        'dias_restantes': dias_restantes,
+        'dias_restantes_tokens': dias_restantes_tokens,
+        'mostrar_aviso_renovacion': mostrar_aviso_renovacion,
+        'anomalias_recientes': anomalias_recientes,
+        'anomalias_count': anomalias_count,
         'costos': COSTO_TOKENS,
         'guardado': request.GET.get('guardado') == '1',
         'historial': historial,
         'sectores_alertas': [
-            ('agro',    'Agro',    '\U0001f331'),
-            ('naval',   'Naval',   '\u2693'),
-            ('aereo',   'Aéreo',   '\u2708\ufe0f'),
-            ('energia', 'Energía', '\u26a1'),
+            ('agro',    'Agro',    'seedling'),
+            ('naval',   'Naval',   'anchor'),
+            ('aereo',   'Aéreo',   'plane'),
+            ('energia', 'Energía', 'bolt'),
         ],
         'horas_alerta': list(range(5, 21)),
         'ubicaciones': ubicaciones,
         'limite_ubicaciones': limite_ubicaciones,
         'api_key_obj': api_key_obj,
-        'dias_historial': perfil.dias_historial,
+        'dias_historial': dias_hist,
         'puede_api_key': nivel in ('plus', 'pro_ia', 'power'),
         'puede_reportes': nivel in ('pro_ia', 'power'),
     })

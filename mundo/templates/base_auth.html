@@ -3,6 +3,7 @@
 {% block extra_head %}
     <style>
         /* ── Layout centrado dark ──────────────────────────────── */
+        html { overflow-x: hidden; }
         body {
             background-color: #0f172a;
             color: #fff;
@@ -12,6 +13,9 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            padding: 16px;
+            box-sizing: border-box;
+            overflow-x: hidden;
             background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 80%);
         }
 
@@ -129,15 +133,18 @@
             font-size: 0.9em;
         }
 
-        /* ── Responsive ────────────────────────────────────────── */
-        @media (max-width: 480px) {
+        /* Responsive: tablet ≤900 | móvil ≤600 */
+        @media (max-width: 900px) {
+            .auth-card { padding: 32px 24px; }
+        }
+        @media (max-width: 600px) {
             .auth-container { padding: 12px; }
             .auth-card { padding: 24px 18px; border-radius: 14px; }
             .auth-brand { font-size: 1.5rem; margin-bottom: 20px; }
             input[type="text"],
             input[type="password"],
-            input[type="email"] { font-size: 16px !important; padding: 13px; }
-            .btn-auth { padding: 13px; font-size: 0.95rem; }
+            input[type="email"] { font-size: 16px !important; padding: 14px; min-height: 48px; }
+            .btn-auth { padding: 14px; font-size: 0.95rem; min-height: 48px; }
             .auth-subtitle { font-size: 1rem; }
         }
     </style>

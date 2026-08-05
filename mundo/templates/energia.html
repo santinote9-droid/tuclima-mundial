@@ -465,21 +465,21 @@
     <style>
         /* --- ESTILOS CORREGIDOS (NAVY OSCURO) --- */
         *, *::before, *::after { box-sizing: border-box; }
-        body { font-family: 'Inter', system-ui, sans-serif; background-color: #020617; color: #e2e8f0; margin: 0; }
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: #020617; color: #e2e8f0; margin: 0; overflow-x: hidden; }
         .digital { font-family: 'JetBrains Mono', monospace; }
 
         /* ICONOS SVG */
         .icon-svg { width: 24px; height: 24px; stroke-width: 2; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
 
         /* HEADER */
-        .header-eng { background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid #1e293b; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
-        .titulo-seccion { color: #facc15; font-weight: 800; font-size: 1.2em; letter-spacing: 2px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; }
+        .header-eng { background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid #1e293b; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+        .titulo-seccion { color: #facc15; font-weight: 800; font-size: 1.05em; letter-spacing: 2px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; flex-shrink: 0; }
         .btn-exit { text-decoration: none; color: #94a3b8; border: 1px solid #334155; padding: 8px 16px; border-radius: 6px; transition: 0.3s; font-size: 0.85em; font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
         .btn-exit:hover { background: #dc2626; border-color: #dc2626; color: white; }
 
         /* GRID SYSTEM */
         .main-container { max-width: 1200px; margin: 0 auto; padding: 30px 15px; }
-        .grid-energy { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .grid-energy { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 20px; }
 
         /* TARJETAS (Instrumentos) */
         .instrumento {
@@ -559,13 +559,17 @@
 
         /* ---- TABLET (≤ 900px) ---- */
         @media (max-width: 900px) {
-            .main-container { padding: 20px 12px; }
-            .header-eng { padding: 12px 20px; gap: 12px; }
+            .main-container { padding: 20px 12px; max-width: 100%; }
+            .header-eng { padding: 12px 16px; gap: 10px; }
             .titulo-seccion { font-size: 1em; }
-            .grid-energy { gap: 14px; }
+            .grid-energy {
+                gap: 14px;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
             .instrumento { min-height: 170px; }
             .inst-body { padding: 18px 16px; }
-            .modal-content { max-height: 94vh; }
+            .modal-content { max-height: 94vh; width: min(920px, calc(100% - 24px)); }
+            #smart-meter-row { gap: 20px !important; }
         }
 
         /* ---- MÓVIL (≤ 600px) ---- */
@@ -573,8 +577,6 @@
             /* Header: apilar y simplificar */
             .header-eng { flex-wrap: wrap; padding: 10px 12px; gap: 8px; justify-content: space-between; }
             .titulo-seccion { flex: 1 1 auto; font-size: 0.95em; letter-spacing: 1px; }
-            /* Ocultar coordenadas lat/lon en móvil */
-            .header-eng .digital { display: none !important; }
             #tc-btn-cabina { padding: 6px 10px !important; font-size: 0.7em; }
             .btn-exit { padding: 6px 10px; font-size: 0.75em; }
             /* Contenedor */
@@ -604,7 +606,8 @@
             .chat-input-area button { padding: 10px 12px !important; font-size: 12px !important; }
             /* Chart container del chat: sin desbordamiento */
             #chart-container { margin: 0 !important; border-radius: 0 !important; }
-            #chart-container canvas, #climatChart { max-width: 100% !important; height: auto !important; }
+            #chart-container .chart-canvas-wrap { height: 280px; position: relative; }
+            #chart-container canvas, #climatChart { max-width: 100% !important; width: 100% !important; height: 100% !important; }
             #chart-tabs { padding: 10px 10px 0 !important; }
             /* Smart Meter: apilar gráfico y panel de datos */
             #smart-meter-row { flex-direction: column !important; gap: 16px !important; }
@@ -633,10 +636,12 @@
         <svg class="icon-svg" style="color:#facc15;" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
         ENERGY OPS <span style="font-size:0.6em; background:#facc15; color:#0f172a; padding:3px 6px; border-radius:4px; font-weight: 800; letter-spacing: 0;">PRO</span>
     </div>
-    <div class="digital" style="font-size: 0.8em; text-align: right; line-height: 1.5;">
-        <div style="color: #64748b; font-weight: bold;">SISTEMA <span style="color:#22c55e;">ONLINE</span></div>
-        <div style="color: #94a3b8;">LAT: {{ lat }} | LON: {{ lon }}</div>
-    </div>
+    {% include 'partials/_sector_location_search.html' with tc_sector='energia' %}
+    <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+    <button id="tc-btn-chat" type="button" onclick="tcOpenChatModal()" title="Abrir TuClima IA" style="background:#1e293b; border:1px solid #334155; color:#94a3b8; padding:6px 12px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:0.75em; font-weight:600; font-family:inherit; transition:0.2s;" onmouseover="this.style.borderColor='#818cf8'; this.style.color='#a5b4fc';" onmouseout="if(!this.classList.contains('tc-chat-open')){this.style.borderColor='#334155'; this.style.color='#94a3b8';}">
+        <svg class="icon-svg" style="width:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/></svg>
+        CHAT IA
+    </button>
     <button id="tc-btn-cabina" onclick="tcToggleCabina()" title="Modo Cabina — alto contraste solar" style="background:#1e293b; border:1px solid #334155; color:#94a3b8; padding:6px 12px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:0.75em; font-weight:600; font-family:inherit; transition:0.2s;">
         <svg class="icon-svg" style="width:16px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
         CABINA
@@ -644,6 +649,7 @@
     <a href="/?lat={{ lat }}&lon={{ lon }}" class="btn-exit">
         <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg> Salir
     </a>
+    </div>
 </div>
 <script>
 function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');var b=document.getElementById('tc-btn-cabina');if(b)b.classList.toggle('tc-cabina-on',on);try{localStorage.setItem('tc_cabin',on?'1':'0');}catch(e){}}
@@ -1199,7 +1205,6 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
     function processMarkdown(text) {
         if (!text) return text;
         
-        // 0. Proteger etiquetas <a> ya presentes para no corromper URLs con markdown
         const htmlLinks = [];
         text = text.replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, (match) => {
             const idx = htmlLinks.length;
@@ -1207,45 +1212,31 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
             return '\x00LINK_' + idx + '\x00';
         });
         
-        // Procesar elementos markdown en orden (importante el orden)
-        
-        // 1. Código inline (backticks)
         text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
         
-        // 2. Negritas (**texto** o __texto__)
+        text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, (m, label, url) => {
+            const idx = htmlLinks.length;
+            htmlLinks.push('<a href="' + url + '" target="_blank" rel="noopener" class="download-link">' + label + '</a>');
+            return '\x00LINK_' + idx + '\x00';
+        });
+        
         text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
         text = text.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-        
-        // 3. Cursivas (*texto* o _texto_)
         text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-        text = text.replace(/_([^_]+)_/g, '<em>$1</em>');
         
-        // 4. Títulos
         text = text.replace(/^### (.+$)/gim, '<h3>$1</h3>');
         text = text.replace(/^## (.+$)/gim, '<h2>$1</h2>');
         text = text.replace(/^# (.+$)/gim, '<h1>$1</h1>');
         
-        // 5. Links [texto](url) - pero preservamos los links ya procesados
-        text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)(?![^<]*<\/a>)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-        
-        // 6. Listas con viñetas (bullet points)
         text = text.replace(/^[•*] (.+$)/gim, '<li>$1</li>');
+        text = text.replace(/(<li>.*?<\/li>\s*)+/gs, (match) => '<ul>' + match + '</ul>');
         
-        // Envolver listas consecutivas en <ul> (no codicioso para evitar fagocitar párrafos intermedios)
-        text = text.replace(/(<li>.*?<\/li>\s*)+/gs, (match) => {
-            return '<ul>' + match + '</ul>';
-        });
-        
-        // 7. Saltos de línea simples a <br>
         text = text.replace(/\n/g, '<br>');
-        
-        // 8. Limpiar <br> fantasma pegados a elementos de bloque
         text = text.replace(/<\/(h[1-3]|ul|ol|li)><br>/g, '</$1>');
         text = text.replace(/<br><(h[1-3]|ul|ol|li)>/g, '<$1>');
         
-        // 9. Restaurar etiquetas <a> originales
         htmlLinks.forEach((link, idx) => {
-            text = text.replace('\x00LINK_' + idx + '\x00', link);
+            text = text.split('\x00LINK_' + idx + '\x00').join(link);
         });
         
         return text;
@@ -2406,9 +2397,20 @@ function tcToggleCabina(){var on=document.body.classList.toggle('cabin-mode');va
 <script>
 function enviarAccionRapida(txt) {
     var inp = document.getElementById('user-input');
-    if (inp) { inp.value = txt; if(typeof enviarMensaje === 'function') enviarMensaje(); }
+    if (inp) {
+        inp.value = txt;
+        if (typeof tcOpenChatModal === 'function') tcOpenChatModal();
+        if (typeof enviarMensaje === 'function') enviarMensaje();
+    }
 }
 </script>
+{% include 'partials/_chat_modal.html' %}
+<div id="tc-chat-modal" class="tc-chat-modal" aria-hidden="true" role="dialog" aria-label="TuClima IA">
+    <div class="tc-chat-modal-backdrop" onclick="tcCloseChatModal()"></div>
+    <div class="tc-chat-modal-panel">
+        <button type="button" class="tc-chat-modal-close" onclick="tcCloseChatModal()" title="Cerrar chat" aria-label="Cerrar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
 <div class="chat-container">
     <div class="chat-header">
         <h3>
@@ -2500,10 +2502,12 @@ function enviarAccionRapida(txt) {
         </button>
     </div>
     <div id="chart-tabs" style="display: flex; gap: 10px; padding: 15px 20px 0 20px; overflow-x: auto;"></div>
-    <div style="padding: 20px;">
+    <div class="chart-canvas-wrap" style="padding: 20px; height: 280px; position: relative;">
         <canvas id="climatChart" width="400" height="200"></canvas>
     </div>
 </div>
+    </div><!-- /.tc-chat-modal-panel -->
+</div><!-- /#tc-chat-modal -->
 
 <script>
     // --- CONFIGURACIÓN ENERGIA INTELLIGENCE PRO ---
@@ -2667,20 +2671,20 @@ async function enviarMensaje() {
         formData.append("userId", djangoUserId);
         formData.append("sector", "energia");
         if (archivo) {
+            formData.append("data00", archivo);
             if (archivo.type.startsWith('image/')) {
+                formData.append("imageMimeType", archivo.type);
+                formData.append("imageName", archivo.name);
+                formData.append("hasImage", "1");
                 await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = () => {
                         formData.append("imageBase64", reader.result.split(',')[1]);
-                        formData.append("imageMimeType", archivo.type);
-                        formData.append("imageName", archivo.name);
                         resolve();
                     };
                     reader.onerror = reject;
                     reader.readAsDataURL(archivo);
                 });
-            } else {
-                formData.append("data00", archivo);
             }
         }
 
@@ -2690,23 +2694,32 @@ async function enviarMensaje() {
             body: formData
         });
 
-        const datos = await respuesta.json();
+        const rawResp = await respuesta.text();
+        let datos = null;
+        try { datos = rawResp ? JSON.parse(rawResp) : null; } catch (e) { datos = null; }
+        if (!datos || typeof datos !== 'object') {
+            throw new Error('La IA no devolvió una respuesta válida. Revisá N8N_WEBHOOK_SECRET y que n8n esté activo.');
+        }
+        if (datos.error && !datos.output) {
+            throw new Error(String(datos.error));
+        }
         
         // --- PROCESAMIENTO DE RESPUESTA IA ---
-        // --- PROCESAMIENTO DE RESPUESTA IA (DENTRO DE TU FUNCION enviarMensaje) ---
-        let respuestaIA = datos.output || "Procesado correctamente.";
+        let respuestaIA = datos.output || datos.texto_limpio || datos.error || "Procesado correctamente.";
+        if (datos.chart_block && String(datos.chart_block).includes('[MOSTRAR_GRAFICO]')
+            && !respuestaIA.includes('[MOSTRAR_GRAFICO]')) {
+            respuestaIA = respuestaIA.trim() + '\n\n' + String(datos.chart_block).trim();
+        }
         
-        // Detectamos si mandó un gráfico ANTES de limpiar el texto
-        let tieneGrafico = respuestaIA.includes('[MOSTRAR_GRAFICO]');
+        let tieneGrafico = respuestaIA.includes('[MOSTRAR_GRAFICO]')
+            || !!(datos.chart_block && String(datos.chart_block).includes('[MOSTRAR_GRAFICO]'));
+        const pidioGrafico = /gr[aá]fico|dashboard|visualiz|m[oó]dulo\s*bi/i.test(texto || '');
 
         // MAGIA VISUAL: Ocultamos todo el bloque técnico para que el usuario solo lea el reporte limpio
         let textoVisible = respuestaIA.replace(/\[MOSTRAR_GRAFICO\][\s\S]*/i, "").trim();
         
         // Procesar enlaces de descarga
-        const respuestaIAConLinks = textoVisible.replace(
-            /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-            '<a href="$2" target="_blank" class="download-link">$1</a>'
-        );
+        const respuestaIAConLinks = textoVisible;
 
         // Eliminar animación de espera
         const typingDiv = document.getElementById(typingId);
@@ -2715,13 +2728,19 @@ async function enviarMensaje() {
         // Imprimir el mensaje limpio en el chat usando addBotMessage
         addBotMessage(respuestaIAConLinks);
         
-        // Disparar el gráfico si existe
-        if (tieneGrafico) {
-            const chartData = extractChartData(datos); // Extraemos los datos del JSON original
+        if (tieneGrafico || pidioGrafico) {
             setTimeout(() => {
-                toggleChart(true); 
-                createSampleChart(chartData); 
-            }, 500); 
+                Promise.resolve(window.tcProcessChatGrafico
+                    ? window.tcProcessChatGrafico(datos, respuestaIA)
+                    : (createSampleChart(extractChartData(datos)) && (toggleChart(true), true))
+                ).then(ok => {
+                    if (!ok && typeof addBotMessage === 'function') {
+                        addBotMessage(tieneGrafico
+                            ? 'Recibí la marca de gráfico pero no pude dibujarlo. Probá de nuevo o tocá el ícono de gráfico.'
+                            : '⚠️ La IA no envió el bloque de datos del gráfico. Pedí de nuevo: "generá el gráfico con el módulo BI" (tiene que incluir el bloque [MOSTRAR_GRAFICO]).');
+                    }
+                });
+            }, 300);
         }
         
         fileInput.value = ""; 
@@ -2729,7 +2748,7 @@ async function enviarMensaje() {
         // Eliminar animación de espera
         const typingDiv = document.getElementById(typingId);
         if (typingDiv) typingDiv.remove();
-        addBotMessage('⚠️ Error de conexión o procesamiento.');
+        addBotMessage('⚠️ ' + (error?.message || 'Error de conexión o procesamiento.'));
         console.error(error); // Para que veas el error real en F12
     }
     chatBox.scrollTop = chatBox.scrollHeight;
@@ -2743,7 +2762,15 @@ async function enviarMensaje() {
 function toggleChart(forceShow = false) {
     const container = document.getElementById('chart-container');
     const chatContainer = document.querySelector('.chat-container');
-    if (forceShow || container.style.display === 'none') {
+    if (!container) return;
+    const isHidden = container.style.display === 'none' || !container.style.display || getComputedStyle(container).display === 'none';
+    if (forceShow || isHidden) {
+        if (!forceShow && !window.myChart) {
+            if (typeof addBotMessage === 'function') {
+                addBotMessage('Pedí un gráfico al asistente (por ejemplo: "generá un gráfico del clima") y lo muestro acá.');
+            }
+            return;
+        }
         container.style.display = 'block';
         setTimeout(() => container.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     } else {
@@ -2817,10 +2844,14 @@ function extractChartData(aiResponse) {
 
 // OVERRIDE: Parser mejorado — acepta key=value y mapea alias de nombres que genera la IA
 extractChartData = function(aiResponse) {
-    const fullOutput = aiResponse.output || aiResponse.texto_limpio || "";
+    const fullOutput = aiResponse.chart_block || aiResponse.output || aiResponse.texto_limpio || "";
     const _gm = fullOutput.match(/\[MOSTRAR_GRAFICO\]([\s\S]*)$/i);
     if (!_gm) return null;
     const bloque = _gm[1].trim();
+    if (bloque.indexOf('{') >= 0 && typeof window.tcParseChartJsonBlock === 'function') {
+        const fromJson = window.tcParseChartJsonBlock(bloque);
+        if (fromJson) return fromJson;
+    }
     const ALIAS = {
         chart_type:'type', labels:'etiquetas', horas:'etiquetas', fechas:'etiquetas', periodos:'etiquetas', turnos:'etiquetas',
         nubosidad_porcentaje:'nubosidad', cobertura_nube:'nubosidad', nubosidad_oktas:'nubosidad',
@@ -2836,12 +2867,18 @@ extractChartData = function(aiResponse) {
     for (const linea of bloque.split('\n')) {
         const t = linea.trim();
         if (!t || t.startsWith('#') || t.startsWith('//')) continue;
-        const sep = t.search(/[=:]/);
+        // Solo el primer : o = (preservar horas 12:00 en el valor)
+        const sepColon = t.indexOf(':');
+        const sepEq = t.indexOf('=');
+        let sep = -1;
+        if (sepColon >= 0 && sepEq >= 0) sep = Math.min(sepColon, sepEq);
+        else sep = sepColon >= 0 ? sepColon : sepEq;
         if (sep === -1) continue;
-        let key = t.slice(0, sep).trim().toLowerCase().replace(/[\s\-]+/g, '_');
-        const raw = t.slice(sep + 1).trim();
+        let key = t.slice(0, sep).trim().toLowerCase().replace(/["'`]/g, '').replace(/[\s\-]+/g, '_');
+        const raw = t.slice(sep + 1).trim(); // resto intacto
         if (!key || !raw) continue;
         key = ALIAS[key] || key;
+        if (['max','min','data','datos','value','values','total','status','message','ok','success','error'].includes(key)) continue;
         let parsed;
         try { parsed = JSON.parse(raw); }
         catch {
@@ -2855,16 +2892,19 @@ extractChartData = function(aiResponse) {
         resultado[key] = Array.isArray(parsed) ? parsed : [parsed];
     }
     if (Array.isArray(resultado.type)) resultado.type = resultado.type[0] || 'line';
-    return resultado;
+    const _hasSeries = Object.entries(resultado).some(([k, v]) =>
+        k !== 'etiquetas' && k !== 'type' && Array.isArray(v) && v.length >= 2 && typeof v[0] === 'number'
+    );
+    return _hasSeries ? resultado : null;
 };
 
 // 3. FUNCIÓN DEL DASHBOARD INTERACTIVO (Chart.js)
 function createSampleChart(chartData = null) {
-    if (!chartData) return;
+    if (!chartData) return false;
 
     const ctx = document.getElementById('climatChart').getContext('2d');
     const tabsContainer = document.getElementById('chart-tabs');
-    if (!tabsContainer) return; 
+    if (!tabsContainer) return false;
     
     tabsContainer.innerHTML = ''; 
 
@@ -2913,12 +2953,15 @@ function createSampleChart(chartData = null) {
     // Variables dinámicas: si la IA usó nombres propios no contemplados en allVariables
     if (chartData) {
         const _knownKeys = new Set(allVariables.map(v => v.key));
-        const _skipKeys = new Set(['type', 'etiquetas', 'titulo', '_titulo']);
+        const _skipKeys = new Set(['type', 'etiquetas', 'titulo', '_titulo', 'region', 'puerto', 'ubicacion', 'cultivo', 'aeropuerto_origen', 'aeropuerto_destino', 'serie', 'series', 'fase_lunar', 'condiciones_mar', 'condiciones_atmosfericas', 'tipo_energia', 'suelo', 'trabajo', 'nombre', 'email', 'max', 'min', 'data', 'datos', 'value', 'values', 'total', 'status', 'message', 'ok', 'success', 'error']);
+        Object.keys(chartData).forEach(k => {
+            if (_skipKeys.has(String(k).toLowerCase())) delete chartData[k];
+        });
         const _dynColors = ['#06b6d4','#f59e0b','#10b981','#f43f5e','#a855f7','#fbbf24','#3b82f6'];
         let _dynIdx = 0;
         for (const [_k, _v] of Object.entries(chartData)) {
-            if (_knownKeys.has(_k) || _skipKeys.has(_k)) continue;
-            if (!Array.isArray(_v) || _v.length === 0 || _v[0] === null || typeof _v[0] === 'string') continue;
+            if (_knownKeys.has(_k) || _skipKeys.has(_k) || _skipKeys.has(String(_k).toLowerCase())) continue;
+            if (!Array.isArray(_v) || _v.length < 2 || typeof _v[0] !== 'number') continue;
             allVariables.push({ key: _k, label: _k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), color: _dynColors[_dynIdx++ % _dynColors.length] });
         }
     }
@@ -2926,8 +2969,9 @@ function createSampleChart(chartData = null) {
     // Filtrar variables disponibles y evitar duplicados viento_direccion/direccion_viento
     let variablesDisponibles = allVariables.filter(v => 
         chartData[v.key] !== undefined && 
-        chartData[v.key].length > 0 && 
-        chartData[v.key][0] !== null
+        Array.isArray(chartData[v.key]) &&
+        chartData[v.key].length >= 2 && 
+        typeof chartData[v.key][0] === 'number'
     );
     
     // Evitar duplicados de dirección de viento
@@ -2938,16 +2982,15 @@ function createSampleChart(chartData = null) {
         variablesDisponibles = variablesDisponibles.filter(v => v.key !== 'direccion_viento');
     }
 
-    if (variablesDisponibles.length === 0) return;
+    if (variablesDisponibles.length === 0) return false;
 
     const labels = chartData.etiquetas || ['Actual'];
     let tituloUbicacion = chartData.region || chartData.puerto || chartData.aeropuerto_origen || chartData.ubicacion || 'Reporte';
-    
-    // 🧡 LIMPIEZA ANTI-BASURA: Sacamos comillas y cortamos si la IA metió un párrafo entero
-    tituloUbicacion = tituloUbicacion.replace(/["']/g, '').trim(); 
+    if (Array.isArray(tituloUbicacion)) tituloUbicacion = tituloUbicacion[0];
+    tituloUbicacion = String(tituloUbicacion == null ? 'Reporte' : tituloUbicacion).replace(/["']/g, '').trim() || 'Reporte';
     if (tituloUbicacion.length > 35) {
-        // Cortamos en la primera coma, punto, o simplemente a los 30 caracteres
-        tituloUbicacion = tituloUbicacion.split(/(?:\n|,|\.)/)[0].substring(0, 35) + '...'; 
+        tituloUbicacion = tituloUbicacion.split(/[,.]/)[0].substring(0, 35) + '...';
+        if (tituloUbicacion.length > 35) tituloUbicacion = tituloUbicacion.substring(0, 35) + '...';
     }
 
     function drawChart(variableConfig) {
@@ -3045,6 +3088,7 @@ function createSampleChart(chartData = null) {
     });
 
     drawChart(variablesDisponibles[0]);
+    return true;
 }
 </script>
 {% include 'partials/_modal_interactivo.html' %}

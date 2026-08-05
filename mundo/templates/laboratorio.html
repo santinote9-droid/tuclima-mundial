@@ -19,9 +19,11 @@
         }
 
         /* ── Contenedor del globo ─────────────────────────── */
+        html, body { width: 100%; height: 100%; }
         #globeViz {
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
             display: block;
         }
 
@@ -462,6 +464,66 @@
         }
         .atm-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 7px 0; }
         .atm-note { color: #475569; font-size: 0.75em; line-height: 1.5; }
+        .atm-actions {
+            display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;
+        }
+        .atm-actions button {
+            flex: 1;
+            min-width: 0;
+            background: rgba(139,92,246,0.1);
+            border: 1px solid rgba(139,92,246,0.28);
+            color: #c4b5fd;
+            border-radius: 7px;
+            padding: 6px 8px;
+            font-size: 0.78em;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .atm-actions button:hover {
+            background: rgba(139,92,246,0.2);
+            border-color: rgba(139,92,246,0.45);
+        }
+        .atm-actions button.ghost {
+            background: rgba(148,163,184,0.06);
+            border-color: rgba(148,163,184,0.2);
+            color: #94a3b8;
+        }
+
+        /* Etiquetas flotantes de capas */
+        #atm-labels {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 8;
+            overflow: hidden;
+        }
+        .atm-float-label {
+            position: absolute;
+            left: 0; top: 0;
+            transform: translate(-50%, -50%);
+            background: rgba(8, 12, 28, 0.88);
+            border: 1px solid rgba(148,163,184,0.28);
+            border-radius: 8px;
+            padding: 5px 9px;
+            font-size: 0.72rem;
+            line-height: 1.25;
+            color: #e2e8f0;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.18s;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+            backdrop-filter: blur(8px);
+        }
+        .atm-float-label.show { opacity: 1; visibility: visible; }
+        .atm-float-label .af-name { font-weight: 700; font-size: 0.78rem; }
+        .atm-float-label .af-meta { color: #94a3b8; font-size: 0.68rem; margin-top: 2px; }
+        .atm-float-label .af-temp { color: #fb923c; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+        .cut-slider-wrap { margin-top: 8px; display: none; }
+        .cut-slider-wrap.show { display: block; }
 
         /* ── Panel de eventos severos ─────────────────────── */
         #events-panel {
@@ -663,25 +725,57 @@
         }
         .sb-section-body.collapsed { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; }
 
-        /* ── Responsive móvil ─────────────────────────────── */
-        @media (max-width: 520px) {
-            /* Barra de controles: expandir al ancho de pantalla */
+        /* ── Responsive: tablet ≤900 | móvil ≤600 ── */
+        @media (max-width: 900px) {
             #controls-bar {
                 min-width: unset;
-                width: calc(100vw - 32px);
-                left: 16px;
+                width: calc(100% - 24px);
+                max-width: none;
+                left: 12px;
                 transform: none;
-                padding: 10px 14px;
-                bottom: 10px;
+                padding: 12px 14px;
+                bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+                box-sizing: border-box;
             }
-            .ctrl-btn { padding: 6px 10px; font-size: 0.75em; }
-            /* Ocultar paneles laterales (accesibles por el sidebar) */
+            .ctrl-btn { padding: 8px 12px; font-size: 0.78em; min-height: 36px; }
+            /* Paneles flotantes: usar sidebar en tablet/móvil */
             #status-panel, #atm-panel, #events-panel, #legend { display: none; }
-            /* HUD y botón volver más compactos */
-            #hud { top: 16px; left: 16px; }
-            #hud h1 { font-size: 1.1em; }
-            #hud p { font-size: 0.72em; }
-            #btn-back { top: 16px; right: 16px; padding: 8px 12px; font-size: 0.76em; }
+            #hud {
+                top: calc(14px + env(safe-area-inset-top, 0px));
+                left: 14px;
+            }
+            #hud h1 { font-size: 1.15em; }
+            #btn-back {
+                top: calc(14px + env(safe-area-inset-top, 0px));
+                right: 14px;
+            }
+            #sidebar { width: min(300px, 92%); max-width: calc(100% - 16px); }
+            #time-slider, #speed-slider, #cut-slider { height: 8px; }
+            #time-slider::-webkit-slider-thumb,
+            #speed-slider::-webkit-slider-thumb,
+            #cut-slider::-webkit-slider-thumb {
+                width: 22px; height: 22px;
+            }
+        }
+        @media (max-width: 600px) {
+            #controls-bar {
+                width: calc(100% - 20px);
+                left: 10px;
+                padding: 10px 12px;
+                bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+                gap: 8px;
+            }
+            .ctrl-btn { padding: 6px 10px; font-size: 0.72em; }
+            .ctrl-row { gap: 6px; }
+            #hud { top: calc(12px + env(safe-area-inset-top, 0px)); left: 12px; }
+            #hud h1 { font-size: 1.05em; }
+            #hud p { font-size: 0.7em; }
+            #btn-back {
+                top: calc(12px + env(safe-area-inset-top, 0px));
+                right: 12px;
+                padding: 8px 12px;
+                font-size: 0.76em;
+            }
         }
     </style>
 {% endblock %}
@@ -695,6 +789,7 @@
 
     <!-- Lienzo del globo -->
     <div id="globeViz"></div>
+    <div id="atm-labels" aria-hidden="true"></div>
 
     <!-- HUD de título -->
     <div id="hud">
@@ -759,10 +854,22 @@
                     <svg class="sb-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
                 </div>
                 <div class="sb-section-body" id="sb-controls-body">
-                    <div class="ctrl-row" style="gap:6px;margin-bottom:10px;flex-wrap:wrap;">
-                        <button id="btn-light" class="ctrl-btn" onclick="toggleFullLight()" title="Iluminar toda la Tierra">
+                    <div class="ctrl-row" style="gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+                        <button id="btn-light" class="ctrl-btn" onclick="toggleFullLight()" title="Iluminar toda la Tierra (sin noche)">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></svg>
-                            <span class="btn-lbl">Ilum.: OFF</span>
+                            <span class="btn-lbl">Ilum. global: OFF</span>
+                        </button>
+                        <button id="btn-night" class="ctrl-btn" onclick="toggleNightLights()" title="Luces de ciudad / textura nocturna">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                            <span class="btn-night-lbl">Noche: OFF</span>
+                        </button>
+                        <button id="btn-cut" class="ctrl-btn" onclick="toggleCrossSection()" title="Corte transversal">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                            <span class="btn-cut-lbl">Corte: OFF</span>
+                        </button>
+                        <button id="btn-labels" class="ctrl-btn ctrl-active" onclick="toggleAtmLabels()" title="Etiquetas flotantes de capas">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                            <span class="btn-labels-lbl">Labels: ON</span>
                         </button>
                         <button id="btn-wind" class="ctrl-btn ctrl-active" onclick="toggleWind()" title="Corrientes de viento">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
@@ -772,6 +879,13 @@
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                             <span class="btn-events-lbl">Alertas: ON</span>
                         </button>
+                    </div>
+                    <div id="cut-slider-wrap" class="cut-slider-wrap">
+                        <div class="time-bar-header">
+                            <span class="ctrl-label">ÁNGULO DEL CORTE</span>
+                            <span id="cut-angle-label">0°</span>
+                        </div>
+                        <input type="range" id="cut-slider" min="0" max="360" step="1" value="0" oninput="onCutAngle(this.value)">
                     </div>
                     <div class="time-bar">
                         <div class="time-bar-header">
@@ -783,7 +897,7 @@
                     </div>
                     <div class="time-bar" style="margin-top:10px;">
                         <div class="time-bar-header" style="gap:8px;">
-                            <span class="ctrl-label">VIAJE EN EL TIEMPO — úItimas 24 h</span>
+                            <span class="ctrl-label">VIAJE EN EL TIEMPO — últimas 24 h</span>
                             <button id="btn-go-now" onclick="goToNow()" title="Volver al tiempo actual" style="background:rgba(56,189,248,0.10);border:1px solid rgba(56,189,248,0.28);color:#38bdf8;border-radius:5px;padding:2px 8px;font-size:0.72em;font-weight:600;cursor:pointer;font-family:inherit;display:none;white-space:nowrap;transition:background 0.18s;">↺ Ahora</button>
                             <span id="time-label">Ahora</span>
                         </div>
@@ -793,16 +907,20 @@
                 </div>
             </div>
 
-            <!-- ★ Capas Atmosféricas — colapsado -->
+            <!-- ★ Capas Atmosféricas — expandido para descubrirlas -->
             <div class="sb-section">
-                <div class="sb-section-header" id="sbh-atm" onclick="toggleSbSection('atm')">
+                <div class="sb-section-header open" id="sbh-atm" onclick="toggleSbSection('atm')">
                     <span class="sb-section-label">
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20M2 12h20"/></svg>
                         Capas Atmosféricas
                     </span>
                     <svg class="sb-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
                 </div>
-                <div class="sb-section-body collapsed" id="sb-atm-body">
+                <div class="sb-section-body" id="sb-atm-body">
+                    <div class="atm-actions">
+                        <button type="button" onclick="event.stopPropagation(); setAllAtmLayers(true)" title="Mostrar todas las capas">Todas</button>
+                        <button type="button" class="ghost" onclick="event.stopPropagation(); setAllAtmLayers(false)" title="Ocultar capas">Ninguna</button>
+                    </div>
                     <div class="atm-layer-row" id="atm-row-troposphere" onclick="toggleAtmLayer('troposphere')">
                         <div class="atm-layer-dot" style="background:#87ceeb;--dot-color:#87ceeb;"></div>
                         <span class="atm-layer-name">Troposfera</span>
@@ -829,7 +947,7 @@
                         <span class="atm-layer-alt">85–700 km</span>
                     </div>
                     <div class="atm-divider"></div>
-                    <div class="atm-note">Clic para activar/desactivar.<br>Ozono: textura con agujero real sobre Antártida (sep–nov).</div>
+                    <div class="atm-note">Altitudes didácticas (exageradas). Termosfera muestra T° diurna/nocturna. Ozono: agujero Antártida (sep–nov). Activá <b>Corte</b> para ver el perfil en capas.</div>
                 </div>
             </div>
 
@@ -898,6 +1016,7 @@
     //  CONFIGURACIÓN DE TEXTURAS
     // ══════════════════════════════════════════════════════════════
     const EARTH_IMG  = '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
+    const NIGHT_IMG  = '//unpkg.com/three-globe/example/img/earth-night.jpg';
     const BUMP_IMG   = '//unpkg.com/three-globe/example/img/earth-topology.png';
     const STARFIELD  = '//unpkg.com/three-globe/example/img/night-sky.png';
 
@@ -920,10 +1039,19 @@
     let cloudsMesh       = null;
     let sunLight         = null;
     let ambientLight     = null;
+    let fillLight        = null;      // luz de relleno (cara nocturna)
+    let hemiLight        = null;      // hemisferio cielo/suelo
     let globeR           = 100;       // se asigna en onGlobeReady
     let cloudsAngle      = 0;         // ángulo acumulado en animación continua
     let currentSpeedMult = 1;         // multiplicador de velocidad (1=real por defecto)
     let fullLightOn      = false;
+    let nightLightsOn    = false;
+    let cutOn            = false;
+    let cutAngleDeg      = 0;
+    let atmLabelsOn      = true;
+    let nightEmissiveTex = null;
+    let cutHelperMesh    = null;
+    const clipPlane      = new THREE.Plane(new THREE.Vector3(1, 0, 0), 0);
     let sliderActive     = false;     // true cuando el slider de tiempo está fuera de "Ahora"
     let simOffsetMs      = 0;
 
@@ -958,12 +1086,37 @@
         const { delta, subLon, utcH } = calcSolar(dateObj || new Date());
         const v = solarVector(delta, subLon, globeR * 200);
         sunLight.position.set(v.x, v.y, v.z);
+        // Relleno desde el antípoda: ilumina un poco la noche sin matar el terminador
+        if (fillLight) fillLight.position.set(-v.x, -v.y * 0.4, -v.z);
         const hemi = delta >= 0 ? 'N' : 'S';
-        document.getElementById('st-sol').textContent =
-            `${Math.abs(delta).toFixed(1)}°${hemi}  /  ${subLon.toFixed(1)}°E`;
+        const solEl = document.getElementById('st-sol');
+        if (solEl) solEl.textContent = `${Math.abs(delta).toFixed(1)}°${hemi}  /  ${subLon.toFixed(1)}°E`;
         const hh = Math.floor(utcH).toString().padStart(2, '0');
         const mm = Math.round((utcH % 1) * 60).toString().padStart(2, '0');
-        document.getElementById('st-utc').textContent = `${hh}:${mm} UTC`;
+        const utcEl = document.getElementById('st-utc');
+        if (utcEl) utcEl.textContent = `${hh}:${mm} UTC`;
+    }
+
+    function applyLightingMode() {
+        if (!ambientLight || !sunLight) return;
+        if (fullLightOn) {
+            // Tierra legible completa: ambiente alto + relleno + sol suave (relieve)
+            ambientLight.intensity = nightLightsOn ? 1.05 : 1.35;
+            ambientLight.color.setHex(0xb8c8e8);
+            sunLight.intensity = 0.85;
+            if (fillLight) { fillLight.intensity = 1.1; fillLight.visible = true; }
+            if (hemiLight) { hemiLight.intensity = 0.55; hemiLight.visible = true; }
+        } else {
+            ambientLight.intensity = nightLightsOn ? 0.22 : 0.38;
+            ambientLight.color.setHex(0x080c1a);
+            sunLight.intensity = 2.2;
+            if (fillLight) { fillLight.intensity = 0.18; fillLight.visible = true; }
+            if (hemiLight) { hemiLight.intensity = 0.12; hemiLight.visible = true; }
+        }
+        const gm = world.globeMaterial && world.globeMaterial();
+        if (gm && nightLightsOn) {
+            gm.emissiveIntensity = fullLightOn ? 0.55 : 1.15;
+        }
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -974,8 +1127,8 @@
         .bumpImageUrl(BUMP_IMG)
         .backgroundImageUrl(STARFIELD)
         .showAtmosphere(true)
-        .atmosphereColor('#4f6bde')
-        .atmosphereAltitude(0.18)
+        .atmosphereColor('#5b7cf0')
+        .atmosphereAltitude(0.22)
         .enablePointerInteraction(true)
         (document.getElementById('globeViz'));
 
@@ -998,12 +1151,64 @@
 
         // ── Luces ─────────────────────────────────────────────────────────
         world.scene().children.filter(c => c.isLight).forEach(l => world.scene().remove(l));
-        ambientLight = new THREE.AmbientLight(0x080c1a, 0.45);
+        ambientLight = new THREE.AmbientLight(0x080c1a, 0.38);
         world.scene().add(ambientLight);
         sunLight = new THREE.DirectionalLight(0xfff6e0, 2.2);
         world.scene().add(sunLight);
+        fillLight = new THREE.DirectionalLight(0x6b8cce, 0.18);
+        world.scene().add(fillLight);
+        hemiLight = new THREE.HemisphereLight(0x3a5a9a, 0x0a1020, 0.12);
+        world.scene().add(hemiLight);
         _lastRafTs = performance.now();
         updateSun(new Date(simTimestamp));
+        applyLightingMode();
+
+        // Clipping para corte transversal
+        world.renderer().localClippingEnabled = true;
+
+        // Textura nocturna (luces de ciudad) como emissiveMap
+        texLoader.load(NIGHT_IMG, (tex) => {
+            nightEmissiveTex = tex;
+            const gm = world.globeMaterial();
+            if (!gm) return;
+            gm.emissiveMap = tex;
+            gm.emissive = new THREE.Color(0xfff2c4);
+            gm.emissiveIntensity = 0;
+            gm.needsUpdate = true;
+            // Atenuar luces en el lado diurno
+            gm.onBeforeCompile = (shader) => {
+                shader.uniforms.uSunDir = { value: new THREE.Vector3(1, 0, 0) };
+                gm.userData.nightShader = shader;
+                shader.fragmentShader = 'uniform vec3 uSunDir;\n' + shader.fragmentShader;
+                shader.fragmentShader = shader.fragmentShader.replace(
+                    '#include <emissivemap_fragment>',
+                    [
+                        '#include <emissivemap_fragment>',
+                        'float _dayN = max(dot(normalize(normal), normalize(uSunDir)), 0.0);',
+                        'totalEmissiveRadiance *= (1.0 - smoothstep(0.02, 0.42, _dayN));',
+                    ].join('\n')
+                );
+            };
+            gm.needsUpdate = true;
+        }, undefined, () => {
+            console.warn('No se pudo cargar textura nocturna');
+        });
+
+        // Helper visual del plano de corte
+        (function buildCutHelper() {
+            const geo = new THREE.PlaneGeometry(globeR * 2.6, globeR * 2.6);
+            const mat = new THREE.MeshBasicMaterial({
+                color: 0x38bdf8,
+                transparent: true,
+                opacity: 0.08,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+            });
+            cutHelperMesh = new THREE.Mesh(geo, mat);
+            cutHelperMesh.visible = false;
+            cutHelperMesh.renderOrder = 1;
+            world.scene().add(cutHelperMesh);
+        })();
 
         // ── Nubes ─────────────────────────────────────────────────────────
         function buildCloudMesh(tex) {
@@ -1026,6 +1231,7 @@
             }
             cloudsMesh = buildCloudMesh(tex);
             world.scene().add(cloudsMesh);
+            if (typeof applyClippingToAll === 'function') applyClippingToAll();
             document.getElementById('st-nubes').textContent = label;
         }
 
@@ -1071,6 +1277,8 @@
                     _sunTick = 0;
                     const simDate = new Date(simTimestamp);
                     updateSun(simDate);
+                    syncNightSunDir(simDate);
+                    updateThermoTempLabels(simDate);
                     const hh = simDate.getUTCHours().toString().padStart(2, '0');
                     const mm = simDate.getUTCMinutes().toString().padStart(2, '0');
                     const tlEl = document.getElementById('time-label');
@@ -1086,7 +1294,11 @@
                     cloudsAngle += BASE_CLOUDS_RAD * currentSpeedMult;
                     cloudsMesh.rotation.y = cloudsAngle;
                 }
+            } else {
+                syncNightSunDir(new Date(Date.now() + simOffsetMs));
             }
+
+            updateAtmLabelPositions();
         })();
 
         // Ocultar pantalla de carga
@@ -1128,12 +1340,13 @@
     function toggleFullLight() {
         if (!ambientLight || !sunLight) return;
         fullLightOn = !fullLightOn;
-        // En modo global: luz ambiental alta + sol apagado (sin terminador)
-        ambientLight.intensity = fullLightOn ? 1.85 : 0.45;
-        sunLight.intensity     = fullLightOn ? 0    : 2.2;
+        applyLightingMode();
         const btn = document.getElementById('btn-light');
-        btn.classList.toggle('ctrl-active', fullLightOn);
-        btn.querySelector('.btn-lbl').textContent = `Ilum. global: ${fullLightOn ? 'ON' : 'OFF'}`;
+        if (btn) {
+            btn.classList.toggle('ctrl-active', fullLightOn);
+            const lbl = btn.querySelector('.btn-lbl');
+            if (lbl) lbl.textContent = `Ilum. global: ${fullLightOn ? 'ON' : 'OFF'}`;
+        }
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -1297,27 +1510,26 @@
     }
 
     // ══════════════════════════════════════════════════════════════
-    //  CAPAS ATMOSFÉRICAS
+    //  CAPAS ATMOSFÉRICAS + LABELS + CORTE + NOCHE + TERMOSFERA
     // ══════════════════════════════════════════════════════════════
     const ATM_LAYER_DEFS = [
-        { id: 'troposphere',  altitude: 0.024, color: 0x87ceeb, opacity: 0.08, useTexture: false },
-        { id: 'stratosphere', altitude: 0.073, color: 0x7b68ee, opacity: 0.10, useTexture: false },
-        { id: 'ozone',        altitude: 0.060, color: null,     opacity: 0.12, useTexture: true  },
-        { id: 'mesosphere',   altitude: 0.155, color: 0x60a5fa, opacity: 0.07, useTexture: false },
-        { id: 'thermosphere', altitude: 0.320, color: 0xfb923c, opacity: 0.05, useTexture: false },
+        { id: 'troposphere',  name: 'Troposfera',   km: '0–12 km',   altitude: 0.035, color: 0x87ceeb, hex: '#87ceeb', opacity: 0.22, wireOpacity: 0.45, useTexture: false, tempNote: '≈ −60 a 15 °C' },
+        { id: 'stratosphere', name: 'Estratosfera', km: '12–50 km',  altitude: 0.095, color: 0x7b68ee, hex: '#7b68ee', opacity: 0.20, wireOpacity: 0.42, useTexture: false, tempNote: '≈ −60 a 0 °C' },
+        { id: 'ozone',        name: 'Capa de Ozono', km: '~25 km',   altitude: 0.078, color: 0xa78bfa, hex: '#a78bfa', opacity: 0.28, wireOpacity: 0.35, useTexture: true,  tempNote: 'Filtro UV' },
+        { id: 'mesosphere',   name: 'Mesosfera',    km: '50–85 km',  altitude: 0.185, color: 0x60a5fa, hex: '#60a5fa', opacity: 0.16, wireOpacity: 0.40, useTexture: false, tempNote: '≈ −90 °C' },
+        { id: 'thermosphere', name: 'Termosfera',   km: '85–700 km', altitude: 0.380, color: 0xfb923c, hex: '#fb923c', opacity: 0.14, wireOpacity: 0.38, useTexture: 'thermo', tempNote: '' },
     ];
     const atmMeshes = {};
+    const atmWires  = {};
     const atmOn     = {};
+    const atmLabelEls = {};
     ATM_LAYER_DEFS.forEach(l => { atmOn[l.id] = false; });
 
     function createOzoneTexture() {
         const W = 1024, H = 512;
         const cv  = document.createElement('canvas');
-        cv.width  = W;
-        cv.height = H;
+        cv.width  = W; cv.height = H;
         const ctx = cv.getContext('2d');
-
-        // Capa base: gradiente turquesa representando ozono estratosférico normal
         const baseG = ctx.createLinearGradient(0, 0, 0, H);
         baseG.addColorStop(0,    'rgba(60,  130, 220, 0.04)');
         baseG.addColorStop(0.15, 'rgba(50,  210, 180, 0.16)');
@@ -1326,9 +1538,6 @@
         baseG.addColorStop(1,    'rgba(60,  0,   180, 0.04)');
         ctx.fillStyle = baseG;
         ctx.fillRect(0, 0, W, H);
-
-        // Agujero de ozono: franja violeta-rosa sobre Antártida (polo sur = fila inferior)
-        // lat -60° → y ≈ 0.833*H  |  lat -90° → y = H
         const holeTop = Math.round(0.80 * H);
         const holeG   = ctx.createLinearGradient(0, holeTop, 0, H);
         holeG.addColorStop(0,    'rgba(0,0,0,0)');
@@ -1337,8 +1546,6 @@
         holeG.addColorStop(1,    'rgba(225, 0, 115, 0.68)');
         ctx.fillStyle = holeG;
         ctx.fillRect(0, holeTop, W, H - holeTop);
-
-        // Núcleo del agujero: elipse más intensa (~70–90°S)
         const cx = W * 0.50, cy = H;
         const ellW = W * 0.35, ellH = H * 0.13;
         const deepG = ctx.createRadialGradient(cx, cy - ellH * 0.5, 0, cx, cy - ellH * 0.5, Math.max(ellW, ellH));
@@ -1349,46 +1556,273 @@
         ctx.beginPath();
         ctx.ellipse(cx, cy, ellW, ellH, 0, Math.PI, 2 * Math.PI);
         ctx.fill();
-
         return new THREE.CanvasTexture(cv);
     }
 
+    /** Textura termosfera: frío (noche) → caliente (día solar) */
+    function createThermoTexture() {
+        const W = 1024, H = 512;
+        const cv = document.createElement('canvas');
+        cv.width = W; cv.height = H;
+        const ctx = cv.getContext('2d');
+        // Longitud: left=180°W … right=180°E — el offset de textura se rota con el sol
+        const g = ctx.createLinearGradient(0, 0, W, 0);
+        g.addColorStop(0.00, 'rgba(60, 80, 200, 0.55)');   // noche
+        g.addColorStop(0.25, 'rgba(180, 90, 40, 0.35)');
+        g.addColorStop(0.50, 'rgba(255, 120, 40, 0.75)');  // día (subsolar)
+        g.addColorStop(0.75, 'rgba(180, 90, 40, 0.35)');
+        g.addColorStop(1.00, 'rgba(60, 80, 200, 0.55)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H);
+        // Brillo polar suave
+        const pg = ctx.createLinearGradient(0, 0, 0, H);
+        pg.addColorStop(0, 'rgba(255,180,80,0.15)');
+        pg.addColorStop(0.5, 'rgba(0,0,0,0)');
+        pg.addColorStop(1, 'rgba(100,140,255,0.12)');
+        ctx.fillStyle = pg;
+        ctx.fillRect(0, 0, W, H);
+        const tex = new THREE.CanvasTexture(cv);
+        tex.wrapS = THREE.RepeatWrapping;
+        return tex;
+    }
+
+    function estimateThermoTemp(dateObj) {
+        const { delta } = calcSolar(dateObj || new Date());
+        // Proxy F10.7 / estación: más inclinación solar → termosfera un poco más caliente
+        const base = 750 + Math.abs(delta) * 10;
+        const day = Math.round(base + 700);      // ~1400–1600 °C diurno
+        const night = Math.round(base * 0.28);   // ~200–300 °C nocturno
+        return { day, night, avg: Math.round((day + night) / 2) };
+    }
+
     function initAtmLayers() {
+        const labelRoot = document.getElementById('atm-labels');
         ATM_LAYER_DEFS.forEach(def => {
             const r   = globeR * (1 + def.altitude);
-            const geo = new THREE.SphereGeometry(r, 64, 64);
+            const geo = new THREE.SphereGeometry(r, 72, 72);
             let mat;
-            if (def.useTexture) {
+            if (def.useTexture === true) {
                 mat = new THREE.MeshBasicMaterial({
-                    map:         createOzoneTexture(),
-                    transparent: true,
-                    opacity:     def.opacity,
-                    side:        THREE.FrontSide,
-                    depthWrite:  false,
-                    blending:    THREE.AdditiveBlending,
+                    map: createOzoneTexture(), transparent: true, opacity: def.opacity,
+                    side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending,
+                });
+            } else if (def.useTexture === 'thermo') {
+                mat = new THREE.MeshBasicMaterial({
+                    map: createThermoTexture(), transparent: true, opacity: def.opacity,
+                    side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending,
                 });
             } else {
                 mat = new THREE.MeshBasicMaterial({
-                    color:       def.color,
-                    transparent: true,
-                    opacity:     def.opacity,
-                    side:        THREE.FrontSide,
-                    depthWrite:  false,
+                    color: def.color, transparent: true, opacity: def.opacity,
+                    side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending,
                 });
             }
-            const mesh  = new THREE.Mesh(geo, mat);
+            const mesh = new THREE.Mesh(geo, mat);
             mesh.visible = false;
+            mesh.renderOrder = 2;
             world.scene().add(mesh);
             atmMeshes[def.id] = mesh;
+
+            const wireGeo = new THREE.SphereGeometry(r * 1.001, 48, 32);
+            const wireMat = new THREE.MeshBasicMaterial({
+                color: def.color || 0xa78bfa, wireframe: true, transparent: true,
+                opacity: def.wireOpacity || 0.4, depthWrite: false, blending: THREE.AdditiveBlending,
+            });
+            const wire = new THREE.Mesh(wireGeo, wireMat);
+            wire.visible = false;
+            wire.renderOrder = 3;
+            world.scene().add(wire);
+            atmWires[def.id] = wire;
+
+            if (labelRoot) {
+                const el = document.createElement('div');
+                el.className = 'atm-float-label';
+                el.id = 'atm-label-' + def.id;
+                el.innerHTML =
+                    `<div class="af-name" style="color:${def.hex}">${def.name}</div>` +
+                    `<div class="af-meta">${def.km}` +
+                    (def.id === 'thermosphere'
+                        ? ` · <span class="af-temp" id="thermo-temp-label">—</span>`
+                        : (def.tempNote ? ` · ${def.tempNote}` : '')) +
+                    `</div>`;
+                labelRoot.appendChild(el);
+                atmLabelEls[def.id] = el;
+            }
+        });
+        applyClippingToAll();
+        updateThermoTempLabels(new Date());
+    }
+
+    function syncAtmAtmosphereHalo() {
+        const anyOn = Object.values(atmOn).some(Boolean);
+        world.atmosphereAltitude(anyOn ? 0.32 : 0.22);
+        world.atmosphereColor(anyOn ? '#7c9cff' : '#5b7cf0');
+        const st = document.getElementById('st-atm');
+        if (st) {
+            const n = Object.values(atmOn).filter(Boolean).length;
+            st.textContent = n ? `${n} capa${n > 1 ? 's' : ''} ON` : 'Halo base';
+        }
+    }
+
+    function setAtmLayer(id, on) {
+        if (!atmMeshes[id]) return;
+        atmOn[id] = !!on;
+        atmMeshes[id].visible = atmOn[id];
+        if (atmWires[id]) atmWires[id].visible = atmOn[id];
+        const row = document.getElementById('atm-row-' + id);
+        if (row) row.classList.toggle('layer-on', atmOn[id]);
+        syncAtmAtmosphereHalo();
+        updateAtmLabelPositions();
+    }
+
+    function toggleAtmLayer(id) { setAtmLayer(id, !atmOn[id]); }
+    function setAllAtmLayers(on) { ATM_LAYER_DEFS.forEach(def => setAtmLayer(def.id, on)); }
+
+    // ── Etiquetas flotantes ──────────────────────────────────────
+    function toggleAtmLabels() {
+        atmLabelsOn = !atmLabelsOn;
+        const btn = document.getElementById('btn-labels');
+        if (btn) {
+            btn.classList.toggle('ctrl-active', atmLabelsOn);
+            const lbl = btn.querySelector('.btn-labels-lbl');
+            if (lbl) lbl.textContent = `Labels: ${atmLabelsOn ? 'ON' : 'OFF'}`;
+        }
+        updateAtmLabelPositions();
+    }
+
+    function projectWorldToScreen(x, y, z) {
+        const v = new THREE.Vector3(x, y, z);
+        v.project(world.camera());
+        return {
+            x: (v.x * 0.5 + 0.5) * window.innerWidth,
+            y: (-v.y * 0.5 + 0.5) * window.innerHeight,
+            behind: v.z > 1,
+        };
+    }
+
+    function updateAtmLabelPositions() {
+        if (!atmLabelsOn) {
+            Object.values(atmLabelEls).forEach(el => el.classList.remove('show'));
+            return;
+        }
+        let lng = 0;
+        try {
+            const pov = world.pointOfView();
+            lng = (pov && typeof pov.lng === 'number') ? pov.lng + 28 : 20;
+        } catch (e) { lng = 20; }
+
+        ATM_LAYER_DEFS.forEach(def => {
+            const el = atmLabelEls[def.id];
+            if (!el) return;
+            if (!atmOn[def.id]) { el.classList.remove('show'); return; }
+            const c = world.getCoords(18, lng, def.altitude);
+            if (!c) { el.classList.remove('show'); return; }
+            const p = projectWorldToScreen(c.x, c.y, c.z);
+            if (p.behind || p.x < -40 || p.x > window.innerWidth + 40 || p.y < -40 || p.y > window.innerHeight + 40) {
+                el.classList.remove('show');
+                return;
+            }
+            el.style.transform = `translate(${p.x}px, ${p.y}px) translate(-50%, -50%)`;
+            el.classList.add('show');
         });
     }
 
-    function toggleAtmLayer(id) {
-        if (!atmMeshes[id]) return;
-        atmOn[id] = !atmOn[id];
-        atmMeshes[id].visible = atmOn[id];
-        const row = document.getElementById('atm-row-' + id);
-        if (row) row.classList.toggle('layer-on', atmOn[id]);
+    function updateThermoTempLabels(dateObj) {
+        const t = estimateThermoTemp(dateObj);
+        const el = document.getElementById('thermo-temp-label');
+        if (el) el.textContent = `día ~${t.day} °C · noche ~${t.night} °C`;
+        // Rotar textura termosfera para alinear el “día” con el subsolar
+        const mesh = atmMeshes.thermosphere;
+        if (mesh && mesh.material && mesh.material.map) {
+            const { subLon } = calcSolar(dateObj || new Date());
+            // map offset: 0.5 ≈ subsolar al centro del gradiente caliente
+            mesh.material.map.offset.x = (180 - subLon) / 360;
+            mesh.material.map.needsUpdate = true;
+        }
+    }
+
+    // ── Luces de ciudad / noche ──────────────────────────────────
+    function syncNightSunDir(dateObj) {
+        const gm = world.globeMaterial && world.globeMaterial();
+        if (!gm || !gm.userData || !gm.userData.nightShader) return;
+        const { delta, subLon } = calcSolar(dateObj || new Date());
+        const v = solarVector(delta, subLon, 1);
+        // Convertir dirección solar a espacio de vista (el `normal` del fragment es view-space)
+        const sunView = new THREE.Vector3(v.x, v.y, v.z).normalize();
+        sunView.transformDirection(world.camera().matrixWorldInverse);
+        gm.userData.nightShader.uniforms.uSunDir.value.copy(sunView);
+    }
+
+    function toggleNightLights() {
+        nightLightsOn = !nightLightsOn;
+        const gm = world.globeMaterial && world.globeMaterial();
+        if (gm) {
+            if (nightEmissiveTex) gm.emissiveMap = nightEmissiveTex;
+            gm.emissiveIntensity = nightLightsOn ? (fullLightOn ? 0.55 : 1.15) : 0;
+            gm.needsUpdate = true;
+        }
+        // Un poco más oscuro el ambiente para que brillen las ciudades
+        if (!fullLightOn && ambientLight) {
+            ambientLight.intensity = nightLightsOn ? 0.22 : 0.38;
+        }
+        const btn = document.getElementById('btn-night');
+        if (btn) {
+            btn.classList.toggle('ctrl-active', nightLightsOn);
+            const lbl = btn.querySelector('.btn-night-lbl');
+            if (lbl) lbl.textContent = `Noche: ${nightLightsOn ? 'ON' : 'OFF'}`;
+        }
+        syncNightSunDir(new Date(simTimestamp));
+    }
+
+    // ── Corte transversal ────────────────────────────────────────
+    function updateClipPlane() {
+        const a = toRad(cutAngleDeg);
+        clipPlane.normal.set(Math.cos(a), 0, Math.sin(a)).normalize();
+        clipPlane.constant = 0;
+        if (cutHelperMesh) {
+            cutHelperMesh.rotation.set(0, -a + Math.PI / 2, 0);
+            cutHelperMesh.visible = cutOn;
+        }
+    }
+
+    function applyClippingToMaterial(mat) {
+        if (!mat) return;
+        mat.clippingPlanes = cutOn ? [clipPlane] : [];
+        mat.clipIntersection = false;
+        mat.needsUpdate = true;
+    }
+
+    function applyClippingToAll() {
+        try { world.renderer().localClippingEnabled = cutOn; } catch (e) {}
+        const gm = world.globeMaterial && world.globeMaterial();
+        applyClippingToMaterial(gm);
+        if (cloudsMesh) applyClippingToMaterial(cloudsMesh.material);
+        Object.values(atmMeshes).forEach(m => applyClippingToMaterial(m.material));
+        Object.values(atmWires).forEach(m => applyClippingToMaterial(m.material));
+        updateClipPlane();
+    }
+
+    function toggleCrossSection() {
+        cutOn = !cutOn;
+        applyClippingToAll();
+        const wrap = document.getElementById('cut-slider-wrap');
+        if (wrap) wrap.classList.toggle('show', cutOn);
+        const btn = document.getElementById('btn-cut');
+        if (btn) {
+            btn.classList.toggle('ctrl-active', cutOn);
+            const lbl = btn.querySelector('.btn-cut-lbl');
+            if (lbl) lbl.textContent = `Corte: ${cutOn ? 'ON' : 'OFF'}`;
+        }
+        // Con corte, conviene ver capas: activar todas si ninguna está on
+        if (cutOn && !Object.values(atmOn).some(Boolean)) setAllAtmLayers(true);
+    }
+
+    function onCutAngle(val) {
+        cutAngleDeg = parseFloat(val) || 0;
+        const lab = document.getElementById('cut-angle-label');
+        if (lab) lab.textContent = `${Math.round(cutAngleDeg)}°`;
+        updateClipPlane();
+        applyClippingToAll();
     }
 
     // ══════════════════════════════════════════════════════════════

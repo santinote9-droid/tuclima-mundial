@@ -5,11 +5,13 @@
 {% block extra_head %}
 <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { overflow-x: hidden; }
         body {
             background: #0f172a; color: #fff;
             font-family: 'Segoe UI', sans-serif;
             display: flex; justify-content: center; align-items: center;
             min-height: 100vh; padding: 20px;
+            overflow-x: hidden;
         }
         .container { max-width: 520px; width: 100%; text-align: center; }
         .check-circle {
@@ -64,19 +66,36 @@
         .mail-note { color: #475569; font-size: 0.82rem; margin-top: 20px; }
         .mail-note a { color: #6366f1; text-decoration: none; }
 
-        /* ── Responsive ──────────────────────────────────── */
-        @media (max-width: 560px) {
-            body { padding: 16px; }
-            h1   { font-size: 1.8rem; }
-            .subtitle { font-size: 0.95rem; margin-bottom: 24px; }
-            .check-circle { width: 88px; height: 88px; font-size: 2.6rem; margin-bottom: 20px; }
-            .data-card { padding: 20px 18px; }
-            .data-label { font-size: 0.82rem; }
-            .data-value { font-size: 0.88rem; }
+        /* ── Responsive: tablet ≤900 | móvil ≤600 ── */
+        @media (max-width: 900px) {
+            body { padding: 24px 16px; }
+            h1 { font-size: 2rem; }
+            .data-card { padding: 24px 22px; }
         }
-        @media (max-width: 380px) {
-            h1 { font-size: 1.45rem; }
-            .data-card { padding: 16px 12px; }
+        @media (max-width: 600px) {
+            body { padding: 16px 12px; align-items: flex-start; }
+            .container { padding-top: 12px; }
+            h1 { font-size: 1.7rem; }
+            .subtitle { font-size: 0.92rem; margin-bottom: 24px; }
+            .check-circle { width: 88px; height: 88px; font-size: 2.6rem; margin-bottom: 20px; }
+            .data-card { padding: 18px 14px; }
+            .data-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+            .data-label { font-size: 0.78rem; }
+            .data-value { font-size: 0.9rem; }
+            .btn-primary, .btn-secondary {
+                min-height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+        @media (max-width: 400px) {
+            h1 { font-size: 1.4rem; }
+            .data-card { padding: 14px 12px; }
         }
     </style>
 {% endblock %}

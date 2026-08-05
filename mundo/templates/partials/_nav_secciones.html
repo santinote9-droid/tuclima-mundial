@@ -6,9 +6,13 @@ Requiere que la vista pase `lat` y `lon` en el contexto (ya lo hacen todas las v
 Usa prefijo "tc-" en IDs/clases/funciones para no colisionar con el menú propio de home.html.
 {% endcomment %}
 <style>
+    /* Guardas globales de sector (alineado con home: tablet ≤900 / móvil ≤600) */
+    html { overflow-x: hidden; }
+    body.tc-sector-page { overflow-x: hidden; }
+
     #tc-nav-fab {
         position: fixed;
-        bottom: 84px;
+        bottom: calc(84px + env(safe-area-inset-bottom, 0px));
         right: 18px;
         z-index: 9998;
         width: 50px;
@@ -27,7 +31,7 @@ Usa prefijo "tc-" en IDs/clases/funciones para no colisionar con el menú propio
         transition: transform 0.2s, border-color 0.2s;
     }
     #tc-nav-fab:hover { transform: scale(1.08); border-color: #38bdf8; }
-    @media (min-width: 769px) { #tc-nav-fab { bottom: 24px; } }
+    @media (min-width: 901px) { #tc-nav-fab { bottom: 24px; } }
 
     #tc-nav-overlay {
         display: none;
@@ -44,8 +48,9 @@ Usa prefijo "tc-" en IDs/clases/funciones para no colisionar con el menú propio
         top: 0;
         right: -300px;
         width: 280px;
-        max-width: 84vw;
+        max-width: min(280px, calc(100% - 24px));
         height: 100vh;
+        height: 100dvh;
         overflow-y: auto;
         background: rgba(15, 23, 42, 0.94);
         backdrop-filter: blur(14px);
@@ -59,6 +64,7 @@ Usa prefijo "tc-" en IDs/clases/funciones para no colisionar con el menú propio
         flex-direction: column;
         gap: 6px;
         font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        box-sizing: border-box;
     }
     #tc-nav-sidebar.open { right: 0; }
     .tc-nav-link {
@@ -100,14 +106,45 @@ Usa prefijo "tc-" en IDs/clases/funciones para no colisionar con el menú propio
     .tc-bnav-item {
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         gap: 3px; text-decoration: none; color: #475569; flex: 1; padding: 4px 2px;
+        min-width: 0;
         opacity: 0.65; transition: color 0.2s, opacity 0.2s;
         -webkit-tap-highlight-color: transparent;
     }
-    .tc-bnav-item svg { width: 20px; height: 20px; stroke-width: 2; }
+    .tc-bnav-item svg { width: 20px; height: 20px; stroke-width: 2; flex-shrink: 0; }
     .tc-bnav-item span { font-size: 0.58em; font-weight: 600; letter-spacing: 0.3px; }
     .tc-bnav-item.active { color: var(--c, #38bdf8) !important; opacity: 1; }
-    @media (max-width: 768px) { #tc-bottom-nav { display: block; } }
+
+    /* Evitar 100vw en modales de sector */
+    .modal-content, .modal-box {
+        max-width: min(920px, calc(100% - 24px));
+        box-sizing: border-box;
+    }
+
+    /* Bottom nav desde tablet (igual que home) + espacio para no tapar contenido */
+    @media (max-width: 900px) {
+        #tc-bottom-nav { display: block; }
+        html.tc-sector body,
+        body.tc-sector-page {
+            padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
+        }
+        .tc-bnav-item span { font-size: 0.55em; }
+    }
+    @media (max-width: 600px) {
+        .tc-bnav-item span { font-size: 0.52em; }
+        #tc-nav-fab {
+            width: 46px;
+            height: 46px;
+            right: 14px;
+            bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+        }
+    }
 </style>
+<script>
+    document.documentElement.classList.add('tc-sector');
+    document.addEventListener('DOMContentLoaded', function () {
+        document.body.classList.add('tc-sector-page');
+    });
+</script>
 
 <button id="tc-nav-fab" onclick="tcToggleNav()" aria-label="Abrir menú de navegación entre secciones" title="Navegación">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>

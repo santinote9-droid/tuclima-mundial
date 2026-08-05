@@ -13,7 +13,7 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-2.0-flash",
+        "modelName": "models/gemini-3.5-flash",
         "options": {
           "maxOutputTokens": 2000
         }
@@ -41,6 +41,12 @@
               "id": "5ddeb4db-0381-4037-9498-9aeb348cd64e",
               "name": "output",
               "value": "={{ $('Function').item.json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "chart-block-aereo-001",
+              "name": "chart_block",
+              "value": "={{ $('Function').item.json.chart_block || '' }}",
               "type": "string"
             }
           ]
@@ -135,11 +141,14 @@
           "id": "Ewe5h1U44UTbd2Qs",
           "name": "Google Service Account account"
         }
-      }
+      },
+      "alwaysOutputData": true,
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "const inputData = $input.first().json;\nconst texto_bruto = inputData.output || inputData.text || \"\";\n\nconst extraerTexto = (campo, fallback) => {\n    const regex = new RegExp(`${campo}[:\\\\s]+([^\\\\n]+)`, 'i');\n    const match = texto_bruto.match(regex);\n    return match ? match[1].trim() : fallback;\n};\n\n// Primer número de una lista \"a, b, c\" para columnas escalares en BigQuery\nconst extraerPrimerNumero = (campo, fallback) => {\n    const texto = extraerTexto(campo, \"\");\n    if (!texto) return fallback;\n    const primerNumero = texto.split(',')[0].trim();\n    const n = parseFloat(primerNumero.replace(',', '.'));\n    return Number.isFinite(n) ? n : fallback;\n};\n\nconst reporte_limpio = texto_bruto.replace(/\\[MOSTRAR_GRAFICO\\][\\s\\S]*/i, \"\").trim();\n\n// Aeropuertos por separado (BigQuery espera columnas distintas)\nconst aeropuerto_origen = extraerTexto(\"aeropuerto_origen\", \"Origen no especificado\");\nconst aeropuerto_destino = extraerTexto(\"aeropuerto_destino\", \"Destino no especificado\");\n\n// corrientes_viento debe ser objeto JSON (no un número suelto)\nconst velocidadViento = extraerPrimerNumero(\"corrientes_viento\", extraerPrimerNumero(\"viento_velocidad\", 0));\nconst direccionViento = extraerPrimerNumero(\"viento_direccion\", null);\nconst altitudRef = extraerPrimerNumero(\"altitud_vuelo\", 10000);\nconst corrientes_viento = {\n    velocidad: velocidadViento,\n    direccion: (direccionViento !== null && Number.isFinite(direccionViento))\n        ? direccionViento\n        : \"variable\",\n    altitud: altitudRef\n};\n\nreturn [{\n    json: {\n        timestamp: new Date().toISOString(),\n        session_id: inputData.session_id || `aereo-${Date.now()}`,\n        sector: \"AEREO\",\n\n        aeropuerto_origen,\n        aeropuerto_destino,\n        altitud_vuelo: altitudRef,\n        temperatura_altitud: extraerPrimerNumero(\"temperatura_altitud\", 15),\n        corrientes_viento,\n        visibilidad_km: extraerPrimerNumero(\"visibilidad_km\", 10),\n        condiciones_atmosfericas: extraerTexto(\"condiciones_atmosfericas\", \"Sin datos\"),\n        ai_flight_analysis: reporte_limpio,\n        metadata: JSON.stringify({ status: \"success\" }),\n\n        // Chart.js / front sigue usando el bloque completo\n        output: texto_bruto\n    }\n}];\n"
+        "jsCode": "const llmOut = $input.first().json || {};\nlet query = '';\ntry { query = String($('When Executed by Another Workflow').first().json.query || ''); } catch (e) {}\nif (!query) query = String(llmOut.query || '');\n\nconst texto_bruto = String(llmOut.output || llmOut.text || '');\nconst fuente = query + '\\n' + texto_bruto;\n\nfunction parseNumList(raw) {\n  if (raw == null) return [];\n  let s = String(raw).trim();\n  s = s.replace(/^\\s*\\[/, '').replace(/\\]\\s*$/, '');\n  return s.split(',').map(v => {\n    v = v.trim().replace(/^[\"'`]|[\"'`]$/g, '');\n    const n = Number(v);\n    return (v !== '' && !isNaN(n)) ? n : null;\n  }).filter(n => n !== null);\n}\n\nfunction findArray(patterns) {\n  for (const p of patterns) {\n    const re = new RegExp(p + '\\\\s*[:=]\\\\s*(\\\\[[^\\\\]]*\\\\]|[0-9.,\\\\s\\\\-]+)', 'i');\n    const m = fuente.match(re);\n    if (m) {\n      const arr = parseNumList(m[1]);\n      if (arr.length >= 2) return arr;\n    }\n  }\n  return null;\n}\n\nfunction findHours() {\n  const labeled = fuente.match(/(?:etiquetas|horas|periodos?|times?)\\s*[:=]\\s*([^\\n]+)/i);\n  if (labeled) {\n    const parts = labeled[1].replace(/[\\[\\]]/g, '').split(',').map(x => x.trim()).filter(Boolean);\n    const hours = parts.map(x => {\n      const hm = x.match(/(\\d{1,2}):(\\d{2})/);\n      return hm ? (String(hm[1]).padStart(2,'0') + ':' + hm[2]) : x;\n    });\n    if (hours.length >= 2) return hours;\n  }\n  const hours = [];\n  const re = /\\b(\\d{1,2}):00\\b/g;\n  let m;\n  while ((m = re.exec(fuente)) !== null) {\n    const h = String(m[1]).padStart(2,'0') + ':00';\n    if (!hours.includes(h)) hours.push(h);\n  }\n  return hours.length >= 2 ? hours : null;\n}\n\nconst etiquetas = findHours() || ['11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00','23:00'];\n\nconst viento = findArray([\n  'corrientes_viento',\n  'viento_sfc',\n  'viento\\\\s*sfc',\n  'viento\\\\s*950\\\\s*hpa',\n  'viento\\\\s*10m',\n  'wind_speed',\n  'velocidad_viento',\n  'viento'\n]) || findArray(['viento\\\\s*850\\\\s*hpa']);\n\nconst direccion = findArray([\n  'viento_direccion',\n  'direccion_viento',\n  'dir_viento',\n  'wind_dir',\n  'direccion\\\\s*950'\n]);\n\nconst nubosidad = findArray([\n  'nubosidad',\n  'cloudcover',\n  'cobertura',\n  'nubes'\n]);\n\nconst temp = findArray([\n  'temperatura_altitud',\n  'temperatura',\n  'temp_c',\n  'temperature'\n]);\n\nconst vis = findArray(['visibilidad_km', 'visibilidad', 'visibility']);\n\nfunction align(arr) {\n  if (!arr) return null;\n  const n = Math.min(arr.length, etiquetas.length);\n  if (n < 2) return null;\n  return arr.slice(0, n);\n}\n\nconst series = {};\nconst v = align(viento); if (v) series.corrientes_viento = v;\nconst d = align(direccion); if (d) series.viento_direccion = d;\nconst nu = align(nubosidad); if (nu) series.nubosidad = nu;\nconst t = align(temp); if (t) series.temperatura_altitud = t;\nconst vi = align(vis); if (vi) series.visibilidad_km = vi;\n\nconst seriesLens = Object.values(series).map(a => a.length);\nconst labLen = seriesLens.length ? Math.max.apply(null, seriesLens) : 2;\nconst labs = etiquetas.slice(0, Math.max(labLen, 2));\n\nlet reporte = texto_bruto.replace(/\\[MOSTRAR_GRAFICO\\][\\s\\S]*/i, '').trim();\nif (!reporte) reporte = 'Análisis operativo generado. Gráfico construido desde datos meteorológicos.';\n\nlet chartBlock = '';\nif (Object.keys(series).length) {\n  const icao = (fuente.match(/\\b(SACO|SAEZ|SAWH|SAAR|SABE|[A-Z]{4})\\b/) || [])[0] || 'S/D';\n  const ubi = (fuente.match(/Bariloche|Ezeiza|Ushuaia|[\\wáéíóúÁÉÍÓÚñÑ]+,\\s*Argentina/i) || [])[0] || 'Argentina';\n  const lines = [\n    '[MOSTRAR_GRAFICO]',\n    'chart_type: line',\n    'etiquetas: ' + labs.join(', '),\n    'aeropuerto_origen: ' + icao,\n    'ubicacion: ' + ubi\n  ];\n  for (const k of Object.keys(series)) {\n    lines.push(k + ': ' + series[k].join(', '));\n  }\n  chartBlock = lines.join('\\n');\n} else if (/\\[MOSTRAR_GRAFICO\\]/i.test(texto_bruto)) {\n  chartBlock = (texto_bruto.match(/\\[MOSTRAR_GRAFICO\\][\\s\\S]*/i) || [''])[0];\n}\n\nconst output = chartBlock ? (reporte + '\\n\\n' + chartBlock).trim() : texto_bruto;\n\nconst extraerTexto = (campo, fallback) => {\n  const regex = new RegExp(campo + '[:\\\\s]+([^\\\\n]+)', 'i');\n  const match = output.match(regex);\n  return match ? match[1].trim().split(',')[0].trim() : fallback;\n};\nconst extraerPrimerNumero = (campo, fallback) => {\n  const texto = extraerTexto(campo, '');\n  if (!texto) return fallback;\n  const n = parseFloat(String(texto).replace(',', '.'));\n  return Number.isFinite(n) ? n : fallback;\n};\n\nconst aeropuerto_origen = extraerTexto('aeropuerto_origen', 'Origen no especificado');\nconst aeropuerto_destino = extraerTexto('aeropuerto_destino', 'Destino no especificado');\nconst velocidadViento = (series.corrientes_viento && series.corrientes_viento[0]) || extraerPrimerNumero('corrientes_viento', 0);\nconst direccionViento = (series.viento_direccion && series.viento_direccion[0]) || null;\nconst altitudRef = extraerPrimerNumero('altitud_vuelo', 10000);\n\nreturn [{\n  json: {\n    timestamp: new Date().toISOString(),\n    session_id: llmOut.session_id || ('aereo-' + Date.now()),\n    sector: 'AEREO',\n    aeropuerto_origen,\n    aeropuerto_destino,\n    altitud_vuelo: altitudRef,\n    temperatura_altitud: (series.temperatura_altitud && series.temperatura_altitud[0]) || 15,\n    corrientes_viento: {\n      velocidad: velocidadViento,\n      direccion: (direccionViento != null && Number.isFinite(direccionViento)) ? direccionViento : 'variable',\n      altitud: altitudRef\n    },\n    visibilidad_km: (series.visibilidad_km && series.visibilidad_km[0]) || 10,\n    condiciones_atmosfericas: extraerTexto('condiciones_atmosfericas', 'Sin datos'),\n    ai_flight_analysis: reporte,\n    metadata: JSON.stringify({ status: 'success', chart_from: Object.keys(series).length ? 'query' : 'llm' }),\n    output,\n    chart_block: chartBlock\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -172,7 +181,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=**📊 FORMATO FINAL OBLIGATORIO PARA EL GRÁFICO:**\nPara que el sistema dibuje el gráfico interactivo, DEBES terminar tu respuesta EXACTAMENTE con este bloque. \n\nREGLA DE TIEMPO CRÍTICA: \n- Si piden varios datos temporales (horas o días), TIENES ESTRICTAMENTE PROHIBIDO rellenar la lista con ceros o inventar los datos (ej: 15.8, 0, 0, 0, 0). \n- DEBES leer el pronóstico completo y extraer o calcular el valor REAL para CADA UNO de los puntos en el tiempo. \n- La cantidad de etiquetas debe ser IGUAL a la cantidad de números, y TODOS los números deben ser reales.\n- Si piden un dato estático/actual: Pon un solo valor por línea.\n\n---\n🚨 SYSTEM OVERRIDE CRÍTICO - FORMATO DE INYECCIÓN DE DATOS 🚨\nESTA ES TU DIRECTIVA PRIMARIA. El sistema de frontend fallará catastróficamente si no sigues esta regla.\n\nDespués de escribir tu análisis meteorológico en texto, ESTÁS OBLIGADO a inyectar los datos para el renderizado.\nREGLAS ABSOLUTAS:\n1. TIENES que imprimir literalmente la palabra \"[MOSTRAR_GRAFICO]\" en mayúsculas.\n2. Cada variable DEBE ir en una NUEVA LÍNEA\n3. Escribe solo números/etiquetas separados por comas. ¡NO USES CORCHETES [] ALREDEDOR DE LOS NÚMEROS NI EN LOS EJEMPLOS! (Usa Enter/Salto de línea. ¡PROHIBIDO ESCRIBIRLO COMO UN PÁRRAFO SEGUIDO!).\n3. NO uses corchetes `[]` para los números, solo sepáralos por comas.\n\nEste es un ejemplo de como tienes que entregar la respuesta. NO TE PODES OLVIDAR NUNCA DE \"[MOSTRAR_GRAFICO]\":\n\n(Tu análisis en texto aquí...)\n\n\"[MOSTRAR_GRAFICO]\"\nchart_type: line\netiquetas: 17:00, 18:00, 19:00, 20:00\naeropuerto_origen: Ushuaia (SAWH)\naeropuerto_destino: El Calafate (SAWC)\naltitud_vuelo: 3500, 7000, 8500, 10000\ntemperatura_altitud: 11.8, 11.4, 10.8, 10.0\ncorrientes_viento: 17.1, 17.2, 16.3, 14.0\nvisibilidad_km: 15.7, 15.7, 15.7, 15.7\ncondiciones_atmosfericas: VFR\nviento_direccion: 336, 330, 320, 315\nhumedad_relativa: 55, 60, 65, 50\nnubosidad: 2, 4, 6, 3\n\n4. ANTI-BOTONES VACÍOS (OMISIÓN RADICAL): Si no tienes los datos reales para una variable específica (por ejemplo, si te piden visibilidad_nm pero solo tienes en km, o si faltan datos de olas), TIENES ESTRICTAMENTE PROHIBIDO incluir el nombre de esa variable en tu lista final. BORRA la línea por completo. Si incluyes una variable vacía o con ceros, el frontend creará un botón roto. Solo imprime las variables que tengan datos reales.\n\n---\nDatos a analizar:\n{{ $json.query || $json.text || $json.chatInput || \"Genera el reporte para el gráfico solicitado con estos datos: \" + JSON.stringify($json) }}",
+        "text": "=Eres el Especialista en Visualizacion Aeronautica de TuClima.\nLa IA principal ya te envia datos reales en query. Tu unica mision: redactar un analisis operativo corto (VFR/IFR, viento, techos) y TERMINAR SIEMPRE con el bloque [MOSTRAR_GRAFICO].\n\nREGLAS:\n- Usa SOLO los numeros del query (no inventes series).\n- Si piden viento: etiquetas horarias + corrientes_viento (kt) + viento_direccion (grados 0-360).\n- Si piden nubosidad: etiquetas + nubosidad (0-100 o oktas segun datos).\n- Cada variable en una linea nueva, numeros separados por comas, SIN corchetes [].\n- Copia el bloque completo; sin el el frontend no dibuja.\n\n**📊 FORMATO FINAL OBLIGATORIO PARA EL GRÁFICO:**\nPara que el sistema dibuje el gráfico interactivo, DEBES terminar tu respuesta EXACTAMENTE con este bloque. \n\nREGLA DE TIEMPO CRÍTICA: \n- Si piden varios datos temporales (horas o días), TIENES ESTRICTAMENTE PROHIBIDO rellenar la lista con ceros o inventar los datos (ej: 15.8, 0, 0, 0, 0). \n- DEBES leer el pronóstico completo y extraer o calcular el valor REAL para CADA UNO de los puntos en el tiempo. \n- La cantidad de etiquetas debe ser IGUAL a la cantidad de números, y TODOS los números deben ser reales.\n- Si piden un dato estático/actual: Pon un solo valor por línea.\n\n---\n🚨 SYSTEM OVERRIDE CRÍTICO - FORMATO DE INYECCIÓN DE DATOS 🚨\nESTA ES TU DIRECTIVA PRIMARIA. El sistema de frontend fallará catastróficamente si no sigues esta regla.\n\nDespués de escribir tu análisis meteorológico en texto, ESTÁS OBLIGADO a inyectar los datos para el renderizado.\nREGLAS ABSOLUTAS:\n1. TIENES que imprimir literalmente la palabra \"[MOSTRAR_GRAFICO]\" en mayúsculas.\n2. Cada variable DEBE ir en una NUEVA LÍNEA\n3. Escribe solo números/etiquetas separados por comas. ¡NO USES CORCHETES [] ALREDEDOR DE LOS NÚMEROS NI EN LOS EJEMPLOS! (Usa Enter/Salto de línea. ¡PROHIBIDO ESCRIBIRLO COMO UN PÁRRAFO SEGUIDO!).\n3. NO uses corchetes `[]` para los números, solo sepáralos por comas.\n\nEste es un ejemplo de como tienes que entregar la respuesta. NO TE PODES OLVIDAR NUNCA DE \"[MOSTRAR_GRAFICO]\":\n\n(Tu análisis en texto aquí...)\n\n\"[MOSTRAR_GRAFICO]\"\nchart_type: line\netiquetas: 17:00, 18:00, 19:00, 20:00\naeropuerto_origen: Ushuaia (SAWH)\naeropuerto_destino: El Calafate (SAWC)\naltitud_vuelo: 3500, 7000, 8500, 10000\ntemperatura_altitud: 11.8, 11.4, 10.8, 10.0\ncorrientes_viento: 17.1, 17.2, 16.3, 14.0\nvisibilidad_km: 15.7, 15.7, 15.7, 15.7\ncondiciones_atmosfericas: VFR\nviento_direccion: 336, 330, 320, 315\nhumedad_relativa: 55, 60, 65, 50\nnubosidad: 2, 4, 6, 3\n\n4. ANTI-BOTONES VACÍOS (OMISIÓN RADICAL): Si no tienes los datos reales para una variable específica (por ejemplo, si te piden visibilidad_nm pero solo tienes en km, o si faltan datos de olas), TIENES ESTRICTAMENTE PROHIBIDO incluir el nombre de esa variable en tu lista final. BORRA la línea por completo. Si incluyes una variable vacía o con ceros, el frontend creará un botón roto. Solo imprime las variables que tengan datos reales.\n\n---\nDatos a analizar:\n{{ $json.query || $json.text || $json.chatInput || \"Genera el reporte para el gráfico solicitado con estos datos: \" + JSON.stringify($json) }}",
         "batching": {}
       },
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
@@ -204,18 +213,17 @@
     },
     "Execute a SQL query": {
       "main": [
-        [
-          {
-            "node": "Edit Fields",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Function": {
       "main": [
         [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          },
           {
             "node": "Execute a SQL query",
             "type": "main",
@@ -251,5 +259,6 @@
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "19ee95c84ac845adb5e56f055bd53b79a0e674016338a7de7b71fc1ecea83ccf"
-  }
+  },
+  "name": "Aereo_BI"
 }

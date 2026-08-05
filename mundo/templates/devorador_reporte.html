@@ -18,11 +18,13 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
+        html { overflow-x: hidden; }
         body {
             background: var(--bg-primary);
             color: #e2e8f0;
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         .navbar-custom {
@@ -32,9 +34,12 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .navbar-brand { color: #fff; font-weight: 700; font-size: 1.1rem; text-decoration: none; }
-        .navbar-links a { color: var(--text-muted); text-decoration: none; margin-left: 20px; font-size: 0.9rem; transition: color .2s; }
+        .navbar-links { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+        .navbar-links a { color: var(--text-muted); text-decoration: none; margin-left: 0; font-size: 0.9rem; transition: color .2s; }
         .navbar-links a:hover { color: #fff; }
 
         .hero {
@@ -99,8 +104,23 @@
         #file-name { margin-top: 10px; font-size: 0.85rem; color: var(--accent-green); font-weight: 600; min-height: 20px; }
 
         /* Form fields */
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
-        @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 16px; margin-top: 20px; }
+
+        /* Responsive: tablet ≤900 | móvil ≤600 */
+        @media (max-width: 900px) {
+            .hero { padding: 36px 16px 28px; }
+            .hero h1 { font-size: 1.6rem; }
+            .card-glass { padding: 22px 18px; }
+        }
+        @media (max-width: 600px) {
+            .navbar-custom { padding: 12px 14px; }
+            .hero { padding: 28px 14px 22px; }
+            .hero h1 { font-size: 1.35rem; }
+            .main-container { margin: 20px auto; padding: 0 12px 40px; }
+            .form-row { grid-template-columns: 1fr; }
+            .field-group select, .field-group input { font-size: 16px; min-height: 44px; }
+            .upload-zone { padding: 28px 14px; }
+        }
 
         .field-group label {
             display: block;

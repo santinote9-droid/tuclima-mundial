@@ -9,6 +9,7 @@
     
     <style>
         /* --- ESTILOS BASE --- */
+        html { overflow-x: hidden; }
         body {
             background-color: #000000;
             background-image: radial-gradient(circle at 60% 20%, #1a1a2e 0%, #000 60%), url('https://www.transparenttextures.com/patterns/stardust.png');
@@ -16,6 +17,7 @@
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0; padding: 20px;
             min-height: 100vh;
+            overflow-x: hidden;
         }
         h1, h2, h3 { font-family: 'Orbitron', sans-serif; letter-spacing: 1px; text-transform: uppercase; }
         .data-val { font-family: 'Roboto Mono', monospace; }
@@ -25,6 +27,14 @@
             border-bottom: 1px solid rgba(56, 189, 248, 0.3);
             padding-bottom: 20px; margin-bottom: 30px;
             display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px;
+        }
+        .header-space h1 {
+            margin: 0;
+            font-size: clamp(1.4rem, 4vw, 2.2em);
+            background: linear-gradient(to right, #fff, #38bdf8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         /* Tarjetas de Cristal (Glassmorphism) */
@@ -41,11 +51,30 @@
 
         /* Grid Layouts */
         .dashboard-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
         }
         .visual-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px; margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
         }
+        .aurora-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .aurora-col {
+            flex: 1;
+            min-width: 0;
+            max-width: 500px;
+            text-align: center;
+        }
+        .chart-box { height: 350px; position: relative; }
 
         /* KPI Cards Spec */
         .kpi-card { display: flex; flex-direction: column; gap: 10px; position: relative; }
@@ -54,7 +83,11 @@
         
         /* Botón de Información (i) */
         .info-btn {
-            background: rgba(255,255,255,0.1); border: none; color: #94a3b8; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; font-family: 'Roboto Mono'; font-weight: bold;
+            background: rgba(255,255,255,0.1); border: none; color: #94a3b8;
+            width: 36px; height: 36px; border-radius: 50%; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Roboto Mono'; font-weight: bold;
+            flex-shrink: 0;
         }
         .info-btn:hover { background: #38bdf8; color: black; box-shadow: 0 0 10px #38bdf8; }
 
@@ -103,10 +136,27 @@
         /* Imagen Fallback */
         .img-fallback { background: #1e293b; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 0.8em; min-height: 200px; border-radius: 12px; }
 
-        /* Ajustes Responsive */
-        @media (max-width: 768px) {
-            .header-space { flex-direction: column; align-items: flex-start; }
-            .visual-grid { grid-template-columns: 1fr; }
+        /* Responsive: tablet ≤900 | móvil ≤600 */
+        @media (max-width: 900px) {
+            body { padding: 16px; }
+            .header-space { flex-direction: column; align-items: flex-start; gap: 14px; }
+            .dashboard-grid, .visual-grid { grid-template-columns: 1fr; gap: 16px; }
+            .chart-box { height: 280px; }
+            .didactic-window { padding: 22px 18px; width: calc(100% - 24px); max-width: none; }
+        }
+        @media (max-width: 600px) {
+            body { padding: 12px 12px 48px; }
+            .header-space { margin-bottom: 20px; padding-bottom: 14px; }
+            .geomag-status { text-align: left !important; border-right: none !important; border-left: 4px solid var(--kp-color); padding-right: 0; padding-left: 12px; width: 100%; box-sizing: border-box; }
+            .glass-panel { padding: 16px; }
+            .chart-box { height: 240px; }
+            .kpi-header { flex-wrap: wrap; gap: 8px; }
+            .chart-actions { flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
+            .info-btn { width: 40px; height: 40px; }
+            .btn-volver { width: 100%; text-align: center; box-sizing: border-box; }
+            .aurora-row { flex-direction: column; align-items: stretch; }
+            .aurora-col { max-width: none; }
+            .data-val { font-size: 2.6em !important; }
         }
     </style>
 {% endblock %}
@@ -117,11 +167,11 @@
             <div style="font-size: 0.8em; color: #38bdf8; margin-bottom: 5px; font-family: 'Roboto Mono';">
                 <span class="live-dot"></span>ENLACE SATELITAL ACTIVO: NOAA / NASA
             </div>
-            <h1 style="margin: 0; font-size: 2.2em; background: linear-gradient(to right, #fff, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            <h1>
                 Monitor de Clima Espacial
             </h1>
         </div>
-        <div style="text-align: right; border-right: 4px solid {{ kp_color }}; padding-right: 15px;">
+        <div class="geomag-status" style="--kp-color: {{ kp_color }}; text-align: right; border-right: 4px solid var(--kp-color); padding-right: 15px;">
             <div style="font-size: 0.9em; color: #94a3b8; font-family: 'Orbitron';">ESTADO GEOMAGNÉTICO</div>
             <div style="font-size: 1.3em; font-weight: bold; color: {{ kp_color }}; text-shadow: 0 0 15px {{ kp_color }}40;">
                 {{ kp_estado }}
@@ -232,7 +282,7 @@
                  <button class="info-btn" style="margin-left: 10px;" onclick="openModal('modal-chart-info')">i</button>
             </div>
         </div>
-        <div style="height: 350px; position: relative;">
+        <div class="chart-box">
             <canvas id="kpChart"></canvas>
         </div>
     </div>
@@ -259,12 +309,12 @@
 
      <div class="glass-panel">
         <h3 style="color: #2ed573; margin-bottom: 20px; text-align: center;">Pronóstico de Auroras (Ovalo Auroral 30min)</h3>
-        <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
-            <div style="flex: 1; min-width: 300px; max-width: 500px; text-align: center;">
+        <div class="aurora-row">
+            <div class="aurora-col">
                 <div style="font-family: 'Orbitron'; color: #94a3b8; margin-bottom: 10px;">HEMISFERIO SUR (Antártida)</div>
                 <img src="{{ img_aurora_sur }}" style="width: 100%; border-radius: 12px; border: 1px solid #334155;" onerror="this.style.display='none'; this.parentElement.innerHTML+='<div class=\'img-fallback\'>Imagen actualizando...</div>'">
             </div>
-            <div style="flex: 1; min-width: 300px; max-width: 500px; text-align: center;">
+            <div class="aurora-col">
                 <div style="font-family: 'Orbitron'; color: #94a3b8; margin-bottom: 10px;">HEMISFERIO NORTE (Ártico)</div>
                 <img src="{{ img_aurora_norte }}" style="width: 100%; border-radius: 12px; border: 1px solid #334155;" onerror="this.style.display='none'; this.parentElement.innerHTML+='<div class=\'img-fallback\'>Imagen actualizando...</div>'">
             </div>

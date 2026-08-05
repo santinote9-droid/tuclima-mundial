@@ -5,6 +5,7 @@
 {% block extra_head %}
 <style>
         /* ESTILO GENERAL DARK MODE */
+        html { overflow-x: hidden; }
         body {
             background-color: #0f172a;
             color: #fff;
@@ -14,6 +15,9 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            padding: 16px;
+            box-sizing: border-box;
+            overflow-x: hidden;
             background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 80%);
         }
 
@@ -92,11 +96,21 @@
         /* Ocultar viñetas feas de errores/ayuda */
         ul.errorlist { color: #ef4444; list-style: none; padding: 0; }
 
-        @media (max-width: 480px) {
-            body { align-items: flex-start; padding-top: 30px; }
-            .container { padding: 12px; }
+        /* Responsive: tablet ≤900 | móvil ≤600 */
+        @media (max-width: 900px) {
+            .card { padding: 32px 24px; }
+        }
+        @media (max-width: 600px) {
+            body { align-items: flex-start; padding: 24px 12px 40px; }
+            .container { padding: 0; }
             .card { padding: 24px 18px; border-radius: 14px; }
             .brand { font-size: 1.4rem; margin-bottom: 20px; }
+            input[type="text"], input[type="password"], input[type="email"] {
+                font-size: 16px !important;
+                padding: 14px;
+                min-height: 48px;
+            }
+            button { padding: 14px; min-height: 48px; }
         }
     </style>
 {% endblock %}

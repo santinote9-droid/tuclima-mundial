@@ -6,11 +6,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { overflow-x: hidden; }
         body {
             font-family: 'Inter', system-ui, sans-serif;
             background: #020617;
             color: #e2e8f0;
             padding: 20px;
+            overflow-x: hidden;
         }
         
         .header {
@@ -35,7 +37,7 @@
         }
         
         .btn {
-            padding: 10px 20px;
+            padding: 12px 20px;
             border-radius: 8px;
             border: 1px solid #334155;
             background: #1e293b;
@@ -45,6 +47,10 @@
             transition: all 0.2s;
             cursor: pointer;
             font-size: 14px;
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .btn:hover {
@@ -66,7 +72,7 @@
             max-width: 1400px;
             margin: 0 auto 30px auto;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
             gap: 20px;
         }
         
@@ -254,13 +260,24 @@
             opacity: 0.3;
         }
 
-        @media (max-width: 480px) {
-            body { padding: 12px; }
-            h1 { font-size: 1.4em !important; }
+        /* Responsive: tablet ≤900 | móvil ≤600 */
+        @media (max-width: 900px) {
+            body { padding: 16px; }
+            h1 { font-size: 1.5em; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            select { min-height: 44px; font-size: 16px; }
+        }
+        @media (max-width: 600px) {
+            body { padding: 12px 12px 40px; }
+            h1 { font-size: 1.25em; }
+            .header { padding: 18px 14px; }
+            .stats-grid { grid-template-columns: 1fr; }
             .stat-card .value { font-size: 2em; }
             .feedback-card { padding: 16px 14px; }
             .feedback-actions { flex-wrap: wrap; }
-            .btn { padding: 8px 14px; font-size: 13px; }
+            .btn { width: 100%; box-sizing: border-box; }
+            .filter-group { flex-direction: column; align-items: stretch; }
+            select { width: 100%; }
         }
     </style>
 {% endblock %}

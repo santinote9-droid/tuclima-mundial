@@ -5,24 +5,36 @@
 {% block extra_head %}
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
     <style>
+        html { overflow-x: hidden; }
         body {
             background-color: #000000;
             background-image: radial-gradient(circle at 50% 50%, #0f172a 0%, #000 80%);
             color: #e2e8f0;
             font-family: 'Segoe UI', sans-serif;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            padding: 24px 16px;
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
-        h1 { font-family: 'Orbitron', sans-serif; font-size: 6em; margin: 0; color: #38bdf8; text-shadow: 0 0 30px rgba(56, 189, 248, 0.5); }
-        h2 { font-family: 'Orbitron', sans-serif; font-size: 1.5em; margin: 10px 0 20px 0; color: #cbd5e1; letter-spacing: 2px; }
-        p { color: #94a3b8; max-width: 400px; line-height: 1.6; }
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(3.2rem, 14vw, 6em);
+            margin: 0; color: #38bdf8;
+            text-shadow: 0 0 30px rgba(56, 189, 248, 0.5);
+        }
+        h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.05rem, 3.5vw, 1.5em);
+            margin: 10px 0 20px 0; color: #cbd5e1; letter-spacing: 2px;
+        }
+        p { color: #94a3b8; max-width: 400px; line-height: 1.6; padding: 0 8px; }
 
         /* RADAR DE ERROR */
         .radar-container {
@@ -53,13 +65,18 @@
         .btn-home {
             margin-top: 30px;
             text-decoration: none;
-            padding: 12px 30px;
+            padding: 14px 30px;
             border: 1px solid #38bdf8;
             color: #38bdf8;
             font-family: 'Orbitron', sans-serif;
             border-radius: 50px;
             transition: 0.3s;
             background: rgba(56, 189, 248, 0.05);
+            min-height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
         }
         .btn-home:hover {
             background: #38bdf8;
@@ -70,11 +87,15 @@
         @keyframes radar-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-        @media (max-width: 480px) {
-            h1 { font-size: 4em; }
-            h2 { font-size: 1.1em; letter-spacing: 1px; }
-            p { font-size: 0.9rem; padding: 0 10px; }
+        /* Responsive: tablet ≤900 | móvil ≤600 */
+        @media (max-width: 900px) {
+            .radar-container { width: 130px; height: 130px; }
+        }
+        @media (max-width: 600px) {
+            h2 { letter-spacing: 1px; }
+            p { font-size: 0.9rem; }
             .radar-container { width: 110px; height: 110px; }
+            .btn-home { width: min(100%, 280px); }
         }
     </style>
 {% endblock %}

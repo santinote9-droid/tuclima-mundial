@@ -1,43 +1,308 @@
 {% comment %}
-  Parches del chat: Excel (autolink Sheets) + boxplot Chart.js.
+  Parches del chat: Excel (autolink Sheets) + boxplot Chart.js + harden gráficos.
   Incluir UNA vez por página sectorial, DESPUÉS de createSampleChart / processMarkdown.
 {% endcomment %}
 <script>
 (function () {
-  // ── 1) Autolink de Google Sheets / URLs sueltas en processMarkdown ──
+  var META_KEYS = [
+    'region', 'puerto', 'ubicacion', 'aeropuerto_origen', 'aeropuerto_destino',
+    'cultivo', 'titulo', '_titulo', 'serie', 'series', 'fase_lunar',
+    'condiciones_mar', 'condiciones_atmosfericas', 'tipo_energia', 'suelo',
+    'trabajo', 'nombre', 'email', 'max', 'min', 'data', 'datos', 'value',
+    'values', 'total', 'status', 'message', 'ok', 'success', 'error'
+  ];
+
+  function tcUnwrapMeta(r) {
+    if (!r || typeof r !== 'object') return r;
+    META_KEYS.forEach(function (k) {
+      if (Array.isArray(r[k]) && r[k].length <= 1) {
+        r[k] = r[k].length ? r[k][0] : '';
+      }
+    });
+    if (Array.isArray(r.type)) r.type = r.type[0] || 'line';
+    if (typeof r.type === 'string') r.type = r.type.toLowerCase().trim();
+    return r;
+  }
+
+  function tcCoerceTitle(val, fallback) {
+    var t = val;
+    if (Array.isArray(t)) t = t[0];
+    if (t == null || t === '') t = fallback || 'Reporte';
+    return String(t).replace(/["']/g, '').trim();
+  }
+
+  // ── 1) Autolink Drive/Sheets + limpiar LaTeX crudo de Gemini ──
+  function tcStripLatex(s) {
+    return String(s || '')
+      // $14.7^\circ\text{C}$ → 14.7°C
+      .replace(/\$([^$]+)\$/g, function (_m, inner) {
+        return String(inner)
+          .replace(/\\%/g, '%')
+          .replace(/\\circ/g, '°')
+          .replace(/\\text\{([^}]*)\}/g, '$1')
+          .replace(/\\mathrm\{([^}]*)\}/g, '$1')
+          .replace(/\\sim/g, '~')
+          .replace(/\\times/g, '×')
+          .replace(/\\cdot/g, '·')
+          .replace(/\\,/g, ' ')
+          .replace(/\\ /g, ' ')
+          .replace(/[{}]/g, '')
+          .replace(/\^/g, '')
+          .replace(/\\/g, '');
+      })
+      .replace(/\\%/g, '%')
+      .replace(/\\circ/g, '°');
+  }
+
   if (typeof processMarkdown === 'function') {
     var _pmOrig = processMarkdown;
     processMarkdown = function (text) {
       if (!text) return _pmOrig(text);
-      var t = String(text);
-      // Convertir URLs bare de Sheets a markdown link si aún no están en []()
+      var t = tcStripLatex(text);
       t = t.replace(
-        /(^|[^\]\(])(https:\/\/docs\.google\.com\/spreadsheets\/d\/[a-zA-Z0-9_-]+(?:\/edit)?[^\s\)\"]*)/g,
+        /(^|[^\]\(])(https:\/\/docs\.google\.com\/(?:spreadsheets|document)\/d\/[a-zA-Z0-9_-]+(?:\/(?:edit|view))?[^\s\)\"]*)/g,
         function (_m, pre, url) {
-          return pre + '[Abrir planilla Excel](' + url.replace(/[.,;:]+$/, '') + ')';
+          var label = /spreadsheets/i.test(url) ? 'Abrir planilla Excel' : 'Abrir reporte TuClima';
+          return pre + '[' + label + '](' + url.replace(/[.,;:]+$/, '') + ')';
         }
       );
-      return _pmOrig(t);
+      t = t.replace(
+        /(^|[^\]\(])(https:\/\/drive\.google\.com\/file\/d\/[a-zA-Z0-9_-]+(?:\/view)?[^\s\)\"]*)/g,
+        function (_m, pre, url) {
+          return pre + '[Abrir reporte TuClima](' + url.replace(/[.,;:]+$/, '') + ')';
+        }
+      );
+      var out = _pmOrig(t);
+      // Safety net: si quedó un placeholder LINK_N sin restaurar
+      if (/\x00LINK_\d+\x00|LINK_\d+/.test(out) && typeof out === 'string') {
+        out = out.replace(/\x00?LINK_(\d+)\x00?/g, function (m, idx) {
+          return m.indexOf('\x00') >= 0 ? '' : m;
+        });
+      }
+      return out;
     };
   }
 
-  // ── 2) Parser: reconocer boxplot_datos / serie ──
+  function tcSynthesizeChartFromText(text) {
+    if (!text) return null;
+    var t = String(text);
+    // Pares "a las HH:00 ... NN%" o "NN% ... HH:00 LT"
+    var pairs = [];
+    var pairRe = /(?:a\s+las\s+)?(\d{1,2}):00(?:\s*LT)?[^%\d]{0,40}(\d{1,3})\s*%|(\d{1,3})\s*%[^:\d]{0,40}(?:a\s+las\s+)?(\d{1,2}):00(?:\s*LT)?/gi;
+    var pm;
+    while ((pm = pairRe.exec(t)) !== null) {
+      var hour = pm[1] || pm[4];
+      var pct = pm[2] || pm[3];
+      if (hour == null || pct == null) continue;
+      pairs.push({ h: String(hour).padStart(2, '0') + ':00', n: Number(pct) });
+    }
+    if (pairs.length >= 2) {
+      return {
+        type: 'line',
+        etiquetas: pairs.map(function (p) { return p.h; }),
+        nubosidad: pairs.map(function (p) { return p.n; }),
+        ubicacion: 'Reporte'
+      };
+    }
+    var hours = [];
+    var hm = t.matchAll(/\b(\d{1,2}):00(?:\s*LT)?\b/gi);
+    for (var m of hm) {
+      var h = String(m[1]).padStart(2, '0') + ':00';
+      if (hours.indexOf(h) === -1) hours.push(h);
+    }
+    var pcts = [];
+    var pctx = t.matchAll(/(\d{1,3})\s*%/g);
+    for (var p of pctx) {
+      var n = Number(p[1]);
+      if (!isNaN(n) && n >= 0 && n <= 100) pcts.push(n);
+    }
+    if (hours.length >= 2 && pcts.length >= 2) {
+      var len = Math.min(hours.length, pcts.length);
+      return {
+        type: 'line',
+        etiquetas: hours.slice(0, len),
+        nubosidad: pcts.slice(0, len),
+        ubicacion: 'Reporte'
+      };
+    }
+    // Series "a, b, c" near nubosidad/viento keywords
+    var serie = t.match(/(?:nubosidad|cobertura)[^0-9\n]{0,40}([\d.,\s]+)/i);
+    var horas = t.match(/(?:etiquetas|horas|periodos?)[^0-9\n]{0,20}([\d:,\sLT]+)/i);
+    if (serie) {
+      var nums = serie[1].split(',').map(function (v) { return Number(String(v).trim().replace('%', '')); }).filter(function (v) { return !isNaN(v); });
+      var labs = horas
+        ? horas[1].split(',').map(function (v) { return v.trim(); }).filter(Boolean)
+        : nums.map(function (_, i) { return String(i + 1); });
+      if (nums.length >= 2) {
+        return { type: 'line', etiquetas: labs.slice(0, nums.length), nubosidad: nums, ubicacion: 'Reporte' };
+      }
+    }
+    // Arrays tipo "Viento 950hPa: [4.3, 4.1, ...]" (salida típica de tools aéreo)
+    function tcParseBracketSeries(labelRe) {
+      var m = t.match(labelRe);
+      if (!m) return null;
+      var nums = String(m[1]).replace(/[\[\]]/g, '').split(',').map(function (v) {
+        return Number(String(v).trim());
+      }).filter(function (n) { return !isNaN(n); });
+      return nums.length >= 2 ? nums : null;
+    }
+    var wind = tcParseBracketSeries(/(?:corrientes_viento|viento\s*950\s*hpa|viento\s*sfc|viento\s*10m|velocidad_viento)\s*[:=]\s*(\[[^\]]*\]|[0-9.,\s\-]+)/i);
+    if (!wind) wind = tcParseBracketSeries(/viento\s*850\s*hpa\s*[:=]\s*(\[[^\]]*\]|[0-9.,\s\-]+)/i);
+    if (wind) {
+      var labsW = hours.length >= 2 ? hours.slice(0, wind.length) : wind.map(function (_, i) { return String(i + 1); });
+      return { type: 'line', etiquetas: labsW, corrientes_viento: wind.slice(0, labsW.length), ubicacion: 'Reporte' };
+    }
+    return null;
+  }
+
+  function tcSeriesNameToKey(name, idx) {
+    var n = String(name || '').toLowerCase();
+    if (/nubosidad|cloud|cobertura/.test(n)) return 'nubosidad';
+    if (/visib/.test(n)) return 'visibilidad_km';
+    if (/temp/.test(n)) return 'temperatura_altitud';
+    if (/direccion|dir\b|heading/.test(n)) return 'viento_direccion';
+    if (/950|sfc|bajo|surface|10\s*m|winds?\s*aloft|viento/.test(n) && idx === 0) return 'corrientes_viento';
+    if (/950|sfc|bajo|surface/.test(n)) return 'corrientes_viento';
+    if (/850/.test(n)) return 'viento_850hpa';
+    if (/700/.test(n)) return 'viento_700hpa';
+    if (/500/.test(n)) return 'viento_500hpa';
+    if (/300|200|jet|alto/.test(n)) return 'viento_300hpa';
+    if (/viento|wind/.test(n) && idx === 0) return 'corrientes_viento';
+    var slug = n.replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40);
+    return slug || ('serie_' + (idx + 1));
+  }
+
+  function tcParseChartJsonBlock(bloque) {
+    var s = String(bloque || '').trim();
+    if (!s) return null;
+    s = s.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+    var start = s.indexOf('{');
+    if (start < 0) return null;
+    var jsonStr = s.slice(start);
+    var obj = null;
+    try { obj = JSON.parse(jsonStr); }
+    catch (e1) {
+      var depth = 0, end = -1;
+      for (var i = 0; i < jsonStr.length; i++) {
+        if (jsonStr[i] === '{') depth++;
+        else if (jsonStr[i] === '}') {
+          depth--;
+          if (depth === 0) { end = i; break; }
+        }
+      }
+      if (end < 0) return null;
+      try { obj = JSON.parse(jsonStr.slice(0, end + 1)); }
+      catch (e2) { return null; }
+    }
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
+
+    var result = { type: String(obj.type || 'line').toLowerCase() };
+    var cats = (obj.xAxis && obj.xAxis.categories) || obj.categories || obj.labels || obj.etiquetas;
+    result.etiquetas = (Array.isArray(cats) && cats.length) ? cats.map(String) : ['Actual'];
+
+    if (obj.title) {
+      result.ubicacion = typeof obj.title === 'string' ? obj.title : String((obj.title && obj.title.text) || 'Reporte');
+    }
+    if (obj.ubicacion) result.ubicacion = obj.ubicacion;
+    if (obj.aeropuerto_origen) result.aeropuerto_origen = obj.aeropuerto_origen;
+    if (obj.region) result.region = obj.region;
+
+    function takeNums(arr) {
+      if (!Array.isArray(arr)) return null;
+      var nums = arr.map(function (v) {
+        if (typeof v === 'number') return v;
+        if (Array.isArray(v) && v.length >= 2) return Number(v[1]);
+        if (v && typeof v === 'object' && v.y != null) return Number(v.y);
+        return Number(v);
+      }).filter(function (n) { return !isNaN(n); });
+      return nums.length >= 2 ? nums : null;
+    }
+
+    if (Array.isArray(obj.series)) {
+      obj.series.forEach(function (ser, idx) {
+        if (!ser) return;
+        var nums = takeNums(ser.data || ser.values);
+        if (!nums) return;
+        var key = ser.key ? String(ser.key) : tcSeriesNameToKey(ser.name || ('serie_' + (idx + 1)), idx);
+        // Evitar pisar si ya existe
+        if (result[key] && idx > 0) key = key + '_' + (idx + 1);
+        result[key] = nums;
+        if (result.etiquetas.length === 1 && result.etiquetas[0] === 'Actual') {
+          result.etiquetas = nums.map(function (_, j) { return String(j + 1); });
+        }
+      });
+    }
+
+    Object.keys(obj).forEach(function (k) {
+      if (['type', 'title', 'xAxis', 'yAxis', 'series', 'categories', 'labels', 'etiquetas', 'ubicacion', 'aeropuerto_origen', 'region'].indexOf(k) >= 0) return;
+      var nums = takeNums(obj[k]);
+      if (nums) result[k] = nums;
+    });
+
+    var has = Object.keys(result).some(function (k) {
+      return ['etiquetas', 'type', 'ubicacion', 'aeropuerto_origen', 'region', 'titulo', '_titulo'].indexOf(k) < 0
+        && Array.isArray(result[k]) && result[k].length >= 2 && typeof result[k][0] === 'number';
+    });
+    return has ? result : null;
+  }
+  window.tcParseChartJsonBlock = tcParseChartJsonBlock;
+
+  function tcExtractMostrarSource(payload) {
+    var cb = String((payload && payload.chart_block) || '');
+    var out = String((payload && (payload.output || payload.texto_limpio)) || '');
+    // Preferir chart_block (viene limpio desde n8n)
+    if (cb.indexOf('[MOSTRAR_GRAFICO]') >= 0) return cb;
+    if (out.indexOf('[MOSTRAR_GRAFICO]') >= 0) return out;
+    if (cb.trim()) return cb.indexOf('[MOSTRAR_GRAFICO]') >= 0 ? cb : ('[MOSTRAR_GRAFICO]\n' + cb);
+    return out;
+  }
+
+  // ── 2) Parser: unwrap meta + reconocer boxplot_datos / serie ──
   if (typeof extractChartData === 'function') {
     var _exOrig = extractChartData;
     extractChartData = function (aiResponse) {
-      var r = _exOrig(aiResponse);
+      var payload = aiResponse || {};
+      var source = tcExtractMostrarSource(payload);
+      var bloqueMatch = String(source).match(/\[MOSTRAR_GRAFICO\]([\s\S]*)/i);
+      var r = null;
+      var bloque = bloqueMatch ? bloqueMatch[1] : '';
+      if (!bloque && String(payload.chart_block || '').trim().charAt(0) === '{') bloque = String(payload.chart_block);
+      var looksJson = /\{[\s\S]*"series"\s*:/.test(bloque) || /^\s*\{/.test(bloque);
+      if (bloque) {
+        r = (typeof window.parseMostrarGraficoJson === 'function'
+          ? window.parseMostrarGraficoJson(bloque)
+          : null) || tcParseChartJsonBlock(bloque);
+      }
+      // Fallback key:value SOLO si no parece JSON (si parece JSON y falló, no generar basura "Data")
+      if (!r && !looksJson) {
+        var merged = Object.assign({}, payload, { output: source, chart_block: payload.chart_block });
+        r = _exOrig(merged);
+      }
+      if (!r) {
+        r = tcSynthesizeChartFromText(
+          (payload.chart_block || '') + '\n' + (payload.output || '') + '\n' + (payload.texto_limpio || '')
+        );
+      }
       if (!r) return r;
-      // Si type llegó como array
-      if (Array.isArray(r.type)) r.type = r.type[0] || 'line';
-      if (typeof r.type === 'string') r.type = r.type.toLowerCase().trim();
+      // Tirar keys basura (Data/Max/etc.) — también con comillas residuales
+      Object.keys(r).forEach(function (k) {
+        var clean = String(k).replace(/["'`]/g, '').toLowerCase();
+        if (['max', 'min', 'data', 'datos', 'value', 'values', 'total', 'status', 'message', 'ok', 'success', 'error', 'series', 'xaxis', 'yaxis', 'title', 'subtitle'].indexOf(clean) >= 0) {
+          delete r[k];
+        }
+      });
+      tcUnwrapMeta(r);
 
-      // Alias
       if (r.boxplot_data && !r.boxplot_datos) r.boxplot_datos = r.boxplot_data;
-      if (r.series && !r.serie) r.serie = r.series;
-      if (Array.isArray(r.serie)) r.serie = r.serie[0];
+      // series[] de Chart.js/Highcharts ya se aplanó en tcParseChartJsonBlock;
+      // solo promover string/objeto serie legado
+      if (r.series && !r.serie && !Array.isArray(r.series)) r.serie = r.series;
+      if (Array.isArray(r.serie) && typeof r.serie[0] === 'number') {
+        /* ok */
+      } else if (Array.isArray(r.serie)) {
+        r.serie = r.serie[0];
+      }
 
-      // boxplot_datos puede llegar como array de números (un solo grupo)
-      // o como string con grupos separados por |
       if (r.boxplot_datos != null && !r._boxplot_grupos) {
         var raw = r.boxplot_datos;
         var grupos = [];
@@ -51,7 +316,6 @@
             if (nums.length) grupos.push(nums);
           });
         } else if (Array.isArray(raw)) {
-          // Si el parser partió por comas un string con |, reconstruir
           var joined = raw.map(String).join(',');
           if (joined.indexOf('|') >= 0) {
             joined.split('|').forEach(function (g) {
@@ -63,7 +327,6 @@
               if (nums.length) grupos.push(nums);
             });
           } else {
-            // Un solo grupo de números
             var nums2 = raw.map(Number).filter(function (n) { return !isNaN(n); });
             if (nums2.length) grupos.push(nums2);
           }
@@ -71,7 +334,6 @@
         if (grupos.length) r._boxplot_grupos = grupos;
       }
 
-      // Resumen Tukey precomputado (opcional)
       if (!r._boxplot_grupos && r.boxplot_min && r.boxplot_q1 && r.boxplot_median && r.boxplot_q3 && r.boxplot_max) {
         var mins = [].concat(r.boxplot_min);
         var q1s = [].concat(r.boxplot_q1);
@@ -91,6 +353,7 @@
 
       return r;
     };
+    window.extractChartData = extractChartData;
   }
 
   // ── 3) Resumen Tukey en cliente (si llegan muestras crudas) ──
@@ -129,12 +392,12 @@
   async function tcRenderChatBoxplot(chartData) {
     var canvas = document.getElementById('climatChart');
     var tabsContainer = document.getElementById('chart-tabs');
-    if (!canvas || typeof Chart === 'undefined') return;
+    if (!canvas || typeof Chart === 'undefined') return false;
     if (tabsContainer) tabsContainer.innerHTML = '';
 
     if (typeof window.tcCargarBoxplotPlugin === 'function') {
       try { await window.tcCargarBoxplotPlugin(); }
-      catch (err) { console.error(err); return; }
+      catch (err) { console.error(err); return false; }
     }
 
     var labels = chartData.etiquetas || [];
@@ -144,67 +407,72 @@
       puntos = chartData._boxplot_resumen;
       if (!labels.length) labels = puntos.map(function (_, i) { return 'G' + (i + 1); });
     } else if (chartData._boxplot_grupos && chartData._boxplot_grupos.length) {
-      chartData._boxplot_grupos.forEach(function (g, i) {
+      chartData._boxplot_grupos.forEach(function (g) {
         var r = tcResumenBox(g);
         if (r) puntos.push(r);
         else puntos.push({ min: 0, q1: 0, median: 0, q3: 0, max: 0, outliers: [] });
       });
       if (!labels.length) labels = puntos.map(function (_, i) { return 'G' + (i + 1); });
-      // Alinear longitudes
       if (labels.length > puntos.length) labels = labels.slice(0, puntos.length);
       while (labels.length < puntos.length) labels.push('G' + (labels.length + 1));
     } else {
       console.warn('Boxplot sin boxplot_datos ni resumen Tukey');
-      return;
+      return false;
     }
 
-    var titulo = chartData.serie || chartData.region || chartData.puerto || chartData.ubicacion || 'Boxplot';
-    if (Array.isArray(titulo)) titulo = titulo[0];
-    titulo = String(titulo).replace(/["']/g, '').trim();
+    var titulo = tcCoerceTitle(
+      chartData.serie || chartData.region || chartData.puerto || chartData.ubicacion,
+      'Boxplot'
+    );
     if (titulo.length > 40) titulo = titulo.substring(0, 37) + '...';
 
     if (window.myChart) { try { window.myChart.destroy(); } catch (e) {} }
 
-    var ctx = canvas.getContext('2d');
-    window.myChart = new Chart(ctx, {
-      type: 'boxplot',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: titulo,
-          data: puntos,
-          backgroundColor: 'rgba(74, 222, 128, 0.25)',
-          borderColor: '#4ade80',
-          borderWidth: 1.5,
-          outlierColor: '#f87171',
-          medianColor: '#facc15',
-          itemRadius: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          title: {
-            display: true,
-            text: 'Boxplot — ' + titulo,
-            color: '#e2e8f0',
-            font: { size: 14 }
-          }
+    try {
+      var ctx = canvas.getContext('2d');
+      window.myChart = new Chart(ctx, {
+        type: 'boxplot',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: titulo,
+            data: puntos,
+            backgroundColor: 'rgba(74, 222, 128, 0.25)',
+            borderColor: '#4ade80',
+            borderWidth: 1.5,
+            outlierColor: '#f87171',
+            medianColor: '#facc15',
+            itemRadius: 0
+          }]
         },
-        scales: {
-          y: {
-            ticks: { color: '#94a3b8' },
-            grid: { color: '#334155' }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            title: {
+              display: true,
+              text: 'Boxplot — ' + titulo,
+              color: '#e2e8f0',
+              font: { size: 14 }
+            }
           },
-          x: {
-            ticks: { color: '#94a3b8' },
-            grid: { color: '#334155' }
+          scales: {
+            y: {
+              ticks: { color: '#94a3b8' },
+              grid: { color: '#334155' }
+            },
+            x: {
+              ticks: { color: '#94a3b8' },
+              grid: { color: '#334155' }
+            }
           }
         }
-      }
-    });
+      });
+    } catch (err) {
+      console.error('Error renderizando boxplot:', err);
+      return false;
+    }
 
     if (tabsContainer) {
       var btn = document.createElement('button');
@@ -212,22 +480,92 @@
       btn.style.cssText = 'padding:6px 14px;border-radius:20px;border:1px solid #3b82f6;background:#3b82f6;color:#fff;cursor:default;font-size:0.85rem;white-space:nowrap;';
       tabsContainer.appendChild(btn);
     }
+    return true;
   }
 
-  // ── 5) Envolver createSampleChart ──
+  // ── 5) Envolver createSampleChart (try/catch + unwrap + bool) ──
   if (typeof createSampleChart === 'function') {
     var _csOrig = createSampleChart;
     createSampleChart = function (chartData) {
-      if (!chartData) return;
-      var tipo = (chartData.type || 'line').toString().toLowerCase().trim();
-      if (tipo === 'boxplot' || tipo === 'box' || tipo === 'caja') {
-        return tcRenderChatBoxplot(chartData);
+      if (!chartData) return false;
+      try {
+        tcUnwrapMeta(chartData);
+        var tipo = (chartData.type || 'line').toString().toLowerCase().trim();
+        if (tipo === 'boxplot' || tipo === 'box' || tipo === 'caja') {
+          return tcRenderChatBoxplot(chartData);
+        }
+        var ok = _csOrig(chartData);
+        return ok !== false && !!window.myChart;
+      } catch (err) {
+        console.error('Error creando gráfico IA:', err);
+        return false;
       }
-      return _csOrig(chartData);
     };
     window.createSampleChart = createSampleChart;
   }
 
+  // ── 6) Gráfico: guardar último payload + botón toolbar ──
+  window.tcLastChartData = window.tcLastChartData || null;
+
+  window.tcProcessChatGrafico = function (datos, respuestaIA) {
+    var d = datos || {};
+    var texto = String(respuestaIA || d.output || d.texto_limpio || '');
+    var bloque = String(d.chart_block || '');
+    if (bloque && bloque.indexOf('[MOSTRAR_GRAFICO]') < 0 && bloque.indexOf('{') >= 0) {
+      bloque = '[MOSTRAR_GRAFICO]\n' + bloque.trim();
+    }
+    var payload = Object.assign({}, d, {
+      chart_block: bloque || d.chart_block || '',
+      output: texto
+    });
+    var chartData = (typeof extractChartData === 'function') ? extractChartData(payload) : null;
+    if (!chartData) chartData = tcSynthesizeChartFromText(texto + '\n' + bloque);
+    if (!chartData) return false;
+    // Forzar .split(',') por si etiquetas/series llegaron como string CSV
+    if (typeof window.tcSplitCsv === 'function') {
+      if (chartData.etiquetas != null) chartData.etiquetas = window.tcSplitCsv(chartData.etiquetas, false);
+      Object.keys(chartData).forEach(function (k) {
+        if (k === 'etiquetas' || k === 'type' || k === 'ubicacion' || k === 'aeropuerto_origen' || k === 'aeropuerto_destino' || k === 'region') return;
+        var v = chartData[k];
+        if (typeof v === 'string' || (Array.isArray(v) && v.length && typeof v[0] === 'string')) {
+          var nums = window.tcSplitCsv(v, true);
+          if (nums.length >= 2) chartData[k] = nums;
+        }
+      });
+    }
+    window.tcLastChartData = chartData;
+    return Promise.resolve(createSampleChart(chartData)).then(function (ok) {
+      if (ok && typeof toggleChart === 'function') toggleChart(true);
+      return !!ok;
+    });
+  };
+  window.tcSynthesizeChartFromText = tcSynthesizeChartFromText;
+
+  if (typeof toggleChart === 'function') {
+    var _tgOrig = toggleChart;
+    toggleChart = function (forceShow) {
+      forceShow = !!forceShow;
+      var container = document.getElementById('chart-container');
+      if (!container) return _tgOrig(forceShow);
+      var isHidden = container.style.display === 'none' || !container.style.display
+        || getComputedStyle(container).display === 'none';
+      // Click del botón: si hay datos guardados pero no chart, renderizar
+      if (!forceShow && isHidden && !window.myChart && window.tcLastChartData) {
+        Promise.resolve(createSampleChart(window.tcLastChartData)).then(function (ok) {
+          if (ok) _tgOrig(true);
+          else if (typeof addBotMessage === 'function') {
+            addBotMessage('No pude redibujar el último gráfico. Pedí de nuevo: \"generá el gráfico\".');
+          }
+        });
+        return;
+      }
+      return _tgOrig(forceShow);
+    };
+    window.toggleChart = toggleChart;
+  }
+
   window.tcRenderChatBoxplot = tcRenderChatBoxplot;
+  window.tcCoerceTitle = tcCoerceTitle;
+  window.tcUnwrapMeta = tcUnwrapMeta;
 })();
 </script>
