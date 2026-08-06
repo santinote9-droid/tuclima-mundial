@@ -173,7 +173,16 @@
         <div style="font-size:0.95rem; font-weight:700; margin-bottom:14px; color:#94a3b8;">Cómo usar la API</div>
         <div style="font-size:0.82rem; color:#64748b; line-height:1.8;">
             <div style="margin-bottom:8px;">Enviá el header <code style="background:#1e293b; padding:2px 7px; border-radius:4px; color:#22d3ee;">Authorization: Bearer TU_API_KEY</code> en cada petición.</div>
-            <div>Endpoints disponibles próximamente — consultá la documentación en el sitio.</div>
+            <div style="margin-bottom:10px;"><strong style="color:#cbd5e1;">Widget / clima actual</strong><br>
+                <code style="background:#1e293b; padding:2px 7px; border-radius:4px; color:#22d3ee; word-break:break-all;">GET /api/v1/widget/?lat=LAT&amp;lon=LON</code>
+            </div>
+            <div style="margin-bottom:10px;">Embed en tu sitio:</div>
+            <pre style="background:#0d1b2e;border:1px solid #334155;border-radius:8px;padding:12px;overflow:auto;font-size:0.72rem;color:#67e8f9;white-space:pre-wrap;">&lt;div id="tuclima-widget"
+     data-lat="-34.60" data-lon="-58.38"
+     data-key="TU_API_KEY"
+     data-base="https://TU-DOMINIO"&gt;&lt;/div&gt;
+&lt;script src="https://TU-DOMINIO/static/js/widget.js" async&gt;&lt;/script&gt;</pre>
+            <div style="margin-top:12px;"><a href="/widget-demo/" style="color:#22d3ee;font-weight:600;">Ver demo del widget →</a></div>
         </div>
     </div>
 

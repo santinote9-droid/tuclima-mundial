@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 import uuid
 from .models import PerfilUsuario, DatoSectorial, UbicacionGuardada, ReporteProgramado, ApiKeyPersonal, ConfiguracionModal, AlertaModal, NotaModal
 from . import estadistica_utils
+from .operabilidad import evaluar_operabilidad
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -1402,6 +1403,20 @@ def agro(request):
     contexto['puede_excel'] = _perfil.puede_excel if _perfil else False
     contexto['puede_devorador'] = _perfil.puede_devorador if _perfil else False
 
+    # Semáforo operativo
+    try:
+        pulv = contexto.get('pulverizacion') or {}
+        estres = contexto.get('estres') or {}
+        bal = contexto.get('balance') or {}
+        contexto['operabilidad'] = evaluar_operabilidad('agro', {
+            'delta_t': pulv.get('delta_t') or 0,
+            'viento_kmh': pulv.get('viento') or 0,
+            'vpd': estres.get('vpd') or 0,
+            'balance_neto': bal.get('diff') or 0,
+        })
+    except Exception:
+        contexto['operabilidad'] = evaluar_operabilidad('agro', {})
+
     return render(request, 'agro.html', contexto)
 
 
@@ -1843,6 +1858,19 @@ def naval(request):
     contexto['puede_excel'] = _perfil.puede_excel if _perfil else False
     contexto['puede_devorador'] = _perfil.puede_devorador if _perfil else False
 
+    # Semáforo operativo
+    try:
+        mar = contexto.get('mar') or {}
+        viento = contexto.get('viento') or {}
+        nav = contexto.get('nav') or {}
+        contexto['operabilidad'] = evaluar_operabilidad('naval', {
+            'olas_m': mar.get('altura') or 0,
+            'viento_kt': viento.get('kt') or 0,
+            'vis_nm': nav.get('vis_nm') or 10,
+        })
+    except Exception:
+        contexto['operabilidad'] = evaluar_operabilidad('naval', {})
+
     return render(request, 'naval.html', contexto)
 
 
@@ -2202,6 +2230,26 @@ def aereo(request):
     contexto['puede_excel'] = _perfil.puede_excel if _perfil else False
     contexto['puede_devorador'] = _perfil.puede_devorador if _perfil else False
 
+    # Semáforo operativo
+    try:
+        cat = (contexto.get('categoria') or {}).get('codigo') or 'VFR'
+        riesgos = contexto.get('riesgos') or {}
+        radar = contexto.get('radar') or {}
+        viento = contexto.get('viento') or {}
+        shear_raw = riesgos.get('shear') or '0'
+        try:
+            shear_kt = float(str(shear_raw).replace('KT', '').strip() or 0)
+        except (TypeError, ValueError):
+            shear_kt = 0
+        contexto['operabilidad'] = evaluar_operabilidad('aereo', {
+            'categoria': cat,
+            'cape': radar.get('cape') or 0,
+            'shear_kt': shear_kt,
+            'viento_kt': viento.get('kt') or 0,
+        })
+    except Exception:
+        contexto['operabilidad'] = evaluar_operabilidad('aereo', {})
+
     return render(request, 'aereo.html', contexto)
 
 
@@ -2545,6 +2593,37 @@ def energia(request):
     contexto['puede_excel'] = _perfil.puede_excel if _perfil else False
     contexto['puede_devorador'] = _perfil.puede_devorador if _perfil else False
 
+    # Semáforo operativo
+    try:
+        atm = contexto.get('atm') or contexto.get('red') or {}
+        eol = contexto.get('eolica') or {}
+        sol = contexto.get('solar') or {}
+        temp_val = 20
+        for key in ('temp', 'temperatura'):
+            if atm.get(key) is not None:
+                try:
+                    temp_val = float(str(atm.get(key)).replace('°C', '').strip())
+                    break
+                except (TypeError, ValueError):
+                    pass
+        wind_val = eol.get('ms') or 0
+        try:
+            wind_val = float(wind_val)
+        except (TypeError, ValueError):
+            wind_val = 0
+        rad_val = sol.get('rad') or 0
+        try:
+            rad_val = float(rad_val)
+        except (TypeError, ValueError):
+            rad_val = 0
+        contexto['operabilidad'] = evaluar_operabilidad('energia', {
+            'temp_c': temp_val,
+            'viento_ms': wind_val,
+            'radiacion': rad_val,
+        })
+    except Exception:
+        contexto['operabilidad'] = evaluar_operabilidad('energia', {})
+
     return render(request, 'energia.html', contexto)
 
 
@@ -2667,6 +2746,38 @@ def estadisticas_energia(request):
 
 # COMPARADOR DE MODELOS
 
+def _resumen_ubicacion(lat, lon, nombre=''):
+    """Resumen actual + 3 días para comparar dos puntos."""
+    url = (
+        "https://api.open-meteo.com/v1/forecast"
+        f"?latitude={lat}&longitude={lon}"
+        "&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation,"
+        "weather_code,apparent_temperature,pressure_msl"
+        "&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max"
+        "&forecast_days=3&timezone=auto"
+    )
+    data = _get_meteo(url, timeout=8, reintentos=1)
+    if 'error' in data:
+        raise Exception(data.get('reason', 'sin datos'))
+    cur = data.get('current') or {}
+    daily = data.get('daily') or {}
+    return {
+        'nombre': nombre or f'{lat}, {lon}',
+        'lat': lat,
+        'lon': lon,
+        'temp': cur.get('temperature_2m'),
+        'sensacion': cur.get('apparent_temperature'),
+        'humedad': cur.get('relative_humidity_2m'),
+        'viento': cur.get('wind_speed_10m'),
+        'precip': cur.get('precipitation'),
+        'presion': cur.get('pressure_msl'),
+        'tmax': (daily.get('temperature_2m_max') or [None])[0],
+        'tmin': (daily.get('temperature_2m_min') or [None])[0],
+        'lluvia_3d': round(sum(x or 0 for x in (daily.get('precipitation_sum') or [])[:3]), 1),
+        'viento_max_3d': max((x or 0 for x in (daily.get('wind_speed_10m_max') or [])[:3]), default=0),
+    }
+
+
 def comparador_modelos(request):
     # 1. Recuperamos coordenadas
     lat_raw = request.GET.get('lat', '-34.6037')
@@ -2759,6 +2870,26 @@ def comparador_modelos(request):
     except Exception as e:
         print(f"Error modelos: {e}")
 
+    # Comparar 2 ubicaciones (opcional: lat2/lon2)
+    dual = None
+    lat2_raw = request.GET.get('lat2', '').strip()
+    lon2_raw = request.GET.get('lon2', '').strip()
+    ciudad2 = request.GET.get('ciudad2', 'Ubicación B').strip() or 'Ubicación B'
+    if lat2_raw and lon2_raw:
+        try:
+            lat2 = str(lat2_raw).replace(',', '.')
+            lon2 = str(lon2_raw).replace(',', '.')
+            dual = {
+                'a': _resumen_ubicacion(lat, lon, ciudad),
+                'b': _resumen_ubicacion(lat2, lon2, ciudad2),
+                'lat2': lat2,
+                'lon2': lon2,
+                'ciudad2': ciudad2,
+            }
+        except Exception as e:
+            print(f"Error dual comparador: {e}")
+            dual = None
+
     return render(request, 'comparador.html', {
         'ciudad': ciudad, 'labels': json.dumps(labels),
         # Temp
@@ -2775,7 +2906,11 @@ def comparador_modelos(request):
         'c_eu': json.dumps(c_eu), 'c_gfs': json.dumps(c_gfs), 'c_icon': json.dumps(c_icon),
         
         'confianza': confianza_score, 'estado_confianza': estado_confianza, 'color_confianza': color_confianza,
-        'lat': lat, 'lon': lon
+        'lat': lat, 'lon': lon,
+        'dual': dual,
+        'ciudad2': ciudad2 if lat2_raw else '',
+        'lat2': lat2_raw,
+        'lon2': lon2_raw,
     })
 
 
@@ -5690,6 +5825,277 @@ def historial_anomalias(request):
         'dias': dias,
         'sector_filtro': sector_filtro,
         'sectores': ['AGRO', 'NAVAL', 'AEREO', 'ENERGIA'],
+    })
+
+
+def _filas_historial_archivo(lat, lon, dias):
+    """Serie diaria desde Open-Meteo Archive (hasta ayer)."""
+    end = datetime.utcnow().date() - timedelta(days=1)
+    start = end - timedelta(days=max(1, int(dias)) - 1)
+    url = (
+        "https://archive-api.open-meteo.com/v1/archive"
+        f"?latitude={lat}&longitude={lon}"
+        f"&start_date={start.isoformat()}&end_date={end.isoformat()}"
+        "&daily=temperature_2m_max,temperature_2m_min,temperature_2m_mean,"
+        "precipitation_sum,wind_speed_10m_max,relative_humidity_2m_mean"
+        "&timezone=auto"
+    )
+    data = _get_meteo(url, timeout=20, reintentos=1)
+    if 'error' in data or 'daily' not in data:
+        raise Exception(data.get('reason', 'Archive API no disponible'))
+    d = data['daily']
+    filas = []
+    tiempos = d.get('time') or []
+    for i, fecha in enumerate(tiempos):
+        filas.append({
+            'fecha': fecha,
+            'tmax': (d.get('temperature_2m_max') or [None])[i] if i < len(d.get('temperature_2m_max') or []) else None,
+            'tmin': (d.get('temperature_2m_min') or [None])[i] if i < len(d.get('temperature_2m_min') or []) else None,
+            'tmean': (d.get('temperature_2m_mean') or [None])[i] if i < len(d.get('temperature_2m_mean') or []) else None,
+            'precip': (d.get('precipitation_sum') or [None])[i] if i < len(d.get('precipitation_sum') or []) else None,
+            'viento_max': (d.get('wind_speed_10m_max') or [None])[i] if i < len(d.get('wind_speed_10m_max') or []) else None,
+            'humedad': (d.get('relative_humidity_2m_mean') or [None])[i] if i < len(d.get('relative_humidity_2m_mean') or []) else None,
+        })
+    return filas, start, end
+
+
+@login_required
+def exportar_historial_punto(request):
+    """
+    Descarga historial climático de un punto (CSV / Excel / PDF).
+    Rango limitado por perfil.dias_historial (Starter+).
+    """
+    perfil = getattr(request.user, 'perfil', None)
+    dias_max = perfil.dias_historial if perfil else 0
+    if dias_max <= 0:
+        return render(request, 'sector_bloqueado.html', {
+            'mensaje': 'La descarga de historial requiere al menos el plan Starter.',
+            'plan_requerido': 'starter',
+        })
+
+    try:
+        lat = float(str(request.GET.get('lat', '')).replace(',', '.'))
+        lon = float(str(request.GET.get('lon', '')).replace(',', '.'))
+    except (TypeError, ValueError):
+        # Fallback: ubicación principal guardada
+        ubi = UbicacionGuardada.objects.filter(usuario=request.user, es_principal=True).first()
+        if not ubi:
+            ubi = UbicacionGuardada.objects.filter(usuario=request.user).first()
+        if not ubi:
+            return JsonResponse({'ok': False, 'error': 'Indicá lat/lon o guardá una ubicación.'}, status=400)
+        lat, lon = float(ubi.lat), float(ubi.lon)
+
+    try:
+        dias = int(request.GET.get('dias', dias_max))
+    except (TypeError, ValueError):
+        dias = dias_max
+    dias = max(1, min(dias, dias_max))
+    formato = (request.GET.get('formato') or 'csv').lower().strip()
+    if formato not in ('csv', 'xlsx', 'pdf'):
+        formato = 'csv'
+    ciudad = (request.GET.get('ciudad') or '').strip()[:80]
+
+    try:
+        filas, start, end = _filas_historial_archivo(lat, lon, dias)
+    except Exception as e:
+        print(f"⚠️ ERROR export historial: {e}")
+        return JsonResponse({'ok': False, 'error': 'No se pudo obtener el historial en este momento.'}, status=502)
+
+    stamp = f"{start.isoformat()}_{end.isoformat()}"
+    base_name = f"tuclima_historial_{lat:.3f}_{lon:.3f}_{stamp}"
+
+    if formato == 'csv':
+        import csv as _csv
+        buf = io.StringIO()
+        w = _csv.writer(buf)
+        w.writerow(['fecha', 'tmax_c', 'tmin_c', 'tmean_c', 'precip_mm', 'viento_max_kmh', 'humedad_pct'])
+        for r in filas:
+            w.writerow([r['fecha'], r['tmax'], r['tmin'], r['tmean'], r['precip'], r['viento_max'], r['humedad']])
+        resp = HttpResponse(buf.getvalue(), content_type='text/csv; charset=utf-8')
+        resp['Content-Disposition'] = f'attachment; filename="{base_name}.csv"'
+        return resp
+
+    if formato == 'xlsx':
+        from openpyxl import Workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Historial'
+        ws.append(['fecha', 'tmax_c', 'tmin_c', 'tmean_c', 'precip_mm', 'viento_max_kmh', 'humedad_pct'])
+        for r in filas:
+            ws.append([r['fecha'], r['tmax'], r['tmin'], r['tmean'], r['precip'], r['viento_max'], r['humedad']])
+        out = io.BytesIO()
+        wb.save(out)
+        out.seek(0)
+        resp = HttpResponse(
+            out.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        resp['Content-Disposition'] = f'attachment; filename="{base_name}.xlsx"'
+        return resp
+
+    # PDF (matplotlib)
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_pdf import PdfPages
+
+    out = io.BytesIO()
+    with PdfPages(out) as pdf:
+        fig, ax = plt.subplots(figsize=(11.69, 8.27))
+        ax.axis('off')
+        titulo = ciudad or f'{lat:.4f}, {lon:.4f}'
+        ax.set_title(f'TuClima — Historial climático\n{titulo}\n{start} → {end} ({dias} días)', fontsize=12, pad=12)
+        cols = ['Fecha', 'Tmax', 'Tmin', 'Tmean', 'Precip', 'Viento', 'Humedad']
+        # Mostrar últimas filas si son muchas (caben ~35 por página)
+        muestra = filas[-40:] if len(filas) > 40 else filas
+        table_data = [cols] + [
+            [
+                r['fecha'],
+                '' if r['tmax'] is None else f"{r['tmax']:.1f}",
+                '' if r['tmin'] is None else f"{r['tmin']:.1f}",
+                '' if r['tmean'] is None else f"{r['tmean']:.1f}",
+                '' if r['precip'] is None else f"{r['precip']:.1f}",
+                '' if r['viento_max'] is None else f"{r['viento_max']:.1f}",
+                '' if r['humedad'] is None else f"{r['humedad']:.0f}",
+            ]
+            for r in muestra
+        ]
+        table = ax.table(cellText=table_data, loc='center', cellLoc='center')
+        table.auto_set_font_size(False)
+        table.set_fontsize(7)
+        table.scale(1, 1.2)
+        pdf.savefig(fig, bbox_inches='tight')
+        plt.close(fig)
+
+        # Página de series (temp media)
+        fig2, ax2 = plt.subplots(figsize=(11.69, 4.5))
+        xs = [r['fecha'] for r in filas]
+        ys = [r['tmean'] for r in filas]
+        ax2.plot(xs, ys, color='#0891b2', linewidth=1.5)
+        ax2.set_title('Temperatura media diaria (°C)')
+        ax2.tick_params(axis='x', labelrotation=45, labelsize=6)
+        ax2.grid(True, alpha=0.3)
+        fig2.tight_layout()
+        pdf.savefig(fig2)
+        plt.close(fig2)
+
+    out.seek(0)
+    resp = HttpResponse(out.getvalue(), content_type='application/pdf')
+    resp['Content-Disposition'] = f'attachment; filename="{base_name}.pdf"'
+    return resp
+
+
+def _api_key_desde_request(request):
+    """Bearer token o ?api_key=."""
+    auth = request.META.get('HTTP_AUTHORIZATION', '') or ''
+    if auth.lower().startswith('bearer '):
+        return auth[7:].strip()
+    return (request.GET.get('api_key') or request.headers.get('X-Api-Key') or '').strip()
+
+
+@csrf_exempt
+@require_http_methods(["GET", "OPTIONS"])
+def api_widget_clima(request):
+    """
+    Endpoint público (auth por API key) para widget embebible.
+    GET /api/v1/widget/?lat=&lon=
+    Header: Authorization: Bearer <clave>
+    """
+    if request.method == 'OPTIONS':
+        resp = HttpResponse(status=204)
+        resp['Access-Control-Allow-Origin'] = '*'
+        resp['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        resp['Access-Control-Allow-Headers'] = 'Authorization, Content-Type, X-Api-Key'
+        return resp
+
+    clave = _api_key_desde_request(request)
+    api_key = None
+    perfil = None
+
+    if clave:
+        try:
+            api_key = ApiKeyPersonal.objects.select_related('usuario', 'usuario__perfil').get(clave=clave, activa=True)
+            perfil = getattr(api_key.usuario, 'perfil', None)
+        except ApiKeyPersonal.DoesNotExist:
+            resp = JsonResponse({'ok': False, 'error': 'API key inválida o inactiva.'}, status=403)
+            resp['Access-Control-Allow-Origin'] = '*'
+            return resp
+    elif request.user.is_authenticated:
+        # Misma sesión (demo / uso interno); embeds externos deben usar API key
+        perfil = getattr(request.user, 'perfil', None)
+    else:
+        resp = JsonResponse({'ok': False, 'error': 'API key requerida (Bearer).'}, status=401)
+        resp['Access-Control-Allow-Origin'] = '*'
+        return resp
+
+    if not perfil or perfil.plan_nivel not in ('plus', 'pro_ia', 'power'):
+        # Demo sin plan: permitir lectura limitada si hay sesión staff, si no bloquear
+        if not (request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser)):
+            resp = JsonResponse({'ok': False, 'error': 'Plan Plus+ requerido.'}, status=403)
+            resp['Access-Control-Allow-Origin'] = '*'
+            return resp
+
+    try:
+        lat = float(str(request.GET.get('lat', '')).replace(',', '.'))
+        lon = float(str(request.GET.get('lon', '')).replace(',', '.'))
+    except (TypeError, ValueError):
+        resp = JsonResponse({'ok': False, 'error': 'Parámetros lat y lon requeridos.'}, status=400)
+        resp['Access-Control-Allow-Origin'] = '*'
+        return resp
+
+    sector = (request.GET.get('sector') or '').lower().strip()
+    try:
+        resumen = _resumen_ubicacion(lat, lon)
+        payload = {
+            'ok': True,
+            'lat': lat,
+            'lon': lon,
+            'temp_c': resumen['temp'],
+            'sensacion_c': resumen['sensacion'],
+            'humedad_pct': resumen['humedad'],
+            'viento_kmh': resumen['viento'],
+            'precip_mm': resumen['precip'],
+            'presion_hpa': resumen['presion'],
+            'tmax_c': resumen['tmax'],
+            'tmin_c': resumen['tmin'],
+            'generado_en': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'attribution': 'TuClima · Open-Meteo',
+        }
+        if sector in ('agro', 'naval', 'aereo', 'energia'):
+            # Semáforo ligero con métricas disponibles del resumen
+            payload['operabilidad'] = evaluar_operabilidad(sector, {
+                'viento_kmh': resumen['viento'] or 0,
+                'viento_kt': (resumen['viento'] or 0) * 0.539957,
+                'viento_ms': (resumen['viento'] or 0) / 3.6,
+                'temp_c': resumen['temp'] or 20,
+                'vis_nm': 10,
+                'olas_m': 0,
+                'categoria': 'VFR',
+                'cape': 0,
+                'shear_kt': 0,
+                'vis_km': 10,
+                'radiacion': 400,
+                'delta_t': 0,
+                'vpd': 0,
+                'balance_neto': 0,
+            })
+        api_key.ultimo_uso = timezone.now()
+        api_key.save(update_fields=['ultimo_uso'])
+        resp = JsonResponse(payload)
+        resp['Access-Control-Allow-Origin'] = '*'
+        resp['Cache-Control'] = 'public, max-age=300'
+        return resp
+    except Exception as e:
+        print(f"⚠️ ERROR widget: {e}")
+        resp = JsonResponse({'ok': False, 'error': 'No se pudieron obtener datos.'}, status=502)
+        resp['Access-Control-Allow-Origin'] = '*'
+        return resp
+
+
+def widget_demo(request):
+    """Página mínima de demo del widget."""
+    return render(request, 'widget_demo.html', {
+        'widget_base': request.build_absolute_uri('/').rstrip('/'),
     })
 
 

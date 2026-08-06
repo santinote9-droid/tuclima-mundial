@@ -144,6 +144,56 @@
         </div>
     </div>
 
+    <!-- Comparar 2 ubicaciones -->
+    <div class="card" style="margin-bottom:22px;">
+        <div style="font-size:0.72rem;letter-spacing:0.1em;color:#64748b;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Comparar 2 ubicaciones</div>
+        <form method="get" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;align-items:end;">
+            <input type="hidden" name="lat" value="{{ lat }}">
+            <input type="hidden" name="lon" value="{{ lon }}">
+            <input type="hidden" name="ciudad" value="{{ ciudad }}">
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:0.75rem;color:#94a3b8;">
+                Lat B
+                <input name="lat2" value="{{ lat2 }}" placeholder="-31.42" required style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;border-radius:8px;padding:10px;min-height:42px;">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:0.75rem;color:#94a3b8;">
+                Lon B
+                <input name="lon2" value="{{ lon2 }}" placeholder="-64.18" required style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;border-radius:8px;padding:10px;min-height:42px;">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:0.75rem;color:#94a3b8;">
+                Nombre B
+                <input name="ciudad2" value="{{ ciudad2 }}" placeholder="Córdoba" style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;border-radius:8px;padding:10px;min-height:42px;">
+            </label>
+            <button type="submit" style="background:rgba(56,189,248,0.15);border:1px solid #38bdf8;color:#38bdf8;border-radius:8px;padding:12px 16px;font-weight:700;cursor:pointer;min-height:42px;">Comparar</button>
+        </form>
+
+        {% if dual %}
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px;">
+            <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:12px;padding:14px;">
+                <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;">Punto A</div>
+                <div style="font-size:1.05rem;font-weight:700;margin:4px 0 10px;">{{ dual.a.nombre }}</div>
+                <div style="font-size:1.8rem;font-weight:800;color:#38bdf8;">{% if dual.a.temp is not None %}{{ dual.a.temp|floatformat:1 }}°C{% else %}—{% endif %}</div>
+                <div style="margin-top:8px;font-size:0.82rem;color:#94a3b8;line-height:1.55;">
+                    Sensación {% if dual.a.sensacion is not None %}{{ dual.a.sensacion|floatformat:1 }}°{% else %}—{% endif %}<br>
+                    Viento {% if dual.a.viento is not None %}{{ dual.a.viento|floatformat:0 }} km/h{% else %}—{% endif %}<br>
+                    Humedad {% if dual.a.humedad is not None %}{{ dual.a.humedad|floatformat:0 }}%{% else %}—{% endif %}<br>
+                    Lluvia 3d {{ dual.a.lluvia_3d }} mm · Viento máx {{ dual.a.viento_max_3d|floatformat:0 }} km/h
+                </div>
+            </div>
+            <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:12px;padding:14px;">
+                <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;">Punto B</div>
+                <div style="font-size:1.05rem;font-weight:700;margin:4px 0 10px;">{{ dual.b.nombre }}</div>
+                <div style="font-size:1.8rem;font-weight:800;color:#fbbf24;">{% if dual.b.temp is not None %}{{ dual.b.temp|floatformat:1 }}°C{% else %}—{% endif %}</div>
+                <div style="margin-top:8px;font-size:0.82rem;color:#94a3b8;line-height:1.55;">
+                    Sensación {% if dual.b.sensacion is not None %}{{ dual.b.sensacion|floatformat:1 }}°{% else %}—{% endif %}<br>
+                    Viento {% if dual.b.viento is not None %}{{ dual.b.viento|floatformat:0 }} km/h{% else %}—{% endif %}<br>
+                    Humedad {% if dual.b.humedad is not None %}{{ dual.b.humedad|floatformat:0 }}%{% else %}—{% endif %}<br>
+                    Lluvia 3d {{ dual.b.lluvia_3d }} mm · Viento máx {{ dual.b.viento_max_3d|floatformat:0 }} km/h
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
     <div class="selector-grid">
         <button class="btn-var active" onclick="updateChart('temp', this)">
             <svg class="anim-pulse" style="width:24px;height:24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/><path d="M12 14v.01"/></svg>

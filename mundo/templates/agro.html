@@ -1857,6 +1857,8 @@ Generado por TuClima Pro - www.tuclima.com
 ═══════════════════════════════════════════════════ -->
 <div style="margin-bottom:20px; font-family:'Segoe UI',system-ui,-apple-system,sans-serif;">
 
+  {% include 'partials/_badge_operabilidad.html' %}
+
   {% if alerta_banner.activo %}<div id="tc-alert-banner" style="background:{{ alerta_banner.color }}; border:1px solid {{ alerta_banner.borde }}; border-radius:12px; padding:11px 16px; margin-bottom:14px; display:flex; align-items:flex-start; gap:10px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ alerta_banner.texto }}" stroke-width="2.5" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span style="flex:1; font-size:0.82rem; font-weight:600; color:{{ alerta_banner.texto }}; line-height:1.45; font-family:'Segoe UI',system-ui,sans-serif;">{{ alerta_banner.mensaje }}</span><button onclick="document.getElementById('tc-alert-banner').style.display='none'" style="background:none; border:none; color:{{ alerta_banner.texto }}; opacity:0.65; cursor:pointer; font-size:1.2rem; line-height:1; padding:0; flex-shrink:0;">&times;</button></div>{% endif %}
 
   <!-- ── 1. SEMÁFORO DE RIESGO AGRONÓMICO ── -->

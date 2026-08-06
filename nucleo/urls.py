@@ -62,6 +62,9 @@ urlpatterns = [
     path('mapas/', views.mapas, name='mapas'),
 
     path('comparador/', comparador_modelos, name='comparador'),
+    path('api/historial/export/', views.exportar_historial_punto, name='exportar_historial_punto'),
+    path('api/v1/widget/', views.api_widget_clima, name='api_widget_clima'),
+    path('widget-demo/', views.widget_demo, name='widget_demo'),
 
     # Endpoint para papers de arXiv
     path('api/papers/', api_papers, name='api_papers'),

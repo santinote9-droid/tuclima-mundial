@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Widget TuClima | Demo{% endblock %}
+
+{% block extra_head %}
+<style>
+  body { background:#0b1220; color:#e2e8f0; font-family:'Segoe UI',system-ui,sans-serif; }
+  .wrap { max-width:640px; margin:40px auto; padding:0 16px 60px; }
+  h1 { font-size:1.4rem; margin:0 0 8px; }
+  p { color:#94a3b8; line-height:1.5; }
+  pre { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:14px; overflow:auto; font-size:0.78rem; color:#67e8f9; white-space:pre-wrap; }
+  .box { margin:24px 0; }
+  a { color:#38bdf8; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wrap">
+  <h1>Widget embebible</h1>
+  <p>Demo. En sitios externos usá tu API key de <a href="/mi-api-key/">Mi API Key</a> (plan Plus+).</p>
+
+  <div class="box">
+    <div id="tuclima-widget"
+         data-lat="-34.6037"
+         data-lon="-58.3816"
+         data-base="{{ widget_base }}"
+         data-key="">
+    </div>
+  </div>
+
+  <pre>&lt;div id="tuclima-widget"
+     data-lat="-34.6037"
+     data-lon="-58.3816"
+     data-key="TU_API_KEY"
+     data-base="{{ widget_base }}"&gt;&lt;/div&gt;
+&lt;script src="{{ widget_base }}/static/js/widget.js" async&gt;&lt;/script&gt;</pre>
+</div>
+<script src="{% static 'js/widget.js' %}"></script>
+{% endblock %}

@@ -885,6 +885,71 @@
         <!-- RIGHT -->
         <div class="mc-stack">
 
+            <!-- Historial climático descargable -->
+            {% if dias_historial > 0 %}
+            <section class="mc-panel">
+                <div class="mc-panel-h">
+                    <div class="left">
+                        <div class="mc-ico"><i class="fas fa-download"></i></div>
+                        <div>
+                            <h2>Historial climático</h2>
+                            <p>Descargá hasta {{ dias_historial }} días de un punto (CSV / Excel / PDF)</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mc-panel-b">
+                    <form id="form-hist-export" style="display:grid;gap:10px;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <input name="lat" id="hex-lat" placeholder="Lat" required style="background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px;">
+                            <input name="lon" id="hex-lon" placeholder="Lon" required style="background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px;">
+                        </div>
+                        <input name="ciudad" id="hex-ciudad" placeholder="Nombre (opcional)" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px;">
+                        {% if ubicaciones %}
+                        <select id="hex-ubi" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px;">
+                            <option value="">Usar ubicación guardada…</option>
+                            {% for u in ubicaciones %}
+                            <option value="{{ u.lat }}|{{ u.lon }}|{{ u.nombre }}">{{ u.nombre }}{% if u.es_principal %} ★{% endif %}</option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                            <a class="mc-btn mc-btn-ghost" id="hex-csv" href="#"><i class="fas fa-file-csv"></i> CSV</a>
+                            <a class="mc-btn mc-btn-ghost" id="hex-xlsx" href="#"><i class="fas fa-file-excel"></i> Excel</a>
+                            <a class="mc-btn mc-btn-primary" id="hex-pdf" href="#"><i class="fas fa-file-pdf"></i> PDF</a>
+                        </div>
+                    </form>
+                    <script>
+                    (function(){
+                        var sel = document.getElementById('hex-ubi');
+                        if (sel) sel.addEventListener('change', function(){
+                            if (!this.value) return;
+                            var p = this.value.split('|');
+                            document.getElementById('hex-lat').value = p[0];
+                            document.getElementById('hex-lon').value = p[1];
+                            document.getElementById('hex-ciudad').value = p[2] || '';
+                        });
+                        function build(fmt){
+                            var lat = document.getElementById('hex-lat').value.trim();
+                            var lon = document.getElementById('hex-lon').value.trim();
+                            if (!lat || !lon) { alert('Indicá lat y lon, o elegí una ubicación guardada.'); return '#'; }
+                            var ciudad = encodeURIComponent(document.getElementById('hex-ciudad').value.trim());
+                            return '/api/historial/export/?lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lon) + '&formato=' + fmt + (ciudad ? '&ciudad=' + ciudad : '');
+                        }
+                        ['csv','xlsx','pdf'].forEach(function(fmt){
+                            var a = document.getElementById('hex-' + fmt);
+                            if (!a) return;
+                            a.addEventListener('click', function(e){
+                                var href = build(fmt);
+                                if (href === '#') { e.preventDefault(); return; }
+                                a.href = href;
+                            });
+                        });
+                    })();
+                    </script>
+                </div>
+            </section>
+            {% endif %}
+
             <!-- Anomalías -->
             <section class="mc-panel">
                 <div class="mc-panel-h">
