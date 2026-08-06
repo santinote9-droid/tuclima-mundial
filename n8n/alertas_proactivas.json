@@ -108,11 +108,12 @@
       "typeVersion": 4.4,
       "position": [960, 300],
       "id": "alerta-005-geocoding",
-      "name": "Geocodificar Ubicacion"
+      "name": "Geocodificar Ubicacion",
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "jsCode": "// Verificar que la geocodificación tuvo resultado\nconst geo = $input.first().json;\nif (!geo.results || geo.results.length === 0) {\n  // Ciudad no encontrada: saltar este usuario\n  return [];\n}\nconst loc = geo.results[0];\nreturn [{\n  json: {\n    lat: loc.latitude,\n    lon: loc.longitude,\n    city_resolved: `${loc.name}, ${loc.country_code || loc.country || ''}`\n  }\n}];"
+        "jsCode": "// Preferir lat/lon del payload Django (ubicación principal); si no, usar geocoding\nconst usuario = $('Filtrar por Hora').item.json;\nif (usuario.lat != null && usuario.lon != null && !Number.isNaN(Number(usuario.lat)) && !Number.isNaN(Number(usuario.lon))) {\n  return [{\n    json: {\n      lat: Number(usuario.lat),\n      lon: Number(usuario.lon),\n      city_resolved: usuario.ubicacion_nombre || `${usuario.lat}, ${usuario.lon}`\n    }\n  }];\n}\nconst geo = $input.first().json;\nif (!geo.results || geo.results.length === 0) {\n  return [];\n}\nconst loc = geo.results[0];\nreturn [{\n  json: {\n    lat: loc.latitude,\n    lon: loc.longitude,\n    city_resolved: `${loc.name}, ${loc.country_code || loc.country || ''}`\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

@@ -1112,6 +1112,21 @@
                 <div class="mc-form-grid" style="margin-bottom:14px;">
                     <div>
                         <label class="mc-label" for="ubicacion_nombre_input">Ciudad / localidad</label>
+                        {% if ubicaciones %}
+                        <select id="select-ubicacion-alerta" class="mc-select" style="margin-bottom:8px;"
+                                onchange="aplicarUbicacionGuardada(this)">
+                            <option value="">— Elegir sitio guardado —</option>
+                            {% for ub in ubicaciones %}
+                            <option value="{{ ub.id }}"
+                                    data-nombre="{{ ub.nombre }}"
+                                    data-lat="{{ ub.lat }}"
+                                    data-lon="{{ ub.lon }}"
+                                    {% if ub.es_principal %}selected{% endif %}>
+                                {% if ub.es_principal %}★ {% endif %}{{ ub.nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
                         <div style="display:flex; gap:6px;">
                             <input type="text" name="ubicacion_nombre" id="ubicacion_nombre_input" class="mc-input"
                                    value="{{ perfil.ubicacion_nombre }}"
@@ -1124,6 +1139,14 @@
                             </button>
                         </div>
                         <div id="ubicacion-estado" style="font-size:0.75rem; margin-top:5px; min-height:16px;"></div>
+                        {% with ub_mapa=ubicaciones.first %}
+                        <a href="{% if ub_mapa %}/?lat={{ ub_mapa.lat }}&lon={{ ub_mapa.lon }}{% else %}/{% endif %}"
+                           id="link-usar-mapa"
+                           class="mc-btn mc-btn-ghost" style="margin-top:8px; min-height:40px;"
+                           {% if not ub_mapa %}hidden{% endif %}>
+                            <i class="fas fa-map"></i> Ver en el mapa
+                        </a>
+                        {% endwith %}
                     </div>
                     <div>
                         <label class="mc-label" for="hora_alerta">Hora de envío (Argentina)</label>
@@ -1163,6 +1186,33 @@
 {% endwith %}
 
 <script>
+async function aplicarUbicacionGuardada(sel) {
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt || !opt.value) return;
+    const nombre = opt.dataset.nombre || opt.textContent.trim();
+    const lat = opt.dataset.lat;
+    const lon = opt.dataset.lon;
+    const input = document.getElementById('ubicacion_nombre_input');
+    if (input) input.value = nombre;
+    const link = document.getElementById('link-usar-mapa');
+    if (link && lat && lon) {
+        link.href = `/?lat=${lat}&lon=${lon}`;
+        link.hidden = false;
+    }
+    try {
+        await fetch(`/api/ubicaciones/${opt.value}/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+            body: JSON.stringify({ action: 'principal' })
+        });
+        const estado = document.getElementById('ubicacion-estado');
+        if (estado) {
+            estado.textContent = 'Sitio marcado como principal para alertas email.';
+            estado.style.color = '#4ade80';
+        }
+    } catch (e) {}
+}
+
 (function autocompletarDesdeLocalStorage() {
     const input = document.getElementById('ubicacion_nombre_input');
     if (!input || input.value.trim()) return;

@@ -154,9 +154,9 @@
         .contenedor-dias { 
             display: flex; 
             overflow-x: auto; 
-            justify-content: center; 
-            gap: 25px; 
-            padding: 25px 60px; 
+            justify-content: flex-start; 
+            gap: 16px; 
+            padding: 25px 20px; 
             max-width: 1900px; 
             margin: 0 auto; 
             box-sizing: border-box;
@@ -173,6 +173,76 @@
             touch-action: pan-x;
             cursor: grab;
         }
+
+        /* Favoritos / mis sitios */
+        .fav-bar {
+            width: 100%;
+            max-width: 800px;
+            margin: -10px auto 18px;
+            padding: 0 8px;
+            box-sizing: border-box;
+        }
+        .fav-bar-inner {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+        }
+        .fav-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            min-height: 40px;
+            border-radius: 999px;
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            background: rgba(15, 23, 42, 0.65);
+            color: #e2e8f0;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+        .fav-chip:hover, .fav-chip.active {
+            border-color: #38bdf8;
+            background: rgba(56, 189, 248, 0.15);
+            color: #fff;
+        }
+        .fav-chip.principal { border-color: #fbbf24; box-shadow: 0 0 12px rgba(251, 191, 36, 0.25); }
+        .fav-chip .fav-star, .fav-chip .fav-del {
+            border: none; background: transparent; color: #94a3b8;
+            cursor: pointer; padding: 2px; line-height: 1; font-size: 0.9rem;
+        }
+        .fav-chip .fav-star.is-on { color: #fbbf24; }
+        .fav-chip .fav-del:hover { color: #f87171; }
+        .fav-save-btn, .fav-cta {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 14px; min-height: 40px; border-radius: 999px;
+            border: 1px dashed rgba(148, 163, 184, 0.5);
+            background: rgba(30, 41, 59, 0.5);
+            color: #94a3b8; font-size: 0.82rem; font-weight: 600;
+            cursor: pointer; text-decoration: none;
+        }
+        .fav-save-btn:hover { border-color: #38bdf8; color: #38bdf8; }
+
+        /* Banner alertas web */
+        .alertas-banner {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto 20px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(251, 191, 36, 0.35);
+            background: rgba(251, 191, 36, 0.1);
+            color: #fde68a;
+            font-size: 0.9rem;
+            display: none;
+            box-sizing: border-box;
+        }
+        .alertas-banner.is-visible { display: block; }
+        .alertas-banner a { color: #38bdf8; font-weight: 700; text-decoration: none; }
+        .alertas-banner ul { margin: 8px 0 0; padding-left: 18px; color: #fef3c7; }
         .contenedor-dias:active { cursor: grabbing; }
         
         .contenedor-dias::-webkit-scrollbar {
@@ -1503,8 +1573,148 @@
 </div>
 </div><!-- /buscador -->
 
+    <div class="fav-bar" id="favBar" data-auth="{% if user.is_authenticated %}1{% else %}0{% endif %}">
+        <div class="fav-bar-inner" id="favBarInner">
+            {% if user.is_authenticated %}
+            <button type="button" class="fav-save-btn" id="btnGuardarSitio" onclick="guardarSitioActual()" title="Guardar ubicación actual">
+                ★ Guardar sitio
+            </button>
+            {% else %}
+            <a class="fav-cta" href="/login/?next=/">Iniciá sesión para guardar sitios</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="alertas-banner" id="alertasBanner" role="status" aria-live="polite"></div>
+
    <script>
         let cargandoDatos = false;
+        window._climaActual = { lat: null, lon: null, ciudad: '' };
+        const HOME_AUTH = document.getElementById('favBar')?.dataset?.auth === '1';
+
+        function getCsrfToken() {
+            return document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('csrftoken='))?.split('=')[1] || '';
+        }
+
+        async function cargarFavoritos() {
+            if (!HOME_AUTH) return;
+            const inner = document.getElementById('favBarInner');
+            if (!inner) return;
+            try {
+                const resp = await fetch('/api/ubicaciones/');
+                if (!resp.ok) return;
+                const data = await resp.json();
+                const saveBtn = document.getElementById('btnGuardarSitio');
+                // Limpiar chips previos
+                inner.querySelectorAll('.fav-chip').forEach(el => el.remove());
+                (data.ubicaciones || []).forEach(ub => {
+                    const chip = document.createElement('div');
+                    chip.className = 'fav-chip' + (ub.es_principal ? ' principal' : '');
+                    chip.dataset.id = ub.id;
+                    chip.dataset.lat = ub.lat;
+                    chip.dataset.lon = ub.lon;
+                    chip.innerHTML = `
+                        <button type="button" class="fav-star ${ub.es_principal ? 'is-on' : ''}" title="Marcar principal" aria-label="Principal">★</button>
+                        <span class="fav-name"></span>
+                        <button type="button" class="fav-del" title="Eliminar" aria-label="Eliminar">×</button>`;
+                    chip.querySelector('.fav-name').textContent = ub.nombre;
+                    chip.querySelector('.fav-name').addEventListener('click', () => {
+                        cargarDatosClima(ub.lat, ub.lon);
+                        inner.querySelectorAll('.fav-chip').forEach(c => c.classList.remove('active'));
+                        chip.classList.add('active');
+                    });
+                    chip.querySelector('.fav-star').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        marcarPrincipal(ub.id);
+                    });
+                    chip.querySelector('.fav-del').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        eliminarSitio(ub.id);
+                    });
+                    if (saveBtn) inner.insertBefore(chip, saveBtn);
+                    else inner.appendChild(chip);
+                });
+                if (saveBtn) {
+                    saveBtn.style.display = (data.puede_guardar === false) ? 'none' : '';
+                }
+            } catch (e) { console.warn('Favoritos:', e); }
+        }
+
+        async function guardarSitioActual() {
+            if (!HOME_AUTH) { location.href = '/login/?next=/'; return; }
+            const lat = window._climaActual.lat;
+            const lon = window._climaActual.lon;
+            if (lat == null || lon == null) {
+                alert('Primero cargá una ubicación en el mapa.');
+                return;
+            }
+            const nombre = prompt('Nombre para este sitio:', window._climaActual.ciudad || 'Mi sitio');
+            if (!nombre) return;
+            try {
+                const resp = await fetch('/api/ubicaciones/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+                    body: JSON.stringify({ nombre: nombre.trim(), lat, lon, es_principal: true })
+                });
+                const data = await resp.json();
+                if (!resp.ok) { alert(data.error || 'No se pudo guardar'); return; }
+                await cargarFavoritos();
+            } catch (e) { alert('Error de red al guardar'); }
+        }
+
+        async function marcarPrincipal(pk) {
+            try {
+                const resp = await fetch(`/api/ubicaciones/${pk}/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+                    body: JSON.stringify({ action: 'principal' })
+                });
+                if (resp.ok) await cargarFavoritos();
+            } catch (e) {}
+        }
+
+        async function eliminarSitio(pk) {
+            if (!confirm('¿Eliminar este sitio?')) return;
+            try {
+                const resp = await fetch(`/api/ubicaciones/${pk}/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+                    body: JSON.stringify({ _method: 'DELETE' })
+                });
+                if (resp.ok) await cargarFavoritos();
+            } catch (e) {}
+        }
+
+        async function cargarAlertasWeb(lat, lon) {
+            if (!HOME_AUTH) return;
+            const banner = document.getElementById('alertasBanner');
+            if (!banner) return;
+            try {
+                const resp = await fetch(`/api/alertas/web/?lat=${lat}&lon=${lon}`);
+                if (!resp.ok) return;
+                const data = await resp.json();
+                const parts = [];
+                if (data.total_disparadas > 0) {
+                    parts.push(`<strong>${data.total_disparadas} alerta(s) activa(s)</strong> en tus umbrales PRO.`);
+                    const lis = (data.alertas_disparadas || []).slice(0, 4).map(a =>
+                        `<li>${a.sector}: ${a.texto} (ahora ${Number(a.valor_actual).toFixed(1)})</li>`
+                    ).join('');
+                    if (lis) parts.push(`<ul>${lis}</ul>`);
+                    parts.push(`<a href="/${(data.alertas_disparadas[0] || {}).sector || 'agro'}/?lat=${lat}&lon=${lon}">Ver en modo PRO</a> · `);
+                }
+                if (data.email_alertas_activas) {
+                    parts.push(`Email diario activo${data.hora_alerta != null ? ' a las ' + data.hora_alerta + ':00' : ''}. `);
+                }
+                if (parts.length) {
+                    parts.push(`<a href="/mi-cuenta/#mc-alertas">Configurar alertas</a>`);
+                    banner.innerHTML = parts.join(' ');
+                    banner.classList.add('is-visible');
+                } else {
+                    banner.classList.remove('is-visible');
+                    banner.innerHTML = '';
+                }
+            } catch (e) {}
+        }
 
         // 1. FILTRO ANTI-COMAS
         function limpiarCoordenada(coord) {
@@ -1600,7 +1810,16 @@
                 
                 if (data.success) {
                     console.log('✅ Datos recibidos:', data.ciudad, data.temp + '°');
+                    window._climaActual = {
+                        lat: data.lat, lon: data.lon, ciudad: data.ciudad || ''
+                    };
+                    try {
+                        localStorage.setItem('ultimaUbicacion', JSON.stringify({
+                            lat: data.lat, lon: data.lon, ciudad: data.ciudad || '', timestamp: Date.now()
+                        }));
+                    } catch (e) {}
                     actualizarInterfaz(data);
+                    cargarAlertasWeb(data.lat, data.lon);
                     // Actualizar URL sin recargar
                     if (safeLat && safeLon && safeLat !== '0' && safeLon !== '0') {
                         const newUrl = `/?lat=${safeLat}&lon=${safeLon}`;
@@ -1748,6 +1967,36 @@
                         <div style="width:${Math.min(uv * 10, 100)}%;height:100%;background:linear-gradient(90deg,#2ed573,#ffa502,#ff4757);border-radius:5px;"></div>
                     </div>`;
             }
+            // AQI
+            const cardAqi = document.getElementById('card-aqi');
+            if (cardAqi) {
+                const aqi = data.aqi;
+                const color = data.aqi_color || '#94a3b8';
+                const label = data.aqi_label || 'N/D';
+                const pm = data.pm25 != null ? `PM2.5: ${data.pm25}` : 'Sin dato de partículas';
+                cardAqi.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                        <svg style="width:28px;height:28px;color:${color};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3c-1.5 4-4 6-4 10a4 4 0 0 0 8 0c0-4-2.5-6-4-10z"/><path d="M8 14h8"/></svg>
+                        <div style="color:#ccc;font-size:0.9em;">CALIDAD DEL AIRE</div>
+                    </div>
+                    <div style="font-size:2.5em;font-weight:bold;color:${color};">${aqi != null ? aqi : '—'}</div>
+                    <div style="font-size:0.85em;color:${color};font-weight:600;">${label}</div>
+                    <div style="font-size:0.75em;color:#94a3b8;margin-top:6px;">${pm}</div>`;
+            }
+            // Confort
+            const cardConf = document.getElementById('card-confort');
+            if (cardConf) {
+                const color = data.confort_color || '#94a3b8';
+                const label = data.confort_label || 'N/D';
+                const score = data.confort != null ? data.confort : '—';
+                cardConf.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                        <svg style="width:28px;height:28px;color:${color};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+                        <div style="color:#ccc;font-size:0.9em;">CONFORT TÉRMICO</div>
+                    </div>
+                    <div style="font-size:2.2em;font-weight:bold;color:${color};">${label}</div>
+                    <div style="font-size:0.8em;color:#94a3b8;margin-top:6px;">Índice ${score}/100 · sensación ${Number(data.sensacion || 0).toFixed(1)}°</div>`;
+            }
             // Nubes
             const tn = document.getElementById('val-tipo-nube');
             if (tn) tn.textContent = data.tipo_nube || '';
@@ -1852,6 +2101,7 @@
 
         // 6. MANEJO DE FORMULARIOS Y FLECHAS
         document.addEventListener('DOMContentLoaded', function() {
+            cargarFavoritos();
 
             // Flechas de inputs
             const latInput = document.getElementById('latInput');
@@ -1998,14 +2248,14 @@
 
 <h2 style="color: #eee; text-shadow: 1px 1px 2px black; display: flex; align-items: center; justify-content: center; gap: 10px;">
     <svg style="width:24px; height:24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-    Calendario de Pronóstico
+    Pronóstico 14 días
 </h2>
 
 <div class="carrusel-wrapper" id="wrapperDias" style="max-width: 1900px; margin: 0 auto;">
 <button class="carrusel-arrow left" onclick="scrollCarrusel('listaDias', -300)" aria-label="Anterior">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
 </button>
-<div class="contenedor-dias" id="listaDias" style="margin: 0 auto; display: flex; justify-content: center; align-items: center;">
+<div class="contenedor-dias" id="listaDias" style="margin: 0 auto; display: flex; justify-content: flex-start; align-items: center;">
     {% for dia in pronostico %}
     <div class="tarjeta-dia {% if forloop.first %}dia-activo{% endif %}" 
          onclick="cambiarDia('{{ dia.fecha_full }}', '{{ dia.nombre_dia }}', '{{ dia.fecha_corta }}', this)">
@@ -2105,6 +2355,33 @@
 
             <div style="width: 100%; height: 5px; background: #333; margin-top: 10px; border-radius: 5px;">
                 <div style="width: {{ uv_index }}0%; max-width: 100%; height: 100%; background: linear-gradient(90deg, #2ed573, #ffa502, #ff4757); border-radius: 5px;"></div>
+            </div>
+        </div>
+
+        <div id="card-aqi" class="detalle-card">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <svg style="width:28px;height:28px;color:{{ aqi_color|default:'#94a3b8' }};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3c-1.5 4-4 6-4 10a4 4 0 0 0 8 0c0-4-2.5-6-4-10z"/><path d="M8 14h8"/></svg>
+                <div style="color: #ccc; font-size: 0.9em;">CALIDAD DEL AIRE</div>
+            </div>
+            <div style="font-size: 2.5em; font-weight: bold; color: {{ aqi_color|default:'#94a3b8' }};">
+                {% if aqi != None %}{{ aqi }}{% else %}—{% endif %}
+            </div>
+            <div style="font-size: 0.85em; color: {{ aqi_color|default:'#94a3b8' }}; font-weight: 600;">{{ aqi_label|default:"N/D" }}</div>
+            <div style="font-size: 0.75em; color: #94a3b8; margin-top: 6px;">
+                {% if pm25 != None %}PM2.5: {{ pm25 }}{% else %}Sin dato de partículas{% endif %}
+            </div>
+        </div>
+
+        <div id="card-confort" class="detalle-card">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <svg style="width:28px;height:28px;color:{{ confort_color|default:'#94a3b8' }};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+                <div style="color: #ccc; font-size: 0.9em;">CONFORT TÉRMICO</div>
+            </div>
+            <div style="font-size: 2.2em; font-weight: bold; color: {{ confort_color|default:'#94a3b8' }};">
+                {{ confort_label|default:"N/D" }}
+            </div>
+            <div style="font-size: 0.8em; color: #94a3b8; margin-top: 6px;">
+                Índice {% if confort != None %}{{ confort }}{% else %}—{% endif %}/100 · sensación {{ sensacion }}°
             </div>
         </div>
 

@@ -80,6 +80,122 @@ def _get_meteo(url: str, timeout: int = 6, reintentos: int = 1) -> dict:
     raise ultimo_error
 
 
+def _indice_confort(temp, humedad, sensacion=None):
+    """
+    Índice de confort térmico simple (0–100) a partir de temp/humedad/sensación.
+    Usa sensación aparente cuando está disponible; si no, heat-index aproximado.
+    """
+    try:
+        t = float(sensacion if sensacion is not None else temp)
+        h = float(humedad or 0)
+    except (TypeError, ValueError):
+        return {'confort': None, 'confort_label': 'N/D', 'confort_color': '#94a3b8'}
+
+    # Heat index simplificado (°C) cuando hace calor y hay humedad
+    if t >= 27 and h >= 40:
+        # Conversión aproximada HI en °C (Rothfusz/Steadman simplificado)
+        tf = t * 9 / 5 + 32
+        hi_f = (
+            -42.379 + 2.04901523 * tf + 10.14333127 * h
+            - 0.22475541 * tf * h - 6.83783e-3 * tf ** 2
+            - 5.481717e-2 * h ** 2 + 1.22874e-3 * tf ** 2 * h
+            + 8.5282e-4 * tf * h ** 2 - 1.99e-6 * tf ** 2 * h ** 2
+        )
+        t_eff = (hi_f - 32) * 5 / 9
+    else:
+        t_eff = t
+
+    if t_eff < 5:
+        label, color, score = 'Frío', '#38bdf8', 25
+    elif t_eff < 15:
+        label, color, score = 'Fresco', '#67e8f9', 45
+    elif t_eff < 24:
+        label, color, score = 'Confort', '#2ed573', 80
+    elif t_eff < 30:
+        label, color, score = 'Calor', '#ffa502', 55
+    else:
+        label, color, score = 'Extremo', '#ff4757', 20
+
+    return {
+        'confort': score,
+        'confort_label': label,
+        'confort_color': color,
+        'confort_temp_efectiva': round(t_eff, 1),
+    }
+
+
+def _obtener_aqi(lat, lon, timeout=4):
+    """Calidad del aire vía Open-Meteo Air Quality API. Fallback seguro si falla."""
+    vacio = {'aqi': None, 'aqi_label': 'N/D', 'aqi_color': '#94a3b8', 'pm25': None}
+    try:
+        url = (
+            f"https://air-quality-api.open-meteo.com/v1/air-quality"
+            f"?latitude={lat}&longitude={lon}"
+            f"&current=european_aqi,pm2_5,us_aqi&timezone=auto"
+        )
+        data = _get_meteo(url, timeout=timeout)
+        cur = data.get('current') or {}
+        aqi = cur.get('european_aqi')
+        if aqi is None:
+            aqi = cur.get('us_aqi')
+        pm25 = cur.get('pm2_5')
+        if aqi is None:
+            return vacio
+        aqi = float(aqi)
+        if aqi <= 20:
+            label, color = 'Buena', '#2ed573'
+        elif aqi <= 40:
+            label, color = 'Aceptable', '#a3e635'
+        elif aqi <= 60:
+            label, color = 'Moderada', '#ffa502'
+        elif aqi <= 80:
+            label, color = 'Mala', '#ff6b35'
+        elif aqi <= 100:
+            label, color = 'Muy mala', '#ff4757'
+        else:
+            label, color = 'Pésima', '#c0392b'
+        return {
+            'aqi': int(round(aqi)),
+            'aqi_label': label,
+            'aqi_color': color,
+            'pm25': round(float(pm25), 1) if pm25 is not None else None,
+        }
+    except Exception as e:
+        logger.warning(f"AQI no disponible: {e}")
+        return vacio
+
+
+def _armar_pronostico(daily, r1, dias_max=14):
+    """Lista de días para el calendario home (hasta dias_max)."""
+    dias_nom = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+    lista = []
+    n = min(dias_max, len(daily.get('time') or []))
+    for i in range(n):
+        dt = datetime.strptime(daily['time'][i], '%Y-%m-%d')
+        nom = "HOY" if i == 0 else dias_nom[dt.weekday()]
+        lista.append({
+            'nombre_dia': nom,
+            'fecha_corta': dt.strftime('%d/%m'),
+            'fecha_full': daily['time'][i],
+            'max': r1(daily['temperature_2m_max'][i]),
+            'min': r1(daily['temperature_2m_min'][i]),
+            'icono': obtener_icono_url(daily['weather_code'][i], 1),
+            'desc': descifrar_desc(daily['weather_code'][i]),
+        })
+    return lista
+
+
+_HOME_FORECAST_URL = (
+    "https://api.open-meteo.com/v1/forecast"
+    "?latitude={lat}&longitude={lon}"
+    "&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,"
+    "weather_code,wind_speed_10m,surface_pressure,visibility"
+    "&hourly=temperature_2m,weather_code,precipitation_probability,is_day"
+    "&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max"
+    "&forecast_days=14&timezone=auto"
+)
+
+
 # ============================================================
 # FORMULARIO DE REGISTRO CON EMAIL REQUERIDO
 # ============================================================
@@ -482,7 +598,9 @@ def home(request):
         'fondo': 'img/dia_radiante.jpg',
         'descripcion': 'Cargando...', 'tipo_nube': '', 'alerta_texto': '',
         'alerta_color': '#a4b0be', 'alerta_tipo': 'normal',
-        'sunrise': '--:--', 'sunset': '--:--'
+        'sunrise': '--:--', 'sunset': '--:--',
+        'aqi': None, 'aqi_label': 'N/D', 'aqi_color': '#94a3b8', 'pm25': None,
+        'confort': None, 'confort_label': 'N/D', 'confort_color': '#94a3b8',
     }
 
     # --- GEOLOCALIZACIÓN ---
@@ -530,7 +648,7 @@ def home(request):
     try:
         # Solo obtener datos del clima si tenemos coordenadas válidas
         if lat != 0.0 and lon != 0.0:
-            url_clima = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,weather_code,precipitation_probability,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto"
+            url_clima = _HOME_FORECAST_URL.format(lat=lat, lon=lon)
             
             response = _get_meteo(url_clima, timeout=8)
             actual = response['current']
@@ -581,6 +699,15 @@ def home(request):
             contexto['visibilidad'] = r1(vis_km)
             contexto['uv_index']    = uv
             contexto['lluvia_hoy']  = r1(actual['precipitation'])
+
+            confort = _indice_confort(
+                actual.get('temperature_2m'),
+                actual.get('relative_humidity_2m'),
+                actual.get('apparent_temperature'),
+            )
+            contexto.update(confort)
+            aqi_data = _obtener_aqi(lat, lon)
+            contexto.update(aqi_data)
             
             contexto['icono'] = obtener_icono_url(code, actual['is_day'])
             contexto['fondo'] = obtener_fondo(code, actual['is_day'])
@@ -632,18 +759,8 @@ def home(request):
             contexto['horas_grafico'] = [h['hora'] for h in tira_hoy if h['tipo'] == 'normal']
             contexto['temps_grafico'] = [h['temp'] for h in tira_hoy if h['tipo'] == 'normal']
 
-            # Pronóstico
-            lista_pronostico = []
-            dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-            for i in range(6):
-                dt = datetime.strptime(daily['time'][i], '%Y-%m-%d')
-                nom = "HOY" if i == 0 else dias[dt.weekday()]
-                lista_pronostico.append({
-                    'nombre_dia': nom, 'fecha_corta': dt.strftime('%d/%m'), 'fecha_full': daily['time'][i],
-                    'max': r1(daily['temperature_2m_max'][i]), 'min': r1(daily['temperature_2m_min'][i]),
-                    'icono': obtener_icono_url(daily['weather_code'][i], 1), 'desc': descifrar_desc(daily['weather_code'][i])
-                })
-            contexto['pronostico'] = lista_pronostico
+            # Pronóstico 14 días
+            contexto['pronostico'] = _armar_pronostico(daily, r1, dias_max=14)
             
             # Carga opcional de noticias y papers - no bloquea la carga principal
             try:
@@ -760,8 +877,8 @@ def clima_data_api(request):
             except:
                 pass
         
-        # Obtener datos del clima
-        url_clima = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,weather_code,precipitation_probability,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto"
+        # Obtener datos del clima (14 días)
+        url_clima = _HOME_FORECAST_URL.format(lat=lat, lon=lon)
         
         response = _get_meteo(url_clima, timeout=8)
         if 'current' not in response:
@@ -847,21 +964,13 @@ def clima_data_api(request):
 
         tira_hoy = datos_por_dia.get(fecha_hoy, [])
 
-        # Pronóstico
-        lista_pronostico = []
-        dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-        for i in range(6):
-            dt = datetime.strptime(daily['time'][i], '%Y-%m-%d')
-            nom = "HOY" if i == 0 else dias[dt.weekday()]
-            lista_pronostico.append({
-                'nombre_dia': nom,
-                'fecha_corta': dt.strftime('%d/%m'),
-                'fecha_full': daily['time'][i],
-                'max': r1(daily['temperature_2m_max'][i]),
-                'min': r1(daily['temperature_2m_min'][i]),
-                'icono': obtener_icono_url(daily['weather_code'][i], 1),
-                'desc': descifrar_desc(daily['weather_code'][i])
-            })
+        lista_pronostico = _armar_pronostico(daily, r1, dias_max=14)
+        confort = _indice_confort(
+            actual.get('temperature_2m'),
+            actual.get('relative_humidity_2m'),
+            actual.get('apparent_temperature'),
+        )
+        aqi_data = _obtener_aqi(lat, lon)
 
         # Anomalía de temperatura (cacheada vía _get_meteo)
         delta_temp = 0
@@ -913,7 +1022,9 @@ def clima_data_api(request):
             'datos_json': datos_por_dia,
             'horas_grafico': [h['hora'] for h in tira_hoy if h['tipo'] == 'normal'],
             'temps_grafico': [h['temp'] for h in tira_hoy if h['tipo'] == 'normal'],
-            'pronostico': lista_pronostico
+            'pronostico': lista_pronostico,
+            **confort,
+            **aqi_data,
         }
         
         return JsonResponse(data)
@@ -5077,13 +5188,24 @@ def api_ubicaciones(request):
     limite = UbicacionGuardada.limite_para_plan(nivel)
 
     if request.method == 'GET':
-        qs = UbicacionGuardada.objects.filter(usuario=request.user).values(
-            'id', 'nombre', 'lat', 'lon', 'sector', 'es_principal', 'creada'
-        )
+        qs = UbicacionGuardada.objects.filter(usuario=request.user).order_by('-es_principal', '-creada')
+        ubicaciones = [
+            {
+                'id': u.id,
+                'nombre': u.nombre,
+                'lat': u.lat,
+                'lon': u.lon,
+                'sector': u.sector,
+                'es_principal': u.es_principal,
+                'creada': u.creada.isoformat() if u.creada else None,
+            }
+            for u in qs
+        ]
         return JsonResponse({
-            'ubicaciones': list(qs),
+            'ubicaciones': ubicaciones,
             'limite': limite,
-            'total': qs.count(),
+            'total': len(ubicaciones),
+            'puede_guardar': limite is None or len(ubicaciones) < limite,
         })
 
     if request.method == 'POST':
@@ -5113,13 +5235,16 @@ def api_ubicaciones(request):
 
         sector = str(datos.get('sector', '')).strip()[:10].lower()
         es_primera = (actual == 0)
+        marcar_principal = bool(datos.get('es_principal')) or es_primera
+        if marcar_principal:
+            UbicacionGuardada.objects.filter(usuario=request.user, es_principal=True).update(es_principal=False)
         ub = UbicacionGuardada.objects.create(
             usuario=request.user,
             nombre=nombre,
             lat=lat,
             lon=lon,
             sector=sector,
-            es_principal=es_primera,
+            es_principal=marcar_principal,
         )
         return JsonResponse({'id': ub.id, 'nombre': ub.nombre, 'lat': ub.lat, 'lon': ub.lon,
                              'sector': ub.sector, 'es_principal': ub.es_principal}, status=201)
@@ -5129,16 +5254,59 @@ def api_ubicaciones(request):
 
 @login_required
 def api_ubicacion_delete(request, pk):
-    """Elimina una ubicación guardada del usuario autenticado."""
-    if request.method not in ('POST', 'DELETE'):
-        return JsonResponse({'error': 'Método no permitido.'}, status=405)
+    """
+    DELETE/POST → elimina una ubicación.
+    PATCH/POST action=principal|rename → actualiza principal o nombre.
+    """
     try:
         ub = UbicacionGuardada.objects.get(pk=pk, usuario=request.user)
     except UbicacionGuardada.DoesNotExist:
         return JsonResponse({'error': 'No encontrada.'}, status=404)
 
-    ub.delete()
-    return JsonResponse({'ok': True})
+    try:
+        datos = json.loads(request.body) if request.body else {}
+    except (json.JSONDecodeError, TypeError):
+        datos = request.POST.dict() if hasattr(request.POST, 'dict') else {}
+
+    action = str(datos.get('action') or request.GET.get('action') or '').strip().lower()
+    method_override = str(datos.get('_method') or '').upper()
+
+    # Actualizar (principal / rename)
+    if request.method == 'PATCH' or (request.method == 'POST' and action in ('principal', 'rename')):
+        if action == 'principal' or datos.get('es_principal') in (True, 'true', '1', 1):
+            UbicacionGuardada.objects.filter(usuario=request.user, es_principal=True).update(es_principal=False)
+            ub.es_principal = True
+            ub.save(update_fields=['es_principal'])
+            # Sincronizar nombre en perfil para alertas email
+            perfil = getattr(request.user, 'perfil', None)
+            if perfil:
+                perfil.ubicacion_nombre = ub.nombre
+                perfil.save(update_fields=['ubicacion_nombre'])
+            return JsonResponse({
+                'ok': True, 'id': ub.id, 'es_principal': True, 'nombre': ub.nombre,
+                'lat': ub.lat, 'lon': ub.lon,
+            })
+        if action == 'rename' or datos.get('nombre'):
+            nuevo = str(datos.get('nombre', '')).strip()[:100]
+            if not nuevo:
+                return JsonResponse({'error': 'El nombre es obligatorio.'}, status=400)
+            ub.nombre = nuevo
+            ub.save(update_fields=['nombre'])
+            return JsonResponse({'ok': True, 'id': ub.id, 'nombre': ub.nombre})
+        return JsonResponse({'error': 'Acción no reconocida.'}, status=400)
+
+    # Eliminar
+    if request.method in ('DELETE',) or method_override == 'DELETE' or request.method == 'POST':
+        era_principal = ub.es_principal
+        ub.delete()
+        if era_principal:
+            otra = UbicacionGuardada.objects.filter(usuario=request.user).order_by('-creada').first()
+            if otra:
+                otra.es_principal = True
+                otra.save(update_fields=['es_principal'])
+        return JsonResponse({'ok': True})
+
+    return JsonResponse({'error': 'Método no permitido.'}, status=405)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -6077,17 +6245,107 @@ def api_alertas_usuarios(request):
     for perfil in (PerfilUsuario.objects
                    .filter(alertas_activas=True, fecha_vencimiento__gt=timezone.now())
                    .select_related('user')):
-        if not perfil.ubicacion_nombre or not perfil.user.email:
+        if not perfil.user.email:
             continue
-        usuarios.append({
-            'id':              perfil.user.id,
-            'email':           perfil.user.email,
-            'nombre':          perfil.user.first_name or perfil.user.username,
-            'sectores':        perfil.alertas_sectores or 'agro',
-            'hora_alerta':     perfil.hora_alerta,
-            'ubicacion_nombre': perfil.ubicacion_nombre,
-        })
+        principal = (
+            UbicacionGuardada.objects
+            .filter(usuario=perfil.user, es_principal=True)
+            .first()
+        )
+        nombre_ubi = (
+            (principal.nombre if principal else None)
+            or perfil.ubicacion_nombre
+            or ''
+        ).strip()
+        if not nombre_ubi and not principal:
+            continue
+        item = {
+            'id': perfil.user.id,
+            'email': perfil.user.email,
+            'nombre': perfil.user.first_name or perfil.user.username,
+            'sectores': perfil.alertas_sectores or 'agro',
+            'hora_alerta': perfil.hora_alerta,
+            'ubicacion_nombre': nombre_ubi or (principal.nombre if principal else ''),
+        }
+        if principal:
+            item['lat'] = principal.lat
+            item['lon'] = principal.lon
+        usuarios.append(item)
     return JsonResponse({'usuarios': usuarios, 'total': len(usuarios)})
+
+
+@login_required
+def api_alertas_web(request):
+    """
+    Alertas para banner en home:
+    - Umbrales AlertaModal evaluados contra clima actual (variables simples)
+    - Estado de alertas email del perfil
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        lat = float(str(request.GET.get('lat', '0')).replace(',', '.'))
+        lon = float(str(request.GET.get('lon', '0')).replace(',', '.'))
+    except (TypeError, ValueError):
+        lat, lon = 0.0, 0.0
+
+    perfil = getattr(request.user, 'perfil', None)
+    email_activas = bool(perfil and perfil.alertas_activas and getattr(perfil, 'puede_alertas_proactivas', False))
+
+    valores = {}
+    if lat != 0.0 or lon != 0.0:
+        try:
+            url = _HOME_FORECAST_URL.format(lat=lat, lon=lon)
+            resp = _get_meteo(url, timeout=6)
+            cur = resp.get('current') or {}
+            daily = resp.get('daily') or {}
+            uv = (daily.get('uv_index_max') or [None])[0] or 0
+            temp = cur.get('temperature_2m')
+            viento = cur.get('wind_speed_10m')
+            humedad = cur.get('relative_humidity_2m')
+            sensacion = cur.get('apparent_temperature')
+            lluvia = cur.get('precipitation')
+            valores = {
+                'temp': temp, 'temperature_2m': temp, 'temperatura': temp,
+                'viento': viento, 'wind_speed_10m': viento, 'wind': viento,
+                'humedad': humedad, 'relative_humidity_2m': humedad,
+                'uv': uv, 'uv_index': uv,
+                'sensacion': sensacion, 'apparent_temperature': sensacion,
+                'lluvia': lluvia, 'precipitation': lluvia,
+            }
+        except Exception as e:
+            logger.warning(f"api_alertas_web clima: {e}")
+
+    disparadas = []
+    configuradas = []
+    qs = AlertaModal.objects.filter(usuario=request.user, activa=True).order_by('-creada')[:40]
+    for a in qs:
+        item = {
+            'id': a.id,
+            'sector': a.sector,
+            'modal_id': a.modal_id,
+            'variable': a.variable,
+            'operador': a.operador,
+            'umbral': a.umbral,
+            'texto': f"{a.variable} {'>' if a.operador == 'gt' else '<'} {a.umbral}",
+        }
+        configuradas.append(item)
+        val = valores.get(a.variable)
+        if val is not None and a.evaluar(float(val)):
+            item_d = dict(item)
+            item_d['valor_actual'] = float(val)
+            item_d['disparada'] = True
+            disparadas.append(item_d)
+
+    return JsonResponse({
+        'email_alertas_activas': email_activas,
+        'ubicacion_alerta': (perfil.ubicacion_nombre if perfil else '') or '',
+        'hora_alerta': getattr(perfil, 'hora_alerta', None) if perfil else None,
+        'alertas_configuradas': len(configuradas),
+        'alertas_disparadas': disparadas,
+        'total_disparadas': len(disparadas),
+    })
 
 
 # ─────────────────────────────────────────────

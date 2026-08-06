@@ -113,8 +113,9 @@ urlpatterns = [
     path('pagar-tokens/', views.mp_crear_preferencia_tokens, name='mp_crear_preferencia_tokens'),
     path('tokens-retorno/', views.tokens_retorno_view, name='tokens_retorno'),
 
-    # Alertas Proactivas — endpoint para n8n
+    # Alertas Proactivas — endpoint para n8n + banner web
     path('api/alertas/usuarios/', views.api_alertas_usuarios, name='api_alertas_usuarios'),
+    path('api/alertas/web/', views.api_alertas_web, name='api_alertas_web'),
 
     # Histórico climático (Fase 2 · n8n + BigQuery)
     path('api/n8n/ubicaciones/', views.api_n8n_ubicaciones, name='api_n8n_ubicaciones'),
