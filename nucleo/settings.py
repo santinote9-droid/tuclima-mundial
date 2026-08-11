@@ -35,7 +35,12 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     'tuclima-mundial.onrender.com',
+    'tuclima.com.ar',
+    'www.tuclima.com.ar',
 ]
+# Extra hosts vía env (coma-separados), útil sin redeploy de código
+_extra_hosts = [h.strip() for h in (os.getenv('ALLOWED_HOSTS_EXTRA') or '').split(',') if h.strip()]
+ALLOWED_HOSTS.extend(_extra_hosts)
 
 
 # Application definition
@@ -184,9 +189,13 @@ LANGUAGES = [
 # Configuraciones de CSRF para producción y desarrollo
 CSRF_TRUSTED_ORIGINS = [
     'https://tuclima-mundial.onrender.com',
+    'https://tuclima.com.ar',
+    'https://www.tuclima.com.ar',
     'http://localhost:8000',
-    'http://127.0.0.1:8000'
+    'http://127.0.0.1:8000',
 ]
+_extra_csrf = [o.strip() for o in (os.getenv('CSRF_TRUSTED_ORIGINS_EXTRA') or '').split(',') if o.strip()]
+CSRF_TRUSTED_ORIGINS.extend(_extra_csrf)
 
 # ============================================================
 # SEGURIDAD HTTPS — solo activo en producción (DEBUG=False)
@@ -257,10 +266,10 @@ DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'Weather Pro <climapro00@g
 # MERCADOPAGO — configura en .env
 # MP_ACCESS_TOKEN=APP_USR-...    (producción)
 # MP_PUBLIC_KEY=APP_USR-...      (front-end, no usada en backend)
-# SITE_URL=https://tuclima-mundial.onrender.com  (para webhooks y back_urls)
+# SITE_URL=https://tuclima.com.ar  (para webhooks, back_urls y emails)
 # ============================================================
 MP_ACCESS_TOKEN = os.getenv('MP_ACCESS_TOKEN', '')
-# Preferí SITE_URL; en Render cae a RENDER_EXTERNAL_URL si no está definida.
+# Preferí SITE_URL (dominio propio); si no, Render URL; último fallback local.
 SITE_URL = (
     (os.getenv('SITE_URL') or '').strip()
     or (os.getenv('RENDER_EXTERNAL_URL') or '').strip()

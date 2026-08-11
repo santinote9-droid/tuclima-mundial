@@ -4741,7 +4741,7 @@ def _site_url_publico(request=None):
         if site.startswith('https://') and '127.0.0.1' not in site and 'localhost' not in site:
             return site.rstrip('/')
 
-    return 'https://tuclima-mundial.onrender.com'
+    return 'https://tuclima.com.ar'
 
 
 def _es_usuario_argentina(request):
@@ -4891,7 +4891,7 @@ def mp_crear_preferencia_tokens(request):
         messages.error(
             request,
             'No hay URL HTTPS pública para Mercado Pago. '
-            'Definí SITE_URL=https://tuclima-mundial.onrender.com en Render.',
+            'Definí SITE_URL=https://tuclima.com.ar en Render.',
         )
         return redirect(f'/activar-plan/?paquete={paquete_id}&pais=AR')
 
@@ -4977,7 +4977,7 @@ def mp_crear_preferencia_tokens(request):
         messages.error(
             request,
             f'Mercado Pago rechazó el pago: {err}. '
-            f'Revisá MP_ACCESS_TOKEN (APP_USR-…), SITE_URL=https://tuclima-mundial.onrender.com '
+            f'Revisá MP_ACCESS_TOKEN (APP_USR-…), SITE_URL=https://tuclima.com.ar '
             f'y ARS_POR_USD en Render.',
         )
     except Exception as e:
