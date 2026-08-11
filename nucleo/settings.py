@@ -80,6 +80,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'mundo.context_processors.site_seo',
             ],
         },
     },
@@ -275,6 +276,10 @@ SITE_URL = (
     or (os.getenv('RENDER_EXTERNAL_URL') or '').strip()
     or 'http://127.0.0.1:8000'
 )
+
+# Google Search Console — meta tag de verificación (opcional)
+# En Render: GOOGLE_SITE_VERIFICATION=contenido_del_meta_sin_comillas
+GOOGLE_SITE_VERIFICATION = (os.getenv('GOOGLE_SITE_VERIFICATION') or '').strip()
 
 # Cotización USD→ARS para Mercado Pago Argentina (preferencias en ARS).
 # Actualizá en Render según cotización aproximada.

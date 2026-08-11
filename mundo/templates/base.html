@@ -7,21 +7,24 @@
 
     {# ── SEO básico ──────────────────────────────────────────── #}
     <meta name="description" content="{% block meta_description %}TuClima — Pronóstico del tiempo profesional con múltiples modelos meteorológicos, análisis sectorial (agro, naval, aéreo, energía) y laboratorio 3D interactivo.{% endblock %}">
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
+    {% if GOOGLE_SITE_VERIFICATION %}<meta name="google-site-verification" content="{{ GOOGLE_SITE_VERIFICATION }}">{% endif %}
+    <link rel="canonical" href="{% block canonical_url %}{{ SITE_URL }}{{ request.path }}{% endblock %}">
 
     {# ── Open Graph (WhatsApp, Facebook, LinkedIn) ───────────── #}
     <meta property="og:type"        content="website">
     <meta property="og:site_name"   content="TuClima">
     <meta property="og:title"       content="{% block og_title %}TuClima — Meteorología Profesional{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Pronósticos multimodelo, análisis sectorial y globo 3D interactivo. Clima en tiempo real para profesionales.{% endblock %}">
-    <meta property="og:image"       content="https://tuclima-mundial.onrender.com{% static 'img/logo.jpg' %}">
-    <meta property="og:url"         content="https://tuclima-mundial.onrender.com/">
+    <meta property="og:image"       content="{% block og_image %}{{ SITE_URL }}{% static 'img/logo.jpg' %}{% endblock %}">
+    <meta property="og:url"         content="{% block og_url %}{{ SITE_URL }}{{ request.path }}{% endblock %}">
+    <meta property="og:locale"      content="es_AR">
 
     {# ── Twitter Card ────────────────────────────────────────── #}
     <meta name="twitter:card"        content="summary_large_image">
     <meta name="twitter:title"       content="{% block twitter_title %}TuClima — Meteorología Profesional{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}Pronósticos multimodelo y análisis climático sectorial en tiempo real.{% endblock %}">
-    <meta name="twitter:image"       content="https://tuclima-mundial.onrender.com{% static 'img/logo.jpg' %}">
+    <meta name="twitter:image"       content="{% block twitter_image %}{{ SITE_URL }}{% static 'img/logo.jpg' %}{% endblock %}">
 
     {# ── Favicon ─────────────────────────────────────────────── #}
     <link rel="icon" type="image/jpeg" href="{% static 'img/logo.jpg' %}">
