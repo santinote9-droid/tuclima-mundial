@@ -2919,103 +2919,169 @@ def comparador_modelos(request):
 #  MÓDULO ESPACIAL (NOAA SWPC)
 # ==============================================================================
 def meteorologia_espacial(request):
-    # URLs Oficiales
-    url_kp = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"
-    url_plasma = "https://services.swpc.noaa.gov/products/solar-wind/plasma-5-minute.json"
-    url_mag = "https://services.swpc.noaa.gov/products/solar-wind/mag-5-minute.json" # <--- NUEVO: Magnetómetro
-    url_xray = "https://services.swpc.noaa.gov/json/GOES/primary/xrays-6-hour.json" # <--- NUEVO: Rayos X
-    url_nasa_earth = "https://epic.gsfc.nasa.gov/api/natural"
-    
-    # Inits seguros
-    kp_actual = 0; kp_estado = "Datos no disponibles"; kp_color = "#64748b"
-    viento_velocidad = 0; viento_densidad = 0
-    bz = 0; bz_estado = "Cerrado"; bz_color = "#64748b" # Init Bz
-    flare_class = "A"; flare_val = 0.0 # Init Rayos X
-    proton_flux = 0.1 # Init Protones (Simulado base si no hay tormenta)
+    """
+    Meteorología espacial (NOAA SWPC + NASA EPIC).
 
-    labels_kp = []; data_kp = []
+    Marzo 2026: SWPC cambió formatos JSON y deprecó /products/solar-wind/*-5-minute.json.
+    Usamos endpoints actuales + formato objeto (Kp/time_tag).
+    """
+    url_kp = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"
+    url_wind = "https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json"
+    url_mag_sum = "https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json"
+    url_rtsw_wind = "https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json"
+    url_rtsw_mag = "https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json"
+    url_xray = "https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json"
+    url_nasa_earth = "https://epic.gsfc.nasa.gov/api/natural"
+
+    kp_actual = 0
+    kp_estado = "Datos no disponibles"
+    kp_color = "#64748b"
+    viento_velocidad = 0
+    viento_densidad = 0
+    bz = 0
+    bz_estado = "Cerrado"
+    bz_color = "#64748b"
+    flare_class = "A"
+    flare_val = 0.0
+
+    labels_kp = []
+    data_kp = []
     img_tierra = "https://epic.gsfc.nasa.gov/archive/natural/2023/10/26/png/epic_1b_20231026003633.png"
+    headers = {"User-Agent": "TuClima/1.0 (https://tuclima.com.ar; espacio)"}
+
+    def _get_json(url, timeout=10):
+        r = requests.get(url, timeout=timeout, headers=headers)
+        r.raise_for_status()
+        return r.json()
+
+    def _ultimo_activo(filas):
+        """Preferí filas active=True (RTSW); si no hay, la última con dato útil."""
+        if not filas:
+            return None
+        activos = [f for f in filas if isinstance(f, dict) and f.get("active") is True]
+        if activos:
+            return activos[-1]
+        return filas[-1] if isinstance(filas[-1], dict) else None
 
     try:
-        # 1. ÍNDICE KP
+        # 1. ÍNDICE KP (formato objeto desde ~mar 2026)
         try:
-            resp_kp = requests.get(url_kp, timeout=3).json()
-            ultimo_dato = resp_kp[-1]
-            kp_actual = float(ultimo_dato[1])
-            # Historial
-            for fila in resp_kp[-24:]:
-                labels_kp.append(fila[0].split(' ')[1][:5])
-                data_kp.append(float(fila[1]))
-            # Semáforo
-            if kp_actual < 4: kp_estado = "Tranquilo"; kp_color = "#2ed573"
-            elif kp_actual < 5: kp_estado = "Activo"; kp_color = "#ffa502"
-            elif kp_actual == 5: kp_estado = "Tormenta G1"; kp_color = "#ff6b81"
-            elif kp_actual == 6: kp_estado = "Tormenta G2"; kp_color = "#ff4757"
-            elif kp_actual >= 7: kp_estado = "Tormenta G3+"; kp_color = "#ff0000"
-        except: pass
+            resp_kp = _get_json(url_kp)
+            filas = [f for f in resp_kp if isinstance(f, dict) and "Kp" in f]
+            if filas:
+                ultimo = filas[-1]
+                kp_actual = float(ultimo.get("Kp") or 0)
+                for fila in filas[-24:]:
+                    tt = str(fila.get("time_tag") or "")
+                    hora = tt[11:16] if "T" in tt else (tt.split(" ")[-1][:5] if tt else "")
+                    labels_kp.append(hora or "--")
+                    data_kp.append(float(fila.get("Kp") or 0))
+                if kp_actual < 4:
+                    kp_estado, kp_color = "Tranquilo", "#2ed573"
+                elif kp_actual < 5:
+                    kp_estado, kp_color = "Activo", "#ffa502"
+                elif kp_actual < 6:
+                    kp_estado, kp_color = "Tormenta G1", "#ff6b81"
+                elif kp_actual < 7:
+                    kp_estado, kp_color = "Tormenta G2", "#ff4757"
+                else:
+                    kp_estado, kp_color = "Tormenta G3+", "#ff0000"
+        except Exception as e:
+            print(f"⚠️ Espacio KP: {e}")
 
-        # 2. VIENTO SOLAR (Velocidad y Densidad)
+        # 2. VIENTO SOLAR — summary + fallback RTSW (densidad)
         try:
-            resp_plasma = requests.get(url_plasma, timeout=3).json()
-            ultimo_plasma = resp_plasma[-1]
-            viento_densidad = float(ultimo_plasma[1])
-            viento_velocidad = float(ultimo_plasma[2])
-        except: pass
+            resp_wind = _get_json(url_wind)
+            if isinstance(resp_wind, list) and resp_wind:
+                viento_velocidad = float(resp_wind[-1].get("proton_speed") or 0)
+            elif isinstance(resp_wind, dict):
+                viento_velocidad = float(resp_wind.get("proton_speed") or 0)
+        except Exception as e:
+            print(f"⚠️ Espacio wind summary: {e}")
 
-        # 3. CAMPO MAGNÉTICO (Bz) - NUEVO
         try:
-            resp_mag = requests.get(url_mag, timeout=3).json()
-            ultimo_mag = resp_mag[-1]
-            bz = float(ultimo_mag[3]) # La columna 3 suele ser Bz
-            
-            # Lógica: Si Bz es negativo, "se abre la puerta" a auroras
-            if bz < 0: 
-                bz_estado = "Sur (Abierto)"
-                bz_color = "#ff4757" # Rojo alerta (bueno para auroras)
-                if bz < -5: bz_estado = "Sur Profundo (Muy Abierto)"
-            else:
-                bz_estado = "Norte (Cerrado)"
-                bz_color = "#2ed573" # Verde tranquilo
-        except: pass
+            resp_rtsw_w = _get_json(url_rtsw_wind)
+            ultimo_w = _ultimo_activo(resp_rtsw_w)
+            if ultimo_w:
+                if not viento_velocidad:
+                    viento_velocidad = float(ultimo_w.get("proton_speed") or 0)
+                viento_densidad = float(ultimo_w.get("proton_density") or 0)
+        except Exception as e:
+            print(f"⚠️ Espacio RTSW wind: {e}")
 
-        # 4. RAYOS X (FLARES) - NUEVO
+        # 3. CAMPO MAGNÉTICO Bz
         try:
-            resp_xray = requests.get(url_xray, timeout=3).json()
-            # Buscamos el último valor 'flux'
-            ultimo_xray = resp_xray[-1]['flux']
-            flare_val = float(ultimo_xray)
-            
-            # Clasificación Científica (A, B, C, M, X)
-            if flare_val < 1e-7: flare_class = "A (Mínima)"
-            elif flare_val < 1e-6: flare_class = "B (Baja)"
-            elif flare_val < 1e-5: flare_class = "C (Menor)"
-            elif flare_val < 1e-4: flare_class = "M (Moderada)"
-            else: flare_class = "X (Severa!)"
-        except: pass
+            resp_mag = _get_json(url_mag_sum)
+            if isinstance(resp_mag, list) and resp_mag:
+                bz = float(resp_mag[-1].get("bz_gsm") or 0)
+            elif isinstance(resp_mag, dict):
+                bz = float(resp_mag.get("bz_gsm") or 0)
+        except Exception as e:
+            print(f"⚠️ Espacio mag summary: {e}")
+            try:
+                resp_rtsw_m = _get_json(url_rtsw_mag)
+                ultimo_m = _ultimo_activo(resp_rtsw_m)
+                if ultimo_m:
+                    bz = float(ultimo_m.get("bz_gsm") or 0)
+            except Exception as e2:
+                print(f"⚠️ Espacio RTSW mag: {e2}")
+
+        if bz < -5:
+            bz_estado, bz_color = "Sur Profundo (Muy Abierto)", "#ff4757"
+        elif bz < 0:
+            bz_estado, bz_color = "Sur (Abierto)", "#ff4757"
+        else:
+            bz_estado, bz_color = "Norte (Cerrado)", "#2ed573"
+
+        # 4. RAYOS X (path en minúsculas: /json/goes/...)
+        try:
+            resp_xray = _get_json(url_xray)
+            if resp_xray:
+                flare_val = float(resp_xray[-1].get("flux") or 0)
+                if flare_val < 1e-7:
+                    flare_class = "A (Mínima)"
+                elif flare_val < 1e-6:
+                    flare_class = "B (Baja)"
+                elif flare_val < 1e-5:
+                    flare_class = "C (Menor)"
+                elif flare_val < 1e-4:
+                    flare_class = "M (Moderada)"
+                else:
+                    flare_class = "X (Severa!)"
+        except Exception as e:
+            print(f"⚠️ Espacio X-ray: {e}")
 
         # 5. NASA EPIC (Tierra)
         try:
-            res_earth = requests.get(url_nasa_earth, timeout=3).json()
+            res_earth = _get_json(url_nasa_earth, timeout=12)
             if res_earth:
                 latest = res_earth[-1]
-                img_name = latest['image']
-                date_path = latest['date'].split(' ')[0].replace('-', '/')
+                img_name = latest["image"]
+                date_path = latest["date"].split(" ")[0].replace("-", "/")
                 img_tierra = f"https://epic.gsfc.nasa.gov/archive/natural/{date_path}/png/{img_name}.png"
-        except: pass
+        except Exception as e:
+            print(f"⚠️ Espacio EPIC: {e}")
 
     except Exception as e:
         print(f"Error Espacio: {e}")
 
-    return render(request, 'espacio.html', {
-        'kp': kp_actual, 'kp_estado': kp_estado, 'kp_color': kp_color,
-        'velocidad': viento_velocidad, 'densidad': viento_densidad,
-        'bz': bz, 'bz_estado': bz_estado, 'bz_color': bz_color, # Nuevos
-        'flare_class': flare_class, 'flare_val': flare_val, # Nuevos
-        'labels_kp': json.dumps(labels_kp), 'data_kp': json.dumps(data_kp),
-        'img_aurora_sur': "https://services.swpc.noaa.gov/images/aurora-forecast-southern-hemisphere.jpg",
-        'img_aurora_norte': "https://services.swpc.noaa.gov/images/aurora-forecast-northern-hemisphere.jpg",
-        'img_sol': "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0193.jpg",
-        'img_tierra': img_tierra
+    return render(request, "espacio.html", {
+        "kp": kp_actual,
+        "kp_estado": kp_estado,
+        "kp_color": kp_color,
+        "velocidad": viento_velocidad,
+        "densidad": viento_densidad,
+        "bz": bz,
+        "bz_estado": bz_estado,
+        "bz_color": bz_color,
+        "flare_class": flare_class,
+        "flare_val": flare_val,
+        "labels_kp": json.dumps(labels_kp),
+        "data_kp": json.dumps(data_kp),
+        "img_aurora_sur": "https://services.swpc.noaa.gov/images/aurora-forecast-southern-hemisphere.jpg",
+        "img_aurora_norte": "https://services.swpc.noaa.gov/images/aurora-forecast-northern-hemisphere.jpg",
+        "img_sol": "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0193.jpg",
+        "img_tierra": img_tierra,
     })
 
 
