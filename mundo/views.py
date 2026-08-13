@@ -23,6 +23,11 @@ import uuid
 from .models import PerfilUsuario, DatoSectorial, UbicacionGuardada, ReporteProgramado, ApiKeyPersonal, ConfiguracionModal, AlertaModal, NotaModal
 from . import estadistica_utils
 from .operabilidad import evaluar_operabilidad
+from .radiacion_utils import resumen_radiacion
+from .evapo_utils import resumen_etc_eta
+from .ondas_utils import resumen_ondas_naval, resumen_ondas_aereo
+from .climatologia_utils import resumen_climatologia, fase_enso, climograma_historico, indices_sequia
+from .hemisferica_utils import resumen_hemisferica
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -44,6 +49,171 @@ import re
 # Cargar variables de entorno
 load_dotenv()
 logger = logging.getLogger(__name__)
+
+
+def _attach_plan_flags(contexto, request, *, sector=None, lat=None, lon=None, funcion=None):
+    """Flags de plan + climatología (Pro IA+) compartidos por modos PRO."""
+    _perfil = getattr(request.user, 'perfil', None)
+    contexto['plan_nivel'] = _perfil.plan_nivel if _perfil else 'free'
+    contexto['puede_excel'] = _perfil.puede_excel if _perfil else False
+    contexto['puede_devorador'] = _perfil.puede_devorador if _perfil else False
+    contexto['puede_radiacion'] = _perfil.puede_radiacion if _perfil else False
+    contexto['puede_ondas'] = _perfil.puede_ondas if _perfil else False
+    puede_clima = _perfil.puede_climatologia if _perfil else False
+    contexto['puede_climatologia'] = puede_clima
+    contexto['enso'] = None
+    contexto['climograma'] = None
+    contexto['sequia'] = None
+    contexto['hemisferica'] = None
+    if not puede_clima or lat is None or lon is None or not sector:
+        contexto['climatologia'] = None
+        return
+
+    # Circulación hemisférica: malla zonal (no climatología de punto).
+    if funcion == 'hemisferica':
+        contexto['climatologia'] = None
+        try:
+            _hdr = {'User-Agent': 'TuClimaMundial/1.0 (proyectoclima@gmail.com)'}
+            contexto['enso'] = fase_enso(
+                lambda url: requests.get(url, timeout=12, headers=_hdr).text
+            )
+        except Exception as e:
+            print(f"⚠️ ENSO (hemisferica): {e}")
+            contexto['enso'] = {'ok': False, 'label': 'ENSO N/D', 'color': '#94a3b8', 'fase': 'N/D'}
+        try:
+            contexto['hemisferica'] = resumen_hemisferica(
+                float(lat), float(lon),
+                lambda url: _get_meteo(url, timeout=35, reintentos=1),
+            )
+        except Exception as e:
+            print(f"⚠️ Circulación hemisférica ({sector}): {e}")
+            contexto['hemisferica'] = {
+                'ok': False,
+                'error': 'No se pudo estimar el flujo zonal',
+                'color': '#94a3b8',
+                'estado': 'No disponible',
+            }
+        return
+
+    try:
+        dias = min(90, max(7, int(_perfil.dias_historial or 30)))
+        _fetch = lambda url: _get_meteo(url, timeout=25, reintentos=1)
+        contexto['climatologia'] = resumen_climatologia(
+            float(lat), float(lon), sector, dias, _fetch,
+        )
+    except Exception as e:
+        print(f"⚠️ Climatología ({sector}): {e}")
+        contexto['climatologia'] = {
+            'ok': False,
+            'error': 'No se pudo cargar el histórico',
+            'color': '#94a3b8',
+            'label': 'No disponible',
+        }
+
+    # Bloque avanzado (ENSO + climograma + SPI) solo en pantalla Climatología.
+    if funcion != 'climatologia':
+        return
+
+    try:
+        _hdr = {'User-Agent': 'TuClimaMundial/1.0 (proyectoclima@gmail.com)'}
+        contexto['enso'] = fase_enso(
+            lambda url: requests.get(url, timeout=12, headers=_hdr).text
+        )
+    except Exception as e:
+        print(f"⚠️ ENSO: {e}")
+        contexto['enso'] = {'ok': False, 'label': 'ENSO N/D', 'color': '#94a3b8', 'fase': 'N/D'}
+    try:
+        contexto['climograma'] = climograma_historico(
+            float(lat), float(lon),
+            lambda url: _get_meteo(url, timeout=45, reintentos=1),
+        )
+    except Exception as e:
+        print(f"⚠️ Climograma ({sector}): {e}")
+        contexto['climograma'] = {'ok': False, 'error': str(e)[:120], 'destacar': False}
+    try:
+        con_spei = (sector or '').lower() == 'agro'
+        contexto['sequia'] = indices_sequia(
+            float(lat), float(lon),
+            lambda url: _get_meteo(url, timeout=45, reintentos=1),
+            con_spei=con_spei,
+        )
+    except Exception as e:
+        print(f"⚠️ Sequía SPI/SPEI ({sector}): {e}")
+        contexto['sequia'] = {'ok': False, 'error': str(e)[:120]}
+
+
+# ============================================================
+# MODOS PRO · pantallas por función (/naval/ondas/, /agro/ia/, …)
+# ============================================================
+PRO_FUNCION_TITULOS = {
+    'hub': 'Panel',
+    'operacion': 'Operación',
+    'radiacion': 'Radiación',
+    'ondas': 'Ondas',
+    'climatologia': 'Climatología',
+    'hemisferica': 'Circulación Hemisférica',
+    'estadistica': 'Estadística',
+    'herramientas': 'Herramientas',
+    'graficos': 'Gráficos',
+    'didacticas': 'Ventanas didácticas',
+    'ia': 'Chat IA',
+}
+
+PRO_FUNCIONES_POR_SECTOR = {
+    'agro': frozenset({'hub', 'operacion', 'radiacion', 'climatologia', 'hemisferica', 'estadistica', 'herramientas', 'graficos', 'didacticas', 'ia'}),
+    'energia': frozenset({'hub', 'operacion', 'radiacion', 'climatologia', 'hemisferica', 'estadistica', 'herramientas', 'graficos', 'didacticas', 'ia'}),
+    'naval': frozenset({'hub', 'operacion', 'ondas', 'climatologia', 'hemisferica', 'estadistica', 'herramientas', 'graficos', 'didacticas', 'ia'}),
+    'aereo': frozenset({'hub', 'operacion', 'ondas', 'climatologia', 'hemisferica', 'estadistica', 'herramientas', 'graficos', 'didacticas', 'ia'}),
+}
+
+
+def _pro_hub_items(sector, lat, lon):
+    """Tarjetas del hub que apuntan a pantallas /{sector}/{funcion}/."""
+    q = f"?lat={lat}&lon={lon}"
+    eje = 'radiacion' if sector in ('agro', 'energia') else 'ondas'
+    eje_meta = {
+        'radiacion': ('Radiación', 'GHI, claridad e integral', 'Ciencia', 'rgba(250,204,21,0.12)', 'rgba(250,204,21,0.35)', '#facc15'),
+        'ondas': ('Ondas', 'Dinámica marina o atmosférica', 'Ciencia', 'rgba(56,189,248,0.12)', 'rgba(56,189,248,0.35)', '#38bdf8'),
+    }
+    eje_label, eje_desc, eje_kicker, eje_bg, eje_border, eje_color = eje_meta[eje]
+    return [
+        {'href': f'/{sector}/operacion/{q}', 'label': 'Operación', 'desc': 'Semáforo y tendencia 24h', 'kicker': 'Ahora', 'bg': 'rgba(74,222,128,0.1)', 'border': 'rgba(74,222,128,0.35)', 'color': '#4ade80'},
+        {'href': f'/{sector}/{eje}/{q}', 'label': eje_label, 'desc': eje_desc, 'kicker': eje_kicker, 'bg': eje_bg, 'border': eje_border, 'color': eje_color},
+        {'href': f'/{sector}/climatologia/{q}', 'label': 'Climatología', 'desc': 'Anomalías e histórico', 'kicker': 'Pro IA', 'bg': 'rgba(167,139,250,0.1)', 'border': 'rgba(167,139,250,0.35)', 'color': '#a78bfa'},
+        {'href': f'/{sector}/hemisferica/{q}', 'label': 'Circulación Hemisférica', 'desc': 'Eddies y v′T′ zonal', 'kicker': 'Dinámica', 'bg': 'rgba(244,114,182,0.1)', 'border': 'rgba(244,114,182,0.35)', 'color': '#f472b6'},
+        {'href': f'/{sector}/estadistica/{q}', 'label': 'Estadística', 'desc': 'Boxplot, Poisson, Weibull', 'kicker': 'Análisis', 'bg': 'rgba(34,211,238,0.1)', 'border': 'rgba(34,211,238,0.35)', 'color': '#67e8f9'},
+        {'href': f'/{sector}/herramientas/{q}', 'label': 'Herramientas', 'desc': 'PDF, Excel, ojo biónico', 'kicker': 'Acciones', 'bg': 'rgba(96,165,250,0.1)', 'border': 'rgba(96,165,250,0.35)', 'color': '#60a5fa'},
+        {'href': f'/{sector}/graficos/{q}', 'label': 'Gráficos', 'desc': 'Monitores y series', 'kicker': 'Visual', 'bg': 'rgba(251,191,36,0.1)', 'border': 'rgba(251,191,36,0.35)', 'color': '#fbbf24'},
+        {'href': f'/{sector}/didacticas/{q}', 'label': 'Didácticas', 'desc': 'Ventanas de aprendizaje', 'kicker': 'Aprender', 'bg': 'rgba(148,163,184,0.1)', 'border': 'rgba(148,163,184,0.35)', 'color': '#cbd5e1'},
+        {'href': f'/{sector}/?lat={lat}&lon={lon}&open_chat=1', 'label': 'Chat IA', 'desc': 'Asistente del modo', 'kicker': 'IA', 'bg': 'rgba(129,140,248,0.12)', 'border': 'rgba(129,140,248,0.4)', 'color': '#a5b4fc'},
+    ]
+
+
+def _render_sector_pro(request, sector, contexto, funcion='hub'):
+    """Elige template hub o pantalla de función PRO."""
+    from django.http import Http404
+
+    allowed = PRO_FUNCIONES_POR_SECTOR.get(sector, frozenset())
+    if funcion not in allowed:
+        raise Http404('Función PRO no disponible para este modo')
+
+    lat = contexto.get('lat')
+    lon = contexto.get('lon')
+    contexto['pro_sector'] = sector
+    contexto['pro_funcion'] = funcion
+    contexto['pro_titulo'] = PRO_FUNCION_TITULOS.get(funcion, funcion.replace('_', ' ').title())
+    contexto['pro_hub_items'] = _pro_hub_items(sector, lat, lon)
+    contexto['open_chat'] = request.GET.get('open_chat') in ('1', 'true', 'yes')
+
+    if funcion == 'hub':
+        return render(request, f'{sector}.html', contexto)
+    if funcion == 'ia':
+        # Chat vive en el panel principal; el menú PRO lo abre directo
+        from django.http import HttpResponseRedirect
+        from urllib.parse import urlencode
+        q = urlencode({'lat': lat, 'lon': lon, 'open_chat': '1'})
+        return HttpResponseRedirect(f'/{sector}/?{q}')
+    return render(request, f'pro/{sector}/{funcion}.html', contexto)
 
 
 # ============================================================
@@ -1089,7 +1259,7 @@ def tiene_acceso_pro(user):
 
 
 
-def agro(request):
+def agro(request, funcion='hub'):
     # 1. Seguridad y Suscripción
     if not request.user.is_authenticated:
         return redirect('login')
@@ -1126,10 +1296,10 @@ def agro(request):
         "cloud_cover,pressure_msl,surface_pressure,wind_speed_10m,wind_direction_10m,"
         "soil_temperature_0cm,soil_temperature_6cm,soil_temperature_18cm,soil_temperature_54cm,"
         "soil_moisture_0_to_1cm,soil_moisture_3_to_9cm,soil_moisture_9_to_27cm,"
-        "vapor_pressure_deficit,shortwave_radiation"  # <--- Datos Reales de Radiación
+        "vapor_pressure_deficit,shortwave_radiation,direct_radiation,diffuse_radiation"
         "&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,"
         "precipitation_probability,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,"
-        "vapor_pressure_deficit,et0_fao_evapotranspiration"
+        "vapor_pressure_deficit,et0_fao_evapotranspiration,shortwave_radiation,direct_radiation,diffuse_radiation"
         "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,"
         "precipitation_probability_max,et0_fao_evapotranspiration&forecast_days=14&timezone=auto"
     )
@@ -1345,9 +1515,10 @@ def agro(request):
             
             # Tarjeta ETo
             'eto': {
-                'hoy': eto_list[0] if eto_list else 0, 
+                'hoy': eto_list[0] if eto_list else 0,
                 'proyeccion': round((eto_list[0] if eto_list else 0) * 7, 1)
             },
+
             
             # Bucles y Gráficos
             'dias_extendidos': dias_extendidos,
@@ -1359,6 +1530,30 @@ def agro(request):
             'tira_24h': tira_24h_agro,
         }
         contexto['alerta_banner'] = alerta_banner
+        try:
+            contexto['radiacion_avanzada'] = resumen_radiacion(
+                curr, hourly, idx_hora, lat=lat, umbral_util=200.0,
+                temp_aire=curr.get('temperature_2m'),
+                temp_suelo=curr.get('soil_temperature_0cm') or curr.get('soil_temperature_6cm'),
+                humedad_rel=curr.get('relative_humidity_2m'),
+                humedad_suelo_sup=curr.get('soil_moisture_0_to_1cm'),
+            )
+        except Exception as _e_rad:
+            print(f"⚠️ Radiación avanzada (agro): {_e_rad}")
+            contexto['radiacion_avanzada'] = None
+
+        try:
+            _eto_hoy = float(contexto['eto']['hoy'] or 0)
+            _theta_raiz = float(curr.get('soil_moisture_9_to_27cm') or 0)
+            contexto['etc_eta'] = resumen_etc_eta(_eto_hoy, _theta_raiz, cultivo_ref='soja')
+            contexto['eto']['etc'] = contexto['etc_eta']['etc_ref']
+            contexto['eto']['eta'] = contexto['etc_eta']['eta_ref']
+            contexto['eto']['ks'] = contexto['etc_eta']['ks']
+            contexto['eto']['ks_estado'] = contexto['etc_eta']['ks_info']['estado']
+            contexto['eto']['ks_color'] = contexto['etc_eta']['ks_info']['color']
+        except Exception as _e_eta:
+            print(f"⚠️ ETc/ETa (agro): {_e_eta}")
+            contexto['etc_eta'] = None
 
         # --- MODALES INTERACTIVOS: evaluar alertas configuradas por el usuario ---
         try:
@@ -1390,6 +1585,8 @@ def agro(request):
             'error': 'No se pudieron cargar los datos climáticos.',
             'lat': lat, 'lon': lon,
             'alertas_disparadas': {},
+            'etc_eta': None,
+            'radiacion_avanzada': None,
             'grafico_agro': {
                 'fechas': '[]',
                 'lluvia': '[]',
@@ -1397,11 +1594,9 @@ def agro(request):
             },
         }
 
-    # Permisos de plan
-    _perfil = getattr(request.user, 'perfil', None)
-    contexto['plan_nivel'] = _perfil.plan_nivel if _perfil else 'free'
-    contexto['puede_excel'] = _perfil.puede_excel if _perfil else False
-    contexto['puede_devorador'] = _perfil.puede_devorador if _perfil else False
+    # Permisos de plan + climatología
+    _attach_plan_flags(contexto, request, sector='agro', lat=contexto.get('lat', lat), lon=contexto.get('lon', lon), funcion=funcion)
+    contexto.setdefault('sector_radiacion', 'agro')
 
     # Semáforo operativo
     try:
@@ -1417,7 +1612,7 @@ def agro(request):
     except Exception:
         contexto['operabilidad'] = evaluar_operabilidad('agro', {})
 
-    return render(request, 'agro.html', contexto)
+    return _render_sector_pro(request, 'agro', contexto, funcion)
 
 
 # ============================================================
@@ -1539,7 +1734,7 @@ def estadisticas_agro(request):
 # ==========================================
 # 2. VISTA: MODO NAVAL (Náutica / Mar)
 # ==========================================
-def naval(request):
+def naval(request, funcion='hub'):
 
     # 1. SEGURIDAD Y SUSCRIPCIÓN
     if not request.user.is_authenticated:
@@ -1584,7 +1779,10 @@ def naval(request):
         f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
         "&current=temperature_2m,relative_humidity_2m,apparent_temperature,pressure_msl,"
         "wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility,is_day"
-        "&hourly=wind_speed_10m"
+        "&hourly=wind_speed_10m,wind_direction_10m,"
+        "wind_speed_950hPa,wind_direction_950hPa,"
+        "wind_speed_850hPa,wind_direction_850hPa,temperature_850hPa,"
+        "wind_speed_700hPa,wind_direction_700hPa,temperature_700hPa,cape"
         "&daily=sunrise,sunset,daylight_duration,wind_speed_10m_max,wind_gusts_10m_max"
         "&timezone=auto"
     )
@@ -1816,6 +2014,35 @@ def naval(request):
             'tira_24h': tira_24h_naval,
         }
         contexto['alerta_banner'] = alerta_banner
+        try:
+            def _gs(arr, i, default=0):
+                val = arr[i] if arr and i < len(arr) else default
+                return val if val is not None else default
+            contexto['ondas_avanzada'] = resumen_ondas_naval({
+                'hs': wave_h,
+                'periodo': curr_m.get('wave_period', 0),
+                'swell_h': swell_h,
+                'swell_periodo': curr_m.get('swell_wave_period', 0),
+                'swell_dir': curr_m.get('swell_wave_direction', 0),
+                'serie_hs': graf_olas,
+                'umbral_hs': 1.5,
+                'wind_unit': 'kmh',
+                'wind_10': curr_w.get('wind_speed_10m', 0),
+                'dir_10': curr_w.get('wind_direction_10m', 0),
+                'wind_950': _gs(hourly_w.get('wind_speed_950hPa', []), idx),
+                'dir_950': _gs(hourly_w.get('wind_direction_950hPa', []), idx),
+                'wind_850': _gs(hourly_w.get('wind_speed_850hPa', []), idx),
+                'dir_850': _gs(hourly_w.get('wind_direction_850hPa', []), idx),
+                'wind_700': _gs(hourly_w.get('wind_speed_700hPa', []), idx),
+                'dir_700': _gs(hourly_w.get('wind_direction_700hPa', []), idx),
+                'lat': lat,
+                'temp_aire': temp_aire,
+                'temp_agua': temp_agua_est,
+                'temp_sfc': temp_aire,
+            })
+        except Exception as _e_ond:
+            print(f"⚠️ Ondas naval: {_e_ond}")
+            contexto['ondas_avanzada'] = None
 
         # --- MODALES INTERACTIVOS: evaluar alertas configuradas por el usuario ---
         try:
@@ -1852,11 +2079,8 @@ def naval(request):
             'alertas_disparadas': {},
         }
 
-    # Permisos de plan
-    _perfil = getattr(request.user, 'perfil', None)
-    contexto['plan_nivel'] = _perfil.plan_nivel if _perfil else 'free'
-    contexto['puede_excel'] = _perfil.puede_excel if _perfil else False
-    contexto['puede_devorador'] = _perfil.puede_devorador if _perfil else False
+    # Permisos de plan + climatología
+    _attach_plan_flags(contexto, request, sector='naval', lat=contexto.get('lat', lat), lon=contexto.get('lon', lon), funcion=funcion)
 
     # Semáforo operativo
     try:
@@ -1871,7 +2095,7 @@ def naval(request):
     except Exception:
         contexto['operabilidad'] = evaluar_operabilidad('naval', {})
 
-    return render(request, 'naval.html', contexto)
+    return _render_sector_pro(request, 'naval', contexto, funcion)
 
 
 # ============================================================
@@ -2007,7 +2231,7 @@ def estadisticas_naval(request):
 
 # ==========================================
 # 3. VISTA: MODO AÉREO (Aviación / Pilotos)
-def aereo(request):
+def aereo(request, funcion='hub'):
     # 1. SEGURIDAD
     if not request.user.is_authenticated:
         return redirect('login')
@@ -2196,6 +2420,36 @@ def aereo(request):
             ],
         }
         contexto['alerta_banner'] = alerta_banner
+        try:
+            elev = float(data.get('elevation') or 0)
+        except (TypeError, ValueError):
+            elev = 0.0
+        try:
+            contexto['ondas_avanzada'] = resumen_ondas_aereo({
+                'viento_kt': wind_k,
+                'rafagas_kt': gusts,
+                'shear_kt': gusts - wind_k,
+                'cape': max_cape,
+                'li': min_li,
+                'viento_altura_kt': tabla_vientos[2]['kt'] if len(tabla_vientos) > 2 else 0,
+                'wind_unit': 'kmh',
+                'wind_10': wind_k,
+                'dir_10': curr.get('wind_direction_10m', 0),
+                'wind_950': w_2000,
+                'dir_950': get_safe(hourly.get('wind_direction_950hPa', []), idx),
+                'wind_850': w_5000,
+                'dir_850': get_safe(hourly.get('wind_direction_850hPa', []), idx),
+                'wind_700': w_10000,
+                'dir_700': get_safe(hourly.get('wind_direction_700hPa', []), idx),
+                'temp_sfc': temp,
+                'temp_850': get_safe(hourly.get('temperature_850hPa', []), idx, temp - 8),
+                'temp_700': get_safe(hourly.get('temperature_700hPa', []), idx, temp - 18),
+                'elevacion_m': elev,
+                'lat': lat,
+            })
+        except Exception as _e_ond:
+            print(f"⚠️ Ondas aereo: {_e_ond}")
+            contexto['ondas_avanzada'] = None
 
         # --- MODALES INTERACTIVOS: evaluar alertas configuradas por el usuario ---
         try:
@@ -2224,11 +2478,8 @@ def aereo(request):
         # En caso de fallo, mostramos esto para debug
         contexto = {'error': 'Error de Datos', 'alertas_disparadas': {}}
 
-    # Permisos de plan
-    _perfil = getattr(request.user, 'perfil', None)
-    contexto['plan_nivel'] = _perfil.plan_nivel if _perfil else 'free'
-    contexto['puede_excel'] = _perfil.puede_excel if _perfil else False
-    contexto['puede_devorador'] = _perfil.puede_devorador if _perfil else False
+    # Permisos de plan + climatología
+    _attach_plan_flags(contexto, request, sector='aereo', lat=contexto.get('lat', lat), lon=contexto.get('lon', lon), funcion=funcion)
 
     # Semáforo operativo
     try:
@@ -2250,7 +2501,7 @@ def aereo(request):
     except Exception:
         contexto['operabilidad'] = evaluar_operabilidad('aereo', {})
 
-    return render(request, 'aereo.html', contexto)
+    return _render_sector_pro(request, 'aereo', contexto, funcion)
 
 
 # ============================================================
@@ -2372,7 +2623,7 @@ def estadisticas_aereo(request):
 
 
 # --- VISTA ENERGÍA (ENERGY OPS) ---
-def energia(request):
+def energia(request, funcion='hub'):
 
     # 1. SEGURIDAD
     if not request.user.is_authenticated:
@@ -2407,7 +2658,7 @@ def energia(request):
     url = (
         f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
         "&current=shortwave_radiation,direct_radiation,diffuse_radiation,wind_speed_10m,temperature_2m,weather_code,pressure_msl,relative_humidity_2m"
-        "&hourly=shortwave_radiation,wind_speed_10m,temperature_2m,pressure_msl"
+        "&hourly=shortwave_radiation,direct_radiation,diffuse_radiation,wind_speed_10m,temperature_2m,pressure_msl"
         "&timezone=auto"
     )
 
@@ -2560,6 +2811,16 @@ def energia(request):
             ],
         }
         contexto['alerta_banner'] = alerta_banner
+        try:
+            contexto['radiacion_avanzada'] = resumen_radiacion(
+                curr, hourly, idx, lat=lat, umbral_util=150.0,
+                area_m2=20.0, eficiencia=0.18, loss_factor=loss_factor,
+                temp_aire=curr.get('temperature_2m'),
+                humedad_rel=curr.get('relative_humidity_2m'),
+            )
+        except Exception as _e_rad:
+            print(f"⚠️ Radiación avanzada (energia): {_e_rad}")
+            contexto['radiacion_avanzada'] = None
 
         # --- MODALES INTERACTIVOS: evaluar alertas configuradas por el usuario ---
         try:
@@ -2587,11 +2848,9 @@ def energia(request):
         print(f"Error Energia: {e}")
         contexto = {'error': 'Sin datos', 'alertas_disparadas': {}}
 
-    # Permisos de plan
-    _perfil = getattr(request.user, 'perfil', None)
-    contexto['plan_nivel'] = _perfil.plan_nivel if _perfil else 'free'
-    contexto['puede_excel'] = _perfil.puede_excel if _perfil else False
-    contexto['puede_devorador'] = _perfil.puede_devorador if _perfil else False
+    # Permisos de plan + climatología
+    _attach_plan_flags(contexto, request, sector='energia', lat=contexto.get('lat', lat), lon=contexto.get('lon', lon), funcion=funcion)
+    contexto['sector_radiacion'] = 'energia'
 
     # Semáforo operativo
     try:
@@ -2624,7 +2883,7 @@ def energia(request):
     except Exception:
         contexto['operabilidad'] = evaluar_operabilidad('energia', {})
 
-    return render(request, 'energia.html', contexto)
+    return _render_sector_pro(request, 'energia', contexto, funcion)
 
 
 # ============================================================

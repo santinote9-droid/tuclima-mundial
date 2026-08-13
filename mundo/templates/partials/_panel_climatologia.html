@@ -1,0 +1,234 @@
+{# Panel Climatología / anomalías — Pro IA+ (todos los modos PRO) #}
+<div id="pro-climatologia">
+{% if puede_climatologia and climatologia %}
+<div class="tc-clima-panel" style="background:linear-gradient(135deg,#0f172a,#1e1b4b);border:1px solid rgba(167,139,250,0.3);border-radius:16px;padding:16px 18px;margin-bottom:14px;font-family:'Segoe UI',system-ui,sans-serif;">
+  <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px;">
+    <div>
+      <div style="font-size:0.66rem;letter-spacing:0.12em;color:#7c3aed;font-weight:700;text-transform:uppercase;">Climatología · Anomalías</div>
+      <div style="font-size:0.82rem;color:#cbd5e1;margin-top:2px;">
+        {% if climatologia.ok %}Últimos {{ climatologia.dias }} días ({{ climatologia.desde }} → {{ climatologia.hasta }}){% else %}Histórico no disponible{% endif %}
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+      {% if enso and enso.ok %}
+      <span title="{{ enso.nota|default:'ONI NOAA/CPC' }} · {{ enso.periodo|default:'' }}"
+            style="font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid {{ enso.color }}66;color:{{ enso.color }};background:{{ enso.color }}18;">
+        ENSO · {{ enso.label }}{% if enso.oni != None %} ({{ enso.oni }}){% endif %}
+      </span>
+      {% endif %}
+      <span style="font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid {{ climatologia.color }}66;color:{{ climatologia.color }};background:{{ climatologia.color }}18;">{{ climatologia.label }}{% if climatologia.ok and climatologia.z is not None %} · z={{ climatologia.z }}{% endif %}</span>
+    </div>
+  </div>
+
+  {% if climatologia.ok %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;">
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">{{ climatologia.primary_label }} (ayer)</div>
+      <div style="font-size:1.2rem;font-weight:800;color:#e2e8f0;font-family:ui-monospace,monospace;">{{ climatologia.hoy }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">{{ climatologia.unidad }}</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">Media período</div>
+      <div style="font-size:1.2rem;font-weight:800;color:#a78bfa;font-family:ui-monospace,monospace;">{{ climatologia.media }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">n={{ climatologia.n }}</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">Anomalía</div>
+      <div style="font-size:1.2rem;font-weight:800;color:{{ climatologia.color }};font-family:ui-monospace,monospace;">{% if climatologia.anomalia > 0 %}+{% endif %}{{ climatologia.anomalia }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">σ={{ climatologia.desvio }}</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">P10 / P50 / P90</div>
+      <div style="font-size:0.95rem;font-weight:800;color:#cbd5e1;font-family:ui-monospace,monospace;margin-top:4px;">{{ climatologia.p10 }} · {{ climatologia.p50 }} · {{ climatologia.p90 }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">{{ climatologia.unidad }}</div>
+    </div>
+    {% if climatologia.secondary_hoy is not None %}
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">{{ climatologia.secondary_label }}</div>
+      <div style="font-size:1.2rem;font-weight:800;color:#67e8f9;font-family:ui-monospace,monospace;">{{ climatologia.secondary_hoy }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">media {{ climatologia.secondary_media }} {{ climatologia.secondary_unidad }}</div>
+    </div>
+    {% endif %}
+  </div>
+  {% if climatologia.nota %}<p style="margin:10px 0 0;font-size:0.7rem;color:#64748b;">{{ climatologia.nota }}</p>{% endif %}
+  {% else %}
+  <p style="margin:0;font-size:0.82rem;color:#94a3b8;">{{ climatologia.error|default:"No se pudo obtener el archivo climático." }}</p>
+  {% endif %}
+
+  {# —— Índices de sequía SPI / SPEI —— #}
+  {% if sequia and sequia.ok %}
+  <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(51,65,85,0.85);">
+    <div style="font-size:0.66rem;letter-spacing:0.1em;color:#64748b;font-weight:700;text-transform:uppercase;margin-bottom:10px;">Índice de sequía · {{ sequia.anios_base }} años</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;">
+      <div style="background:rgba(15,23,42,0.7);border:1px solid {{ sequia.spi3.color }}44;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">SPI-3</div>
+        <div style="font-size:1.35rem;font-weight:800;color:{{ sequia.spi3.color }};font-family:ui-monospace,monospace;">{% if sequia.spi3.valor != None %}{{ sequia.spi3.valor }}{% else %}—{% endif %}</div>
+        <div style="font-size:0.68rem;color:{{ sequia.spi3.color }};">{{ sequia.spi3.label }}</div>
+      </div>
+      <div style="background:rgba(15,23,42,0.7);border:1px solid {{ sequia.spi6.color }}44;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">SPI-6</div>
+        <div style="font-size:1.35rem;font-weight:800;color:{{ sequia.spi6.color }};font-family:ui-monospace,monospace;">{% if sequia.spi6.valor != None %}{{ sequia.spi6.valor }}{% else %}—{% endif %}</div>
+        <div style="font-size:0.68rem;color:{{ sequia.spi6.color }};">{{ sequia.spi6.label }}</div>
+      </div>
+      {% if sequia.spei3 %}
+      <div style="background:rgba(15,23,42,0.7);border:1px solid {{ sequia.spei3.color }}44;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">SPEI-3</div>
+        <div style="font-size:1.35rem;font-weight:800;color:{{ sequia.spei3.color }};font-family:ui-monospace,monospace;">{% if sequia.spei3.valor != None %}{{ sequia.spei3.valor }}{% else %}—{% endif %}</div>
+        <div style="font-size:0.68rem;color:{{ sequia.spei3.color }};">{{ sequia.spei3.label }}</div>
+      </div>
+      {% endif %}
+      {% if sequia.spei6 %}
+      <div style="background:rgba(15,23,42,0.7);border:1px solid {{ sequia.spei6.color }}44;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">SPEI-6</div>
+        <div style="font-size:1.35rem;font-weight:800;color:{{ sequia.spei6.color }};font-family:ui-monospace,monospace;">{% if sequia.spei6.valor != None %}{{ sequia.spei6.valor }}{% else %}—{% endif %}</div>
+        <div style="font-size:0.68rem;color:{{ sequia.spei6.color }};">{{ sequia.spei6.label }}</div>
+      </div>
+      {% endif %}
+    </div>
+    <p style="margin:8px 0 0;font-size:0.68rem;color:#64748b;line-height:1.4;">{{ sequia.nota }}</p>
+  </div>
+  {% elif sequia and not sequia.ok %}
+  <p style="margin:12px 0 0;font-size:0.75rem;color:#64748b;">Índices de sequía: {{ sequia.error|default:"no disponibles" }}</p>
+  {% endif %}
+
+  {# —— Climograma histórico —— #}
+  {% if climograma and climograma.ok %}
+  <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(51,65,85,0.85);">
+    <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px;">
+      <div>
+        <div style="font-size:0.66rem;letter-spacing:0.1em;color:#64748b;font-weight:700;text-transform:uppercase;">{{ climograma.titulo }}</div>
+        <div style="font-size:0.75rem;color:#94a3b8;margin-top:2px;">{{ climograma.nota }}</div>
+      </div>
+      {% if climograma.destacar %}
+      <span style="font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid #fbbf2466;color:#fbbf24;background:rgba(251,191,36,0.12);">
+        Anomalía seca · ΔP acumulada {{ climograma.anomalia_precip_acum }} mm
+      </span>
+      {% elif climograma.anomalia_precip_acum != None %}
+      <span style="font-size:0.72rem;color:#94a3b8;">ΔP año {{ climograma.anomalia_precip_acum }} mm · {{ climograma.meses_secos }} meses secos</span>
+      {% endif %}
+    </div>
+    <div style="position:relative;height:220px;width:100%;">
+      <canvas id="tc-climograma-chart"></canvas>
+    </div>
+  </div>
+  {{ climograma.labels|json_script:"tc-cg-labels" }}
+  {{ climograma.precip_clim|json_script:"tc-cg-pc" }}
+  {{ climograma.precip_act|json_script:"tc-cg-pa" }}
+  {{ climograma.temp_clim|json_script:"tc-cg-tc" }}
+  {{ climograma.temp_act|json_script:"tc-cg-ta" }}
+  <script>
+  (function () {
+    if (typeof Chart === 'undefined') return;
+    var el = document.getElementById('tc-climograma-chart');
+    if (!el || el.dataset.ready) return;
+    function read(id) {
+      var n = document.getElementById(id);
+      if (!n) return [];
+      try { return JSON.parse(n.textContent); } catch (e) { return []; }
+    }
+    var labels = read('tc-cg-labels');
+    var precipClim = read('tc-cg-pc');
+    var precipAct = read('tc-cg-pa');
+    var tempClim = read('tc-cg-tc');
+    var tempAct = read('tc-cg-ta');
+    el.dataset.ready = '1';
+    new Chart(el, {
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            type: 'bar',
+            label: 'Precip. clim. (mm)',
+            data: precipClim,
+            backgroundColor: 'rgba(100,116,139,0.45)',
+            borderColor: 'rgba(148,163,184,0.5)',
+            borderWidth: 1,
+            borderRadius: 3,
+            yAxisID: 'yP',
+            order: 2
+          },
+          {
+            type: 'bar',
+            label: 'Precip. {{ climograma.anio }} (mm)',
+            data: precipAct,
+            backgroundColor: 'rgba(56,189,248,0.65)',
+            borderColor: 'rgba(56,189,248,0.9)',
+            borderWidth: 1,
+            borderRadius: 3,
+            yAxisID: 'yP',
+            order: 2
+          },
+          {
+            type: 'line',
+            label: 'T clim. (°C)',
+            data: tempClim,
+            borderColor: '#fbbf24',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            pointRadius: 2,
+            tension: 0.25,
+            yAxisID: 'yT',
+            order: 1
+          },
+          {
+            type: 'line',
+            label: 'T {{ climograma.anio }} (°C)',
+            data: tempAct,
+            borderColor: '#f97316',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [5, 4],
+            pointRadius: 2,
+            tension: 0.25,
+            yAxisID: 'yT',
+            order: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 12, padding: 10 } },
+          tooltip: {
+            backgroundColor: 'rgba(15,23,42,0.92)',
+            titleColor: '#e2e8f0',
+            bodyColor: '#94a3b8',
+            borderColor: 'rgba(167,139,250,0.35)',
+            borderWidth: 1
+          }
+        },
+        scales: {
+          x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(51,65,85,0.35)' } },
+          yP: {
+            position: 'left',
+            title: { display: true, text: 'mm', color: '#64748b', font: { size: 10 } },
+            ticks: { color: '#38bdf8', font: { size: 9 } },
+            grid: { color: 'rgba(51,65,85,0.25)' }
+          },
+          yT: {
+            position: 'right',
+            title: { display: true, text: '°C', color: '#64748b', font: { size: 10 } },
+            ticks: { color: '#fbbf24', font: { size: 9 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  })();
+  </script>
+  {% elif climograma and not climograma.ok %}
+  <p style="margin:12px 0 0;font-size:0.75rem;color:#64748b;">Climograma: {{ climograma.error|default:"no disponible" }}</p>
+  {% endif %}
+</div>
+{% elif not puede_climatologia %}
+<div style="background:rgba(15,23,42,0.85);border:1px dashed rgba(167,139,250,0.4);border-radius:16px;padding:14px 16px;margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;font-family:'Segoe UI',system-ui,sans-serif;">
+  <div>
+    <div style="font-size:0.66rem;letter-spacing:0.1em;color:#7c3aed;font-weight:700;text-transform:uppercase;">Climatología</div>
+    <div style="font-size:0.85rem;color:#cbd5e1;margin-top:4px;">ENSO, SPI/SPEI, climograma 30 años y anomalías — desde <strong style="color:#a78bfa;">Pro IA</strong></div>
+  </div>
+  <a href="/pricing/" style="display:inline-flex;align-items:center;background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.4);color:#a78bfa;padding:10px 14px;border-radius:10px;text-decoration:none;font-size:0.82rem;font-weight:700;min-height:40px;">Ver planes →</a>
+</div>
+{% endif %}
+</div>

@@ -106,6 +106,21 @@ class PerfilUsuario(models.Model):
         return self.plan_nivel in ('plus', 'pro_ia', 'power')
 
     @property
+    def puede_radiacion(self):
+        """Plus+: panel avanzado de radiación / balance energético (Agro + Energía)."""
+        return self.plan_nivel in ('plus', 'pro_ia', 'power')
+
+    @property
+    def puede_ondas(self):
+        """Plus+: panel avanzado de ondas / dinámica (Naval + Aéreo)."""
+        return self.plan_nivel in ('plus', 'pro_ia', 'power')
+
+    @property
+    def puede_climatologia(self):
+        """Pro IA+: panel de climatología / anomalías históricas en modos PRO."""
+        return self.plan_nivel in ('pro_ia', 'power')
+
+    @property
     def puede_devorador(self):
         """Plus+ pueden subir archivos y usar el Devorador de Reportes."""
         return self.plan_nivel in ('plus', 'pro_ia', 'power')

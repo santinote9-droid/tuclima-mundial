@@ -1,0 +1,489 @@
+<div id="pro-estadistica" class="stats-aereo" style="background:linear-gradient(135deg,#0f172a,#111827); border:1px solid rgba(34,211,238,0.35); border-radius:16px; margin-top:12px; overflow:hidden;">
+    <div style="padding:16px 20px 12px; border-bottom:1px solid rgba(34,211,238,0.2); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; align-items:center; gap:9px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-6 4 4 5-8"/></svg>
+        <span style="color:#67e8f9; font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; font-family:'Segoe UI',system-ui,sans-serif;">Estadística Climática</span>
+        <span style="background:rgba(34,211,238,0.12); color:#67e8f9; font-size:0.62rem; font-weight:700; padding:2px 8px; border-radius:20px; letter-spacing:0.05em;">TIEMPO REAL · API</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <select id="stats-aereo-variable" style="background:#0f172a; border:1px solid #164e63; border-radius:8px; color:#e2e8f0; padding:6px 10px; font-size:0.76rem; font-family:inherit;">
+          <option value="temperatura">Temperatura (°C)</option>
+          <option value="viento">Viento Superficie (kt)</option>
+          <option value="rafagas">Ráfagas (kt)</option>
+          <option value="nubosidad">Nubosidad (%)</option>
+          <option value="cape">CAPE — Inestabilidad (J/kg)</option>
+        </select>
+        <button onclick="statsAereoCargar()" id="stats-aereo-btn" style="display:inline-flex; align-items:center; gap:6px; background:rgba(34,211,238,0.12); border:1px solid rgba(34,211,238,0.4); color:#67e8f9; padding:6px 14px; border-radius:8px; cursor:pointer; font-size:0.76rem; font-weight:700; font-family:inherit;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Actualizar
+        </button>
+      </div>
+    </div>
+
+    <div class="tc-stats-tabs">
+      <button class="stats-aereo-tab" data-tab="boxplot" onclick="statsAereoTab('boxplot')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid rgba(34,211,238,0.35); border-bottom:none; background:rgba(34,211,238,0.14); color:#67e8f9; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Boxplot por Día</button>
+      <button class="stats-aereo-tab" data-tab="frecuencias" onclick="statsAereoTab('frecuencias')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Frecuencias Relativas</button>
+      <button class="stats-aereo-tab" data-tab="poisson" onclick="statsAereoTab('poisson')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Distribución Poisson</button>
+      <button class="stats-aereo-tab" data-tab="hipotesis" onclick="statsAereoTab('hipotesis')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Test de Hipótesis</button>
+      <button class="stats-aereo-tab" data-tab="weibull" onclick="statsAereoTab('weibull')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Weibull (Viento)</button>
+      <button class="stats-aereo-tab" data-tab="percentiles" onclick="statsAereoTab('percentiles')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Percentiles de Riesgo</button>
+      <button class="stats-aereo-tab" data-tab="historico" onclick="statsAereoTab('historico')" style="white-space:nowrap; padding:7px 14px; border-radius:20px 20px 0 0; border:1px solid #1e293b; border-bottom:none; background:transparent; color:#64748b; cursor:pointer; font-size:0.74rem; font-weight:700; font-family:inherit;">Histórico Real</button>
+    </div>
+
+    <div style="padding:16px 20px 20px; border-top:1px solid rgba(34,211,238,0.15);">
+      <div id="stats-aereo-loading" style="display:none; color:#67e8f9; font-size:0.78rem; text-align:center; padding:30px 0;">Calculando estadísticas sobre el pronóstico horario…</div>
+      <div id="stats-aereo-error" style="display:none; color:#f87171; font-size:0.78rem; text-align:center; padding:30px 0;"></div>
+
+      <div id="stats-aereo-pane-boxplot" class="stats-aereo-pane">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 10px; line-height:1.5;">Distribución horaria de la variable elegida para cada uno de los próximos días del pronóstico. La caja muestra el rango intercuartílico (Q1–Q3), la línea central la mediana, y los puntos los valores atípicos (outliers).</p>
+        <div style="position:relative; height:260px;"><canvas id="stats-aereo-chart-boxplot"></canvas></div>
+      </div>
+
+      <div id="stats-aereo-pane-frecuencias" class="stats-aereo-pane" style="display:none;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 10px; line-height:1.5;">Frecuencia relativa (%) de todas las horas del pronóstico agrupadas en intervalos. Muestra qué tan probable es cada rango de valores en los próximos días.</p>
+        <div style="position:relative; height:260px;"><canvas id="stats-aereo-chart-frecuencias"></canvas></div>
+      </div>
+
+      <div id="stats-aereo-pane-poisson" class="stats-aereo-pane" style="display:none;">
+        <p id="stats-aereo-poisson-desc" style="font-size:0.72rem; color:#94a3b8; margin:0 0 10px; line-height:1.5;"></p>
+        <div style="position:relative; height:260px;"><canvas id="stats-aereo-chart-poisson"></canvas></div>
+      </div>
+
+      <div id="stats-aereo-pane-hipotesis" class="stats-aereo-pane" style="display:none;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 12px; line-height:1.5;">Test de bondad de ajuste Chi-cuadrado (χ²): ¿el conteo diario de horas de riesgo aeronáutico es compatible con un proceso de Poisson?</p>
+        <div id="stats-aereo-hip-resultado"></div>
+      </div>
+
+      <div id="stats-aereo-pane-weibull" class="stats-aereo-pane" style="display:none;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 10px; line-height:1.5;">La distribución de <strong>Weibull</strong> es el modelo estándar para caracterizar el viento: describe la probabilidad de cada velocidad a partir de dos parámetros, <em>k</em> (forma, dispersión) y <em>c</em> (escala, ligado al viento medio). Solo se calcula para la variable Viento.</p>
+        <div id="stats-aereo-weibull-na" style="display:none; color:#94a3b8; font-size:0.78rem; text-align:center; padding:20px 14px; background:rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.2); border-radius:10px;">Seleccioná la variable <strong>Viento</strong> arriba para ver el ajuste de Weibull.</div>
+        <div id="stats-aereo-weibull-contenido" style="display:none;">
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+            <div style="flex:1; min-width:110px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"><div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:4px;">k (forma)</div><div id="stats-aereo-weibull-k" style="font-size:1.2rem; font-weight:800; color:#e2e8f0;">—</div></div>
+            <div style="flex:1; min-width:110px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"><div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:4px;">c (escala)</div><div id="stats-aereo-weibull-c" style="font-size:1.2rem; font-weight:800; color:#e2e8f0;">—</div></div>
+            <div style="flex:1; min-width:150px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"><div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:4px;">Densidad de potencia</div><div id="stats-aereo-weibull-pot" style="font-size:1.2rem; font-weight:800; color:#fbbf24;">—</div></div>
+          </div>
+          <div style="position:relative; height:260px;"><canvas id="stats-aereo-chart-weibull"></canvas></div>
+        </div>
+      </div>
+
+      <div id="stats-aereo-pane-percentiles" class="stats-aereo-pane" style="display:none;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 12px; line-height:1.5;">Percentiles de la muestra: el <strong>P95</strong>, por ejemplo, es el valor que solo se supera el 5% del tiempo en los próximos 14 días — útil como umbral de riesgo operativo.</p>
+        <div id="stats-aereo-percentiles-cards" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+      </div>
+
+      <div id="stats-aereo-pane-historico" class="stats-aereo-pane" style="display:none;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 12px; line-height:1.5;">Comparación en tiempo real: el valor de ahora vs. el promedio real de días anteriores a esta misma hora, calculado sobre snapshots guardados automáticamente cada hora (n8n + BigQuery).</p>
+        <div id="stats-aereo-historico-loading" style="color:#67e8f9; font-size:0.78rem; text-align:center; padding:20px 0;">Consultando histórico…</div>
+        <div id="stats-aereo-historico-empty" style="display:none; color:#94a3b8; font-size:0.78rem; text-align:center; padding:20px 14px; background:rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.2); border-radius:10px;">Todavía no hay suficiente histórico acumulado para esta variable y ubicación. Los snapshots se guardan automáticamente cada hora — volvé a revisar en unos días.</div>
+        <div id="stats-aereo-historico-contenido" style="display:none;">
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+            <div id="stats-aereo-hist-hoy" style="flex:1; min-width:140px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"></div>
+            <div id="stats-aereo-hist-prom" style="flex:1; min-width:140px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"></div>
+            <div id="stats-aereo-hist-diff" style="flex:1; min-width:140px; background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:10px 14px;"></div>
+          </div>
+          <div style="position:relative; height:220px;"><canvas id="stats-aereo-chart-historico"></canvas></div>
+          <div style="margin-top:8px; font-size:0.65rem; color:#64748b; text-align:center;">Bandas: línea amarilla punteada = media histórica · banda naranja = ±2σ · banda roja = ±3σ (carta de control)</div>
+
+          <div id="stats-aereo-control-box" style="display:none; margin-top:16px;"></div>
+          <div id="stats-aereo-testt-box" style="margin-top:14px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+  {% load l10n %}{% localize off %}
+  (function(){
+    var STATS_LAT = {{ lat|default:"-34.60" }};
+    var STATS_LON = {{ lon|default:"-58.38" }};
+
+    var statsAereoCharts = {};
+    var tcBoxplotRegistrado = false;
+
+    window.statsAereoTab = function(tab) {
+      document.querySelectorAll('.stats-aereo-tab').forEach(function(btn){
+        var active = btn.getAttribute('data-tab') === tab;
+        btn.style.background = active ? 'rgba(34,211,238,0.14)' : 'transparent';
+        btn.style.color = active ? '#67e8f9' : '#64748b';
+        btn.style.borderColor = active ? 'rgba(34,211,238,0.35)' : '#1e293b';
+      });
+      document.querySelectorAll('.stats-aereo-pane').forEach(function(pane){ pane.style.display = 'none'; });
+      var target = document.getElementById('stats-aereo-pane-' + tab);
+      if (target) target.style.display = 'block';
+    };
+
+    function statsAereoDestroy(id) {
+      if (statsAereoCharts[id]) { statsAereoCharts[id].destroy(); delete statsAereoCharts[id]; }
+    }
+
+    function statsAereoRenderBoxplot(data) {
+      var canvas = document.getElementById('stats-aereo-chart-boxplot');
+      if (!canvas || !data.boxplot || !data.boxplot.length) return;
+      tcCargarBoxplotPlugin().then(function(){
+        if (!tcBoxplotRegistrado) {
+          Chart.register(ChartBoxPlot.BoxPlotController, ChartBoxPlot.BoxAndWiskers);
+          tcBoxplotRegistrado = true;
+        }
+        statsAereoDestroy('boxplot');
+        var labels = data.boxplot.map(function(g){ return g.label; });
+        var puntos = data.boxplot.map(function(g){
+          return { min: g.min, q1: g.q1, median: g.mediana, q3: g.q3, max: g.max, outliers: g.outliers || [] };
+        });
+        statsAereoCharts['boxplot'] = new Chart(canvas.getContext('2d'), {
+          type: 'boxplot',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: data.variable.label,
+              data: puntos,
+              backgroundColor: 'rgba(34,211,238,0.18)',
+              borderColor: '#22d3ee',
+              borderWidth: 1.5,
+              outlierColor: '#f87171',
+              itemRadius: 3
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              title: { display: true, text: data.variable.label + ' — variabilidad diaria del pronóstico', color: '#e2e8f0', font: { size: 13 } }
+            },
+            scales: {
+              y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+              x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
+            }
+          }
+        });
+      }).catch(function(err){ console.error('No se pudo cargar el módulo de boxplot:', err); });
+    }
+
+    function statsAereoRenderFrecuencias(data) {
+      var canvas = document.getElementById('stats-aereo-chart-frecuencias');
+      if (!canvas || !data.frecuencias || !data.frecuencias.length) return;
+      statsAereoDestroy('frecuencias');
+      var labels = data.frecuencias.map(function(b){ return b.rango; });
+      var valores = data.frecuencias.map(function(b){ return b.frecuencia_relativa; });
+      statsAereoCharts['frecuencias'] = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Frecuencia relativa (%)',
+            data: valores,
+            backgroundColor: 'rgba(34,211,238,0.5)',
+            borderColor: '#22d3ee',
+            borderWidth: 1,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Frecuencia relativa — ' + data.variable.label, color: '#e2e8f0', font: { size: 13 } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#94a3b8', callback: function(v){ return v + '%'; } }, grid: { color: '#1e293b' } },
+            x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function statsAereoRenderPoisson(data) {
+      var descEl = document.getElementById('stats-aereo-poisson-desc');
+      var canvas = document.getElementById('stats-aereo-chart-poisson');
+      if (!data.poisson) {
+        if (descEl) descEl.innerText = 'No hay suficientes datos para ajustar una distribución de Poisson.';
+        return;
+      }
+      if (descEl) {
+        descEl.innerHTML = data.poisson_evento_desc + ' &nbsp;·&nbsp; λ (promedio de eventos/día) = <strong style="color:#67e8f9;">' + data.poisson.lambda + '</strong>';
+      }
+      if (!canvas) return;
+      statsAereoDestroy('poisson');
+      var labels = data.poisson.k.map(function(k){ return k + ' evento(s)'; });
+      statsAereoCharts['poisson'] = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Observado (bloques 6h)', data: data.poisson.observado, backgroundColor: 'rgba(34,211,238,0.55)', borderRadius: 4 },
+            { label: 'Teórico Poisson (λ=' + data.poisson.lambda + ')', data: data.poisson.teorico, backgroundColor: 'rgba(250,204,21,0.55)', borderRadius: 4 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#94a3b8' } },
+            title: { display: true, text: 'Bloques de 6h observados vs. Poisson teórico', color: '#e2e8f0', font: { size: 13 } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: '#1e293b' } },
+            x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function statsAereoRenderHipotesis(data) {
+      var el = document.getElementById('stats-aereo-hip-resultado');
+      if (!el) return;
+      var t = data.test_hipotesis;
+      if (!t) {
+        var motivo = data.test_hipotesis_motivo || 'No hay suficientes categorías para calcular el test con este período de datos.';
+        el.innerHTML = '<div style="color:#94a3b8; font-size:0.8rem; line-height:1.5; background:rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.2); border-radius:10px; padding:14px 16px;">' + motivo + '</div>';
+        return;
+      }
+      var col = t.rechaza_h0 ? '#f87171' : '#4ade80';
+      var bg = t.rechaza_h0 ? 'rgba(239,68,68,0.08)' : 'rgba(74,222,128,0.08)';
+      var iconoVeredicto = t.rechaza_h0
+        ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" style="vertical-align:-2px; margin-right:5px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+        : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:5px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+      el.innerHTML =
+        '<div style="background:' + bg + '; border:1px solid ' + col + '33; border-radius:10px; padding:16px 18px;">' +
+          '<div style="font-size:0.68rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">H0</div>' +
+          '<div style="font-size:0.82rem; color:#e2e8f0; margin-bottom:10px;">' + t.h0 + '</div>' +
+          '<div style="font-size:0.68rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">H1</div>' +
+          '<div style="font-size:0.82rem; color:#e2e8f0; margin-bottom:14px;">' + t.h1 + '</div>' +
+          '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;">' +
+            '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">χ² = <strong style="color:#e2e8f0;">' + t.estadistico + '</strong></span>' +
+            '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">gl = <strong style="color:#e2e8f0;">' + t.grados_libertad + '</strong></span>' +
+            '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">p-valor = <strong style="color:#e2e8f0;">' + t.p_valor + '</strong></span>' +
+            '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">α = <strong style="color:#e2e8f0;">' + t.alfa + '</strong></span>' +
+          '</div>' +
+          '<div style="font-size:0.82rem; font-weight:700; color:' + col + '; display:flex; align-items:center;">' + iconoVeredicto + (t.rechaza_h0 ? 'SE RECHAZA H0' : 'NO SE RECHAZA H0') + '</div>' +
+          '<div style="font-size:0.78rem; color:#cbd5e1; margin-top:6px; line-height:1.5;">' + t.conclusion + '</div>' +
+        '</div>';
+    }
+
+    function statsAereoRenderWeibull(data) {
+      var na = document.getElementById('stats-aereo-weibull-na');
+      var cont = document.getElementById('stats-aereo-weibull-contenido');
+      var canvas = document.getElementById('stats-aereo-chart-weibull');
+      if (!na || !cont) return;
+      if (data.variable.key !== 'viento' || !data.weibull) {
+        na.style.display = 'block';
+        na.innerText = data.variable.key !== 'viento'
+          ? 'Seleccioná la variable Viento arriba para ver el ajuste de Weibull.'
+          : 'No hay suficientes datos de viento en este pronóstico para ajustar una distribución de Weibull (mínimo 10 valores).';
+        cont.style.display = 'none';
+        return;
+      }
+      na.style.display = 'none';
+      cont.style.display = 'block';
+      var w = data.weibull;
+      document.getElementById('stats-aereo-weibull-k').innerText = w.k_forma;
+      document.getElementById('stats-aereo-weibull-c').innerText = w.c_escala + ' ' + (data.variable.unidad || '');
+      document.getElementById('stats-aereo-weibull-pot').innerText = w.densidad_potencia_wm2 + ' W/m²';
+      if (!canvas || !w.curva || !w.curva.length) return;
+      statsAereoDestroy('weibull');
+      statsAereoCharts['weibull'] = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: w.curva.map(function(b){ return b.rango; }),
+          datasets: [
+            { type: 'bar', label: 'Observado', data: w.curva.map(function(b){ return b.observado; }), backgroundColor: 'rgba(96,165,250,0.5)', borderRadius: 4, order: 2 },
+            { type: 'line', label: 'Weibull teórico (k=' + w.k_forma + ', c=' + w.c_escala + ')', data: w.curva.map(function(b){ return b.teorico; }), borderColor: '#fbbf24', backgroundColor: 'transparent', borderWidth: 2.5, tension: 0.35, pointRadius: 2, order: 1 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#94a3b8' } },
+            title: { display: true, text: 'Viento (' + (data.variable.unidad || '') + ') — observado vs. Weibull', color: '#e2e8f0', font: { size: 13 } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+            x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function statsAereoRenderPercentiles(data) {
+      var el = document.getElementById('stats-aereo-percentiles-cards');
+      if (!el) return;
+      if (!data.percentiles || !data.percentiles.valores) { el.innerHTML = ''; return; }
+      var unidad = data.variable.unidad || '';
+      el.innerHTML = data.percentiles.valores.map(function(p){
+        var destacado = p.p >= 90;
+        return '<div style="flex:1; min-width:110px; background:' + (destacado ? 'rgba(251,191,36,0.08)' : '#0f172a') + '; border:1px solid ' + (destacado ? 'rgba(251,191,36,0.3)' : '#1e293b') + '; border-radius:10px; padding:12px 14px; text-align:center;">' +
+          '<div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:6px;">P' + p.p + '</div>' +
+          '<div style="font-size:1.25rem; font-weight:800; color:' + (destacado ? '#fbbf24' : '#e2e8f0') + ';">' + p.valor + ' <span style="font-size:0.6em; color:#64748b;">' + unidad + '</span></div>' +
+          '<div style="font-size:0.62rem; color:#64748b; margin-top:4px;">se supera solo el ' + (100 - p.p) + '% del tiempo</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function statsAereoRenderHistorico(data) {
+      var loading = document.getElementById('stats-aereo-historico-loading');
+      var empty = document.getElementById('stats-aereo-historico-empty');
+      var contenido = document.getElementById('stats-aereo-historico-contenido');
+      if (loading) loading.style.display = 'none';
+      if (!data || !data.ok || !data.hoy || data.hoy.valor == null || !data.promedio_historico || data.promedio_historico.valor == null) {
+        if (empty) { empty.style.display = 'block'; if (data && data.error) empty.innerText = data.error; }
+        if (contenido) contenido.style.display = 'none';
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+      if (contenido) contenido.style.display = 'block';
+
+      var variableSel = document.getElementById('stats-aereo-variable');
+      var textoVar = variableSel ? variableSel.options[variableSel.selectedIndex].text : '';
+      var diff = data.diferencia_pct;
+      var diffColor = diff > 0 ? '#fb923c' : (diff < 0 ? '#60a5fa' : '#94a3b8');
+
+      document.getElementById('stats-aereo-hist-hoy').innerHTML = '<div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Hoy (esta hora)</div><div style="font-size:1.3rem; font-weight:800; color:#e2e8f0;">' + data.hoy.valor + '</div>';
+      document.getElementById('stats-aereo-hist-prom').innerHTML = '<div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Promedio (' + (data.promedio_historico.n_dias || 0) + ' días previos)</div><div style="font-size:1.3rem; font-weight:800; color:#e2e8f0;">' + data.promedio_historico.valor + '</div>';
+      document.getElementById('stats-aereo-hist-diff').innerHTML = '<div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Diferencia vs. histórico</div><div style="font-size:1.3rem; font-weight:800; color:' + diffColor + ';">' + (diff > 0 ? '+' : '') + diff + '%</div>';
+
+      // Carta de control (±2σ / ±3σ) y test t, si BigQuery devolvió suficiente muestra
+      statsAereoRenderControlYTestT(data);
+
+      var canvas = document.getElementById('stats-aereo-chart-historico');
+      if (!canvas || !data.serie_semanas || !data.serie_semanas.length) return;
+      statsAereoDestroy('historico');
+      var labels = data.serie_semanas.map(function(s){ return s.semana; });
+      var valores = data.serie_semanas.map(function(s){ return s.valor; });
+      var cc = data.carta_control;
+      var datasets = [{ type: 'bar', label: textoVar, data: valores, backgroundColor: labels.map(function(l){ return l === 'Hoy' ? 'rgba(250,204,21,0.75)' : 'rgba(34,211,238,0.5)'; }), borderRadius: 4, order: 3 }];
+      if (cc) {
+        var rellenar = function(v){ return labels.map(function(){ return v; }); };
+        datasets.push({ type: 'line', label: 'Media histórica', data: rellenar(cc.media), borderColor: '#fbbf24', borderDash: [5,4], borderWidth: 1.5, pointRadius: 0, fill: false, order: 1 });
+        datasets.push({ type: 'line', label: '+2σ', data: rellenar(cc.limite_superior_2s), borderColor: 'rgba(251,146,60,0.6)', borderWidth: 1, pointRadius: 0, fill: false, order: 2 });
+        datasets.push({ type: 'line', label: '-2σ', data: rellenar(cc.limite_inferior_2s), borderColor: 'rgba(251,146,60,0.6)', borderWidth: 1, pointRadius: 0, fill: false, order: 2 });
+        datasets.push({ type: 'line', label: '+3σ', data: rellenar(cc.limite_superior_3s), borderColor: 'rgba(239,68,68,0.5)', borderWidth: 1, borderDash: [2,3], pointRadius: 0, fill: false, order: 2 });
+        datasets.push({ type: 'line', label: '-3σ', data: rellenar(cc.limite_inferior_3s), borderColor: 'rgba(239,68,68,0.5)', borderWidth: 1, borderDash: [2,3], pointRadius: 0, fill: false, order: 2 });
+      }
+      statsAereoCharts['historico'] = new Chart(canvas.getContext('2d'), {
+        data: { labels: labels, datasets: datasets },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: !!cc, labels: { color: '#94a3b8', font: { size: 9 }, filter: function(item){ return item.text !== textoVar; } } }, title: { display: true, text: 'Evolución semanal — ' + textoVar, color: '#e2e8f0', font: { size: 13 } } },
+          scales: { y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } } }
+        }
+      });
+    }
+
+    function statsAereoRenderControlYTestT(data) {
+      var boxCC = document.getElementById('stats-aereo-control-box');
+      var boxTT = document.getElementById('stats-aereo-testt-box');
+      if (boxCC) {
+        var cc = data.carta_control;
+        if (!cc) {
+          boxCC.style.display = 'none';
+        } else {
+          boxCC.style.display = 'block';
+          var estColor = cc.estado === 'normal' ? '#4ade80' : (cc.estado === 'fuera_2s' ? '#fb923c' : '#ef4444');
+          var estTexto = cc.estado === 'normal' ? 'DENTRO DE LO NORMAL' : (cc.estado === 'fuera_2s' ? 'ANOMALÍA MODERADA (fuera de ±2σ)' : 'ANOMALÍA SEVERA (fuera de ±3σ)');
+          boxCC.innerHTML =
+            '<div style="font-size:0.7rem; color:#67e8f9; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">Carta de Control (Shewhart)</div>' +
+            '<div style="background:rgba(' + (cc.estado === 'normal' ? '74,222,128' : cc.estado === 'fuera_2s' ? '251,146,60' : '239,68,68') + ',0.08); border:1px solid ' + estColor + '33; border-radius:10px; padding:14px 16px;">' +
+              '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">z-score = <strong style="color:#e2e8f0;">' + cc.z_score + '</strong></span>' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">n histórico = <strong style="color:#e2e8f0;">' + cc.n_historico + ' días</strong></span>' +
+              '</div>' +
+              '<div style="font-size:0.82rem; font-weight:700; color:' + estColor + ';">' + estTexto + '</div>' +
+            '</div>';
+        }
+      }
+      if (boxTT) {
+        var t = data.test_t;
+        if (!t) {
+          boxTT.innerHTML = '<div style="color:#94a3b8; font-size:0.78rem; line-height:1.5; background:rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.2); border-radius:10px; padding:12px 14px;">Se necesitan más días de histórico acumulado para calcular el test t de Student.</div>';
+        } else {
+          var col = t.rechaza_h0 ? '#f87171' : '#4ade80';
+          var bg = t.rechaza_h0 ? 'rgba(239,68,68,0.08)' : 'rgba(74,222,128,0.08)';
+          boxTT.innerHTML =
+            '<div style="font-size:0.7rem; color:#67e8f9; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">Test t de Student: ¿hoy es distinto de lo normal?</div>' +
+            '<div style="background:' + bg + '; border:1px solid ' + col + '33; border-radius:10px; padding:14px 16px;">' +
+              '<div style="font-size:0.68rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">H0</div>' +
+              '<div style="font-size:0.8rem; color:#e2e8f0; margin-bottom:10px;">' + t.h0 + '</div>' +
+              '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">t = <strong style="color:#e2e8f0;">' + t.estadistico_t + '</strong></span>' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">gl = <strong style="color:#e2e8f0;">' + t.grados_libertad + '</strong></span>' +
+                '<span style="background:#0f172a; border:1px solid #1e293b; border-radius:7px; padding:5px 12px; font-size:0.74rem; color:#94a3b8;">p-valor = <strong style="color:#e2e8f0;">' + t.p_valor + '</strong></span>' +
+              '</div>' +
+              '<div style="font-size:0.8rem; font-weight:700; color:' + col + ';">' + (t.rechaza_h0 ? 'SE RECHAZA H0' : 'NO SE RECHAZA H0') + '</div>' +
+              '<div style="font-size:0.76rem; color:#cbd5e1; margin-top:6px; line-height:1.5;">' + t.conclusion + '</div>' +
+            '</div>';
+        }
+      }
+    }
+
+    window.statsAereoCargarHistorico = function() {
+      var variableSel = document.getElementById('stats-aereo-variable');
+      var loading = document.getElementById('stats-aereo-historico-loading');
+      var empty = document.getElementById('stats-aereo-historico-empty');
+      var contenido = document.getElementById('stats-aereo-historico-contenido');
+      if (!variableSel || !loading) return;
+      loading.style.display = 'block';
+      if (empty) empty.style.display = 'none';
+      if (contenido) contenido.style.display = 'none';
+
+      var url = '/api/estadisticas/aereo/historico/?lat=' + STATS_LAT + '&lon=' + STATS_LON + '&variable=' + encodeURIComponent(variableSel.value);
+      fetch(url, { credentials: 'include' })
+        .then(function(r){ return r.json(); })
+        .then(statsAereoRenderHistorico)
+        .catch(function(){
+          loading.style.display = 'none';
+          if (empty) { empty.style.display = 'block'; empty.innerText = 'No se pudo conectar con el servicio de histórico.'; }
+        });
+    };
+
+    window.statsAereoCargar = function() {
+      var variableSel = document.getElementById('stats-aereo-variable');
+      var loading = document.getElementById('stats-aereo-loading');
+      var errorBox = document.getElementById('stats-aereo-error');
+      var btn = document.getElementById('stats-aereo-btn');
+      if (!variableSel || !loading || !errorBox) return;
+
+      loading.style.display = 'block';
+      errorBox.style.display = 'none';
+      if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+
+      var url = '/api/estadisticas/aereo/?lat=' + STATS_LAT + '&lon=' + STATS_LON + '&variable=' + encodeURIComponent(variableSel.value);
+
+      fetch(url, { credentials: 'include' })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          loading.style.display = 'none';
+          if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+          if (!data.ok) { errorBox.innerText = data.error || 'Error al calcular estadísticas.'; errorBox.style.display = 'block'; return; }
+          statsAereoRenderBoxplot(data);
+          statsAereoRenderFrecuencias(data);
+          statsAereoRenderPoisson(data);
+          statsAereoRenderHipotesis(data);
+          statsAereoRenderWeibull(data);
+          statsAereoRenderPercentiles(data);
+        })
+        .catch(function(){
+          loading.style.display = 'none';
+          if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+          errorBox.innerText = 'No se pudo conectar con el servidor de estadísticas.';
+          errorBox.style.display = 'block';
+        });
+      statsAereoCargarHistorico();
+    };
+
+    var variableSelect = document.getElementById('stats-aereo-variable');
+    if (variableSelect) variableSelect.addEventListener('change', window.statsAereoCargar);
+
+    setTimeout(window.statsAereoCargar, 500);
+  })();
+  {% endlocalize %}
+  </script>
+
+</div>
+<script>
+function enviarAccionRapida(txt) {
+    var inp = document.getElementById('user-input');
+    if (inp) {
+        inp.value = txt;
+        if (typeof tcOpenChatModal === 'function') tcOpenChatModal();
+        if (typeof enviarMensaje === 'function') enviarMensaje();
+    }
+}
+</script>

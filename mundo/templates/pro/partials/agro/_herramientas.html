@@ -1,0 +1,205 @@
+<div id="pro-herramientas" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+    <button onclick="enviarAccionRapida('Generá un reporte PDF con los parámetros agronómicos actuales: Delta T, VPD, balance hídrico y pronóstico extendido. Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(30,58,95,0.8); border:1px solid rgba(59,130,246,0.4); color:#93c5fd; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#1d4ed8';this.style.color='#fff'" onmouseout="this.style.background='rgba(30,58,95,0.8)';this.style.color='#93c5fd'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Generar PDF</button>
+    {% if puede_excel %}
+    <button onclick="enviarAccionRapida('Generá un Excel con el balance hídrico diario, ETo y pronóstico de lluvia de los próximos 14 días. Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(20,83,45,0.8); border:1px solid rgba(74,222,128,0.4); color:#86efac; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#16a34a';this.style.color='#fff'" onmouseout="this.style.background='rgba(20,83,45,0.8)';this.style.color='#86efac'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg> Generar Excel</button>
+    {% else %}
+    <a href="/pricing/" style="display:flex; align-items:center; gap:7px; background:rgba(15,23,42,0.6); border:1px solid rgba(51,65,85,0.5); color:#64748b; padding:9px 16px; border-radius:10px; cursor:not-allowed; font-size:0.83rem; font-weight:600; font-family:inherit; text-decoration:none;" title="Disponible desde plan Plus — Actualizá tu plan"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Excel — Plan Plus+</a>
+    {% endif %}
+    <button onclick="enviarAccionRapida('¿Cuáles son las condiciones y recomendaciones agrícolas para hoy basándote en los datos actuales? Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(59,27,107,0.8); border:1px solid rgba(167,139,250,0.4); color:#c4b5fd; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#7c3aed';this.style.color='#fff'" onmouseout="this.style.background='rgba(59,27,107,0.8)';this.style.color='#c4b5fd'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><path d="M17 8C8 10 5.9 16.17 3.82 19.04c-.82 1.1.6 2.5 1.58 1.39C7 18 7.5 17 12 17c5 0 10-3 10-9-4.5 0-8.17 1.62-12 5 2-4 2.5-7.5 7-8z"/></svg> Análisis Rápido</button>
+  </div>
+
+  <!-- ── 4. CALCULADORA DE PULVERIZACIÓN ── -->
+  <details style="background:linear-gradient(135deg,#0f172a,#1e293b); border:1px solid rgba(51,65,85,0.4); border-radius:16px; margin-top:12px; overflow:hidden;">
+    <summary style="padding:14px 20px; cursor:pointer; color:#94a3b8; font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; list-style:none; display:flex; align-items:center; gap:9px; font-family:'Segoe UI',system-ui,sans-serif; user-select:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 10h8M8 14h5M8 6h8"/></svg>Calculadora de Pulverización<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div style="padding:14px 20px 18px; border-top:1px solid rgba(51,65,85,0.3);">
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; margin-bottom:14px;">
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">CULTIVO</div><select id="tc-cultivo" style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; font-family:inherit;"><option value="soja">Soja</option><option value="maiz">Maíz</option><option value="trigo">Trigo</option><option value="girasol">Girasol</option><option value="pasturas">Pasturas</option></select></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">DOSIS (L/ha)</div><input type="number" id="tc-dosis" value="2" min="0.1" step="0.1" style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">AGUA (L/ha)</div><input type="number" id="tc-agua" value="100" min="50" step="10" style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">BOQUILLA</div><select id="tc-boquilla" style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; font-family:inherit;"><option value="abanico">Abanico plano</option><option value="doble">Doble abanico</option><option value="cono">Cono hueco</option></select></div>
+      </div>
+      <button type="button" onclick="tcPulvCalc()" style="background:rgba(74,222,128,0.12); border:1px solid rgba(74,222,128,0.4); color:#4ade80; padding:9px 20px; border-radius:9px; cursor:pointer; font-size:0.82rem; font-weight:700; font-family:inherit;">Calcular condición</button>
+      <div id="tcCalcPulvRes" style="margin-top:12px;"></div>
+    </div>
+  </details>
+
+  <!-- ── 5. OJO BIÓNICO — VISIÓN IA ── -->
+  <div id="tc-dz-agro" style="margin-top:14px; border:2px dashed rgba(74,222,128,0.3); border-radius:16px; padding:28px 20px; text-align:center; cursor:pointer; transition:border-color 0.25s,background 0.25s; background:rgba(15,23,42,0.6);"
+    ondragover="event.preventDefault();this.style.borderColor='#4ade80';this.style.background='rgba(74,222,128,0.07)';"
+    ondragleave="this.style.borderColor='rgba(74,222,128,0.3)';this.style.background='rgba(15,23,42,0.6)';"
+    ondrop="tcDzDrop_agro(event)"
+    onclick="var l=document.getElementById('tc-dz-loading-agro');if(!l||l.style.display==='none')document.getElementById('tc-vision-inp-agro').click()">
+    <input type="file" id="tc-vision-inp-agro" accept="image/*" style="display:none;" onchange="tcDzFile_agro(this)">
+    <div id="tc-dz-idle-agro">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 10px;display:block;opacity:0.7;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <p style="margin:0 0 4px;font-size:0.88rem;font-weight:700;color:#4ade80;letter-spacing:0.04em;">OJO BIÓNICO</p>
+      <p style="margin:0;font-size:0.76rem;color:#94a3b8;line-height:1.5;">Arrastrá aquí la foto de tu cultivo<br>o hacé clic para explorar</p>
+    </div>
+    <div id="tc-dz-loading-agro" style="display:none;">
+      <p style="margin:0 0 12px;font-size:0.82rem;color:#4ade80;animation:tcDzPulse 1.4s ease-in-out infinite;">Analizando imagen con IA…</p>
+      <div style="height:6px;border-radius:3px;background:rgba(74,222,128,0.15);overflow:hidden;"><div style="height:100%;width:0;background:#4ade80;border-radius:3px;animation:tcDzBar 2.2s ease-in-out infinite;"></div></div>
+    </div>
+    <div id="tc-dz-result-agro" style="display:none;text-align:left;"></div>
+  </div>
+  <style>
+  @keyframes tcDzPulse{0%,100%{opacity:0.4}50%{opacity:1}}
+  @keyframes tcDzBar{0%{width:0}60%{width:70%}100%{width:100%}}
+  </style>
+  <script>
+  function tcDzDrop_agro(e){e.preventDefault();var dz=document.getElementById('tc-dz-agro');dz.style.borderColor='rgba(74,222,128,0.3)';dz.style.background='rgba(15,23,42,0.6)';var f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))tcDzSend_agro(f);}
+  function tcDzFile_agro(inp){if(inp.files[0])tcDzSend_agro(inp.files[0]);}
+  async function tcDzSend_agro(file){
+    document.getElementById('tc-dz-idle-agro').style.display='none';
+    document.getElementById('tc-dz-loading-agro').style.display='block';
+    document.getElementById('tc-dz-result-agro').style.display='none';
+    try {
+      const okTok = await fetch('/api/tokens/consumir/', {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({tipo:'CHAT_N8N', descripcion:'Vision IA agro'})
+      });
+      if (okTok.status === 402 || !okTok.ok) {
+        document.getElementById('tc-dz-loading-agro').style.display='none';
+        document.getElementById('tc-dz-idle-agro').style.display='block';
+        if (typeof mostrarLimiteIA === 'function') mostrarLimiteIA();
+        return;
+      }
+    } catch(e) {
+      document.getElementById('tc-dz-loading-agro').style.display='none';
+      document.getElementById('tc-dz-idle-agro').style.display='block';
+      return;
+    }
+    var fd=new FormData();
+    fd.append('chatInput','Analizá esta imagen de mi cultivo y decime el estado fitosanitario, posibles plagas o enfermedades que observás.');
+    fd.append('sessionId',sessionId);
+    fd.append('userId',djangoUserId);
+    fd.append('sector','agro');
+    fd.append('data00',file);
+    fetch(urlN8N,{method:'POST',credentials:'include',body:fd})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var txt=(d.output||d.text||JSON.stringify(d)).replace(/</g,'&lt;').replace(/\n/g,'<br>');
+        var res=document.getElementById('tc-dz-result-agro');
+        res.innerHTML='<div style="font-size:0.8rem;color:#e2e8f0;line-height:1.65;padding:4px 0 8px;">'+txt+'</div><button onclick="tcDzReset_agro()" style="background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.4);color:#4ade80;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.75rem;font-family:inherit;">Nueva imagen</button>';
+        document.getElementById('tc-dz-loading-agro').style.display='none';
+        res.style.display='block';
+      })
+      .catch(function(){document.getElementById('tc-dz-loading-agro').style.display='none';document.getElementById('tc-dz-idle-agro').style.display='block';});
+  }
+  function tcDzReset_agro(){document.getElementById('tc-dz-idle-agro').style.display='block';document.getElementById('tc-dz-result-agro').style.display='none';document.getElementById('tc-vision-inp-agro').value='';}
+  </script>
+
+  <!-- ── 6. VENTANA SEGURA ── -->
+  <details style="background:linear-gradient(135deg,#0f172a,#1e293b); border:1px solid rgba(51,65,85,0.4); border-radius:16px; margin-top:12px; overflow:hidden;">
+    <summary style="padding:14px 20px; cursor:pointer; color:#94a3b8; font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; list-style:none; display:flex; align-items:center; gap:9px; font-family:'Segoe UI',system-ui,sans-serif; user-select:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v6M15 3v6"/></svg>Ventana Segura de Trabajo<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div style="padding:14px 20px 18px; border-top:1px solid rgba(51,65,85,0.3);">
+      <p style="font-size:0.72rem; color:#64748b; margin:0 0 12px; line-height:1.5;">Encontrá las próximas N horas consecutivas donde las condiciones cumplen tus umbrales para pulverizar.</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; margin-bottom:14px;">
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">DURACIÓN (h)</div><input type="number" id="tc-vs-dur-agro" value="3" min="1" max="8" style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">LLUVIA MÁX (%)</div><input type="number" id="tc-vs-lluvia-agro" value="20" min="0" max="80" step="5" style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">VIENTO MÁX (km/h)</div><input type="number" id="tc-vs-viento-agro" value="15" min="1" max="40" style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+      </div>
+      <button onclick="tcVsScan_agro()" style="background:rgba(74,222,128,0.12); border:1px solid rgba(74,222,128,0.4); color:#4ade80; padding:9px 20px; border-radius:9px; cursor:pointer; font-size:0.82rem; font-weight:700; font-family:inherit;">Buscar ventana</button>
+      <div id="tcVsRes-agro" style="margin-top:12px;"></div>
+    </div>
+  </details>
+  <script>
+  {% localize off %}var _tc_h24_agro=[{% for h in tira_24h %}{"hora":"{{ h.hora }}","lluvia":{{ h.lluvia }},"viento":{{ h.viento }},"temp":{{ h.temp }}}{% if not forloop.last %},{% endif %}{% endfor %}];{% endlocalize %}
+  function tcVsScan_agro(){
+    var dur=parseInt(document.getElementById('tc-vs-dur-agro').value)||3;
+    var mxL=parseInt(document.getElementById('tc-vs-lluvia-agro').value)||20;
+    var mxV=parseFloat(document.getElementById('tc-vs-viento-agro').value)||15;
+    var d=_tc_h24_agro,best=null,bestS=Infinity;
+    for(var i=0;i<=d.length-dur;i++){var sl=d.slice(i,i+dur);var ok=sl.every(function(h){return h.lluvia<=mxL&&h.viento<=mxV;});if(ok){var sc=sl.reduce(function(a,h){return a+h.lluvia+h.viento;},0);if(sc<bestS){bestS=sc;best=sl;}}}
+    var el=document.getElementById('tcVsRes-agro');
+    if(!best){el.innerHTML='<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:12px 14px;font-size:0.8rem;color:#ef4444;">Sin ventana de '+dur+'h que cumpla los criterios en las próximas 24h.</div>';return;}
+    var mL=Math.max.apply(null,best.map(function(h){return h.lluvia;}));
+    var mV=Math.max.apply(null,best.map(function(h){return h.viento;}));
+    var mT=Math.min.apply(null,best.map(function(h){return h.temp;}));
+    el.innerHTML='<div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.3);border-radius:10px;padding:12px 14px;"><div style="font-size:0.72rem;color:#4ade80;font-weight:700;letter-spacing:0.05em;margin-bottom:6px;">VENTANA ÓPTIMA</div><div style="font-size:0.88rem;font-weight:800;color:#f1f5f9;margin-bottom:8px;">'+best[0].hora+' → '+best[best.length-1].hora+'</div><div style="display:flex;flex-wrap:wrap;gap:7px;"><span style="background:#0f172a;border:1px solid #334155;border-radius:7px;padding:4px 10px;font-size:0.72rem;color:#94a3b8;">Lluvia máx: <strong style="color:#60a5fa;">'+mL+'%</strong></span><span style="background:#0f172a;border:1px solid #334155;border-radius:7px;padding:4px 10px;font-size:0.72rem;color:#94a3b8;">Viento máx: <strong style="color:#4ade80;">'+mV+' km/h</strong></span><span style="background:#0f172a;border:1px solid #334155;border-radius:7px;padding:4px 10px;font-size:0.72rem;color:#94a3b8;">Temp mín: <strong style="color:#fbbf24;">'+mT+'°C</strong></span></div></div>';
+  }
+  </script>
+
+  <script>
+  var _tc_dt={{ pulverizacion.delta_t|default:0|stringformat:".1f" }}, _tc_vt={{ pulverizacion.viento|default:0|stringformat:".1f" }};
+  function tcPulvCalc(){
+    var dosis=parseFloat(document.getElementById('tc-dosis').value)||2;
+    var agua=parseFloat(document.getElementById('tc-agua').value)||100;
+    var boquilla=document.getElementById('tc-boquilla').value;
+    var conc=(dosis/agua*100).toFixed(2);
+    var ver='',col='',bg='',msg='';
+    if(_tc_dt>10||_tc_vt>20){ver='NO APTO';col='#ef4444';bg='rgba(239,68,68,0.1)';msg='Delta T o viento fuera de rango. Riesgo de deriva y evaporación. Postergar la labor.';}
+    else if(_tc_dt>=8||_tc_vt>15){ver='CONDICIONAL';col='#fb923c';bg='rgba(251,146,60,0.1)';msg='Condiciones marginales. Reducir presión de trabajo y supervisar deriva continuamente.';}
+    else if(_tc_dt>=2&&_tc_dt<=8&&_tc_vt<=15){ver='ÓPTIMO';col='#4ade80';bg='rgba(74,222,128,0.1)';msg='Condiciones ideales. Delta T y viento dentro del rango agronómico recomendado.';}
+    else{ver='RIESGO INV.';col='#facc15';bg='rgba(251,191,36,0.1)';msg='Delta T muy bajo. Riesgo de inversión térmica y deriva nocturna. Esperar condiciones diurnas.';}
+    var bq=boquilla==='abanico'?'Amplio ángulo, baja presión (2-3 bar)':boquilla==='doble'?'Doble pulso, cobertura total (3-4 bar)':'Cono hueco, alta penetración (4-5 bar)';
+    document.getElementById('tcCalcPulvRes').innerHTML='<div style="background:'+bg+'; border:1px solid '+col+'33; border-radius:10px; padding:12px 14px;"><div style="margin-bottom:7px;"><span style="background:'+col+'22; color:'+col+'; font-size:0.72rem; font-weight:800; padding:3px 10px; border-radius:20px; letter-spacing:0.06em;">'+ver+'</span></div><p style="margin:0 0 8px; font-size:0.8rem; color:#e2e8f0; line-height:1.5;">'+msg+'</p><div style="display:flex; flex-wrap:wrap; gap:7px;"><span style="background:#0f172a; border:1px solid #334155; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">Concentración: <strong style="color:#e2e8f0;">'+conc+'%</strong></span><span style="background:#0f172a; border:1px solid #334155; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">ΔT: <strong style="color:'+col+';">'+_tc_dt+'°C</strong></span><span style="background:#0f172a; border:1px solid #334155; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">Boquilla: <strong style="color:#e2e8f0;">'+bq+'</strong></span></div></div>';
+  }
+  </script>
+
+  <!-- ── 7. MONITOR 24H Chart.js ── -->
+  <script>
+  (function() {
+    var raw = (typeof _tc_h24_agro !== 'undefined') ? _tc_h24_agro : [];
+    if (!raw.length) return;
+    var horas   = raw.map(function(h){ return h.hora; });
+    var temps   = raw.map(function(h){ return h.temp; });
+    var lluvias = raw.map(function(h){ return h.lluvia; });
+    var vientos = raw.map(function(h){ return h.viento; });
+    var ctx = document.getElementById('agro-chart-24h');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: horas,
+        datasets: [{
+          label: 'Temp (°C)',
+          data: temps,
+          type: 'line',
+          borderColor: '#facc15',
+          backgroundColor: 'rgba(250,204,21,0.08)',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.4,
+          fill: true,
+          yAxisID: 'yTemp',
+          order: 1
+        }, {
+          label: 'Lluvia (%)',
+          data: lluvias,
+          backgroundColor: 'rgba(59,130,246,0.55)',
+          borderColor: 'rgba(59,130,246,0.85)',
+          borderWidth: 1,
+          borderRadius: 2,
+          yAxisID: 'yLluvia',
+          order: 2
+        }, {
+          label: 'Viento (km/h)',
+          data: vientos,
+          type: 'line',
+          borderColor: 'rgba(74,222,128,0.7)',
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          tension: 0.35,
+          yAxisID: 'yTemp',
+          order: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 12, padding: 12 } },
+          tooltip: { backgroundColor: 'rgba(15,23,42,0.92)', titleColor: '#e2e8f0', bodyColor: '#94a3b8', borderColor: 'rgba(74,222,128,0.3)', borderWidth: 1 }
+        },
+        scales: {
+          x: { ticks: { color: '#475569', font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }, grid: { color: 'rgba(51,65,85,0.3)' } },
+          yTemp: { position: 'left', ticks: { color: '#facc15', font: { size: 9 } }, grid: { color: 'rgba(51,65,85,0.25)' }, title: { display: true, text: '°C / km/h', color: '#475569', font: { size: 9 } } },
+          yLluvia: { position: 'right', min: 0, max: 100, ticks: { color: '#3b82f6', font: { size: 9 } }, grid: { display: false }, title: { display: true, text: 'Lluvia %', color: '#475569', font: { size: 9 } } }
+        }
+      }
+    });
+  })();
+  </script>

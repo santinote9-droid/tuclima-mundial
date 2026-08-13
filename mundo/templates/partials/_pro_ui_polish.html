@@ -1,0 +1,58 @@
+{# Estilos compartidos: pestañas de estadística + scroll horizontal elegante #}
+<style>
+  .tc-pro-page.tc-pro-page--wide { max-width: 1120px; }
+
+  .tc-stats-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 12px 16px 0;
+    border-bottom: 1px solid rgba(34, 211, 238, 0.15);
+  }
+  .tc-stats-tabs button {
+    flex: 0 1 auto;
+  }
+  @media (max-width: 640px) {
+    .tc-stats-tabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(34, 211, 238, 0.45) rgba(15, 23, 42, 0.9);
+      padding-bottom: 8px;
+    }
+    .tc-stats-tabs::-webkit-scrollbar { height: 5px; }
+    .tc-stats-tabs::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 999px;
+    }
+    .tc-stats-tabs::-webkit-scrollbar-thumb {
+      background: rgba(34, 211, 238, 0.4);
+      border-radius: 999px;
+    }
+  }
+
+  .tc-scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(56, 189, 248, 0.4) rgba(15, 23, 42, 0.85);
+    padding-bottom: 6px;
+  }
+  .tc-scroll-x::-webkit-scrollbar { height: 5px; }
+  .tc-scroll-x::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.9);
+    border-radius: 999px;
+  }
+  .tc-scroll-x::-webkit-scrollbar-thumb {
+    background: rgba(56, 189, 248, 0.4);
+    border-radius: 999px;
+  }
+  .tc-scroll-x::-webkit-scrollbar-thumb:hover {
+    background: rgba(56, 189, 248, 0.6);
+  }
+
+  #pro-estadistica {
+    max-width: 100%;
+  }
+</style>

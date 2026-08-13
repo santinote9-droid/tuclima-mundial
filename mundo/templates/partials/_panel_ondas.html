@@ -1,0 +1,257 @@
+{# Panel Ondas / dinámica — Plus+ (Naval + Aéreo) #}
+<div id="pro-ondas">
+{% if puede_ondas and ondas_avanzada %}
+<div class="tc-ondas-panel" style="background:linear-gradient(135deg,#0f172a,#1e293b);border:1px solid rgba(56,189,248,0.28);border-radius:16px;padding:16px 18px;margin-bottom:14px;font-family:'Segoe UI',system-ui,sans-serif;">
+  <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px;">
+    <div>
+      <div style="font-size:0.66rem;letter-spacing:0.12em;color:#0284c7;font-weight:700;text-transform:uppercase;">Dinámica · Ondas</div>
+      <div style="font-size:0.82rem;color:#cbd5e1;margin-top:2px;">{% if ondas_avanzada.modo == 'naval' %}Mar · SRH · QG aguas someras{% else %}Fr · SRH · CAPE · QG estratificado{% endif %}</div>
+    </div>
+    {% if ondas_avanzada.modo == 'naval' %}
+    <span style="font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid {{ ondas_avanzada.tipo_color }}66;color:{{ ondas_avanzada.tipo_color }};background:{{ ondas_avanzada.tipo_color }}18;">{{ ondas_avanzada.tipo }}</span>
+    {% else %}
+    <span style="font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid {{ ondas_avanzada.regimen_color }}66;color:{{ ondas_avanzada.regimen_color }};background:{{ ondas_avanzada.regimen_color }}18;">{{ ondas_avanzada.regimen }}</span>
+    {% endif %}
+  </div>
+
+  {% if ondas_avanzada.modo == 'naval' %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;">
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">Hs</div>
+      <div style="font-size:1.2rem;font-weight:800;color:#38bdf8;font-family:ui-monospace,monospace;">{{ ondas_avanzada.hs }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">m significativa</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">Período</div>
+      <div style="font-size:1.2rem;font-weight:800;color:#e2e8f0;font-family:ui-monospace,monospace;">{{ ondas_avanzada.periodo }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">s</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">Swell</div>
+      <div style="font-size:1.2rem;font-weight:800;color:#67e8f9;font-family:ui-monospace,monospace;">{{ ondas_avanzada.swell_h }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">m · T {{ ondas_avanzada.swell_periodo }}s</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">Steepness</div>
+      <div style="font-size:1.2rem;font-weight:800;color:{{ ondas_avanzada.steep_color }};font-family:ui-monospace,monospace;">{% if ondas_avanzada.steepness is not None %}{{ ondas_avanzada.steepness }}{% else %}—{% endif %}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">{{ ondas_avanzada.steep_label }}</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">Hs ≥ {{ ondas_avanzada.umbral_hs }}m</div>
+      <div style="font-size:1.2rem;font-weight:800;color:#fbbf24;font-family:ui-monospace,monospace;">{{ ondas_avanzada.horas_riesgo }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">horas (próx. 24h)</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid {{ ondas_avanzada.srh_color|default:'#334155' }}55;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">SRH 0–3 km</div>
+      <div style="font-size:1.2rem;font-weight:800;color:{{ ondas_avanzada.srh_color|default:'#94a3b8' }};font-family:ui-monospace,monospace;">{% if ondas_avanzada.srh != None %}{{ ondas_avanzada.srh }}{% else %}—{% endif %}</div>
+      <div style="font-size:0.68rem;color:{{ ondas_avanzada.srh_color|default:'#94a3b8' }};">{{ ondas_avanzada.srh_label|default:'N/D' }}</div>
+    </div>
+  </div>
+  {% if ondas_avanzada.srh_detalle %}
+  <p style="margin:10px 0 0;font-size:0.75rem;color:#94a3b8;line-height:1.4;">{% if ondas_avanzada.srh_alerta %}<strong style="color:{{ ondas_avanzada.srh_color }};">Alerta tromba/rotación · </strong>{% endif %}{{ ondas_avanzada.srh_detalle }}</p>
+  {% endif %}
+
+  {% else %}{# aereo #}
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;">
+    <div style="background:rgba(15,23,42,0.7);border:1px solid {{ ondas_avanzada.fr_color|default:'#334155' }}55;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">Froude Fr</div>
+      <div style="font-size:1.35rem;font-weight:800;color:{{ ondas_avanzada.fr_color|default:'#e2e8f0' }};font-family:ui-monospace,monospace;">{% if ondas_avanzada.fr != None %}{{ ondas_avanzada.fr }}{% else %}—{% endif %}</div>
+      <div style="font-size:0.68rem;color:{{ ondas_avanzada.fr_color|default:'#94a3b8' }};">{{ ondas_avanzada.fr_label|default:'N/D' }}</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid {{ ondas_avanzada.srh_color|default:'#334155' }}55;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">SRH 0–3 km</div>
+      <div style="font-size:1.35rem;font-weight:800;color:{{ ondas_avanzada.srh_color|default:'#e2e8f0' }};font-family:ui-monospace,monospace;">{% if ondas_avanzada.srh != None %}{{ ondas_avanzada.srh }}{% else %}—{% endif %}</div>
+      <div style="font-size:0.68rem;color:{{ ondas_avanzada.srh_color|default:'#94a3b8' }};">{{ ondas_avanzada.srh_label|default:'N/D' }} · m²/s²</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">Shear sfc</div>
+      <div style="font-size:1.2rem;font-weight:800;color:#fbbf24;font-family:ui-monospace,monospace;">{{ ondas_avanzada.shear_kt|floatformat:0 }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">kt (ráfaga−viento)</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">Shear vert.</div>
+      <div style="font-size:1.2rem;font-weight:800;color:#a78bfa;font-family:ui-monospace,monospace;">{{ ondas_avanzada.shear_vertical_kt|floatformat:0 }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">kt (alt−sfc)</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">CAPE</div>
+      <div style="font-size:1.2rem;font-weight:800;color:#f87171;font-family:ui-monospace,monospace;">{{ ondas_avanzada.cape }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">J/kg</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">LI</div>
+      <div style="font-size:1.2rem;font-weight:800;color:#e2e8f0;font-family:ui-monospace,monospace;">{{ ondas_avanzada.li }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">lifted index</div>
+    </div>
+  </div>
+  <p style="margin:10px 0 0;font-size:0.75rem;color:#94a3b8;line-height:1.4;">{{ ondas_avanzada.detalle }}</p>
+  {% if ondas_avanzada.fr_detalle %}
+  <p style="margin:6px 0 0;font-size:0.7rem;color:#64748b;line-height:1.4;">
+    <strong style="color:{{ ondas_avanzada.fr_color }};">Fr</strong> = U/(N·H)
+    {% if ondas_avanzada.fr_h_m %} · H≈{{ ondas_avanzada.fr_h_m }} m ({{ ondas_avanzada.fr_h_fuente }}){% endif %}
+    · {{ ondas_avanzada.fr_detalle }}
+  </p>
+  {% endif %}
+  {% if ondas_avanzada.srh_detalle %}
+  <p style="margin:4px 0 0;font-size:0.7rem;color:#64748b;line-height:1.4;">
+    <strong style="color:{{ ondas_avanzada.srh_color }};">SRH</strong> · {{ ondas_avanzada.srh_detalle }}
+  </p>
+  {% endif %}
+  {% endif %}
+
+  {% if ondas_avanzada.qg and ondas_avanzada.qg.ok %}
+  {% with qg=ondas_avanzada.qg %}
+  <div class="tc-qg-block" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(51,65,85,0.85);">
+    <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px;">
+      <div>
+        <div style="font-size:0.66rem;letter-spacing:0.1em;color:#0284c7;font-weight:700;text-transform:uppercase;">Sistema cuasi-geostrófico (QG)</div>
+        <div style="font-size:0.75rem;color:#94a3b8;margin-top:2px;">Modelo sugerido: <strong style="color:#e2e8f0;">{{ qg.modelo_sugerido }}</strong> · f={{ qg.f_sci }} s⁻¹ ({{ qg.hemisferio }})</div>
+      </div>
+      <span style="font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid {{ qg.Ro_color }}66;color:{{ qg.Ro_color }};background:{{ qg.Ro_color }}18;">Ro={{ qg.Ro }} · {{ qg.Ro_label }}</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:12px;">
+      <div style="background:rgba(15,23,42,0.65);border:1px solid #334155;border-radius:10px;padding:8px 10px;">
+        <div style="font-size:0.6rem;color:#64748b;text-transform:uppercase;">U típica</div>
+        <div style="font-size:1.05rem;font-weight:800;color:#e2e8f0;font-family:ui-monospace,monospace;">{{ qg.U_ms|floatformat:0 }}</div>
+        <div style="font-size:0.65rem;color:#94a3b8;">m/s</div>
+      </div>
+      <div style="background:rgba(15,23,42,0.65);border:1px solid #334155;border-radius:10px;padding:8px 10px;">
+        <div style="font-size:0.6rem;color:#64748b;text-transform:uppercase;">Escala L</div>
+        <div style="font-size:1.05rem;font-weight:800;color:#e2e8f0;font-family:ui-monospace,monospace;">{{ qg.L_km|floatformat:0 }}</div>
+        <div style="font-size:0.65rem;color:#94a3b8;">km (ref.)</div>
+      </div>
+      <div style="background:rgba(15,23,42,0.65);border:1px solid #334155;border-radius:10px;padding:8px 10px;">
+        <div style="font-size:0.6rem;color:#64748b;text-transform:uppercase;">Rd estrat.</div>
+        <div style="font-size:1.05rem;font-weight:800;color:#c4b5fd;font-family:ui-monospace,monospace;">{{ qg.estratificada.Rd_km|floatformat:0 }}</div>
+        <div style="font-size:0.65rem;color:#94a3b8;">km · NH/|f|</div>
+      </div>
+      <div style="background:rgba(15,23,42,0.65);border:1px solid {{ qg.estratificada.Bu_color }}44;border-radius:10px;padding:8px 10px;">
+        <div style="font-size:0.6rem;color:#64748b;text-transform:uppercase;">Burger Bu</div>
+        <div style="font-size:1.05rem;font-weight:800;color:{{ qg.estratificada.Bu_color }};font-family:ui-monospace,monospace;">{{ qg.estratificada.Bu }}</div>
+        <div style="font-size:0.65rem;color:{{ qg.estratificada.Bu_color }};">{{ qg.estratificada.Bu_label }}</div>
+      </div>
+    </div>
+
+    {# Pestañas de modelos QG — default: estratificada #}
+    <div class="tc-qg-tabs" data-tc-qg-tabs>
+      <div role="tablist" aria-label="Modelos QG" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+        <button type="button" role="tab" aria-selected="true" data-tc-qg-tab="estrat" class="tc-qg-tab is-active"
+          style="cursor:pointer;border:1px solid rgba(196,181,253,0.45);background:rgba(196,181,253,0.14);color:#c4b5fd;font-size:0.72rem;font-weight:700;padding:7px 12px;border-radius:999px;min-height:36px;">
+          Estratificada
+        </button>
+        <button type="button" role="tab" aria-selected="false" data-tc-qg-tab="capa2" class="tc-qg-tab"
+          style="cursor:pointer;border:1px solid #334155;background:rgba(15,23,42,0.5);color:#94a3b8;font-size:0.72rem;font-weight:600;padding:7px 12px;border-radius:999px;min-height:36px;">
+          2 capas
+        </button>
+        <button type="button" role="tab" aria-selected="false" data-tc-qg-tab="capa1" class="tc-qg-tab"
+          style="cursor:pointer;border:1px solid #334155;background:rgba(15,23,42,0.5);color:#94a3b8;font-size:0.72rem;font-weight:600;padding:7px 12px;border-radius:999px;min-height:36px;">
+          1 capa
+        </button>
+      </div>
+
+      <div role="tabpanel" data-tc-qg-panel="estrat" class="tc-qg-panel">
+        <div class="tc-qg-card" style="position:relative;overflow:hidden;background:rgba(15,23,42,0.7);border:1px solid {{ qg.estratificada.color }}44;border-radius:12px;padding:14px 16px;min-height:120px;">
+          <div aria-hidden="true" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;padding:12px;z-index:0;">
+            <span style="font-family:ui-monospace,monospace;font-size:clamp(0.7rem,2.2vw,0.95rem);color:#94a3b8;opacity:0.35;text-align:center;line-height:1.45;user-select:none;">{{ qg.estratificada.ecuacion }}</span>
+          </div>
+          <div style="position:relative;z-index:1;">
+            <div style="font-size:0.68rem;font-weight:700;color:{{ qg.estratificada.color }};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">{{ qg.estratificada.titulo }}</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;font-size:0.8rem;">
+              <div><span style="color:#64748b;">N</span> <strong style="color:{{ qg.estratificada.N_color }};">{{ qg.estratificada.N }}</strong></div>
+              <div><span style="color:#64748b;">Rd</span> <strong style="color:#e2e8f0;">{{ qg.estratificada.Rd_km|floatformat:0 }} km</strong></div>
+              <div><span style="color:#64748b;">Bu</span> <strong style="color:{{ qg.estratificada.Bu_color }};">{{ qg.estratificada.Bu }}</strong></div>
+              <div><span style="color:#64748b;">H</span> <strong style="color:#e2e8f0;">{{ qg.estratificada.H_m }} m</strong></div>
+            </div>
+            <p style="margin:10px 0 0;font-size:0.7rem;color:#94a3b8;line-height:1.4;">{{ qg.estratificada.N_label }} · {{ qg.estratificada.nota }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div role="tabpanel" data-tc-qg-panel="capa2" class="tc-qg-panel" hidden>
+        <div class="tc-qg-card" style="position:relative;overflow:hidden;background:rgba(15,23,42,0.7);border:1px solid {{ qg.capa2.color }}44;border-radius:12px;padding:14px 16px;min-height:120px;">
+          <div aria-hidden="true" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;padding:12px;z-index:0;">
+            <span style="font-family:ui-monospace,monospace;font-size:clamp(0.7rem,2.2vw,0.95rem);color:#94a3b8;opacity:0.35;text-align:center;line-height:1.45;user-select:none;">{{ qg.capa2.ecuacion }}</span>
+          </div>
+          <div style="position:relative;z-index:1;">
+            <div style="font-size:0.68rem;font-weight:700;color:{{ qg.capa2.color }};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">{{ qg.capa2.titulo }}</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;font-size:0.8rem;">
+              <div><span style="color:#64748b;">g′</span> <strong style="color:#e2e8f0;">{{ qg.capa2.g_prime }}</strong></div>
+              <div><span style="color:#64748b;">Rdᵢ</span> <strong style="color:#e2e8f0;">{{ qg.capa2.Rd_int_km|floatformat:0 }} km</strong></div>
+              <div><span style="color:#64748b;">h₁/h₂</span> <strong style="color:#e2e8f0;">{{ qg.capa2.h1_m|floatformat:0 }}/{{ qg.capa2.h2_m|floatformat:0 }}</strong></div>
+              <div><span style="color:#64748b;">cᵢ</span> <strong style="color:#e2e8f0;">{{ qg.capa2.c_int_ms|floatformat:0 }} m/s</strong></div>
+            </div>
+            <p style="margin:10px 0 0;font-size:0.7rem;color:#94a3b8;line-height:1.4;">{{ qg.capa2.nota }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div role="tabpanel" data-tc-qg-panel="capa1" class="tc-qg-panel" hidden>
+        <div class="tc-qg-card" style="position:relative;overflow:hidden;background:rgba(15,23,42,0.7);border:1px solid {{ qg.capa1.color }}44;border-radius:12px;padding:14px 16px;min-height:120px;">
+          <div aria-hidden="true" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;padding:12px;z-index:0;">
+            <span style="font-family:ui-monospace,monospace;font-size:clamp(0.7rem,2.2vw,0.95rem);color:#94a3b8;opacity:0.35;text-align:center;line-height:1.45;user-select:none;">{{ qg.capa1.ecuacion }}</span>
+          </div>
+          <div style="position:relative;z-index:1;">
+            <div style="font-size:0.68rem;font-weight:700;color:{{ qg.capa1.color }};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">{{ qg.capa1.titulo }}</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;font-size:0.8rem;">
+              <div><span style="color:#64748b;">Rd</span> <strong style="color:#e2e8f0;">{{ qg.capa1.Rd_km|floatformat:0 }} km</strong></div>
+              <div><span style="color:#64748b;">H</span> <strong style="color:#e2e8f0;">{{ qg.capa1.H_m|floatformat:0 }} m</strong></div>
+              <div><span style="color:#64748b;">c</span> <strong style="color:#e2e8f0;">{{ qg.capa1.c_ms|floatformat:0 }} m/s</strong></div>
+              <div><span style="color:#64748b;">PV</span> <strong style="color:#e2e8f0;">{{ qg.capa1.PV }}</strong></div>
+            </div>
+            <p style="margin:10px 0 0;font-size:0.7rem;color:#94a3b8;line-height:1.4;">{{ qg.capa1.nota }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin:10px 0 0;font-size:0.68rem;color:#64748b;line-height:1.4;">{{ qg.nota_general }}</p>
+  </div>
+  <script>
+  (function () {
+    var root = document.querySelector('[data-tc-qg-tabs]');
+    if (!root || root.dataset.bound) return;
+    root.dataset.bound = '1';
+    var tabs = root.querySelectorAll('[data-tc-qg-tab]');
+    var panels = root.querySelectorAll('[data-tc-qg-panel]');
+    function activate(id) {
+      tabs.forEach(function (btn) {
+        var on = btn.getAttribute('data-tc-qg-tab') === id;
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+        btn.classList.toggle('is-active', on);
+        if (on) {
+          btn.style.borderColor = 'rgba(196,181,253,0.45)';
+          btn.style.background = 'rgba(196,181,253,0.14)';
+          btn.style.color = '#c4b5fd';
+          btn.style.fontWeight = '700';
+        } else {
+          btn.style.borderColor = '#334155';
+          btn.style.background = 'rgba(15,23,42,0.5)';
+          btn.style.color = '#94a3b8';
+          btn.style.fontWeight = '600';
+        }
+      });
+      panels.forEach(function (p) {
+        p.hidden = p.getAttribute('data-tc-qg-panel') !== id;
+      });
+    }
+    tabs.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        activate(btn.getAttribute('data-tc-qg-tab'));
+      });
+    });
+  })();
+  </script>
+  {% endwith %}
+  {% endif %}
+</div>
+{% elif not puede_ondas %}
+<div style="background:rgba(15,23,42,0.85);border:1px dashed rgba(56,189,248,0.35);border-radius:16px;padding:14px 16px;margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;font-family:'Segoe UI',system-ui,sans-serif;">
+  <div>
+    <div style="font-size:0.66rem;letter-spacing:0.1em;color:#0284c7;font-weight:700;text-transform:uppercase;">Ondas / dinámica</div>
+    <div style="font-size:0.85rem;color:#cbd5e1;margin-top:4px;">Fr, SRH, diagnósticos QG y olas/shear — desde <strong style="color:#38bdf8;">Plus</strong></div>
+  </div>
+  <a href="/pricing/" style="display:inline-flex;align-items:center;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;padding:10px 14px;border-radius:10px;text-decoration:none;font-size:0.82rem;font-weight:700;min-height:40px;">Ver planes →</a>
+</div>
+{% endif %}
+</div>

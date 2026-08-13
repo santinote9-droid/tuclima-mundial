@@ -1,0 +1,392 @@
+{# Circulación Hemisférica — zonales / storm tracks / jet (Pro IA+) #}
+<div id="pro-hemisferica">
+{% if puede_climatologia and hemisferica %}
+{% with storm=hemisferica.storm_tracks jet=hemisferica.jet %}
+<div class="tc-hemi-panel" style="background:linear-gradient(145deg,#0b1224 0%,#1a1030 55%,#0f172a 100%);border:1px solid rgba(244,114,182,0.28);border-radius:16px;padding:16px 18px;margin-bottom:14px;font-family:'Segoe UI',system-ui,sans-serif;position:relative;overflow:hidden;">
+  <div aria-hidden="true" style="position:absolute;inset:auto 12px 10px auto;font-size:1.05rem;color:rgba(244,114,182,0.28);font-family:'Times New Roman',Times,serif;pointer-events:none;user-select:none;">
+    \(\overline{v'T'}\) · \(U(p)\)
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:14px;">
+    <div>
+      <div style="font-size:0.66rem;letter-spacing:0.12em;color:#f472b6;font-weight:700;text-transform:uppercase;">Circulación Hemisférica · Dinámica</div>
+      <div style="font-size:0.82rem;color:#cbd5e1;margin-top:2px;">
+        Hemisferio {{ hemisferica.hemisferio_label|default:"—" }}
+        {% if hemisferica.desde %} · {{ hemisferica.desde }} → {{ hemisferica.hasta }}{% endif %}
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+      {% if enso and enso.ok %}
+      <span style="font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid {{ enso.color }}66;color:{{ enso.color }};background:{{ enso.color }}18;">ENSO · {{ enso.label }}</span>
+      {% endif %}
+      {% if storm and storm.ok %}
+      <span style="font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid {{ storm.color }}66;color:{{ storm.color }};background:{{ storm.color }}18;">Storm tracks · {{ storm.label }}</span>
+      {% endif %}
+      {% if jet and jet.ok %}
+      <span style="font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid {{ jet.color }}66;color:{{ jet.color }};background:{{ jet.color }}18;">{{ jet.estado }}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  {# —— Storm tracks (local) —— #}
+  {% if storm and storm.ok %}
+  <div style="margin-bottom:14px;padding:14px;border-radius:12px;background:rgba(15,23,42,0.55);border:1px solid rgba(251,146,60,0.28);">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-bottom:10px;">
+      <div>
+        <div style="font-size:0.66rem;letter-spacing:0.1em;color:#fb923c;font-weight:700;text-transform:uppercase;">Actividad de Storm Tracks</div>
+        <div style="font-size:0.78rem;color:#94a3b8;margin-top:2px;">Sobre tu punto · varianza high-pass (~5 d) de SLP y \(v\)</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:1.6rem;font-weight:800;color:{{ storm.color }};font-family:ui-monospace,monospace;line-height:1;">{{ storm.indice }}</div>
+        <div style="font-size:0.68rem;color:#94a3b8;">índice 0–100 · {{ storm.label }}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:10px;">
+      <div style="background:rgba(2,6,23,0.55);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">σ(SLP′)</div>
+        <div style="font-size:1.15rem;font-weight:800;color:#fdba74;font-family:ui-monospace,monospace;">{{ storm.sigma_slp }}</div>
+        <div style="font-size:0.68rem;color:#94a3b8;">hPa</div>
+      </div>
+      <div style="background:rgba(2,6,23,0.55);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">σ(v′)</div>
+        <div style="font-size:1.15rem;font-weight:800;color:#67e8f9;font-family:ui-monospace,monospace;">{{ storm.sigma_v }}</div>
+        <div style="font-size:0.68rem;color:#94a3b8;">m/s meridional</div>
+      </div>
+      <div style="background:rgba(2,6,23,0.55);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">Ventana</div>
+        <div style="font-size:0.95rem;font-weight:700;color:#e2e8f0;margin-top:4px;">{{ storm.desde }} → {{ storm.hasta }}</div>
+        <div style="font-size:0.68rem;color:#94a3b8;">{{ storm.n_horas }} h</div>
+      </div>
+    </div>
+    <canvas id="tcStormVarChart" height="110" aria-label="Varianza diaria SLP"></canvas>
+    {% if storm.nota %}<p style="margin:8px 0 0;font-size:0.7rem;color:#64748b;">{{ storm.nota }}</p>{% endif %}
+    {{ storm.dias_labels|json_script:"tc-storm-days" }}
+    {{ storm.var_slp_diaria|json_script:"tc-storm-var" }}
+  </div>
+  {% endif %}
+
+  {# —— Jet stream U —— #}
+  {% if jet and jet.ok %}
+  <div style="margin-bottom:14px;padding:14px;border-radius:12px;background:rgba(15,23,42,0.55);border:1px solid rgba(56,189,248,0.28);">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-bottom:10px;">
+      <div>
+        <div style="font-size:0.66rem;letter-spacing:0.1em;color:#38bdf8;font-weight:700;text-transform:uppercase;">Corriente en chorro · \(U(p)\)</div>
+        <div style="font-size:0.78rem;color:#94a3b8;margin-top:2px;">Perfil vertical + sección tiempo–presión (sfc → 200 hPa)</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:1.15rem;font-weight:800;color:{{ jet.color }};font-family:ui-monospace,monospace;">
+          {% if jet.jet_U_kt != None %}{{ jet.jet_U_kt }} kt{% else %}—{% endif %}
+          {% if jet.jet_hPa %} @ {{ jet.jet_hPa }} hPa{% endif %}
+        </div>
+        {% if jet.meridional and jet.meridional.ok %}
+        <div style="font-size:0.68rem;color:#94a3b8;">Núcleo U250 ≈ lat {{ jet.meridional.jet_lat }}° (vos {{ hemisferica.lat_usuario }}°)</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:12px;">
+      <div>
+        <div style="font-size:0.72rem;font-weight:700;color:#7dd3fc;margin-bottom:6px;">Perfil \(U\) ahora vs media 7 d</div>
+        <canvas id="tcJetPerfilChart" height="200" aria-label="Perfil vertical U"></canvas>
+      </div>
+      <div>
+        <div style="font-size:0.72rem;font-weight:700;color:#7dd3fc;margin-bottom:6px;">U @ 250 hPa vs latitud (tu meridiano)</div>
+        <canvas id="tcJetMeridChart" height="200" aria-label="Perfil meridional U250"></canvas>
+      </div>
+    </div>
+
+    <div style="font-size:0.72rem;font-weight:700;color:#7dd3fc;margin-bottom:6px;">Sección tiempo–presión de \(U\) (kt) · paso 6 h</div>
+    <div style="position:relative;width:100%;overflow-x:auto;">
+      <canvas id="tcJetHeatmap" width="720" height="260" style="width:100%;max-width:720px;height:auto;display:block;" aria-label="Heatmap U tiempo-presión"></canvas>
+    </div>
+    <div id="tcJetHeatLegend" style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:0.65rem;color:#64748b;"></div>
+    {% if jet.nota %}<p style="margin:8px 0 0;font-size:0.7rem;color:#64748b;">{{ jet.nota }}</p>{% endif %}
+
+    {{ jet.levels_hPa|json_script:"tc-jet-levels" }}
+    {{ jet.level_labels|json_script:"tc-jet-llab" }}
+    {{ jet.perfil_ahora_kt|json_script:"tc-jet-now" }}
+    {{ jet.perfil_media_kt|json_script:"tc-jet-mean" }}
+    {{ jet.times|json_script:"tc-jet-times" }}
+    {{ jet.U_kt_matrix|json_script:"tc-jet-matrix" }}
+    {% if jet.meridional and jet.meridional.ok %}
+    {{ jet.meridional.lats|json_script:"tc-jet-mlats" }}
+    {{ jet.meridional.U250_kt|json_script:"tc-jet-mu" }}
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {# —— Bloque zonal v'T' —— #}
+  {% if hemisferica.lats %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px;">
+    <div style="background:rgba(15,23,42,0.72);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">Pico v′T′ → polo</div>
+      <div style="font-size:1.25rem;font-weight:800;color:#f9a8d4;font-family:ui-monospace,monospace;">{{ hemisferica.pico_vt }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">K·m/s · lat {{ hemisferica.pico_lat }}°</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.72);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">vs clima del mes</div>
+      <div style="font-size:1.25rem;font-weight:800;color:{{ hemisferica.color }};font-family:ui-monospace,monospace;">{% if hemisferica.ratio_clima %}×{{ hemisferica.ratio_clima }}{% else %}—{% endif %}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">{{ hemisferica.estado }}</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.72);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">Malla zonal</div>
+      <div style="font-size:1.25rem;font-weight:800;color:#e2e8f0;font-family:ui-monospace,monospace;">{{ hemisferica.n_lons }}×{{ hemisferica.lats|length }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">{{ hemisferica.n_dias }} días</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr;gap:12px;">
+    <div style="background:rgba(15,23,42,0.55);border:1px solid #334155;border-radius:12px;padding:12px 14px;">
+      <div style="font-size:0.72rem;font-weight:700;color:#fda4af;margin-bottom:6px;">Perfil meridional · flujo de calor hacia el polo</div>
+      <canvas id="tcHemiVtChart" height="160"></canvas>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">
+      <div style="background:rgba(15,23,42,0.55);border:1px solid #334155;border-radius:12px;padding:12px 14px;">
+        <div style="font-size:0.72rem;font-weight:700;color:#67e8f9;margin-bottom:6px;">Temperatura zonal media</div>
+        <canvas id="tcHemiTChart" height="140"></canvas>
+      </div>
+      <div style="background:rgba(15,23,42,0.55);border:1px solid #334155;border-radius:12px;padding:12px 14px;">
+        <div style="font-size:0.72rem;font-weight:700;color:#c4b5fd;margin-bottom:6px;">Ciclo estacional tipificado</div>
+        <canvas id="tcHemiClimChart" height="140"></canvas>
+      </div>
+    </div>
+  </div>
+  {{ hemisferica.lats|json_script:"tc-hemi-lats" }}
+  {{ hemisferica.vt_polo|json_script:"tc-hemi-vt" }}
+  {{ hemisferica.T_zonal|json_script:"tc-hemi-tz" }}
+  {% if hemisferica.ciclo %}
+  {{ hemisferica.ciclo.labels|json_script:"tc-hemi-clab" }}
+  {{ hemisferica.ciclo.valores|json_script:"tc-hemi-cval" }}
+  {% endif %}
+  {% elif hemisferica.error %}
+  <p style="margin:0 0 10px;font-size:0.82rem;color:#94a3b8;">Zonal v′T′: {{ hemisferica.error }}</p>
+  {% endif %}
+
+  <div style="margin-top:14px;padding:12px 14px;border-radius:12px;background:rgba(15,23,42,0.45);border:1px solid rgba(51,65,85,0.9);">
+    <div style="font-size:0.72rem;font-weight:700;color:#e2e8f0;margin-bottom:4px;">Escalas</div>
+    <p style="margin:0;font-size:0.78rem;color:#94a3b8;line-height:1.45;">
+      <strong style="color:#cbd5e1;">Storm tracks</strong> y el chorro son diagnósticos del <em>punto / meridiano</em>.
+      \(\overline{v'T'}\) sigue siendo hemisférico (promedio zonal). Climatología local queda aparte.
+    </p>
+  </div>
+</div>
+
+<script>
+(function () {
+  function read(id) {
+    var n = document.getElementById(id);
+    if (!n) return null;
+    try { return JSON.parse(n.textContent); } catch (e) { return null; }
+  }
+  var tick = { color: '#94a3b8', font: { size: 10 } };
+  var grid = { color: 'rgba(51,65,85,0.7)' };
+
+  /* Storm tracks sparkline */
+  if (typeof Chart !== 'undefined') {
+    var sDays = read('tc-storm-days') || [];
+    var sVar = read('tc-storm-var') || [];
+    var elS = document.getElementById('tcStormVarChart');
+    if (elS && sDays.length && !elS.dataset.ready) {
+      elS.dataset.ready = '1';
+      new Chart(elS, {
+        type: 'bar',
+        data: { labels: sDays, datasets: [{ data: sVar, backgroundColor: 'rgba(251,146,60,0.55)', borderRadius: 3 }] },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false }, title: { display: true, text: 'Varianza diaria de SLP′ (hPa²)', color: '#64748b', font: { size: 11 } } },
+          scales: { x: { ticks: tick, grid: { display: false } }, y: { ticks: tick, grid: grid } }
+        }
+      });
+    }
+
+    /* Jet perfil vertical: U en X, nivel en Y (categoría invertida) */
+    var levels = read('tc-jet-levels') || [];
+    var llab = read('tc-jet-llab') || [];
+    var nowU = read('tc-jet-now') || [];
+    var meanU = read('tc-jet-mean') || [];
+    var elP = document.getElementById('tcJetPerfilChart');
+    if (elP && levels.length && !elP.dataset.ready) {
+      elP.dataset.ready = '1';
+      new Chart(elP, {
+        type: 'line',
+        data: {
+          labels: llab.length ? llab : levels,
+          datasets: [
+            { label: 'Ahora', data: nowU, borderColor: '#38bdf8', backgroundColor: 'transparent', borderWidth: 2.5, pointRadius: 3, tension: 0.2 },
+            { label: 'Media 7d', data: meanU, borderColor: '#64748b', borderDash: [5, 4], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: 0.2 }
+          ]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12, font: { size: 10 } } } },
+          scales: {
+            x: { ticks: tick, grid: grid, title: { display: true, text: 'U (kt)', color: '#64748b', font: { size: 10 } } },
+            y: { ticks: tick, grid: { display: false }, reverse: false }
+          }
+        }
+      });
+    }
+
+    var mLats = read('tc-jet-mlats') || [];
+    var mU = read('tc-jet-mu') || [];
+    var elM = document.getElementById('tcJetMeridChart');
+    if (elM && mLats.length && !elM.dataset.ready) {
+      elM.dataset.ready = '1';
+      new Chart(elM, {
+        type: 'line',
+        data: {
+          labels: mLats,
+          datasets: [{ data: mU, borderColor: '#22d3ee', backgroundColor: 'rgba(34,211,238,0.12)', fill: true, tension: 0.25, pointRadius: 3, borderWidth: 2 }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: tick, grid: { display: false }, title: { display: true, text: 'Latitud (°)', color: '#64748b', font: { size: 10 } } },
+            y: { ticks: tick, grid: grid, title: { display: true, text: 'U250 (kt)', color: '#64748b', font: { size: 10 } } }
+          }
+        }
+      });
+    }
+
+    /* Zonal charts */
+    var lats = read('tc-hemi-lats') || [];
+    var vt = read('tc-hemi-vt') || [];
+    var Tz = read('tc-hemi-tz') || [];
+    function line(id, labels, data, color, yLabel) {
+      var el = document.getElementById(id);
+      if (!el || !labels.length || el.dataset.ready) return;
+      el.dataset.ready = '1';
+      new Chart(el, {
+        type: 'line',
+        data: { labels: labels, datasets: [{ data: data, borderColor: color, backgroundColor: color + '22', fill: true, tension: 0.28, pointRadius: 3, borderWidth: 2 }] },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: tick, grid: { display: false }, title: { display: true, text: 'Latitud (°)', color: '#64748b', font: { size: 10 } } },
+            y: { ticks: tick, grid: grid, title: { display: !!yLabel, text: yLabel || '', color: '#64748b', font: { size: 10 } } }
+          }
+        }
+      });
+    }
+    line('tcHemiVtChart', lats, vt, '#f472b6', 'K·m/s → polo');
+    line('tcHemiTChart', lats, Tz, '#22d3ee', '°C');
+    var climLabels = read('tc-hemi-clab') || [];
+    var climVals = read('tc-hemi-cval') || [];
+    var mesIdx = {{ hemisferica.ciclo.mes_actual|default:1 }} - 1;
+    var elC = document.getElementById('tcHemiClimChart');
+    if (elC && climLabels.length && !elC.dataset.ready) {
+      elC.dataset.ready = '1';
+      new Chart(elC, {
+        type: 'bar',
+        data: { labels: climLabels, datasets: [{ data: climVals, backgroundColor: climVals.map(function (_, i) { return i === mesIdx ? '#f9a8d4' : '#64748b'; }), borderRadius: 4 }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: tick, grid: { display: false } }, y: { ticks: tick, grid: grid } } }
+      });
+    }
+  }
+
+  /* Heatmap canvas U(t,p) */
+  (function drawHeat() {
+    var canvas = document.getElementById('tcJetHeatmap');
+    var matrix = read('tc-jet-matrix');
+    var times = read('tc-jet-times') || [];
+    var labs = read('tc-jet-llab') || [];
+    if (!canvas || !matrix || !matrix.length) return;
+    var rows = matrix.length;
+    var cols = (matrix[0] || []).length;
+    if (!cols) return;
+
+    var padL = 52, padR = 10, padT = 8, padB = 36;
+    var W = canvas.width, H = canvas.height;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, W, H);
+
+    var vals = [];
+    for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+      var v = matrix[r][c];
+      if (v != null && !isNaN(v)) vals.push(v);
+    }
+    if (!vals.length) return;
+    var vmin = Math.min.apply(null, vals);
+    var vmax = Math.max.apply(null, vals);
+    if (vmax === vmin) vmax = vmin + 1;
+
+    function color(u) {
+      // azul (este débil/neg) → cian → amarillo → rojo (oeste fuerte)
+      var t = (u - vmin) / (vmax - vmin);
+      t = Math.max(0, Math.min(1, t));
+      var stops = [
+        [15, 23, 42],
+        [30, 64, 175],
+        [34, 211, 238],
+        [250, 204, 21],
+        [239, 68, 68]
+      ];
+      var x = t * (stops.length - 1);
+      var i = Math.floor(x);
+      var f = x - i;
+      var a = stops[i], b = stops[Math.min(i + 1, stops.length - 1)];
+      var R = Math.round(a[0] + (b[0] - a[0]) * f);
+      var G = Math.round(a[1] + (b[1] - a[1]) * f);
+      var B = Math.round(a[2] + (b[2] - a[2]) * f);
+      return 'rgb(' + R + ',' + G + ',' + B + ')';
+    }
+
+    var cellW = (W - padL - padR) / cols;
+    var cellH = (H - padT - padB) / rows;
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var u = matrix[r][c];
+        ctx.fillStyle = (u == null) ? '#1e293b' : color(u);
+        ctx.fillRect(padL + c * cellW, padT + r * cellH, Math.ceil(cellW) + 0.5, Math.ceil(cellH) + 0.5);
+      }
+    }
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '10px Segoe UI, system-ui, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var r = 0; r < rows; r++) {
+      ctx.fillText(labs[r] || '', padL - 6, padT + (r + 0.5) * cellH);
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    var step = Math.max(1, Math.floor(cols / 8));
+    for (var c = 0; c < cols; c += step) {
+      ctx.fillText(times[c] || '', padL + (c + 0.5) * cellW, H - padB + 6);
+    }
+
+    var leg = document.getElementById('tcJetHeatLegend');
+    if (leg) {
+      leg.innerHTML = '<span>U (kt)</span><span style="flex:1;height:8px;border-radius:4px;background:linear-gradient(90deg,#1e40af,#22d3ee,#facc15,#ef4444);"></span>' +
+        '<span>' + Math.round(vmin) + '</span><span>' + Math.round(vmax) + '</span>';
+    }
+  })();
+})();
+</script>
+{% endwith %}
+{% elif puede_climatologia %}
+<div style="background:#0f172a;border:1px solid #334155;border-radius:14px;padding:16px;color:#94a3b8;font-size:0.88rem;">
+  No hay diagnóstico hemisférico en contexto. Abrí esta pantalla desde el menú PRO.
+</div>
+{% else %}
+<div style="background:linear-gradient(135deg,#0f172a,#1e1b4b);border:1px solid rgba(167,139,250,0.25);border-radius:14px;padding:18px;text-align:center;">
+  <div style="font-size:0.7rem;letter-spacing:0.1em;color:#a78bfa;font-weight:700;text-transform:uppercase;margin-bottom:6px;">Pro IA+</div>
+  <p style="margin:0;color:#cbd5e1;font-size:0.9rem;">Circulación Hemisférica requiere plan Pro IA o Power.</p>
+  <a href="/pricing/" style="display:inline-block;margin-top:12px;padding:8px 14px;border-radius:10px;background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.4);color:#c4b5fd;text-decoration:none;font-weight:700;font-size:0.85rem;">Ver planes</a>
+</div>
+{% endif %}
+</div>
+<script>
+(function () {
+  if (window.MathJax && window.MathJax.typesetPromise) return;
+  window.MathJax = { tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] } };
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js';
+  s.async = true;
+  document.head.appendChild(s);
+})();
+</script>

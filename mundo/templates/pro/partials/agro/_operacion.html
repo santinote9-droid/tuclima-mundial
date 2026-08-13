@@ -1,0 +1,73 @@
+{% include 'partials/_badge_operabilidad.html' %}
+{% if alerta_banner.activo %}<div id="tc-alert-banner" style="background:{{ alerta_banner.color }}; border:1px solid {{ alerta_banner.borde }}; border-radius:12px; padding:11px 16px; margin-bottom:14px; display:flex; align-items:flex-start; gap:10px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ alerta_banner.texto }}" stroke-width="2.5" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span style="flex:1; font-size:0.82rem; font-weight:600; color:{{ alerta_banner.texto }}; line-height:1.45; font-family:'Segoe UI',system-ui,sans-serif;">{{ alerta_banner.mensaje }}</span><button onclick="document.getElementById('tc-alert-banner').style.display='none'" style="background:none; border:none; color:{{ alerta_banner.texto }}; opacity:0.65; cursor:pointer; font-size:1.2rem; line-height:1; padding:0; flex-shrink:0;">&times;</button></div>{% endif %}
+<div id="pro-operacion" style="background:linear-gradient(135deg,#0f172a,#1e293b); border:1px solid rgba(51,65,85,0.4); border-radius:16px; padding:16px 20px; margin-bottom:12px;">
+    <div style="font-size:0.66rem; letter-spacing:0.12em; color:#475569; font-weight:700; margin-bottom:12px; text-transform:uppercase; display:flex; align-items:center; gap:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><rect x="6" y="1" width="12" height="22" rx="3" fill="#1e293b" stroke="#475569" stroke-width="1.5"/><circle cx="12" cy="7" r="3" fill="#ef4444"/><circle cx="12" cy="12" r="3" fill="#facc15"/><circle cx="12" cy="17" r="3" fill="#4ade80"/></svg> Semáforo de Riesgo Operacional</div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {{ pulverizacion.color }}33; border-left:3px solid {{ pulverizacion.color }}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Pulverización</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{{ pulverizacion.color }}; box-shadow:0 0 7px {{ pulverizacion.color }}90; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{{ pulverizacion.color }}; font-size:0.82rem;">{{ pulverizacion.estado }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">Δ T: {{ pulverizacion.delta_t }}</div>
+      </div>
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {{ estres.color }}33; border-left:3px solid {{ estres.color }}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Estrés VPD</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{{ estres.color }}; box-shadow:0 0 7px {{ estres.color }}90; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{{ estres.color }}; font-size:0.82rem;">{{ estres.estado }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">{{ estres.vpd }} kPa</div>
+      </div>
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {{ balance.color_diff }}33; border-left:3px solid {{ balance.color_diff }}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Balance Hídrico</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{{ balance.color_diff }}; box-shadow:0 0 7px {{ balance.color_diff }}90; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{{ balance.color_diff }}; font-size:0.82rem;">{% if balance.diff >= 0 %}SUPERÁVIT{% else %}DÉFICIT{% endif %}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">Neto: {% if balance.diff > 0 %}+{% endif %}{{ balance.diff }} mm</div>
+      </div>
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid #fbbf2433; border-left:3px solid #fbbf24; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Crecimiento GDD</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:#fbbf24; box-shadow:0 0 7px #fbbf2490; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:#fbbf24; font-size:0.82rem;">{{ gdd.estado|upper }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">{{ gdd.valor }} G-Día</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 2. 
+<div id="pro-herramientas" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+    <button onclick="enviarAccionRapida('Generá un reporte PDF con los parámetros agronómicos actuales: Delta T, VPD, balance hídrico y pronóstico extendido. Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(30,58,95,0.8); border:1px solid rgba(59,130,246,0.4); color:#93c5fd; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#1d4ed8';this.style.color='#fff'" onmouseout="this.style.background='rgba(30,58,95,0.8)';this.style.color='#93c5fd'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Generar PDF</button>
+    {% if puede_excel %}
+    <button onclick="enviarAccionRapida('Generá un Excel con el balance hídrico diario, ETo y pronóstico de lluvia de los próximos 14 días. Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(20,83,45,0.8); border:1px solid rgba(74,222,128,0.4); color:#86efac; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#16a34a';this.style.color='#fff'" onmouseout="this.style.background='rgba(20,83,45,0.8)';this.style.color='#86efac'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg> Generar Excel</button>
+    {% else %}
+    <a href="/pricing/" style="display:flex; align-items:center; gap:7px; background:rgba(15,23,42,0.6); border:1px solid rgba(51,65,85,0.5); color:#64748b; padding:9px 16px; border-radius:10px; cursor:not-allowed; font-size:0.83rem; font-weight:600; font-family:inherit; text-decoration:none;" title="Disponible desde plan Plus — Actualizá tu plan"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Excel — Plan Plus+</a>
+    {% endif %}
+    <button onclick="enviarAccionRapida('¿Cuáles son las condiciones y recomendaciones agrícolas para hoy basándote en los datos actuales? Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(59,27,107,0.8); border:1px solid rgba(167,139,250,0.4); color:#c4b5fd; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#7c3aed';this.style.color='#fff'" onmouseout="this.style.background='rgba(59,27,107,0.8)';this.style.color='#c4b5fd'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><path d="M17 8C8 10 5.9 16.17 3.82 19.04c-.82 1.1.6 2.5 1.58 1.39C7 18 7.5 17 12 17c5 0 10-3 10-9-4.5 0-8.17 1.62-12 5 2-4 2.5-7.5 7-8z"/></svg> Análisis Rápido</button>
+  </div>
+
+  <!-- ── 3. TIMELINE PRÓXIMAS 24H ── -->
+  <div style="background:linear-gradient(135deg,#0f172a,#1e293b); border:1px solid rgba(51,65,85,0.4); border-radius:16px; padding:16px 20px; overflow:hidden;">
+    <div style="font-size:0.66rem; letter-spacing:0.12em; color:#475569; font-weight:700; margin-bottom:12px; text-transform:uppercase; display:flex; align-items:center; gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Tendencia Próximas 24h</div>
+    <div class="tc-scroll-x" style="display:flex; gap:8px;">
+      {% for h in tira_24h %}
+      <div style="flex-shrink:0; background:{% if forloop.first %}rgba(15,23,42,0.95){% else %}rgba(15,23,42,0.7){% endif %}; border:1px solid {% if forloop.first %}rgba(99,102,241,0.5){% else %}rgba(51,65,85,0.3){% endif %}; border-radius:10px; padding:10px 11px; text-align:center; min-width:72px;">
+        <div style="font-size:0.6rem; color:{% if forloop.first %}#818cf8{% else %}#64748b{% endif %}; font-weight:700; margin-bottom:5px; white-space:nowrap;">{{ h.hora }}</div>
+        <div style="display:flex; justify-content:center; align-items:center; height:22px; margin-bottom:4px;">{% if h.code <= 1 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></svg>{% elif h.code == 2 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="15" cy="9" r="4" stroke="#fbbf24"/><path d="M9 19H5a3 3 0 0 1 0-6h.26A6 6 0 0 1 18 14" stroke="#94a3b8"/></svg>{% elif h.code == 3 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>{% elif h.code <= 49 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><line x1="3" y1="8" x2="21" y2="8"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="5" y1="16" x2="19" y2="16"/></svg>{% elif h.code <= 69 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="12" y1="17" x2="12" y2="19"/><line x1="16" y1="19" x2="16" y2="21"/></svg>{% elif h.code <= 79 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="8" y1="19" x2="6" y2="17"/><line x1="8" y1="19" x2="10" y2="17"/><line x1="16" y1="19" x2="16" y2="21"/><line x1="16" y1="19" x2="14" y2="17"/><line x1="16" y1="19" x2="18" y2="17"/></svg>{% elif h.code <= 82 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="12" y1="17" x2="12" y2="19"/><line x1="16" y1="19" x2="16" y2="21"/></svg>{% else %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.9" stroke="#ef4444"/><polyline points="13 11 9 17 15 17 11 23" stroke="#facc15"/></svg>{% endif %}</div>
+        <div style="font-size:0.82rem; font-weight:700; color:#f1f5f9;">{{ h.temp }}°</div>
+        <div style="font-size:0.65rem; color:{% if h.lluvia > 60 %}#60a5fa{% elif h.lluvia > 30 %}#facc15{% else %}#475569{% endif %}; margin-top:2px;">{{ h.lluvia }}%</div>
+      </div>
+      {% empty %}<div style="color:#475569; font-size:0.8rem; padding:10px;">Sin datos</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  

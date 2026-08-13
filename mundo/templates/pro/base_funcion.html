@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}{{ pro_titulo }} · TuClima Pro{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { background:#020617; color:#e2e8f0; margin:0; font-family:'Segoe UI',system-ui,-apple-system,sans-serif; }
+  .tc-pro-page { max-width:960px; margin:0 auto; padding:16px 16px 120px; box-sizing:border-box; }
+  .tc-pro-page-head { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:18px; }
+  .tc-pro-page-head a.back {
+    display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+    color:#94a3b8; font-size:0.82rem; font-weight:600; padding:8px 12px; min-height:40px;
+    border:1px solid #334155; border-radius:10px; background:rgba(15,23,42,0.85);
+  }
+  .tc-pro-page-head a.back:hover { color:#67e8f9; border-color:#22d3ee; }
+  .tc-pro-page-head h1 { margin:0; font-size:1.15rem; font-weight:800; color:#f1f5f9; letter-spacing:0.02em; }
+  .tc-pro-page-head .meta { margin-left:auto; font-size:0.72rem; color:#64748b; }
+</style>
+{% include 'partials/_pro_ui_polish.html' %}
+{% endblock %}
+{% block content %}
+{% include 'partials/_nav_secciones.html' with tc_activo=pro_sector %}
+{% include 'partials/_menu_pro_interno.html' with sector=pro_sector %}
+<div class="tc-pro-page{% if pro_funcion == 'estadistica' %} tc-pro-page--wide{% endif %}">
+  <div class="tc-pro-page-head">
+    <a class="back" href="/{{ pro_sector }}/?lat={{ lat }}&lon={{ lon }}">← Panel {{ pro_sector|title }}</a>
+    <h1>{{ pro_titulo }}</h1>
+    <div class="meta">lat {{ lat|floatformat:3 }} · lon {{ lon|floatformat:3 }}</div>
+  </div>
+  {% block pro_body %}{% endblock %}
+</div>
+<script>
+/* Acciones PDF/Excel desde pantallas de función → vuelven al hub con chat */
+window.enviarAccionRapida = window.enviarAccionRapida || function (msg) {
+  try { sessionStorage.setItem('tc_pro_quick', msg || ''); } catch (e) {}
+  var lat = '{{ lat }}';
+  var lon = '{{ lon }}';
+  var sector = '{{ pro_sector }}';
+  window.location.href = '/' + sector + '/?lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lon) + '&open_chat=1';
+};
+</script>
+{% endblock %}

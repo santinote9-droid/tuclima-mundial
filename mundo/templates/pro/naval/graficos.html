@@ -1,0 +1,11 @@
+{% extends 'pro/base_funcion.html' %}
+{% block pro_body %}
+
+<div style="background:linear-gradient(135deg,#0f172a,#1e293b);border:1px solid rgba(56,189,248,0.25);border-radius:16px;padding:18px;">
+  <p style="margin:0 0 10px;color:#94a3b8;font-size:0.85rem;line-height:1.5;">Los gráficos principales del modo viven en el panel general. Desde acá podés ir al monitor operativo o a la estadística avanzada.</p>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;">
+    <a href="/naval/?lat={{ lat }}&lon={{ lon }}#grafico" style="display:inline-flex;align-items:center;min-height:40px;padding:8px 14px;border-radius:10px;border:1px solid rgba(56,189,248,0.35);color:#67e8f9;text-decoration:none;font-weight:700;font-size:0.82rem;">Ver gráfico del panel</a>
+    <a href="/naval/estadistica/?lat={{ lat }}&lon={{ lon }}" style="display:inline-flex;align-items:center;min-height:40px;padding:8px 14px;border-radius:10px;border:1px solid rgba(167,139,250,0.35);color:#c4b5fd;text-decoration:none;font-weight:700;font-size:0.82rem;">Estadística avanzada</a>
+  </div>
+</div>
+{% endblock %}

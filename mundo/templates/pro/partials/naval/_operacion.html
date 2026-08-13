@@ -1,0 +1,73 @@
+{% include 'partials/_badge_operabilidad.html' %}
+{% if alerta_banner.activo %}<div id="tc-alert-banner" style="background:{{ alerta_banner.color }}; border:1px solid {{ alerta_banner.borde }}; border-radius:12px; padding:11px 16px; margin-bottom:14px; display:flex; align-items:flex-start; gap:10px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ alerta_banner.texto }}" stroke-width="2.5" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span style="flex:1; font-size:0.82rem; font-weight:600; color:{{ alerta_banner.texto }}; line-height:1.45; font-family:'Segoe UI',system-ui,sans-serif;">{{ alerta_banner.mensaje }}</span><button onclick="document.getElementById('tc-alert-banner').style.display='none'" style="background:none; border:none; color:{{ alerta_banner.texto }}; opacity:0.65; cursor:pointer; font-size:1.2rem; line-height:1; padding:0; flex-shrink:0;">&times;</button></div>{% endif %}
+<div id="pro-operacion" style="background:linear-gradient(135deg,#0f172a,#0c1a2e); border:1px solid rgba(30,58,138,0.5); border-radius:16px; padding:16px 20px; margin-bottom:12px;">
+    <div style="font-size:0.66rem; letter-spacing:0.12em; color:#475569; font-weight:700; margin-bottom:12px; text-transform:uppercase; display:flex; align-items:center; gap:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><rect x="6" y="1" width="12" height="22" rx="3" fill="#0c1a2e" stroke="#1e3a8a" stroke-width="1.5"/><circle cx="12" cy="7" r="3" fill="#ef4444"/><circle cx="12" cy="12" r="3" fill="#facc15"/><circle cx="12" cy="17" r="3" fill="#4ade80"/></svg> Semáforo de Condición Naval</div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {{ status.color }}33; border-left:3px solid {{ status.color }}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Estado Puerto</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{{ status.color }}; box-shadow:0 0 7px {{ status.color }}90; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{{ status.color }}; font-size:0.82rem;">{{ status.msg }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">Oleaje {{ mar.altura }}m</div>
+      </div>
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {% if mar.douglas >= 5 %}#ef444433{% elif mar.douglas >= 3 %}#facc1533{% else %}#4ade8033{% endif %}; border-left:3px solid {% if mar.douglas >= 5 %}#ef4444{% elif mar.douglas >= 3 %}#facc15{% else %}#4ade80{% endif %}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Estado del Mar</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{% if mar.douglas >= 5 %}#ef4444{% elif mar.douglas >= 3 %}#facc15{% else %}#4ade80{% endif %}; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{% if mar.douglas >= 5 %}#ef4444{% elif mar.douglas >= 3 %}#facc15{% else %}#4ade80{% endif %}; font-size:0.82rem;">{{ mar.estado|upper }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">Douglas {{ mar.douglas }} · {{ mar.altura }}m</div>
+      </div>
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {% if viento.beaufort >= 7 %}#ef444433{% elif viento.beaufort >= 4 %}#facc1533{% else %}#4ade8033{% endif %}; border-left:3px solid {% if viento.beaufort >= 7 %}#ef4444{% elif viento.beaufort >= 4 %}#facc15{% else %}#4ade80{% endif %}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Viento</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{% if viento.beaufort >= 7 %}#ef4444{% elif viento.beaufort >= 4 %}#facc15{% else %}#4ade80{% endif %}; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{% if viento.beaufort >= 7 %}#ef4444{% elif viento.beaufort >= 4 %}#facc15{% else %}#4ade80{% endif %}; font-size:0.82rem;">B{{ viento.beaufort }} · {{ viento.desc|upper }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">{{ viento.kt }} kt · Ráfagas {{ viento.rafaga }} kt</div>
+      </div>
+
+      <div style="flex:1; min-width:140px; background:rgba(15,23,42,0.8); border:1px solid {% if nav.vis_nm < 1 %}#ef444433{% elif nav.vis_nm < 3 %}#facc1533{% else %}#4ade8033{% endif %}; border-left:3px solid {% if nav.vis_nm < 1 %}#ef4444{% elif nav.vis_nm < 3 %}#facc15{% else %}#4ade80{% endif %}; border-radius:10px; padding:11px 14px;">
+        <div style="font-size:0.6rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Visibilidad</div>
+        <div style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{% if nav.vis_nm < 1 %}#ef4444{% elif nav.vis_nm < 3 %}#facc15{% else %}#4ade80{% endif %}; display:inline-block; flex-shrink:0;"></span>
+          <span style="font-weight:700; color:{% if nav.vis_nm < 1 %}#ef4444{% elif nav.vis_nm < 3 %}#facc15{% else %}#4ade80{% endif %}; font-size:0.82rem;">{{ nav.cond_vis }}</span>
+        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:3px;">{{ nav.vis_nm }} NM</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 2. 
+<div id="pro-herramientas" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+    <button onclick="enviarAccionRapida('Generá un reporte PDF náutico con estado del mar, viento, visibilidad y estimación de temperatura del agua actual. Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(12,26,46,0.9); border:1px solid rgba(59,130,246,0.4); color:#93c5fd; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#1d4ed8';this.style.color='#fff'" onmouseout="this.style.background='rgba(12,26,46,0.9)';this.style.color='#93c5fd'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Generar PDF</button>
+    {% if puede_excel %}
+    <button onclick="enviarAccionRapida('Generá un Excel con la evolución horaria del oleaje y el viento para las próximas 24 horas. Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(12,26,46,0.9); border:1px solid rgba(74,222,128,0.4); color:#86efac; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#16a34a';this.style.color='#fff'" onmouseout="this.style.background='rgba(12,26,46,0.9)';this.style.color='#86efac'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg> Generar Excel</button>
+    {% else %}
+    <a href="/pricing/" style="display:flex; align-items:center; gap:7px; background:rgba(15,23,42,0.6); border:1px solid rgba(51,65,85,0.5); color:#64748b; padding:9px 16px; border-radius:10px; cursor:not-allowed; font-size:0.83rem; font-weight:600; font-family:inherit; text-decoration:none;" title="Disponible desde plan Plus — Actualizá tu plan"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Excel — Plan Plus+</a>
+    {% endif %}
+    <button onclick="enviarAccionRapida('¿Cuáles son las condiciones náuticas actuales y la recomendación de operación para hoy? Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(12,26,46,0.9); border:1px solid rgba(167,139,250,0.4); color:#c4b5fd; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#1e40af';this.style.color='#fff'" onmouseout="this.style.background='rgba(12,26,46,0.9)';this.style.color='#c4b5fd'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></svg> Parte de Puerto</button>
+  </div>
+
+  <!-- ── 3. TIMELINE PRÓXIMAS 24H ── -->
+  <div style="background:linear-gradient(135deg,#0f172a,#0c1a2e); border:1px solid rgba(30,58,138,0.4); border-radius:16px; padding:16px 20px; overflow:hidden;">
+    <div style="font-size:0.66rem; letter-spacing:0.12em; color:#475569; font-weight:700; margin-bottom:12px; text-transform:uppercase; display:flex; align-items:center; gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Tendencia Océano-Viento · Próximas 24h</div>
+    <div class="tc-scroll-x" style="display:flex; gap:8px;">
+      {% for h in tira_24h %}
+      <div style="flex-shrink:0; background:{% if forloop.first %}rgba(15,23,42,0.95){% else %}rgba(15,23,42,0.7){% endif %}; border:1px solid {% if forloop.first %}rgba(59,130,246,0.5){% else %}rgba(30,58,138,0.3){% endif %}; border-radius:10px; padding:10px 11px; text-align:center; min-width:72px;">
+        <div style="font-size:0.6rem; color:{% if forloop.first %}#60a5fa{% else %}#64748b{% endif %}; font-weight:700; margin-bottom:5px; white-space:nowrap;">{{ h.hora }}</div>
+        <div style="display:flex; justify-content:center; align-items:center; height:22px; margin-bottom:4px;">{% if h.ola >= 3 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2.5"><path d="M2 10s2.5-4 6-4 5.5 4 10 4 4-4 6-4"/><path d="M2 16s2.5-4 6-4 5.5 4 10 4 4-4 6-4"/></svg>{% elif h.ola >= 1 %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2.5"><path d="M2 14s2.5-3 6-3 5.5 3 10 3 4-3 6-3"/></svg>{% else %}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><line x1="3" y1="11" x2="21" y2="11"/><line x1="5" y1="15" x2="19" y2="15"/></svg>{% endif %}</div>
+        <div style="font-size:0.82rem; font-weight:700; color:{% if h.ola >= 2.5 %}#ef4444{% elif h.ola >= 1.5 %}#facc15{% else %}#4ade80{% endif %};">{{ h.ola }}m</div>
+        <div style="font-size:0.65rem; color:{% if h.viento >= 25 %}#ef4444{% elif h.viento >= 15 %}#facc15{% else %}#60a5fa{% endif %}; margin-top:2px;">{{ h.viento }}kt</div>
+      </div>
+      {% empty %}<div style="color:#475569; font-size:0.8rem; padding:10px;">Sin datos</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  

@@ -1,0 +1,39 @@
+{# Hub de funciones PRO — pantallas separadas #}
+<div class="tc-pro-hub" style="margin:20px 0 28px;font-family:'Segoe UI',system-ui,sans-serif;">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+    <div>
+      <div style="font-size:0.66rem;letter-spacing:0.12em;color:#64748b;font-weight:700;text-transform:uppercase;">Funciones PRO</div>
+      <div style="font-size:0.95rem;color:#e2e8f0;font-weight:700;margin-top:4px;">Elegí una función para abrirla en pantalla completa</div>
+    </div>
+    <button type="button" onclick="tcToggleProMenu()" style="display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:8px 14px;border-radius:10px;border:1px solid rgba(167,139,250,0.45);background:rgba(167,139,250,0.12);color:#c4b5fd;font-weight:700;font-size:0.82rem;cursor:pointer;font-family:inherit;">Abrir menú</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">
+    {% for item in pro_hub_items %}
+    <a href="{{ item.href }}" {% if item.label == 'Chat IA' %}onclick="return tcProOpenChat(event)"{% endif %} style="text-decoration:none;display:flex;flex-direction:column;gap:6px;padding:14px 14px;min-height:88px;border-radius:14px;border:1px solid {{ item.border }};background:{{ item.bg }};color:{{ item.color }};">
+      <span style="font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85;">{{ item.kicker }}</span>
+      <span style="font-size:0.95rem;font-weight:800;color:#f8fafc;">{{ item.label }}</span>
+      <span style="font-size:0.72rem;color:#94a3b8;line-height:1.35;">{{ item.desc }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% include 'partials/_menu_pro_interno.html' with sector=pro_sector %}
+{% if open_chat %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (typeof tcOpenChatModal === 'function') {
+    setTimeout(function () {
+      tcOpenChatModal();
+      try {
+        var msg = sessionStorage.getItem('tc_pro_quick');
+        if (msg) {
+          sessionStorage.removeItem('tc_pro_quick');
+          var input = document.getElementById('user-input') || document.querySelector('#tc-chat-modal textarea, #tc-chat-modal input[type="text"]');
+          if (input) { input.value = msg; }
+        }
+      } catch (e) {}
+    }, 400);
+  }
+});
+</script>
+{% endif %}

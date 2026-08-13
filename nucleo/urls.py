@@ -18,9 +18,13 @@ urlpatterns = [
     path('', views.home, name='home'),          # Página Principal (Público General)
     path('api/clima-data/', views.clima_data_api, name='clima_data_api'),  # API para datos del clima en JSON
     path('agro/', views.agro, name='agro'),     # MODO AGRO 🚜
+    path('agro/<slug:funcion>/', views.agro, name='agro_pro'),
     path('naval/', views.naval, name='naval'),  # MODO NAVAL ⚓
+    path('naval/<slug:funcion>/', views.naval, name='naval_pro'),
     path('aereo/', views.aereo, name='aereo'),  # MODO AÉREO ✈️
+    path('aereo/<slug:funcion>/', views.aereo, name='aereo_pro'),
     path('energia/', views.energia, name='energia'), # ENERGÍA ⚡
+    path('energia/<slug:funcion>/', views.energia, name='energia_pro'),
 
     # API Estadística — Poisson, boxplot, frecuencias relativas, test de hipótesis (por sector)
     path('api/estadisticas/agro/', views.estadisticas_agro, name='estadisticas_agro'),

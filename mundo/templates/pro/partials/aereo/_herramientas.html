@@ -1,0 +1,191 @@
+<div id="pro-herramientas" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+    <button onclick="enviarAccionRapida('Generá un reporte PDF de briefing meteorológico de aviación con categoría, vientos por altura, nubes y riesgos actuales. Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(30,27,75,0.8); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#4338ca';this.style.color='#fff'" onmouseout="this.style.background='rgba(30,27,75,0.8)';this.style.color='#a5b4fc'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Generar PDF</button>
+    {% if puede_excel %}
+    <button onclick="enviarAccionRapida('Generá un Excel con los vientos por altura (SFC, 2000ft, 5000ft, 10000ft) y la evolución de nubes para las próximas 12 horas. Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(20,83,45,0.8); border:1px solid rgba(74,222,128,0.4); color:#86efac; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#16a34a';this.style.color='#fff'" onmouseout="this.style.background='rgba(20,83,45,0.8)';this.style.color='#86efac'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg> Generar Excel</button>
+    {% else %}
+    <a href="/pricing/" style="display:flex; align-items:center; gap:7px; background:rgba(15,23,42,0.6); border:1px solid rgba(51,65,85,0.5); color:#64748b; padding:9px 16px; border-radius:10px; cursor:not-allowed; font-size:0.83rem; font-weight:600; font-family:inherit; text-decoration:none;" title="Disponible desde plan Plus — Actualizá tu plan"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Excel — Plan Plus+</a>
+    {% endif %}
+    <button onclick="enviarAccionRapida('¿Cuál es el briefing meteorológico y la categoría VFR/IFR actual? ¿Es seguro volar? Ubicación: lat={{ lat|floatformat:4 }}, lon={{ lon|floatformat:4 }}')" style="display:flex; align-items:center; gap:7px; background:rgba(30,27,75,0.8); border:1px solid rgba(167,139,250,0.4); color:#c4b5fd; padding:9px 16px; border-radius:10px; cursor:pointer; font-size:0.83rem; font-weight:600; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#7c3aed';this.style.color='#fff'" onmouseout="this.style.background='rgba(30,27,75,0.8)';this.style.color='#c4b5fd'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19 4c-2 0-4 1-4 1l-3.5 3.5L4.8 6.2c-.5-.2-1 .1-1 .6v.5l6.6 3.3-1.4 3.4-2-.4L5 15l2.3.5.5 2.3 1.8-1 .4-2 3.4-1.4 3.3 6.6h.5c.5 0 .8-.5.6-1z"/></svg> Briefing Rápido</button>
+  </div>
+
+  <!-- ── 4. CALCULADORA GO/NO-GO ── -->
+  <details style="background:linear-gradient(135deg,#0f172a,#1e293b); border:1px solid rgba(99,102,241,0.3); border-radius:16px; margin-top:12px; overflow:hidden;">
+    <summary style="padding:14px 20px; cursor:pointer; color:#a5b4fc; font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; list-style:none; display:flex; align-items:center; gap:9px; font-family:'Segoe UI',system-ui,sans-serif; user-select:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19 4c-2 0-4 1-4 1l-3.5 3.5L4.8 6.2c-.5-.2-1 .1-1 .6v.5l6.6 3.3-1.4 3.4-2-.4L5 15l2.3.5.5 2.3 1.8-1 .4-2 3.4-1.4 3.3 6.6h.5c.5 0 .8-.5.6-1z"/></svg>Calculadora Go / No-Go<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div style="padding:14px 20px 18px; border-top:1px solid rgba(99,102,241,0.2);">
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; margin-bottom:14px;">
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">OPERACIÓN</div><select id="tc-op" style="width:100%; background:#0f172a; border:1px solid #312e81; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; font-family:inherit;"><option value="vfr">VFR Diurno</option><option value="nvfr">VFR Nocturno</option><option value="ifr">IFR</option></select></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">AUTONOMÍA (h)</div><input type="number" id="tc-aut" value="3" min="0.5" step="0.5" style="width:100%; background:#0f172a; border:1px solid #312e81; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">ALT. DIST. (NM)</div><input type="number" id="tc-altnm" value="30" min="0" style="width:100%; background:#0f172a; border:1px solid #312e81; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">VEL. CRUCERO (kt)</div><input type="number" id="tc-cruise" value="90" min="40" style="width:100%; background:#0f172a; border:1px solid #312e81; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+      </div>
+      <button onclick="tcAeroCalc()" style="background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; padding:9px 20px; border-radius:9px; cursor:pointer; font-size:0.82rem; font-weight:700; font-family:inherit;">Evaluar vuelo</button>
+      <div id="tcCalcAerRes" style="margin-top:12px;"></div>
+    </div>
+  </details>
+
+  <!-- ── 5. OJO BIÓNICO — VISIÓN IA ── -->
+  <div id="tc-dz-aereo" style="margin-top:14px; border:2px dashed rgba(165,180,252,0.3); border-radius:16px; padding:28px 20px; text-align:center; cursor:pointer; transition:border-color 0.25s,background 0.25s; background:rgba(15,23,42,0.6);"
+    ondragover="event.preventDefault();this.style.borderColor='#a5b4fc';this.style.background='rgba(165,180,252,0.07)';"
+    ondragleave="this.style.borderColor='rgba(165,180,252,0.3)';this.style.background='rgba(15,23,42,0.6)';"
+    ondrop="tcDzDrop_aereo(event)"
+    onclick="var l=document.getElementById('tc-dz-loading-aereo');if(!l||l.style.display==='none')document.getElementById('tc-vision-inp-aereo').click()">
+    <input type="file" id="tc-vision-inp-aereo" accept="image/*" style="display:none;" onchange="tcDzFile_aereo(this)">
+    <div id="tc-dz-idle-aereo">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 10px;display:block;opacity:0.7;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <p style="margin:0 0 4px;font-size:0.88rem;font-weight:700;color:#a5b4fc;letter-spacing:0.04em;">OJO BIÓNICO</p>
+      <p style="margin:0;font-size:0.76rem;color:#94a3b8;line-height:1.5;">Arrastrá aquí la imagen meteorológica o radarograma<br>o hacé clic para explorar</p>
+    </div>
+    <div id="tc-dz-loading-aereo" style="display:none;">
+      <p style="margin:0 0 12px;font-size:0.82rem;color:#a5b4fc;animation:tcDzPulse 1.4s ease-in-out infinite;">Analizando imagen con IA…</p>
+      <div style="height:6px;border-radius:3px;background:rgba(165,180,252,0.15);overflow:hidden;"><div style="height:100%;width:0;background:#a5b4fc;border-radius:3px;animation:tcDzBar 2.2s ease-in-out infinite;"></div></div>
+    </div>
+    <div id="tc-dz-result-aereo" style="display:none;text-align:left;"></div>
+  </div>
+  <script>
+  function tcDzDrop_aereo(e){e.preventDefault();var dz=document.getElementById('tc-dz-aereo');dz.style.borderColor='rgba(165,180,252,0.3)';dz.style.background='rgba(15,23,42,0.6)';var f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))tcDzSend_aereo(f);}
+  function tcDzFile_aereo(inp){if(inp.files[0])tcDzSend_aereo(inp.files[0]);}
+  async function tcDzSend_aereo(file){
+    document.getElementById('tc-dz-idle-aereo').style.display='none';
+    document.getElementById('tc-dz-loading-aereo').style.display='block';
+    document.getElementById('tc-dz-result-aereo').style.display='none';
+    try {
+      const okTok = await fetch('/api/tokens/consumir/', {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({tipo:'CHAT_N8N', descripcion:'Vision IA aereo'})
+      });
+      if (okTok.status === 402 || !okTok.ok) {
+        document.getElementById('tc-dz-loading-aereo').style.display='none';
+        document.getElementById('tc-dz-idle-aereo').style.display='block';
+        if (typeof mostrarLimiteIA === 'function') mostrarLimiteIA();
+        return;
+      }
+    } catch(e) {
+      document.getElementById('tc-dz-loading-aereo').style.display='none';
+      document.getElementById('tc-dz-idle-aereo').style.display='block';
+      return;
+    }
+    var fd=new FormData();
+    fd.append('chatInput','Analizá esta imagen meteorológica, radarograma o NOTAM y dame tu evaluación para vuelo VFR, incluyendo riesgos identificables.');
+    fd.append('sessionId',sessionId);
+    fd.append('userId',djangoUserId);
+    fd.append('sector','aereo');
+    fd.append('data00',file);
+    fetch(urlN8N,{method:'POST',credentials:'include',body:fd})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var txt=(d.output||d.text||JSON.stringify(d)).replace(/</g,'&lt;').replace(/\n/g,'<br>');
+        var res=document.getElementById('tc-dz-result-aereo');
+        res.innerHTML='<div style="font-size:0.8rem;color:#e2e8f0;line-height:1.65;padding:4px 0 8px;">'+txt+'</div><button onclick="tcDzReset_aereo()" style="background:rgba(165,180,252,0.12);border:1px solid rgba(165,180,252,0.4);color:#a5b4fc;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.75rem;font-family:inherit;">Nueva imagen</button>';
+        document.getElementById('tc-dz-loading-aereo').style.display='none';
+        res.style.display='block';
+      })
+      .catch(function(){document.getElementById('tc-dz-loading-aereo').style.display='none';document.getElementById('tc-dz-idle-aereo').style.display='block';});
+  }
+  function tcDzReset_aereo(){document.getElementById('tc-dz-idle-aereo').style.display='block';document.getElementById('tc-dz-result-aereo').style.display='none';document.getElementById('tc-vision-inp-aereo').value='';}
+  </script>
+
+  <!-- ── 6. VENTANA SEGURA ── -->
+  <details style="background:linear-gradient(135deg,#0f172a,#1e1b4b); border:1px solid rgba(79,70,229,0.4); border-radius:16px; margin-top:12px; overflow:hidden;">
+    <summary style="padding:14px 20px; cursor:pointer; color:#94a3b8; font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; list-style:none; display:flex; align-items:center; gap:9px; font-family:'Segoe UI',system-ui,sans-serif; user-select:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v6M15 3v6"/></svg>Ventana VFR Segura<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div style="padding:14px 20px 18px; border-top:1px solid rgba(79,70,229,0.3);">
+      <p style="font-size:0.72rem; color:#64748b; margin:0 0 12px; line-height:1.5;">Encontrá las próximas N horas consecutivas con cielo despejado y viento aceptable para vuelo VFR.</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; margin-bottom:14px;">
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">DURACIÓN (h)</div><input type="number" id="tc-vs-dur-aereo" value="2" min="1" max="8" style="width:100%; background:#0f172a; border:1px solid #312e81; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">NUBES MÁX (%)</div><input type="number" id="tc-vs-nubes-aereo" value="50" min="0" max="100" step="5" style="width:100%; background:#0f172a; border:1px solid #312e81; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+        <div><div style="font-size:0.65rem; color:#64748b; margin-bottom:4px; font-weight:600;">VIENTO MÁX (km/h)</div><input type="number" id="tc-vs-viento-aereo" value="25" min="1" max="60" style="width:100%; background:#0f172a; border:1px solid #312e81; border-radius:8px; color:#e2e8f0; padding:7px 10px; font-size:0.8rem; box-sizing:border-box;"></div>
+      </div>
+      <button onclick="tcVsScan_aereo()" style="background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; padding:9px 20px; border-radius:9px; cursor:pointer; font-size:0.82rem; font-weight:700; font-family:inherit;">Buscar ventana</button>
+      <div id="tcVsRes-aereo" style="margin-top:12px;"></div>
+    </div>
+  </details>
+  <script>
+  {% load l10n %}{% localize off %}var _tc_h24_aereo=[{% for h in tira_24h %}{"hora":"{{ h.hora }}","nubes":{{ h.nubes }},"viento":{{ h.viento }},"temp":{{ h.temp }}}{% if not forloop.last %},{% endif %}{% endfor %}];{% endlocalize %}
+  function tcVsScan_aereo(){
+    var dur=parseInt(document.getElementById('tc-vs-dur-aereo').value)||2;
+    var mxN=parseInt(document.getElementById('tc-vs-nubes-aereo').value)||50;
+    var mxV=parseFloat(document.getElementById('tc-vs-viento-aereo').value)||25;
+    var d=_tc_h24_aereo,best=null,bestS=Infinity;
+    for(var i=0;i<=d.length-dur;i++){var sl=d.slice(i,i+dur);var ok=sl.every(function(h){return h.nubes<=mxN&&h.viento<=mxV;});if(ok){var sc=sl.reduce(function(a,h){return a+h.nubes+h.viento*2;},0);if(sc<bestS){bestS=sc;best=sl;}}}
+    var el=document.getElementById('tcVsRes-aereo');
+    if(!best){el.innerHTML='<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:12px 14px;font-size:0.8rem;color:#ef4444;">Sin ventana VFR de '+dur+'h que cumpla los criterios en las próximas 24h.</div>';return;}
+    var mN=Math.max.apply(null,best.map(function(h){return h.nubes;}));
+    var mV=Math.max.apply(null,best.map(function(h){return h.viento;}));
+    el.innerHTML='<div style="background:rgba(165,180,252,0.08);border:1px solid rgba(165,180,252,0.3);border-radius:10px;padding:12px 14px;"><div style="font-size:0.72rem;color:#a5b4fc;font-weight:700;letter-spacing:0.05em;margin-bottom:6px;">VENTANA VFR ÓPTIMA</div><div style="font-size:0.88rem;font-weight:800;color:#f1f5f9;margin-bottom:8px;">'+best[0].hora+' → '+best[best.length-1].hora+'</div><div style="display:flex;flex-wrap:wrap;gap:7px;"><span style="background:#0f172a;border:1px solid #312e81;border-radius:7px;padding:4px 10px;font-size:0.72rem;color:#94a3b8;">Nubes máx: <strong style="color:#a5b4fc;">'+mN+'%</strong></span><span style="background:#0f172a;border:1px solid #312e81;border-radius:7px;padding:4px 10px;font-size:0.72rem;color:#94a3b8;">Viento máx: <strong style="color:#60a5fa;">'+mV+' km/h</strong></span></div></div>';
+  }
+  </script>
+
+  <script>
+  var _tc_cat='{{ categoria.codigo|default:"VFR" }}', _tc_cape={{ radar.cape|default:0 }}, _tc_wkt={{ viento.kt|default:0 }}, _tc_raf={{ viento.rafagas|default:0 }};
+  function tcAeroCalc(){
+    var op=document.getElementById('tc-op').value;
+    var aut=parseFloat(document.getElementById('tc-aut').value)||3;
+    var altNm=parseFloat(document.getElementById('tc-altnm').value)||30;
+    var cruise=parseFloat(document.getElementById('tc-cruise').value)||90;
+    var altTime=(altNm/cruise);
+    var reasons=[]; var ver='GO'; var col='#4ade80'; var bg='rgba(74,222,128,0.1)';
+    if(_tc_cat==='LIFR'){ver='NO-GO';col='#ef4444';bg='rgba(239,68,68,0.1)';reasons.push('LIFR activo — visibilidad prohibitiva para cualquier VFR');}
+    if(_tc_cat==='IFR'&&op==='vfr'){ver='NO-GO';col='#ef4444';bg='rgba(239,68,68,0.1)';reasons.push('IFR activo — VFR no permitido en estas condiciones');}
+    if(_tc_cape>1000){if(ver==='GO'){ver='CONDICIONAL';col='#fb923c';bg='rgba(251,146,60,0.1)';}reasons.push('CAPE '+_tc_cape+' J/kg — desarrollo tormentoso posible');}
+    if((_tc_raf-_tc_wkt)>20){if(ver==='GO'){ver='CONDICIONAL';col='#fb923c';bg='rgba(251,146,60,0.1)';}reasons.push('Wind shear '+(_tc_raf-_tc_wkt)+'kt — cuidado en despegue y aterrizaje');}
+    if(op==='nvfr'&&(_tc_cat==='MVFR'||_tc_cat==='IFR'||_tc_cat==='LIFR')){ver='NO-GO';col='#ef4444';bg='rgba(239,68,68,0.1)';reasons.push('NVFR requiere VMC — condiciones actuales lo impiden');}
+    if(reasons.length===0) reasons.push('Sin restricciones detectadas. Condiciones dentro de parámetros.');
+    var combAlt=aut>altTime?(aut-altTime).toFixed(1)+' h disponible':'INSUFICIENTE';
+    var resHTML=reasons.map(function(r){return '<li style="margin-bottom:3px;">'+r+'</li>';}).join('');
+    document.getElementById('tcCalcAerRes').innerHTML='<div style="background:'+bg+'; border:1px solid '+col+'33; border-radius:10px; padding:12px 14px;"><div style="margin-bottom:8px;"><span style="background:'+col+'22; color:'+col+'; font-size:0.72rem; font-weight:800; padding:3px 10px; border-radius:20px; letter-spacing:0.06em;">'+ver+'</span></div><ul style="margin:0 0 8px; padding-left:16px; font-size:0.78rem; color:#cbd5e1; line-height:1.65;">'+resHTML+'</ul><div style="display:flex; flex-wrap:wrap; gap:7px;"><span style="background:#0f172a; border:1px solid #312e81; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">Cat: <strong style="color:'+col+';">'+_tc_cat+'</strong></span><span style="background:#0f172a; border:1px solid #312e81; border-radius:7px; padding:4px 10px; font-size:0.72rem; color:#94a3b8;">Comb. alt: <strong style="color:#e2e8f0;">'+combAlt+'</strong></span></div></div>';
+  }
+  </script>
+
+  <!-- ── MONITOR AVIACIÓN · 24H ── -->
+  <div style="background:linear-gradient(135deg,#0f172a,#0d1017); border:1px solid rgba(99,102,241,0.25); border-radius:16px; padding:16px 20px; margin-top:12px;">
+    <div style="font-size:0.66rem; letter-spacing:0.12em; color:#475569; font-weight:700; margin-bottom:10px; text-transform:uppercase; display:flex; align-items:center; gap:6px;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Monitor Aviación · Próximas 24H
+    </div>
+    <div style="position:relative; height:160px;"><canvas id="aereo-chart-24h"></canvas></div>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">
+      <span style="font-size:0.62rem; color:#94a3b8; display:flex; align-items:center; gap:4px;"><span style="width:12px; height:3px; background:#a5b4fc; border-radius:2px; display:inline-block;"></span>Viento kt</span>
+      <span style="font-size:0.62rem; color:#94a3b8; display:flex; align-items:center; gap:4px;"><span style="width:12px; height:8px; background:rgba(74,222,128,0.55); border-radius:2px; display:inline-block;"></span>VFR</span>
+      <span style="font-size:0.62rem; color:#94a3b8; display:flex; align-items:center; gap:4px;"><span style="width:12px; height:8px; background:rgba(250,204,21,0.55); border-radius:2px; display:inline-block;"></span>MVFR</span>
+      <span style="font-size:0.62rem; color:#94a3b8; display:flex; align-items:center; gap:4px;"><span style="width:12px; height:8px; background:rgba(251,146,60,0.60); border-radius:2px; display:inline-block;"></span>BKN·IFR</span>
+      <span style="font-size:0.62rem; color:#94a3b8; display:flex; align-items:center; gap:4px;"><span style="width:12px; height:8px; background:rgba(239,68,68,0.65); border-radius:2px; display:inline-block;"></span>OVC·LIFR</span>
+    </div>
+  </div>
+  <script>
+  (function(){
+    var raw = (typeof _tc_h24_aereo !== 'undefined') ? _tc_h24_aereo : [];
+    if (!raw.length) return;
+    var ctx = document.getElementById('aereo-chart-24h');
+    if (!ctx) return;
+    var horas  = raw.map(function(h){ return h.hora; });
+    var nubes  = raw.map(function(h){ return h.nubes; });
+    var viento = raw.map(function(h){ return Math.round(h.viento / 1.852 * 10) / 10; });
+    function nCol(v){
+      if(v<=12) return 'rgba(74,222,128,0.55)';
+      if(v<=25) return 'rgba(74,222,128,0.42)';
+      if(v<=50) return 'rgba(250,204,21,0.55)';
+      if(v<=87) return 'rgba(251,146,60,0.60)';
+      return 'rgba(239,68,68,0.65)';
+    }
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: horas,
+        datasets: [
+          { type:'bar',  label:'Nubes %',    data:nubes,  backgroundColor:nubes.map(nCol), borderWidth:0, borderRadius:3, yAxisID:'y',  order:2 },
+          { type:'line', label:'Viento kt', data:viento, borderColor:'#a5b4fc', backgroundColor:'rgba(165,180,252,0.08)', fill:true, borderWidth:2, tension:0.4, pointRadius:0, yAxisID:'y1', order:1 }
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        interaction:{ mode:'index', intersect:false },
+        plugins:{ legend:{ display:false } },
+        scales:{
+          x:  { grid:{color:'rgba(30,41,59,0.8)'}, ticks:{color:'#475569', font:{size:9}, maxTicksLimit:8} },
+          y:  { position:'left',  min:0, max:100, grid:{color:'rgba(30,41,59,0.6)'}, ticks:{color:'#64748b', font:{size:9}, callback:function(v){return v+'%';}} },
+          y1: { position:'right', min:0, grid:{display:false}, ticks:{color:'#a5b4fc', font:{size:9}, callback:function(v){return v+' kt';}} }
+        }
+      }
+    });
+  })();
+  </script>

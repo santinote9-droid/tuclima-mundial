@@ -1,0 +1,367 @@
+{# Panel Radiación / balance energético — Plus+ (Agro + Energía) #}
+<div id="pro-radiacion">
+{% if puede_radiacion and radiacion_avanzada %}
+{% with r=radiacion_avanzada %}
+<div class="tc-rad-panel" style="background:linear-gradient(135deg,#0f172a,#1e293b);border:1px solid rgba(250,204,21,0.25);border-radius:16px;padding:16px 18px;margin-bottom:14px;font-family:'Segoe UI',system-ui,sans-serif;">
+  <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px;">
+    <div>
+      <div style="font-size:0.66rem;letter-spacing:0.12em;color:#a16207;font-weight:700;text-transform:uppercase;">Balance energético · Radiación</div>
+      <div style="font-size:0.82rem;color:#cbd5e1;margin-top:2px;">GHI · Air Mass / Beer–Lambert · Rn · PAR fotónico</div>
+    </div>
+    <span style="font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid {{ r.kt_color }}66;color:{{ r.kt_color }};background:{{ r.kt_color }}18;">{{ r.kt_label }}{% if r.kt is not None %} · Kt {{ r.kt }}{% endif %}</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;">
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">GHI</div>
+      <div style="font-size:1.25rem;font-weight:800;color:#facc15;font-family:ui-monospace,monospace;">{{ r.ghi }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">W/m² global</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">DNI</div>
+      <div style="font-size:1.25rem;font-weight:800;color:#fbbf24;font-family:ui-monospace,monospace;">{{ r.dni }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">W/m² directa</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">DHI</div>
+      <div style="font-size:1.25rem;font-weight:800;color:#94a3b8;font-family:ui-monospace,monospace;">{{ r.dhi }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">W/m² difusa</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">Difusa</div>
+      <div style="font-size:1.25rem;font-weight:800;color:#e2e8f0;font-family:ui-monospace,monospace;">{{ r.fraccion_difusa_pct }}%</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">fracción DHI/GHI</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">Integral día</div>
+      <div style="font-size:1.25rem;font-weight:800;color:#38bdf8;font-family:ui-monospace,monospace;">{{ r.mj_dia }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">MJ/m²</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">Horas útiles</div>
+      <div style="font-size:1.25rem;font-weight:800;color:#4ade80;font-family:ui-monospace,monospace;">{{ r.horas_utiles }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">GHI ≥ {{ r.umbral_util }} W/m²</div>
+    </div>
+
+    {% if sector_radiacion == 'agro' %}
+    {# PAR + tooltip cuántico #}
+    <div class="tc-par-card" style="background:rgba(15,23,42,0.7);border:1px solid rgba(134,239,172,0.35);border-radius:10px;padding:10px 12px;position:relative;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">PAR est.</div>
+        <button type="button" id="tcParTipBtn" aria-expanded="false" aria-controls="tcParTip"
+                title="Por qué µmol y no W/m²"
+                style="width:22px;height:22px;border-radius:50%;border:1px solid rgba(134,239,172,0.5);background:rgba(134,239,172,0.12);color:#86efac;font-size:0.72rem;font-weight:800;cursor:pointer;line-height:1;padding:0;">?</button>
+      </div>
+      <div style="font-size:1.25rem;font-weight:800;color:#86efac;font-family:ui-monospace,monospace;">{{ r.par_umol|floatformat:0 }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">µmol/m²/s · {{ r.par_wm2 }} W/m²</div>
+      <div id="tcParTip" role="region" hidden
+           style="margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(6,78,59,0.35);border:1px solid rgba(134,239,172,0.25);font-size:0.72rem;color:#bbf7d0;line-height:1.45;">
+        <strong style="color:#86efac;">Agro usa mecánica cuántica</strong><br>
+        El µmol/m²/s cuenta <em>fotones</em> (partículas de luz) en 400–700 nm.
+        Las plantas no “comen” Watts (energía ondulatoria/calor): absorben cuantos que disparan la fotosíntesis.
+        Por eso el PAR se mide en micromoles, no solo en W/m² (~{{ r.par_wm2 }} W/m² ≈ 45% del GHI).
+      </div>
+    </div>
+    {% endif %}
+
+    {% if sector_radiacion == 'energia' %}
+    <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+      <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">Energía est.</div>
+      <div style="font-size:1.25rem;font-weight:800;color:#facc15;font-family:ui-monospace,monospace;">{{ r.energia_diaria_kwh }}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;">kWh · 20 m² · 18%</div>
+    </div>
+    {% endif %}
+  </div>
+
+  {# —— Beer–Lambert / Air Mass —— #}
+  <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(51,65,85,0.8);">
+    <div style="font-size:0.66rem;letter-spacing:0.1em;color:#f59e0b;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Atenuación · Beer–Lambert &amp; Air Mass</div>
+    <p style="margin:0 0 10px;font-size:0.78rem;color:#94a3b8;line-height:1.45;">
+      En lugar de electromagnetismo puro (Faraday/Ampère), acá importa la <strong style="color:#e2e8f0;">columna de aire</strong>:
+      \(I = I_0\,e^{-\tau\cdot\mathrm{AM}}\). Al atardecer AM sube; con nubes τ efectiva sube → cae la radiación en superficie.
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:10px;">
+      <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">Air Mass</div>
+        <div style="font-size:1.2rem;font-weight:800;color:#fbbf24;font-family:ui-monospace,monospace;">{% if r.air_mass != None %}{{ r.air_mass }}{% else %}—{% endif %}</div>
+        <div style="font-size:0.68rem;color:#94a3b8;">z ≈ {{ r.zenith_deg }}°</div>
+      </div>
+      <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">T cielo limpio</div>
+        <div style="font-size:1.2rem;font-weight:800;color:#fde68a;font-family:ui-monospace,monospace;">{% if r.transmitancia_clear != None %}{{ r.transmitancia_clear }}{% else %}—{% endif %}</div>
+        <div style="font-size:0.68rem;color:#94a3b8;">e<sup>−τ₀·AM</sup> · τ₀={{ r.tau_clear }}</div>
+      </div>
+      <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">τ efectiva</div>
+        <div style="font-size:1.2rem;font-weight:800;color:#fb923c;font-family:ui-monospace,monospace;">{% if r.tau_eff != None %}{{ r.tau_eff }}{% else %}—{% endif %}</div>
+        <div style="font-size:0.68rem;color:#94a3b8;">atm + nubes (obs.)</div>
+      </div>
+      <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;">GHI Beer limpio</div>
+        <div style="font-size:1.2rem;font-weight:800;color:#facc15;font-family:ui-monospace,monospace;">{{ r.ghi_beer_clear }}</div>
+        <div style="font-size:0.68rem;color:#94a3b8;">vs GHI {{ r.ghi }} · G₀ {{ r.g0 }}</div>
+      </div>
+    </div>
+    {# Tarjetas de series del gráfico Beer #}
+    {% if r.chart_beer %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:10px;">
+      <div style="display:flex;gap:10px;align-items:stretch;background:rgba(15,23,42,0.75);border:1px solid #334155;border-radius:10px;overflow:hidden;">
+        <div style="width:4px;background:#64748b;flex-shrink:0;" aria-hidden="true"></div>
+        <div style="padding:8px 10px 8px 0;min-width:0;">
+          <div style="font-size:0.62rem;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">G₀ TOA · ahora</div>
+          <div style="font-size:1.1rem;font-weight:800;color:#cbd5e1;font-family:ui-monospace,monospace;">{{ r.chart_beer.g0.ahora|default:"—" }}</div>
+          <div style="font-size:0.65rem;color:#64748b;">máx {{ r.chart_beer.g0.max }}{% if r.chart_beer.g0.max_hora %} · {{ r.chart_beer.g0.max_hora }}{% endif %} · W/m²</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:stretch;background:rgba(15,23,42,0.75);border:1px solid rgba(251,191,36,0.35);border-radius:10px;overflow:hidden;">
+        <div style="width:4px;background:#fbbf24;flex-shrink:0;" aria-hidden="true"></div>
+        <div style="padding:8px 10px 8px 0;min-width:0;">
+          <div style="font-size:0.62rem;color:#fbbf24;text-transform:uppercase;letter-spacing:0.06em;">Beer limpio · ahora</div>
+          <div style="font-size:1.1rem;font-weight:800;color:#fde68a;font-family:ui-monospace,monospace;">{{ r.chart_beer.beer.ahora|default:"—" }}</div>
+          <div style="font-size:0.65rem;color:#64748b;">máx {{ r.chart_beer.beer.max }}{% if r.chart_beer.beer.max_hora %} · {{ r.chart_beer.beer.max_hora }}{% endif %} · W/m²</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:stretch;background:rgba(15,23,42,0.75);border:1px solid rgba(250,204,21,0.4);border-radius:10px;overflow:hidden;">
+        <div style="width:4px;background:#facc15;flex-shrink:0;" aria-hidden="true"></div>
+        <div style="padding:8px 10px 8px 0;min-width:0;">
+          <div style="font-size:0.62rem;color:#facc15;text-transform:uppercase;letter-spacing:0.06em;">GHI obs. · ahora</div>
+          <div style="font-size:1.1rem;font-weight:800;color:#facc15;font-family:ui-monospace,monospace;">{{ r.chart_beer.ghi.ahora|default:"—" }}</div>
+          <div style="font-size:0.65rem;color:#64748b;">máx {{ r.chart_beer.ghi.max }}{% if r.chart_beer.ghi.max_hora %} · {{ r.chart_beer.ghi.max_hora }}{% endif %} · W/m²</div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    <canvas id="tcBeerChart" height="150" aria-label="G0 vs Beer-Lambert vs GHI"></canvas>
+  </div>
+
+  {# —— Balance radiativo neto + gráfico SW/LW —— #}
+  <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(51,65,85,0.8);">
+    <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px;">
+      <div style="font-size:0.66rem;letter-spacing:0.1em;color:#64748b;font-weight:700;text-transform:uppercase;">Balance radiativo · onda corta vs larga</div>
+      <span style="font-size:0.72rem;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid {{ r.rn_color }}55;color:{{ r.rn_color }};background:{{ r.rn_color }}14;">{{ r.rn_label }}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;">
+      <div style="background:rgba(15,23,42,0.7);border:1px solid rgba(250,204,21,0.28);border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#a16207;text-transform:uppercase;letter-spacing:0.06em;">Rn</div>
+        <div style="font-size:1.35rem;font-weight:800;color:{{ r.rn_color }};font-family:ui-monospace,monospace;">{{ r.rn }}</div>
+        <div style="font-size:0.68rem;color:#94a3b8;">W/m² neto</div>
+      </div>
+      <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">Rns</div>
+        <div style="font-size:1.25rem;font-weight:800;color:#fde68a;font-family:ui-monospace,monospace;">{{ r.rns }}</div>
+        <div style="font-size:0.68rem;color:#94a3b8;">W/m² SW neta</div>
+      </div>
+      <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">Rnl</div>
+        <div style="font-size:1.25rem;font-weight:800;color:#93c5fd;font-family:ui-monospace,monospace;">{{ r.rnl }}</div>
+        <div style="font-size:0.68rem;color:#94a3b8;">W/m² LW neta</div>
+      </div>
+      <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">σ ε T⁴ suelo</div>
+        <div style="font-size:1.25rem;font-weight:800;color:#7dd3fc;font-family:ui-monospace,monospace;">{{ r.lw_up_stefan }}</div>
+        <div style="font-size:0.68rem;color:#94a3b8;">W/m² Stefan–Boltzmann</div>
+      </div>
+      <div style="background:rgba(15,23,42,0.7);border:1px solid rgba(52,211,153,0.3);border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">Agua evaporable</div>
+        <div style="font-size:1.25rem;font-weight:800;color:#34d399;font-family:ui-monospace,monospace;">{{ r.evap_mm_h }}</div>
+        <div style="font-size:0.68rem;color:#94a3b8;">mm/h si Rn→LE · día ~{{ r.evap_mm_dia_le }} mm (70% Rn)</div>
+      </div>
+      <div style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">Albedo α</div>
+        <div style="font-size:1.25rem;font-weight:800;color:#e2e8f0;font-family:ui-monospace,monospace;">{{ r.albedo }}</div>
+        <div style="font-size:0.68rem;color:#94a3b8;">{{ r.albedo_pct }}% · {{ r.albedo_fuente }}</div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;background:rgba(15,23,42,0.55);border:1px solid #334155;border-radius:12px;padding:12px 14px;">
+      <div style="font-size:0.72rem;font-weight:700;color:#e2e8f0;margin-bottom:8px;">Rns (SW) vs Rnl (LW) → Rn disponible</div>
+      {% if r.chart_rn %}
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:10px;">
+        <div style="display:flex;gap:10px;align-items:stretch;background:rgba(2,6,23,0.55);border:1px solid rgba(253,230,138,0.35);border-radius:10px;overflow:hidden;">
+          <div style="width:4px;background:#fde68a;flex-shrink:0;" aria-hidden="true"></div>
+          <div style="padding:8px 10px 8px 0;min-width:0;">
+            <div style="font-size:0.62rem;color:#fde68a;text-transform:uppercase;letter-spacing:0.06em;">Rns (SW) · ahora</div>
+            <div style="font-size:1.1rem;font-weight:800;color:#fde68a;font-family:ui-monospace,monospace;">{{ r.chart_rn.rns.ahora|default:"—" }}</div>
+            <div style="font-size:0.65rem;color:#64748b;">máx {{ r.chart_rn.rns.max }}{% if r.chart_rn.rns.max_hora %} · {{ r.chart_rn.rns.max_hora }}{% endif %} · W/m²</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:stretch;background:rgba(2,6,23,0.55);border:1px solid rgba(96,165,250,0.35);border-radius:10px;overflow:hidden;">
+          <div style="width:4px;background:#60a5fa;flex-shrink:0;" aria-hidden="true"></div>
+          <div style="padding:8px 10px 8px 0;min-width:0;">
+            <div style="font-size:0.62rem;color:#93c5fd;text-transform:uppercase;letter-spacing:0.06em;">Rnl (LW) · ahora</div>
+            <div style="font-size:1.1rem;font-weight:800;color:#93c5fd;font-family:ui-monospace,monospace;">{{ r.chart_rn.rnl.ahora|default:"—" }}</div>
+            <div style="font-size:0.65rem;color:#64748b;">máx {{ r.chart_rn.rnl.max }}{% if r.chart_rn.rnl.max_hora %} · {{ r.chart_rn.rnl.max_hora }}{% endif %} · W/m²</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:stretch;background:rgba(2,6,23,0.55);border:1px solid rgba(52,211,153,0.4);border-radius:10px;overflow:hidden;">
+          <div style="width:4px;background:#34d399;flex-shrink:0;" aria-hidden="true"></div>
+          <div style="padding:8px 10px 8px 0;min-width:0;">
+            <div style="font-size:0.62rem;color:#34d399;text-transform:uppercase;letter-spacing:0.06em;">Rn neto · ahora</div>
+            <div style="font-size:1.1rem;font-weight:800;color:#34d399;font-family:ui-monospace,monospace;">{{ r.chart_rn.rn.ahora|default:"—" }}</div>
+            <div style="font-size:0.65rem;color:#64748b;">máx {{ r.chart_rn.rn.max }}{% if r.chart_rn.rn.max_hora %} · {{ r.chart_rn.rn.max_hora }}{% endif %} · W/m²</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      <canvas id="tcRnChart" height="170" aria-label="Balance radiativo horario"></canvas>
+    </div>
+
+    <p style="margin:10px 0 0;font-size:0.7rem;color:#64748b;line-height:1.45;">
+      Rn = Rns − Rnl. Rns = (1−α)·GHI. Emisión suelo \(L\uparrow=\varepsilon\sigma T_s^4\) (Stefan–Boltzmann).
+      El equivalente en mm usa λ≈2,45 MJ/kg: energía neta que <em>podría</em> evaporar agua (cota; en campo ~70% de Rn diurno va a LE).
+      T aire {{ r.rn_temp_aire }}°C · T suelo {{ r.rn_temp_suelo }}°C · eₐ≈{{ r.rn_ea_kpa }} kPa.
+      {% if r.humedad_sup_pct != None %}Albedo ajustado por humedad superficial {{ r.humedad_sup_pct }}%.{% endif %}
+    </p>
+  </div>
+
+  <p style="margin:12px 0 0;font-size:0.7rem;color:#64748b;line-height:1.4;">Kt = GHI/G₀. PAR, Beer–Lambert, Rn y mm son estimaciones operativas, no metrología certificada.</p>
+</div>
+
+{{ r.serie_labels_24|json_script:"tc-rad-labels" }}
+{{ r.serie_ghi_24|json_script:"tc-rad-ghi" }}
+{{ r.serie_g0_24|json_script:"tc-rad-g0" }}
+{{ r.serie_beer_24|json_script:"tc-rad-beer" }}
+{{ r.serie_rns_24|json_script:"tc-rad-rns" }}
+{{ r.serie_rnl_24|json_script:"tc-rad-rnl" }}
+{{ r.serie_rn_24|json_script:"tc-rad-rn" }}
+
+<script>
+(function () {
+  var tipBtn = document.getElementById('tcParTipBtn');
+  var tip = document.getElementById('tcParTip');
+  if (tipBtn && tip) {
+    tipBtn.addEventListener('click', function () {
+      var open = tip.hasAttribute('hidden');
+      if (open) tip.removeAttribute('hidden'); else tip.setAttribute('hidden', '');
+      tipBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+
+  if (typeof Chart === 'undefined') return;
+  function read(id) {
+    var n = document.getElementById(id);
+    if (!n) return [];
+    try { return JSON.parse(n.textContent); } catch (e) { return []; }
+  }
+  var labels = read('tc-rad-labels');
+  var tick = { color: '#94a3b8', font: { size: 10 } };
+  var grid = { color: 'rgba(51,65,85,0.65)' };
+
+  var tipOpts = {
+    enabled: true,
+    mode: 'index',
+    intersect: false,
+    backgroundColor: 'rgba(15,23,42,0.95)',
+    titleColor: '#f1f5f9',
+    bodyColor: '#cbd5e1',
+    borderColor: 'rgba(250,204,21,0.4)',
+    borderWidth: 1,
+    padding: 10,
+    displayColors: true,
+    callbacks: {
+      label: function (ctx) {
+        var v = ctx.parsed && ctx.parsed.y != null ? ctx.parsed.y : ctx.raw;
+        return ' ' + ctx.dataset.label + ': ' + v + ' W/m²';
+      }
+    }
+  };
+  var hoverOpts = {
+    mode: 'index',
+    intersect: false
+  };
+  function lineDs(label, data, color, extra) {
+    return Object.assign({
+      label: label,
+      data: data,
+      borderColor: color,
+      borderWidth: 2,
+      pointRadius: 3,
+      pointHoverRadius: 6,
+      pointHitRadius: 18,
+      pointBackgroundColor: color,
+      tension: 0.25
+    }, extra || {});
+  }
+
+  var elB = document.getElementById('tcBeerChart');
+  if (elB && labels.length && !elB.dataset.ready) {
+    elB.dataset.ready = '1';
+    new Chart(elB, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          lineDs('G₀ TOA', read('tc-rad-g0'), '#94a3b8', { borderDash: [4, 3], borderWidth: 1.5, fill: false }),
+          lineDs('Beer limpio', read('tc-rad-beer'), '#fbbf24', { fill: false }),
+          lineDs('GHI obs.', read('tc-rad-ghi'), '#facc15', { backgroundColor: 'rgba(250,204,21,0.12)', fill: true })
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: hoverOpts,
+        hover: hoverOpts,
+        plugins: {
+          legend: { labels: { color: '#94a3b8', boxWidth: 12, font: { size: 10 } } },
+          tooltip: tipOpts
+        },
+        scales: {
+          x: { ticks: tick, grid: { display: false } },
+          y: { ticks: tick, grid: grid, title: { display: true, text: 'W/m²', color: '#64748b', font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  var elR = document.getElementById('tcRnChart');
+  if (elR && labels.length && !elR.dataset.ready) {
+    elR.dataset.ready = '1';
+    new Chart(elR, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          lineDs('Rns (SW)', read('tc-rad-rns'), '#fde68a', { backgroundColor: 'rgba(253,230,138,0.15)', fill: true }),
+          lineDs('Rnl (LW)', read('tc-rad-rnl'), '#60a5fa', { fill: false }),
+          lineDs('Rn neto', read('tc-rad-rn'), '#34d399', { borderWidth: 2.5, fill: false })
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: hoverOpts,
+        hover: hoverOpts,
+        plugins: {
+          legend: { labels: { color: '#94a3b8', boxWidth: 12, font: { size: 10 } } },
+          tooltip: tipOpts
+        },
+        scales: {
+          x: { ticks: tick, grid: { display: false } },
+          y: { ticks: tick, grid: grid, title: { display: true, text: 'W/m²', color: '#64748b', font: { size: 10 } } }
+        }
+      }
+    });
+  }
+})();
+</script>
+<script>
+(function () {
+  if (window.MathJax && window.MathJax.typesetPromise) return;
+  window.MathJax = { tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] } };
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js';
+  s.async = true;
+  document.head.appendChild(s);
+})();
+</script>
+{% endwith %}
+{% elif not puede_radiacion %}
+<div class="tc-rad-teaser" style="background:rgba(15,23,42,0.85);border:1px dashed rgba(250,204,21,0.35);border-radius:16px;padding:14px 16px;margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;font-family:'Segoe UI',system-ui,sans-serif;">
+  <div>
+    <div style="font-size:0.66rem;letter-spacing:0.1em;color:#a16207;font-weight:700;text-transform:uppercase;">Radiación avanzada</div>
+    <div style="font-size:0.85rem;color:#cbd5e1;margin-top:4px;">GHI, Beer–Lambert, Rn y PAR fotónico — desde <strong style="color:#facc15;">Plus</strong></div>
+  </div>
+  <a href="/pricing/" style="display:inline-flex;align-items:center;gap:6px;background:rgba(250,204,21,0.12);border:1px solid rgba(250,204,21,0.4);color:#facc15;padding:10px 14px;border-radius:10px;text-decoration:none;font-size:0.82rem;font-weight:700;min-height:40px;">Ver planes →</a>
+</div>
+{% endif %}
+</div>
