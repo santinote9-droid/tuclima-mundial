@@ -14,6 +14,7 @@ def _site_base():
 
 # Páginas públicas indexables (sin login)
 SITEMAP_PATHS = [
+    ('landing', 1.0, 'daily'),
     ('home', 1.0, 'daily'),
     ('pricing', 0.9, 'weekly'),
     ('ayuda', 0.7, 'monthly'),
@@ -95,3 +96,17 @@ def sitemap_xml(request):
         + '\n</urlset>\n'
     )
     return HttpResponse(body, content_type='application/xml; charset=utf-8')
+
+
+def ads_txt(request):
+    """IAB ads.txt para Google AdSense (requerido en el dominio raíz)."""
+    client = (getattr(settings, 'ADSENSE_CLIENT', '') or '').strip()
+    # ca-pub-123... → pub-123...
+    pub_id = client[3:] if client.startswith('ca-') else client
+    if not pub_id:
+        return HttpResponse(
+            '# AdSense aún no configurado (ADSENSE_CLIENT)\n',
+            content_type='text/plain; charset=utf-8',
+        )
+    body = f'google.com, {pub_id}, DIRECT, f08c47fec0942fa0\n'
+    return HttpResponse(body, content_type='text/plain; charset=utf-8')

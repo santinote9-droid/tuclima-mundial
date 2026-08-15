@@ -1,0 +1,594 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}TuClima — Bienvenida{% endblock %}
+{% block meta_description %}TuClima Pro: plataforma de inteligencia climática para Agro, Naval, Aéreo y Energía. Pronósticos operativos, ciencia aplicada y herramientas profesionales.{% endblock %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg0: #06101f;
+    --bg1: #0b1a30;
+    --bg-card: rgba(255, 255, 255, 0.04);
+    --line: rgba(255, 255, 255, 0.12);
+    --text: #ffffff;
+    --muted: rgba(255, 255, 255, 0.68);
+    --blue: #2f7de1;
+    --blue-bright: #5aa2ff;
+    --blue-deep: #1a4f9c;
+  }
+  body { background: var(--bg0); }
+  .tc-landing {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg0);
+    color: var(--text);
+    font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
+    overflow-x: hidden;
+  }
+  .ld-sky {
+    position: fixed; inset: 0; z-index: -2;
+    background:
+      radial-gradient(ellipse 70% 45% at 15% 0%, rgba(47, 125, 225, 0.22), transparent 55%),
+      radial-gradient(ellipse 55% 40% at 90% 15%, rgba(90, 162, 255, 0.12), transparent 50%),
+      linear-gradient(180deg, #06101f 0%, #0a1628 48%, #07101c 100%);
+  }
+  .ld-grid {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 75% 55% at 50% 25%, #000 15%, transparent 72%);
+  }
+
+  .ld-top {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+    max-width: 1100px; margin: 0 auto;
+    padding: 22px 24px 8px;
+  }
+  .ld-brand {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: #fff;
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-weight: 700; font-size: 1.2rem; letter-spacing: 0.01em;
+  }
+  .ld-brand .clima { color: var(--blue-bright); }
+  .ld-brand .badge {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.58rem; letter-spacing: 0.12em;
+    color: #fff; border: 1px solid rgba(90, 162, 255, 0.55);
+    background: rgba(47, 125, 225, 0.22);
+    padding: 4px 8px; border-radius: 3px; font-weight: 700;
+  }
+  .ld-nav {
+    display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+  }
+  .ld-nav a {
+    text-decoration: none; color: var(--muted);
+    font-size: 0.9rem; font-weight: 600;
+    padding: 8px 12px; border-radius: 6px;
+    border: 1px solid transparent;
+    transition: color .2s, border-color .2s, background .2s;
+  }
+  .ld-nav a:hover { color: #fff; border-color: var(--line); background: rgba(255,255,255,0.04); }
+  .ld-nav a.ld-cta-ghost {
+    color: var(--blue-bright); border-color: rgba(90, 162, 255, 0.4);
+  }
+  .ld-nav a.ld-cta-solid {
+    color: #06101f; background: #fff; border-color: #fff; font-weight: 700;
+  }
+  .ld-nav a.ld-cta-solid:hover { background: var(--blue-bright); border-color: var(--blue-bright); color: #06101f; }
+
+  .ld-hero {
+    max-width: 1100px; margin: 0 auto;
+    padding: 52px 24px 40px;
+    min-height: calc(100vh - 110px);
+    display: flex; flex-direction: column; justify-content: center;
+    box-sizing: border-box;
+  }
+  .ld-kicker {
+    font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--blue-bright); font-weight: 700; margin: 0 0 16px;
+  }
+  .ld-hero h1 {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: clamp(1.9rem, 4.2vw, 3.05rem);
+    font-weight: 700; line-height: 1.22;
+    margin: 0 0 18px; color: #fff;
+    max-width: 18ch;
+  }
+  .ld-hero h1 em {
+    font-style: italic; color: var(--blue-bright); font-weight: 400;
+  }
+  .ld-lead {
+    margin: 0 0 30px; max-width: 46ch;
+    font-size: 1.08rem; line-height: 1.6; color: var(--muted);
+    font-weight: 400;
+  }
+  .ld-actions {
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  }
+  .ld-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px; min-height: 46px; padding: 12px 22px;
+    border-radius: 8px; font-weight: 700; font-size: 0.95rem;
+    text-decoration: none; border: 1px solid transparent;
+    transition: transform .15s, background .2s, border-color .2s, color .2s;
+  }
+  .ld-btn:hover { transform: translateY(-1px); }
+  .ld-btn-primary {
+    background: #fff;
+    color: #06101f;
+  }
+  .ld-btn-primary:hover { background: var(--blue-bright); }
+  .ld-btn-secondary {
+    background: transparent;
+    color: #fff; border-color: rgba(255,255,255,0.35);
+  }
+  .ld-btn-secondary:hover { border-color: var(--blue-bright); color: var(--blue-bright); }
+  .ld-btn-outline {
+    background: rgba(47, 125, 225, 0.15);
+    color: var(--blue-bright);
+    border-color: rgba(90, 162, 255, 0.45);
+  }
+  .ld-btn-outline:hover { background: rgba(47, 125, 225, 0.28); color: #fff; }
+
+  .ld-section {
+    max-width: 1100px; margin: 0 auto;
+    padding: 20px 24px 56px;
+  }
+  .ld-section h2 {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 1.35rem; font-weight: 700;
+    margin: 0 0 10px; color: #fff;
+  }
+  .ld-section .ld-sub {
+    margin: 0 0 24px; color: var(--muted); font-size: 1rem; line-height: 1.55; max-width: 58ch;
+  }
+
+  /* Descripción */
+  .ld-about {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 22px;
+    align-items: stretch;
+  }
+  .ld-about-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 28px 26px;
+  }
+  .ld-about-card p {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 1.02rem;
+    line-height: 1.65;
+  }
+  .ld-about-card p:last-child { margin-bottom: 0; }
+  .ld-about-points {
+    list-style: none; margin: 0; padding: 0;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .ld-about-points li {
+    display: grid; grid-template-columns: 28px 1fr; gap: 12px;
+    align-items: start;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: rgba(47, 125, 225, 0.08);
+    border: 1px solid rgba(90, 162, 255, 0.18);
+  }
+  .ld-about-points .n {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    color: var(--blue-bright);
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+  .ld-about-points strong {
+    display: block; color: #fff; font-size: 0.95rem; margin-bottom: 2px;
+  }
+  .ld-about-points span {
+    color: var(--muted); font-size: 0.88rem; line-height: 1.45;
+  }
+
+  .ld-modes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .ld-mode {
+    display: block; text-decoration: none;
+    padding: 20px 18px;
+    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    transition: border-color .2s, transform .15s, background .2s;
+  }
+  .ld-mode:hover {
+    transform: translateY(-2px);
+    border-color: rgba(90, 162, 255, 0.55);
+    background: rgba(47, 125, 225, 0.1);
+  }
+  .ld-mode strong {
+    display: block; font-size: 1.02rem; margin-bottom: 6px;
+    color: #fff; font-family: 'Libre Baskerville', Georgia, serif;
+  }
+  .ld-mode span { font-size: 0.88rem; color: var(--muted); line-height: 1.45; }
+  .ld-mode::before {
+    content: '';
+    display: block;
+    width: 28px; height: 2px;
+    background: var(--blue);
+    margin-bottom: 14px;
+  }
+
+  .ld-extra {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px;
+  }
+  .ld-chip {
+    text-decoration: none; color: #fff;
+    font-size: 0.84rem; font-weight: 600;
+    padding: 8px 14px; border-radius: 6px;
+    border: 1px solid var(--line); background: rgba(255,255,255,0.03);
+  }
+  .ld-chip:hover { border-color: var(--blue-bright); color: var(--blue-bright); }
+
+  /* Noticias */
+  .ld-news-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .ld-news-grid.is-loading,
+  .ld-news-grid.is-empty,
+  .ld-news-grid.is-error {
+    display: flex;
+    min-height: 140px;
+    align-items: center;
+    justify-content: center;
+  }
+  .ld-news-estado {
+    color: var(--muted);
+    text-align: center;
+    font-size: 0.95rem;
+  }
+  .ld-news-estado.is-error { color: #f87171; }
+  .ld-news-card {
+    display: flex; flex-direction: column;
+    text-decoration: none;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    min-height: 168px;
+    transition: border-color .2s, transform .15s, background .2s;
+  }
+  .ld-news-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(90, 162, 255, 0.5);
+    background: rgba(47, 125, 225, 0.08);
+  }
+  .ld-news-body {
+    padding: 18px 18px 16px;
+    display: flex; flex-direction: column; gap: 10px; flex: 1;
+  }
+  .ld-news-meta {
+    display: flex; justify-content: space-between; gap: 10px;
+    font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--blue-bright); font-weight: 700;
+  }
+  .ld-news-meta time { color: var(--muted); font-weight: 600; text-transform: none; letter-spacing: 0; }
+  .ld-news-card h3 {
+    margin: 0;
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: #fff;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .ld-news-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+  }
+  .ld-news-more {
+    margin-top: 18px;
+  }
+  .ld-news-more a {
+    color: var(--blue-bright);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.92rem;
+  }
+  .ld-news-more a:hover { text-decoration: underline; }
+
+  .ld-ads {
+    border: 1px dashed rgba(90, 162, 255, 0.35);
+    border-radius: 12px;
+    background: rgba(47, 125, 225, 0.06);
+    padding: 28px 20px;
+    text-align: center;
+  }
+  .ld-ads-label {
+    font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--blue-bright); font-weight: 700; margin: 0 0 10px;
+  }
+  .ld-ads-slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px; margin-top: 16px;
+  }
+  .ld-ad-slot {
+    min-height: 90px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: rgba(6, 16, 31, 0.55);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.35); font-size: 0.78rem; font-weight: 600;
+    overflow: hidden;
+  }
+  .ld-ad-slot.ld-ad-live {
+    display: block;
+    color: inherit;
+    padding: 4px;
+    background: rgba(255,255,255,0.03);
+  }
+  .ld-ads code {
+    font-size: 0.82em;
+    color: var(--blue-bright);
+  }
+
+  @media (max-width: 800px) {
+    .ld-about { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .ld-hero { padding-top: 36px; min-height: auto; }
+    .ld-top { padding: 16px 16px 0; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tc-landing">
+  <div class="ld-sky" aria-hidden="true"></div>
+  <div class="ld-grid" aria-hidden="true"></div>
+
+  <header class="ld-top">
+    <a class="ld-brand notranslate" href="{% url 'landing' %}">
+      Tu<span class="clima">Clima</span>
+      <span class="badge">PRO</span>
+    </a>
+    <nav class="ld-nav" aria-label="Menú principal">
+      <a href="{% url 'home' %}">Dashboard</a>
+      <a href="#nosotros">La plataforma</a>
+      <a href="#noticias">Noticias</a>
+      <a href="{% url 'pricing' %}">Planes</a>
+      {% if user.is_authenticated %}
+      <a href="/mi-cuenta/">Mi cuenta</a>
+      {% else %}
+      <a class="ld-cta-ghost" href="{% url 'login' %}">Iniciar sesión</a>
+      <a class="ld-cta-solid" href="{% url 'registro' %}">Registrarse</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <section class="ld-hero">
+    <p class="ld-kicker">Inteligencia climática profesional</p>
+    <h1>Información climática <em>clara</em> para decidir con criterio.</h1>
+    <p class="ld-lead">
+      TuClima concentra datos meteorológicos, análisis sectorial y herramientas científicas
+      en una plataforma pensada para operación agropecuaria, naval, aérea y energética.
+    </p>
+    <div class="ld-actions">
+      <a class="ld-btn ld-btn-primary" href="{% url 'home' %}">Ir al dashboard</a>
+      {% if user.is_authenticated %}
+      <a class="ld-btn ld-btn-secondary" href="/mi-cuenta/">Mi cuenta</a>
+      {% else %}
+      <a class="ld-btn ld-btn-secondary" href="{% url 'login' %}">Iniciar sesión</a>
+      <a class="ld-btn ld-btn-outline" href="{% url 'pricing' %}">Ver planes</a>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="ld-section" id="nosotros">
+    <h2>Qué es TuClima</h2>
+    <p class="ld-sub">Una breve presentación de la plataforma y para quién está pensada.</p>
+    <div class="ld-about">
+      <div class="ld-about-card">
+        <p>
+          <strong style="color:#fff;font-weight:700;">TuClima</strong> es una plataforma de meteorología operativa
+          que integra pronósticos multimodelo, indicadores sectoriales y paneles de ciencia aplicada.
+          El objetivo es simple: acercar información climática confiable al punto geográfico donde se toma la decisión.
+        </p>
+        <p>
+          Desde el dashboard general hasta los modos profesionales, la plataforma organiza el clima
+          en lenguaje útil para el campo, la navegación, la aviación y la generación de energía.
+          También ofrece acceso a papers, comparador de modelos, mapas y laboratorio 3D.
+        </p>
+        <p>
+          Pensada para productores, operadores, instructores, consultores y equipos técnicos
+          que necesitan contexto climático sin perder rigor científico.
+        </p>
+      </div>
+      <ul class="ld-about-points">
+        <li>
+          <span class="n">01</span>
+          <div>
+            <strong>Dashboard operativo</strong>
+            <span>Clima actual, alertas y ubicación en un solo panel.</span>
+          </div>
+        </li>
+        <li>
+          <span class="n">02</span>
+          <div>
+            <strong>Modos sectoriales PRO</strong>
+            <span>Agro, Naval, Aéreo y Energía con métricas específicas.</span>
+          </div>
+        </li>
+        <li>
+          <span class="n">03</span>
+          <div>
+            <strong>Ciencia aplicada</strong>
+            <span>Radiación, ondas, climatología, estadística y papers.</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="ld-section" id="modos">
+    <h2>Modos profesionales</h2>
+    <p class="ld-sub">Cuatro accesos sectoriales, con panel operativo y herramientas avanzadas.</p>
+    <div class="ld-modes">
+      <a class="ld-mode" href="{% url 'agro' %}">
+        <strong>Agro</strong>
+        <span>ETo, radiación, PAR, SPI y balance hídrico para decisiones de campo.</span>
+      </a>
+      <a class="ld-mode" href="{% url 'naval' %}">
+        <strong>Naval</strong>
+        <span>Oleaje, viento y dinámica marina para operación en agua.</span>
+      </a>
+      <a class="ld-mode" href="{% url 'aereo' %}">
+        <strong>Aéreo</strong>
+        <span>Shear, CAPE, Froude y briefing para planificación de vuelo.</span>
+      </a>
+      <a class="ld-mode" href="{% url 'energia' %}">
+        <strong>Energía</strong>
+        <span>GHI, claridad y estimación de producción renovable.</span>
+      </a>
+    </div>
+    <div class="ld-extra">
+      <a class="ld-chip" href="{% url 'ciencia' %}">Papers &amp; ArXiv</a>
+      <a class="ld-chip" href="{% url 'comparador' %}">Comparador de modelos</a>
+      <a class="ld-chip" href="{% url 'espacio' %}">Meteorología espacial</a>
+      <a class="ld-chip" href="{% url 'laboratorio' %}">Laboratorio 3D</a>
+      <a class="ld-chip" href="{% url 'mapas' %}">Mapas &amp; Radar</a>
+    </div>
+  </section>
+
+  <section class="ld-section" id="noticias">
+    <h2>Noticias climáticas</h2>
+    <p class="ld-sub">Actualidad meteorológica y ambiental reciente, seleccionada para el contexto de TuClima.</p>
+    <div class="ld-news-grid is-loading" id="ld-noticias" role="status" aria-live="polite">
+      <div class="ld-news-estado">Cargando noticias…</div>
+    </div>
+    <p class="ld-news-more">
+      <a href="{% url 'home' %}#titulo-noticias-home">Ver más en el dashboard →</a>
+    </p>
+  </section>
+
+  {% include 'partials/_adsense_landing.html' %}
+
+  {% include 'partials/_site_footer.html' %}
+</div>
+
+<script>
+(function () {
+  const container = document.getElementById('ld-noticias');
+  if (!container) return;
+
+  function escapeHtml(valor) {
+    return String(valor ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function formatearFecha(fecha) {
+    if (!fecha) return '';
+    const d = new Date(fecha);
+    if (Number.isNaN(d.getTime())) return '';
+    const diff = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (diff < 3600) return 'Hace menos de 1 h';
+    if (diff < 86400) return `Hace ${Math.floor(diff / 3600)} h`;
+    if (diff < 604800) return `Hace ${Math.floor(diff / 86400)} días`;
+    return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+  }
+
+  function normalizar(texto) {
+    return String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function esMeteorologia(titulo, descripcion) {
+    const c = normalizar(`${titulo || ''} ${descripcion || ''}`);
+    const claves = [
+      'clima', 'meteorolog', 'temperatura', 'lluvia', 'tormenta', 'viento',
+      'pronostico', 'alerta', 'inundacion', 'sequia', 'cambio climatico',
+      'el nino', 'la nina', 'campo', 'agro', 'ola de calor', 'temporal'
+    ];
+    return claves.some((k) => c.includes(k));
+  }
+
+  async function cargar() {
+    container.className = 'ld-news-grid is-loading';
+    container.innerHTML = '<div class="ld-news-estado">Cargando noticias…</div>';
+    try {
+      const resp = await fetch('/api/noticias/', { headers: { Accept: 'application/json' } });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const data = await resp.json();
+      if (!data.success) throw new Error(data.error || 'Respuesta inválida');
+
+      let items = Array.isArray(data.items) ? data.items : [];
+      const filtradas = items.filter((n) => esMeteorologia(n.title, n.description));
+      items = (filtradas.length ? filtradas : items).slice(0, 6);
+
+      if (!items.length) {
+        container.className = 'ld-news-grid is-empty';
+        container.innerHTML = '<div class="ld-news-estado">No hay noticias disponibles por el momento.</div>';
+        return;
+      }
+
+      container.className = 'ld-news-grid';
+      container.removeAttribute('role');
+      container.innerHTML = items.map((n) => {
+        const titulo = escapeHtml(n.title || 'Sin título');
+        const desc = escapeHtml(n.description || '');
+        const fuente = escapeHtml(n.source || 'Medios');
+        const fecha = formatearFecha(n.published || n.pubDate || n.date);
+        const link = escapeHtml(n.link || n.url || '#');
+        return `
+          <a class="ld-news-card" href="${link}" target="_blank" rel="noopener noreferrer">
+            <div class="ld-news-body">
+              <div class="ld-news-meta">
+                <span>${fuente}</span>
+                ${fecha ? `<time>${escapeHtml(fecha)}</time>` : ''}
+              </div>
+              <h3>${titulo}</h3>
+              ${desc ? `<p>${desc}</p>` : ''}
+            </div>
+          </a>`;
+      }).join('');
+    } catch (err) {
+      container.className = 'ld-news-grid is-error';
+      container.innerHTML = '<div class="ld-news-estado is-error">No se pudieron cargar las noticias.</div>';
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', cargar);
+  } else {
+    cargar();
+  }
+})();
+</script>
+{% endblock %}

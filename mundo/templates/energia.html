@@ -473,7 +473,7 @@
 
         /* HEADER */
         .header-eng { background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid #1e293b; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
-        .titulo-seccion { color: #facc15; font-weight: 800; font-size: 1.05em; letter-spacing: 2px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; flex-shrink: 0; }
+        .titulo-seccion { color: #fff; font-weight: 800; font-size: 1.05em; letter-spacing: 2px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; flex-shrink: 0; }
         .btn-exit { text-decoration: none; color: #94a3b8; border: 1px solid #334155; padding: 8px 16px; border-radius: 6px; transition: 0.3s; font-size: 0.85em; font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
         .btn-exit:hover { background: #dc2626; border-color: #dc2626; color: white; }
 
@@ -634,7 +634,7 @@
 <div class="header-eng">
     <div class="titulo-seccion">
         <svg class="icon-svg" style="color:#facc15;" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        TuClima <span style="font-size:0.6em; background:#facc15; color:#0f172a; padding:3px 6px; border-radius:4px; font-weight: 800; letter-spacing: 0;">Pro</span>
+        Tu<span style="color:#facc15;">Clima</span> <span style="font-size:0.6em; background:rgba(250,204,21,0.15); color:#facc15; border:1px solid rgba(250,204,21,0.35); padding:3px 6px; border-radius:4px; font-weight:800; letter-spacing:1px;">PRO</span>
     </div>
     {% include 'partials/_sector_location_search.html' with tc_sector='energia' %}
     <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
@@ -642,7 +642,7 @@
         <svg class="icon-svg" style="width:16px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
         CABINA
     </button>
-    <a href="/?lat={{ lat }}&lon={{ lon }}" class="btn-exit">
+    <a href="/clima/?lat={{ lat }}&lon={{ lon }}" class="btn-exit">
         <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg> Salir
     </a>
     </div>

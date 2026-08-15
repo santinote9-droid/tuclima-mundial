@@ -750,6 +750,13 @@ def error_500(request):
     return render(request, '500.html', status=500)
 
 # --- VISTA HOME (PÚBLICA) ---
+def landing(request):
+    """Pantalla de bienvenida pública (sin Open-Meteo)."""
+    return render(request, 'landing.html', {
+        'user': request.user,
+    })
+
+
 def home(request):
     # Configuración Default - Sin ubicación predeterminada para carga instantánea
     lat = 0.0
@@ -7143,12 +7150,10 @@ def api_n8n_ubicaciones(request):
 @csrf_exempt
 def api_estadisticas_historico(request, sector):
     """
-    Proxy Django → n8n (Workflow B · Webhook): pide la comparación
-    "hoy vs. promedio de semanas pasadas a esta hora" que n8n calcula
-    contra BigQuery (tabla datos_clima.snapshots_historicos).
+    Histórico "hoy vs misma hora en días previos".
 
-    Django nunca toca BigQuery directamente: reenvía la consulta al
-    webhook de n8n y devuelve la respuesta tal cual al frontend.
+    1) Intenta webhook n8n → BigQuery (si está configurado y responde OK).
+    2) Si falla / 404 / timeout: fallback Open-Meteo past_days (misma forma JSON).
     """
     if not request.user.is_authenticated:
         return JsonResponse({'ok': False, 'error': 'No autenticado'}, status=401)
@@ -7163,10 +7168,6 @@ def api_estadisticas_historico(request, sector):
     if perfil and not perfil.tiene_acceso_sector(sector):
         return JsonResponse({'ok': False, 'error': f'Sin acceso al sector {sector}'}, status=403)
 
-    webhook_url = getattr(settings, 'N8N_HISTORICO_WEBHOOK_URL', '')
-    if not webhook_url:
-        return JsonResponse({'ok': False, 'error': 'Histórico no configurado todavía (falta N8N_HISTORICO_WEBHOOK_URL).'}, status=503)
-
     lat_raw = request.GET.get('lat', '-34.60')
     lon_raw = request.GET.get('lon', '-58.38')
     variable = request.GET.get('variable', '')
@@ -7176,34 +7177,50 @@ def api_estadisticas_historico(request, sector):
     except ValueError:
         lat, lon = -34.60, -58.38
 
-    try:
-        resp = requests.get(
-            webhook_url,
-            params={'sector': sector, 'lat': lat, 'lon': lon, 'variable': variable},
-            headers={'X-N8N-Secret': getattr(settings, 'N8N_HISTORICO_SECRET', '')},
-            timeout=12,
-        )
-        data = resp.json()
-        data.setdefault('ok', True)
-
-        # Enriquecemos con carta de control (±2σ/±3σ) y test t de Student
-        # usando media/desvío/n que BigQuery ya calcula (STDDEV en la
-        # consulta SQL del workflow n8n). No requiere tocar n8n.
+    data = None
+    webhook_url = getattr(settings, 'N8N_HISTORICO_WEBHOOK_URL', '') or ''
+    if webhook_url:
         try:
-            hoy_valor = (data.get('hoy') or {}).get('valor')
-            prom = data.get('promedio_historico') or {}
-            media_hist = prom.get('valor')
-            desvio_hist = prom.get('desviacion')
-            n_hist = prom.get('n_dias')
-            data['carta_control'] = estadistica_utils.carta_control(hoy_valor, media_hist, desvio_hist, n_hist)
-            data['test_t'] = estadistica_utils.test_t_una_observacion(hoy_valor, media_hist, desvio_hist, n_hist)
+            resp = requests.get(
+                webhook_url,
+                params={'sector': sector, 'lat': lat, 'lon': lon, 'variable': variable},
+                headers={'X-N8N-Secret': getattr(settings, 'N8N_HISTORICO_SECRET', '')},
+                timeout=10,
+            )
+            if resp.status_code < 400:
+                payload = resp.json()
+                if isinstance(payload, dict) and (payload.get('ok') is not False) and payload.get('hoy'):
+                    data = payload
+                    data.setdefault('ok', True)
+                    data.setdefault('fuente', 'n8n')
         except Exception as e:
-            logger.warning(f"No se pudo calcular carta de control/test t ({sector}): {e}")
-            data['carta_control'] = None
-            data['test_t'] = None
+            logger.warning(f"Histórico n8n no disponible ({sector}): {e}")
 
-        return JsonResponse(data, status=resp.status_code if resp.status_code < 500 else 200)
+    if data is None:
+        try:
+            data = estadistica_utils.historico_misma_hora_openmeteo(
+                lat, lon, sector, variable,
+                lambda url: _get_meteo(url, timeout=25, reintentos=1),
+            )
+        except Exception as e:
+            logger.warning(f"Histórico Open-Meteo fallback falló ({sector}): {e}")
+            return JsonResponse({'ok': False, 'error': 'El histórico no está disponible en este momento.'}, status=502)
+
+    if not data.get('ok'):
+        return JsonResponse(data, status=502)
+
+    try:
+        hoy_valor = (data.get('hoy') or {}).get('valor')
+        prom = data.get('promedio_historico') or {}
+        media_hist = prom.get('valor')
+        desvio_hist = prom.get('desviacion')
+        n_hist = prom.get('n_dias')
+        data['carta_control'] = estadistica_utils.carta_control(hoy_valor, media_hist, desvio_hist, n_hist)
+        data['test_t'] = estadistica_utils.test_t_una_observacion(hoy_valor, media_hist, desvio_hist, n_hist)
     except Exception as e:
-        logger.warning(f"Histórico n8n/BigQuery no disponible ({sector}): {e}")
-        return JsonResponse({'ok': False, 'error': 'El histórico no está disponible en este momento.'}, status=502)
+        logger.warning(f"No se pudo calcular carta de control/test t ({sector}): {e}")
+        data['carta_control'] = None
+        data['test_t'] = None
+
+    return JsonResponse(data)
 

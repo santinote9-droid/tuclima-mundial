@@ -526,9 +526,9 @@
             font-family: 'JetBrains Mono', monospace; 
             font-size: 1.25em; font-weight: 700; color: #fff; letter-spacing: -1px; 
         }
-        .brand-title span { color: var(--accent); }
+        .brand-title .brand-clima { color: #4ade80; }
         .badge-pro { 
-            background: rgba(250, 204, 21, 0.15); color: var(--warning); border: 1px solid rgba(250, 204, 21, 0.3);
+            background: rgba(250, 204, 21, 0.15); color: #facc15; border: 1px solid rgba(250, 204, 21, 0.3);
             padding: 4px 8px; border-radius: 4px; font-size: 0.7em; font-weight: bold; letter-spacing: 1px;
         }
 
@@ -859,7 +859,7 @@
 <header class="header-eng">
         <div class="brand-box">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5a4 4 0 0 1 5.66 0"/><path d="M10 10a2 2 0 0 1 2.83 0"/></svg>
-            <div class="brand-title">TuClima <span>Pro</span></div>
+            <div class="brand-title">Tu<span class="brand-clima">Clima</span></div>
             <span class="badge-pro">PRO</span>
         </div>
 
@@ -881,7 +881,7 @@
                     <span class="tc-hdr-lbl" style="font-family:'JetBrains Mono'; font-size:0.75em;">PDF</span>
                 </button>
                 
-                <a href="/?lat={{ lat }}&lon={{ lon }}" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 8px; border-radius: 6px; display: flex; align-items: center;" title="Salir">
+                <a href="/clima/?lat={{ lat }}&lon={{ lon }}" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 8px; border-radius: 6px; display: flex; align-items: center;" title="Salir">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                 </a>
         </div>

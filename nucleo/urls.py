@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from mundo import views  # Importamos las vistas
 from mundo.views import home, comparador_modelos, api_papers
-from mundo.seo import robots_txt, sitemap_xml
+from mundo.seo import robots_txt, sitemap_xml, ads_txt
 
 # Manejadores de error personalizados
 handler403 = 'mundo.views.error_403'
@@ -15,7 +15,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('robots.txt', robots_txt, name='robots_txt'),
     path('sitemap.xml', sitemap_xml, name='sitemap_xml'),
-    path('', views.home, name='home'),          # Página Principal (Público General)
+    path('ads.txt', ads_txt, name='ads_txt'),
+    path('', views.landing, name='landing'),  # Bienvenida pública
+    path('clima/', views.home, name='home'),  # Dashboard clima (antes en /)
     path('api/clima-data/', views.clima_data_api, name='clima_data_api'),  # API para datos del clima en JSON
     path('agro/', views.agro, name='agro'),     # MODO AGRO 🚜
     path('agro/<slug:funcion>/', views.agro, name='agro_pro'),

@@ -2,12 +2,21 @@ from django.conf import settings
 
 
 def site_seo(request):
-    """Inyecta URL canónica del sitio y verificación Google en todos los templates."""
+    """Inyecta URL canónica del sitio, verificación Google y flags de AdSense."""
     site_url = (getattr(settings, 'SITE_URL', '') or '').rstrip('/')
     if not site_url:
         # Fallback: construir desde el request (útil en local)
         site_url = request.build_absolute_uri('/').rstrip('/')
+
+    adsense_client = getattr(settings, 'ADSENSE_CLIENT', '') or ''
+    adsense_enabled = bool(getattr(settings, 'ADSENSE_ENABLED', False)) and bool(adsense_client)
+
     return {
         'SITE_URL': site_url,
         'GOOGLE_SITE_VERIFICATION': getattr(settings, 'GOOGLE_SITE_VERIFICATION', '') or '',
+        'ADSENSE_ENABLED': adsense_enabled,
+        'ADSENSE_CLIENT': adsense_client,
+        'ADSENSE_SLOT_A': getattr(settings, 'ADSENSE_SLOT_A', '') or '',
+        'ADSENSE_SLOT_B': getattr(settings, 'ADSENSE_SLOT_B', '') or '',
+        'ADSENSE_SLOT_C': getattr(settings, 'ADSENSE_SLOT_C', '') or '',
     }

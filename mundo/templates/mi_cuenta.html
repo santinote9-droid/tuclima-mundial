@@ -1205,7 +1205,7 @@
                         </div>
                         <div id="ubicacion-estado" style="font-size:0.75rem; margin-top:5px; min-height:16px;"></div>
                         {% with ub_mapa=ubicaciones.first %}
-                        <a href="{% if ub_mapa %}/?lat={{ ub_mapa.lat }}&lon={{ ub_mapa.lon }}{% else %}/{% endif %}"
+                        <a href="{% if ub_mapa %}/clima/?lat={{ ub_mapa.lat }}&lon={{ ub_mapa.lon }}{% else %}/clima/{% endif %}"
                            id="link-usar-mapa"
                            class="mc-btn mc-btn-ghost" style="margin-top:8px; min-height:40px;"
                            {% if not ub_mapa %}hidden{% endif %}>
@@ -1261,7 +1261,7 @@ async function aplicarUbicacionGuardada(sel) {
     if (input) input.value = nombre;
     const link = document.getElementById('link-usar-mapa');
     if (link && lat && lon) {
-        link.href = `/?lat=${lat}&lon=${lon}`;
+        link.href = `/clima/?lat=${lat}&lon=${lon}`;
         link.hidden = false;
     }
     try {

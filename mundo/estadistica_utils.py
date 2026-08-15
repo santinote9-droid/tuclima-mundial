@@ -543,3 +543,203 @@ def agrupar_por_bloque(tiempos, valores, horas_bloque=6):
             orden.append(etiqueta)
         grupos[etiqueta].append(v)
     return {e: grupos[e] for e in orden}
+
+
+# ------------------------------------------------------------------
+# Histórico "misma hora" (fallback Open-Meteo si n8n/BigQuery cae)
+# ------------------------------------------------------------------
+_HISTORICO_VARS = {
+    'agro': {
+        'precipitacion': {'api': 'weather', 'campo': 'precipitation', 'factor': 1.0, 'label': 'Precipitación', 'unidad': 'mm'},
+        'temperatura': {'api': 'weather', 'campo': 'temperature_2m', 'factor': 1.0, 'label': 'Temperatura', 'unidad': '°C'},
+        'humedad': {'api': 'weather', 'campo': 'relative_humidity_2m', 'factor': 1.0, 'label': 'Humedad', 'unidad': '%'},
+        'viento': {'api': 'weather', 'campo': 'wind_speed_10m', 'factor': 1.0, 'label': 'Viento', 'unidad': 'km/h'},
+        'et0': {'api': 'weather', 'campo': 'et0_fao_evapotranspiration', 'factor': 1.0, 'label': 'ET0', 'unidad': 'mm'},
+    },
+    'naval': {
+        'olas': {'api': 'marine', 'campo': 'wave_height', 'factor': 1.0, 'label': 'Altura de olas', 'unidad': 'm'},
+        'periodo_ola': {'api': 'marine', 'campo': 'wave_period', 'factor': 1.0, 'label': 'Período de ola', 'unidad': 's'},
+        'viento': {'api': 'weather', 'campo': 'wind_speed_10m', 'factor': 0.539957, 'label': 'Viento', 'unidad': 'kt'},
+        'temperatura': {'api': 'weather', 'campo': 'temperature_2m', 'factor': 1.0, 'label': 'Temperatura', 'unidad': '°C'},
+    },
+    'aereo': {
+        'temperatura': {'api': 'weather', 'campo': 'temperature_2m', 'factor': 1.0, 'label': 'Temperatura', 'unidad': '°C', 'models': 'gfs_seamless'},
+        'viento': {'api': 'weather', 'campo': 'wind_speed_10m', 'factor': 1.0 / 1.852, 'label': 'Viento', 'unidad': 'kt', 'models': 'gfs_seamless'},
+        'rafagas': {'api': 'weather', 'campo': 'wind_gusts_10m', 'factor': 1.0 / 1.852, 'label': 'Ráfagas', 'unidad': 'kt', 'models': 'gfs_seamless'},
+        'nubosidad': {'api': 'weather', 'campo': 'cloud_cover', 'factor': 1.0, 'label': 'Nubosidad', 'unidad': '%', 'models': 'gfs_seamless'},
+        'cape': {'api': 'weather', 'campo': 'cape', 'factor': 1.0, 'label': 'CAPE', 'unidad': 'J/kg', 'models': 'gfs_seamless'},
+    },
+    'energia': {
+        'radiacion': {'api': 'weather', 'campo': 'shortwave_radiation', 'factor': 1.0, 'label': 'Radiación', 'unidad': 'W/m²'},
+        'viento': {'api': 'weather', 'campo': 'wind_speed_10m', 'factor': 1.0 / 3.6, 'label': 'Viento', 'unidad': 'm/s'},
+        'temperatura': {'api': 'weather', 'campo': 'temperature_2m', 'factor': 1.0, 'label': 'Temperatura', 'unidad': '°C'},
+        'presion': {'api': 'weather', 'campo': 'pressure_msl', 'factor': 1.0, 'label': 'Presión', 'unidad': 'hPa'},
+    },
+}
+
+
+def _media(xs):
+    return sum(xs) / len(xs) if xs else None
+
+
+def _desvio(xs):
+    if not xs or len(xs) < 2:
+        return None
+    m = _media(xs)
+    var = sum((x - m) ** 2 for x in xs) / (len(xs) - 1)
+    return var ** 0.5
+
+
+def historico_misma_hora_openmeteo(lat, lon, sector, variable, fetch_json, *, past_days=35):
+    """
+    Compara el valor de la hora actual vs. el mismo slot horario
+    en días previos (Open-Meteo past_days). Misma forma de respuesta
+    que el webhook n8n/BigQuery para el frontend de Estadística.
+    """
+    sector = (sector or '').lower()
+    vars_sec = _HISTORICO_VARS.get(sector) or {}
+    defaults = {
+        'agro': 'precipitacion',
+        'naval': 'olas',
+        'aereo': 'temperatura',
+        'energia': 'radiacion',
+    }
+    if variable not in vars_sec:
+        variable = defaults.get(sector, next(iter(vars_sec), None))
+    cfg = vars_sec.get(variable)
+    if not cfg:
+        return {'ok': False, 'error': 'Variable no soportada para histórico'}
+
+    past_days = max(14, min(int(past_days), 92))
+    campos = cfg['campo']
+    models = cfg.get('models')
+    if cfg['api'] == 'marine':
+        url = (
+            f"https://marine-api.open-meteo.com/v1/marine"
+            f"?latitude={lat}&longitude={lon}"
+            f"&hourly={campos}&past_days={past_days}&forecast_days=1&timezone=auto"
+        )
+    else:
+        url = (
+            f"https://api.open-meteo.com/v1/forecast"
+            f"?latitude={lat}&longitude={lon}"
+            f"&hourly={campos}&past_days={past_days}&forecast_days=1&timezone=auto"
+        )
+        if models:
+            url += f"&models={models}"
+
+    try:
+        data = fetch_json(url)
+    except Exception as e:
+        return {'ok': False, 'error': f'No se pudo obtener histórico: {e}'}
+
+    if not isinstance(data, dict) or data.get('error'):
+        return {'ok': False, 'error': data.get('reason', 'API histórico con error') if isinstance(data, dict) else 'API histórico inválida'}
+
+    hourly = data.get('hourly') or {}
+    times = hourly.get('time') or []
+    raw = hourly.get(cfg['campo']) or []
+    if len(times) < 48:
+        return {'ok': False, 'error': 'Serie histórica insuficiente'}
+
+    factor = float(cfg.get('factor') or 1.0)
+
+    def _parse_hourly(payload):
+        hourly = (payload or {}).get('hourly') or {}
+        times = hourly.get('time') or []
+        raw = hourly.get(cfg['campo']) or []
+        by_day = defaultdict(dict)
+        for i, t in enumerate(times):
+            if i >= len(raw) or raw[i] is None:
+                continue
+            day = str(t)[:10]
+            try:
+                hour = int(str(t)[11:13])
+            except (ValueError, IndexError):
+                continue
+            by_day[day][hour] = float(raw[i]) * factor
+        return by_day
+
+    by_day_hour = _parse_hourly(data)
+
+    # Marino en tierra firme → Open-Meteo devuelve nulls; buscar celda costera cercana
+    if cfg['api'] == 'marine' and sum(len(h) for h in by_day_hour.values()) < 24:
+        for dlat, dlon in ((0.0, 0.35), (0.0, 0.55), (-0.15, 0.45), (0.15, 0.45), (0.0, -0.35)):
+            url_c = (
+                f"https://marine-api.open-meteo.com/v1/marine"
+                f"?latitude={lat + dlat}&longitude={lon + dlon}"
+                f"&hourly={campos}&past_days={past_days}&forecast_days=1&timezone=auto"
+            )
+            try:
+                data_c = fetch_json(url_c)
+            except Exception:
+                continue
+            by_try = _parse_hourly(data_c)
+            if sum(len(h) for h in by_try.values()) >= 24:
+                by_day_hour = by_try
+                break
+
+    days = sorted(by_day_hour.keys())
+    if len(days) < 4:
+        return {'ok': False, 'error': 'Todavía no hay suficientes días de histórico'}
+
+    # Hora de referencia: última hora disponible del día más reciente
+    hoy_day = days[-1]
+    horas_hoy = sorted(by_day_hour[hoy_day].keys())
+    if not horas_hoy:
+        return {'ok': False, 'error': 'Sin dato para la hora actual'}
+    hora_ref = horas_hoy[-1]
+    valor_hoy = by_day_hour[hoy_day][hora_ref]
+
+    hist_vals = []
+    for d in days[:-1]:
+        if hora_ref in by_day_hour[d]:
+            hist_vals.append(by_day_hour[d][hora_ref])
+
+    if len(hist_vals) < 3:
+        return {'ok': False, 'error': 'Pocos días con dato a esta misma hora'}
+
+    media = _media(hist_vals)
+    desvio = _desvio(hist_vals)
+    diff_pct = None
+    if media is not None and abs(media) > 1e-9:
+        diff_pct = round(100.0 * (valor_hoy - media) / abs(media), 1)
+    elif media is not None:
+        diff_pct = 0.0 if abs(valor_hoy - media) < 1e-9 else (100.0 if valor_hoy > media else -100.0)
+
+    # Serie semanal: promedios de la misma hora en ventanas de 7 días (más Hoy)
+    prev_days = days[:-1]
+    serie = []
+    n_sem = min(4, max(1, len(prev_days) // 7))
+    for s in range(n_sem, 0, -1):
+        bloque = prev_days[-s * 7: -(s - 1) * 7 if s > 1 else None]
+        if not bloque:
+            continue
+        vals = [by_day_hour[d][hora_ref] for d in bloque if hora_ref in by_day_hour[d]]
+        if not vals:
+            continue
+        serie.append({'semana': f'S-{s}', 'valor': round(_media(vals), 2)})
+    serie.append({'semana': 'Hoy', 'valor': round(valor_hoy, 2)})
+
+    return {
+        'ok': True,
+        'fuente': 'open-meteo',
+        'sector': sector,
+        'variable': variable,
+        'variable_label': cfg.get('label'),
+        'unidad': cfg.get('unidad'),
+        'hora_local': f'{hora_ref:02d}:00',
+        'hoy': {'valor': round(valor_hoy, 2), 'fecha': hoy_day},
+        'promedio_historico': {
+            'valor': round(media, 2),
+            'desviacion': round(desvio, 2) if desvio is not None else None,
+            'n_dias': len(hist_vals),
+        },
+        'diferencia_pct': diff_pct,
+        'serie_semanas': serie,
+        'nota': (
+            f'Comparación a las {hora_ref:02d}:00 (hora local) vs. {len(hist_vals)} días previos · '
+            'Open-Meteo (fallback; n8n/BigQuery no disponible).'
+        ),
+    }
+

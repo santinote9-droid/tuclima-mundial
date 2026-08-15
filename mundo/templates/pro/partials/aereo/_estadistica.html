@@ -73,7 +73,7 @@
       </div>
 
       <div id="stats-aereo-pane-historico" class="stats-aereo-pane" style="display:none;">
-        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 12px; line-height:1.5;">Comparación en tiempo real: el valor de ahora vs. el promedio real de días anteriores a esta misma hora, calculado sobre snapshots guardados automáticamente cada hora (n8n + BigQuery).</p>
+        <p id="stats-aereo-historico-nota" style="font-size:0.72rem; color:#94a3b8; margin:0 0 12px; line-height:1.5;">Comparación: valor de ahora vs. promedio de días previos a esta misma hora (Open-Meteo; o n8n/BigQuery si está disponible).</p>
         <div id="stats-aereo-historico-loading" style="color:#67e8f9; font-size:0.78rem; text-align:center; padding:20px 0;">Consultando histórico…</div>
         <div id="stats-aereo-historico-empty" style="display:none; color:#94a3b8; font-size:0.78rem; text-align:center; padding:20px 14px; background:rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.2); border-radius:10px;">Todavía no hay suficiente histórico acumulado para esta variable y ubicación. Los snapshots se guardan automáticamente cada hora — volvé a revisar en unos días.</div>
         <div id="stats-aereo-historico-contenido" style="display:none;">
@@ -329,6 +329,8 @@
       }
       if (empty) empty.style.display = 'none';
       if (contenido) contenido.style.display = 'block';
+      var notaEl = document.getElementById('stats-aereo-historico-nota');
+      if (notaEl && data.nota) notaEl.textContent = data.nota;
 
       var variableSel = document.getElementById('stats-aereo-variable');
       var textoVar = variableSel ? variableSel.options[variableSel.selectedIndex].text : '';

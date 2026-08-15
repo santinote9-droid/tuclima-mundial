@@ -281,6 +281,23 @@ SITE_URL = (
 # En Render: GOOGLE_SITE_VERIFICATION=contenido_del_meta_sin_comillas
 GOOGLE_SITE_VERIFICATION = (os.getenv('GOOGLE_SITE_VERIFICATION') or '').strip()
 
+# ============================================================
+# GOOGLE ADSENSE — opcional (landing / publicidad)
+# 1) Creá cuenta en https://www.google.com/adsense/
+# 2) Agregá el sitio y esperá aprobación
+# 3) Creá 1–3 unidades "Display" y pegá los IDs abajo
+# ADSENSE_CLIENT=ca-pub-XXXXXXXXXXXXXXXX
+# ADSENSE_SLOT_A=##########
+# ADSENSE_SLOT_B=##########
+# ADSENSE_SLOT_C=##########
+# ADSENSE_ENABLED=true   (solo activá en producción cuando esté aprobado)
+# ============================================================
+ADSENSE_CLIENT = (os.getenv('ADSENSE_CLIENT') or 'ca-pub-6917571231301347').strip()
+ADSENSE_SLOT_A = (os.getenv('ADSENSE_SLOT_A') or '').strip()
+ADSENSE_SLOT_B = (os.getenv('ADSENSE_SLOT_B') or '').strip()
+ADSENSE_SLOT_C = (os.getenv('ADSENSE_SLOT_C') or '').strip()
+ADSENSE_ENABLED = (os.getenv('ADSENSE_ENABLED') or '').strip().lower() in ('1', 'true', 'yes', 'on')
+
 # Cotización USD→ARS para Mercado Pago Argentina (preferencias en ARS).
 # Actualizá en Render según cotización aproximada.
 try:
