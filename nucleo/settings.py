@@ -282,21 +282,16 @@ SITE_URL = (
 GOOGLE_SITE_VERIFICATION = (os.getenv('GOOGLE_SITE_VERIFICATION') or '').strip()
 
 # ============================================================
-# GOOGLE ADSENSE — opcional (landing / publicidad)
-# 1) Creá cuenta en https://www.google.com/adsense/
-# 2) Agregá el sitio y esperá aprobación
-# 3) Creá 1–3 unidades "Display" y pegá los IDs abajo
-# ADSENSE_CLIENT=ca-pub-XXXXXXXXXXXXXXXX
-# ADSENSE_SLOT_A=##########
-# ADSENSE_SLOT_B=##########
-# ADSENSE_SLOT_C=##########
-# ADSENSE_ENABLED=true   (solo activá en producción cuando esté aprobado)
+# GOOGLE ADSENSE — landing (Partners & anuncios)
+# Script en <head> (base.html) + unidades en partials/_adsense_landing.html
+# ADSENSE_ENABLED=false para apagar banners sin quitar el script de verificación
 # ============================================================
 ADSENSE_CLIENT = (os.getenv('ADSENSE_CLIENT') or 'ca-pub-6917571231301347').strip()
-ADSENSE_SLOT_A = (os.getenv('ADSENSE_SLOT_A') or '').strip()
-ADSENSE_SLOT_B = (os.getenv('ADSENSE_SLOT_B') or '').strip()
-ADSENSE_SLOT_C = (os.getenv('ADSENSE_SLOT_C') or '').strip()
-ADSENSE_ENABLED = (os.getenv('ADSENSE_ENABLED') or '').strip().lower() in ('1', 'true', 'yes', 'on')
+ADSENSE_SLOT_A = (os.getenv('ADSENSE_SLOT_A') or '4234611639').strip()  # Display auto
+ADSENSE_SLOT_B = (os.getenv('ADSENSE_SLOT_B') or '2897479230').strip()  # Multiplex autorelaxed
+ADSENSE_SLOT_C = (os.getenv('ADSENSE_SLOT_C') or '7510727841').strip()  # Display auto
+_adsense_flag = (os.getenv('ADSENSE_ENABLED') or 'true').strip().lower()
+ADSENSE_ENABLED = _adsense_flag in ('1', 'true', 'yes', 'on')
 
 # Cotización USD→ARS para Mercado Pago Argentina (preferencias en ARS).
 # Actualizá en Render según cotización aproximada.

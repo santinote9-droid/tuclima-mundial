@@ -1,6 +1,6 @@
-{# Bloque publicitario listo para Google AdSense.
-   Sin ADSENSE_ENABLED + ADSENSE_CLIENT muestra placeholders.
-   Con variables configuradas renderiza unidades Display. #}
+{# Bloque publicitario Google AdSense (landing).
+   Script del publisher va en base.html <head>.
+   Slot B es Multiplex (autorelaxed); A y C son Display auto. #}
 <section class="ld-section" id="publicidad" aria-label="Espacio publicitario">
   <h2>Partners &amp; anuncios</h2>
   <p class="ld-sub">Espacio reservado para publicidad y alianzas del ecosistema TuClima.</p>
@@ -9,15 +9,16 @@
     <p class="ld-ads-label">{% if ADSENSE_ENABLED %}Anuncios{% else %}Espacio publicitario{% endif %}</p>
     {% if not ADSENSE_ENABLED %}
     <p style="margin:0;color:rgba(255,255,255,0.45);font-size:0.9rem;">
-      Preparado para Google AdSense. Activá <code>ADSENSE_ENABLED</code> y los IDs en el entorno cuando la cuenta esté aprobada.
+      AdSense en pausa (<code>ADSENSE_ENABLED=false</code>).
     </p>
     {% endif %}
 
     <div class="ld-ads-slots">
       {% if ADSENSE_ENABLED and ADSENSE_SLOT_A %}
       <div class="ld-ad-slot ld-ad-live" data-ad-slot="landing-a">
+        {# landing-a — Display #}
         <ins class="adsbygoogle"
-             style="display:block;min-height:90px;width:100%"
+             style="display:block"
              data-ad-client="{{ ADSENSE_CLIENT }}"
              data-ad-slot="{{ ADSENSE_SLOT_A }}"
              data-ad-format="auto"
@@ -28,13 +29,13 @@
       {% endif %}
 
       {% if ADSENSE_ENABLED and ADSENSE_SLOT_B %}
-      <div class="ld-ad-slot ld-ad-live" data-ad-slot="landing-b">
+      <div class="ld-ad-slot ld-ad-live ld-ad-multiplex" data-ad-slot="landing-b">
+        {# landing-b — Multiplex / autorelaxed #}
         <ins class="adsbygoogle"
-             style="display:block;min-height:90px;width:100%"
+             style="display:block"
+             data-ad-format="autorelaxed"
              data-ad-client="{{ ADSENSE_CLIENT }}"
-             data-ad-slot="{{ ADSENSE_SLOT_B }}"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
+             data-ad-slot="{{ ADSENSE_SLOT_B }}"></ins>
       </div>
       {% else %}
       <div class="ld-ad-slot" data-ad-slot="landing-b">Slot B · AdSense</div>
@@ -42,8 +43,9 @@
 
       {% if ADSENSE_ENABLED and ADSENSE_SLOT_C %}
       <div class="ld-ad-slot ld-ad-live" data-ad-slot="landing-c">
+        {# landing-c — Display #}
         <ins class="adsbygoogle"
-             style="display:block;min-height:90px;width:100%"
+             style="display:block"
              data-ad-client="{{ ADSENSE_CLIENT }}"
              data-ad-slot="{{ ADSENSE_SLOT_C }}"
              data-ad-format="auto"
