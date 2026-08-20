@@ -3588,53 +3588,88 @@ def ls_checkout(request):
 
     # Ruta principal: crear checkout vía API
     if api_key and store_id:
-        try:
-            payload = _json.dumps({
-                "data": {
-                    "type": "checkouts",
-                    "attributes": {
-                        "checkout_data": {
-                            "custom": {
-                                "user_id": str(request.user.id),
-                                "paquete_id": paquete_id,
-                            }
-                        },
-                        "product_options": {
-                            "redirect_url": f"{site}/ls-retorno/?paquete_id={paquete_id}",
-                        },
+        import time as _time
+        payload = _json.dumps({
+            "data": {
+                "type": "checkouts",
+                "attributes": {
+                    "checkout_data": {
+                        "custom": {
+                            "user_id": str(request.user.id),
+                            "paquete_id": paquete_id,
+                        }
                     },
-                    "relationships": {
-                        "store":   {"data": {"type": "stores",   "id": str(store_id)}},
-                        "variant": {"data": {"type": "variants", "id": str(variant_id)}},
+                    "product_options": {
+                        "redirect_url": f"{site}/ls-retorno/?paquete_id={paquete_id}",
                     },
-                }
-            }).encode('utf-8')
-            req_api = _req.Request(
-                'https://api.lemonsqueezy.com/v1/checkouts',
-                data=payload,
-                headers={
-                    'Authorization': f'Bearer {api_key}',
-                    'Accept': 'application/vnd.api+json',
-                    'Content-Type': 'application/vnd.api+json',
                 },
-                method='POST',
-            )
-            with _req.urlopen(req_api, timeout=15) as resp:
-                body = _json.loads(resp.read().decode('utf-8'))
-            checkout_url = body['data']['attributes']['url']
-            logger.info(f'[LS_CHECKOUT] Checkout creado OK: {checkout_url[:60]}...')
-            return redirect(checkout_url)
+                "relationships": {
+                    "store":   {"data": {"type": "stores",   "id": str(store_id)}},
+                    "variant": {"data": {"type": "variants", "id": str(variant_id)}},
+                },
+            }
+        }).encode('utf-8')
 
-        except _uerr.HTTPError as e:
-            try:
-                detalle = e.read().decode('utf-8')
-            except Exception:
-                detalle = str(e)
-            logger.error(f'[LS_CHECKOUT] HTTPError API: {e.code} {detalle}')
+        last_http = None
+        last_detalle = ''
+        try:
+            for intento in range(1, 4):
+                try:
+                    req_api = _req.Request(
+                        'https://api.lemonsqueezy.com/v1/checkouts',
+                        data=payload,
+                        headers={
+                            'Authorization': f'Bearer {api_key}',
+                            'Accept': 'application/vnd.api+json',
+                            'Content-Type': 'application/vnd.api+json',
+                        },
+                        method='POST',
+                    )
+                    with _req.urlopen(req_api, timeout=25) as resp:
+                        body = _json.loads(resp.read().decode('utf-8'))
+                    checkout_url = body['data']['attributes']['url']
+                    logger.info(
+                        f'[LS_CHECKOUT] Checkout creado OK (intento {intento}): {checkout_url[:60]}...'
+                    )
+                    return redirect(checkout_url)
+                except _uerr.HTTPError as e:
+                    try:
+                        detalle = e.read().decode('utf-8')
+                    except Exception:
+                        detalle = str(e)
+                    last_http, last_detalle = e.code, detalle
+                    logger.error(f'[LS_CHECKOUT] HTTPError API intento={intento}: {e.code} {detalle}')
+                    # 503/502/429 suelen ser temporales en LS
+                    if e.code in (429, 502, 503) and intento < 3:
+                        _time.sleep(1.2 * intento)
+                        continue
+                    break
+
+            extra = ''
+            if last_http == 401:
+                extra = (
+                    "<p><b>Causa:</b> Lemon Squeezy rechazó la API key "
+                    "(<code>Unauthenticated</code>). No es un problema del variant/store.</p>"
+                    "<ol>"
+                    "<li>Entrá a Lemon Squeezy → <b>Settings → API</b> (con <b>Test mode</b> ON si aún no estás Live).</li>"
+                    "<li>Creá una API key nueva y copiá solo el token.</li>"
+                    "<li>Pegala en <code>.env</code> / Render como <code>LEMONSQUEEZY_API_KEY=...</code> "
+                    "(sin comillas, sin espacios, una sola línea).</li>"
+                    "<li>Reiniciá el servidor / redeploy.</li>"
+                    "</ol>"
+                )
+            elif last_http in (502, 503):
+                extra = (
+                    "<p><b>Causa:</b> Lemon Squeezy respondió temporalmente "
+                    "<code>Service Unavailable</code>. Suele ser un corte corto de su API.</p>"
+                    "<p>Esperá 30–60 segundos y volvé a intentar. "
+                    "Tu API key y variant están OK.</p>"
+                )
             return HttpResponse(
-                f"<h2>Error en la API de Lemon Squeezy (HTTP {e.code})</h2>"
+                f"<h2>Error en la API de Lemon Squeezy (HTTP {last_http})</h2>"
                 f"<p><b>store_id:</b> {store_id} | <b>variant_id:</b> {variant_id}</p>"
-                f"<pre>{detalle}</pre>"
+                f"<pre>{last_detalle}</pre>"
+                f"{extra}"
                 f"<p><a href='/pricing/'>Volver a pricing</a></p>"
             )
         except Exception as e:
@@ -4189,7 +4224,23 @@ def mapas(request):
 
 
 def legal(request):
-    return render(request, 'legal.html')
+    return render(request, 'legal.html', {'legal_doc': 'indice'})
+
+
+def legal_terminos(request):
+    return render(request, 'legal_terminos.html', {'legal_doc': 'terminos'})
+
+
+def legal_privacidad(request):
+    return render(request, 'legal_privacidad.html', {'legal_doc': 'privacidad'})
+
+
+def legal_cookies(request):
+    return render(request, 'legal_cookies.html', {'legal_doc': 'cookies'})
+
+
+def legal_reembolsos(request):
+    return render(request, 'legal_reembolsos.html', {'legal_doc': 'reembolsos'})
 
 
 # --- NUEVA FUNCIONALIDAD: PROCESAMIENTO MULTISECTORIAL ---

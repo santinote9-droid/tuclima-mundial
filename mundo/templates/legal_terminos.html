@@ -1,0 +1,145 @@
+{% extends 'legal_base.html' %}
+
+{% block title %}Términos de Servicio | TuClima{% endblock %}
+
+{% block legal_title %}Términos de Servicio{% endblock %}
+
+{% block legal_body %}
+<h2>1. Identificación del prestador</h2>
+<p>
+  El sitio web y la plataforma <span class="notranslate">TuClima</span> (en adelante, “la Plataforma”)
+  son operados por <span class="placeholder">[RAZÓN SOCIAL]</span>,
+  CUIT <span class="placeholder">[CUIT]</span>, con domicilio en
+  <span class="placeholder">[DOMICILIO FISCAL]</span>, República Argentina
+  (en adelante, “TuClima”, “nosotros” o “el Prestador”).
+</p>
+<p>
+  Contacto legal / soporte:
+  <span class="placeholder">[EMAIL LEGAL]</span>
+  · Sitio: <span class="notranslate">tuclima.com.ar</span> (y dominios asociados).
+</p>
+
+<h2>2. Aceptación</h2>
+<p>
+  Al acceder, registrarse o utilizar la Plataforma, usted declara haber leído y aceptado estos
+  Términos, la <a href="{% url 'legal_privacidad' %}">Política de Privacidad</a>,
+  la <a href="{% url 'legal_cookies' %}">Política de Cookies</a> y, si corresponde,
+  la <a href="{% url 'legal_reembolsos' %}">Política de Reembolsos</a>.
+  Si no está de acuerdo, no utilice el servicio.
+</p>
+<p>
+  La aceptación puede formalizarse mediante checkbox en registro y/o checkout, y quedará
+  registrada con fecha y versión del documento <span class="placeholder">[MECANISMO A IMPLEMENTAR / CONFIRMAR]</span>.
+</p>
+
+<h2>3. Descripción del servicio</h2>
+<p>
+  TuClima ofrece herramientas de información meteorológica y climática con fines
+  <strong>informativos y de apoyo a la decisión</strong>, incluyendo (según el plan contratado):
+</p>
+<ul>
+  <li>Consultas de clima, modos sectoriales (agro, aéreo, naval, energía) y visualizaciones.</li>
+  <li>Funciones avanzadas, reportes, alertas, API de usuario y asistentes de inteligencia artificial (IA).</li>
+  <li>Consumo de “tokens” u otros créditos asociados a planes de suscripción o recargas.</li>
+</ul>
+<p>
+  Los datos meteorológicos provienen de terceros (p. ej. Open-Meteo y modelos/fuentes asociados).
+  TuClima no opera como servicio meteorológico oficial ni sustituye avisos del
+  Servicio Meteorológico Nacional (SMN), NOTAMs, cartas aeronáuticas, ni otros organismos competentes.
+</p>
+
+<h2>4. Elegibilidad y cuenta</h2>
+<ul>
+  <li>Debe tener al menos <strong>18 años</strong> o contar con representación legal suficiente.</li>
+  <li>Es responsable de la confidencialidad de su cuenta, contraseña y claves de API.</li>
+  <li>Debe proporcionar datos de registro veraces y mantener actualizado su email de contacto.</li>
+  <li>Nos reservamos el derecho de suspender cuentas por uso indebido, fraude o incumplimiento.</li>
+</ul>
+
+<h2>5. Planes, precios y pagos</h2>
+<p>
+  Los planes, precios y métodos de pago vigentes se publican en
+  <a href="{% url 'pricing' %}">/pricing/</a>. Pueden incluir:
+  Lemon Squeezy, PayPal, Mercado Pago y/o transferencia bancaria (CVU/ARS), según disponibilidad.
+</p>
+<ul>
+  <li>Los precios pueden expresarse en USD y/o ARS. Impuestos aplicables
+    <span class="placeholder">[DEFINIR: IVA / monotributo / factura]</span>.</li>
+  <li>Según el canal de cobro, el comprobante puede ser emitido por TuClima o por un
+    procesador / Merchant of Record (p. ej. Lemon Squeezy)
+    <span class="placeholder">[CONFIRMAR QUIÉN FACTURA EN CADA CANAL]</span>.</li>
+  <li>La activación del plan puede demorar hasta la confirmación del pago o del webhook del proveedor.</li>
+  <li>Las condiciones de cancelación y reembolso se detallan en la
+    <a href="{% url 'legal_reembolsos' %}">Política de Reembolsos</a>.</li>
+</ul>
+
+<h2>6. Tokens, IA y contenidos generados</h2>
+<ul>
+  <li>Los tokens/créditos se consumen según el uso de funciones (chat IA, reportes, etc.) y
+    <strong>no son acumulables más allá de lo indicado en el plan</strong>, salvo que se indique lo contrario.</li>
+  <li>Los resultados de IA se generan de forma automática y <strong>pueden contener errores</strong>.
+    No constituyen asesoramiento profesional (agrónomo, piloto, náutico, energético, legal o financiero).</li>
+  <li>Usted no debe enviar secretos, datos de terceros sin base legal, ni información sensible innecesaria a la IA.</li>
+  <li>TuClima no garantiza exactitud, exhaustividad ni idoneidad de outputs de IA para un fin particular.</li>
+</ul>
+
+<h2>7. Limitación de responsabilidad meteorológica y sectorial</h2>
+<p>
+  La Plataforma se ofrece “tal cual” y “según disponibilidad”. En la máxima medida permitida por la ley aplicable:
+</p>
+<ul>
+  <li>TuClima <strong>no es responsable</strong> por decisiones operativas tomadas únicamente en base a la Plataforma
+    (p. ej. pulverización, riego, despegue/aterrizaje, navegación, despacho energético).</li>
+  <li>Debe contrastar con fuentes oficiales y protocolos propios de su actividad.</li>
+  <li>No se garantiza continuidad ininterrumpida del servicio ni ausencia de errores en datos de terceros.</li>
+</ul>
+<p>
+  <span class="placeholder">[ABOGADO: ajustar techo de responsabilidad / exclusión de daños indirectos conforme derecho del consumidor AR]</span>
+</p>
+
+<h2>8. Uso aceptable y API</h2>
+<p>Queda prohibido, entre otros:</p>
+<ul>
+  <li>Usar la Plataforma de forma ilegal, abusiva o que afecte a terceros.</li>
+  <li>Intentar acceder sin autorización a sistemas, cuentas o datos ajenos.</li>
+  <li>Revender, redistribuir masivamente o scrapear el servicio sin autorización escrita.</li>
+  <li>Exceder límites técnicos o de plan de forma deliberada.</li>
+</ul>
+<p>
+  Si dispone de API key personal, su uso está limitado a su cuenta y plan; puede rotarse o revocarse ante abuso.
+</p>
+
+<h2>9. Propiedad intelectual</h2>
+<p>
+  El software, diseño, marcas y contenidos propios de TuClima son de
+  <span class="placeholder">[RAZÓN SOCIAL]</span> o de sus licenciantes.
+  Los datos meteorológicos pertenecen a sus proveedores respectivos y se usan bajo sus condiciones.
+</p>
+
+<h2>10. Publicidad y terceros</h2>
+<p>
+  La Plataforma puede mostrar publicidad (p. ej. Google AdSense) y servicios de terceros
+  (pagos, traducción, analítica, IA). El uso de esos servicios se rige también por sus propias políticas.
+</p>
+
+<h2>11. Modificaciones</h2>
+<p>
+  Podemos actualizar estos Términos. La versión vigente se publicará en esta URL con fecha de actualización.
+  Cambios materiales podrán comunicarse por email o aviso en la Plataforma
+  <span class="placeholder">[DEFINIR PLAZO DE AVISO]</span>.
+</p>
+
+<h2>12. Legislación y jurisdicción</h2>
+<p>
+  Estos Términos se interpretan conforme a las leyes de la República Argentina.
+  Para controversias, serán competentes los tribunales ordinarios de
+  <span class="placeholder">[CIUDAD / PROVINCIA]</span>,
+  sin perjuicio de derechos irrenunciables del consumidor.
+</p>
+
+<h2>13. Contacto</h2>
+<p>
+  Consultas sobre estos Términos:
+  <span class="placeholder">[EMAIL LEGAL]</span>
+</p>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends 'legal_base.html' %}
+
+{% block title %}Política de Reembolsos | TuClima{% endblock %}
+
+{% block legal_title %}Política de Reembolsos y Cancelación{% endblock %}
+
+{% block legal_body %}
+<h2>1. Alcance</h2>
+<p>
+  Esta política aplica a compras de planes, suscripciones y paquetes de tokens/créditos
+  de <span class="notranslate">TuClima</span> realizadas a través de los canales disponibles
+  (Lemon Squeezy, PayPal, Mercado Pago, transferencia u otros publicados en
+  <a href="{% url 'pricing' %}">pricing</a>).
+</p>
+<p>
+  Prestador: <span class="placeholder">[RAZÓN SOCIAL]</span>,
+  CUIT <span class="placeholder">[CUIT]</span>.
+  Soporte de pagos: <span class="placeholder">[EMAIL SOPORTE / PAGOS]</span>.
+</p>
+
+<h2>2. Naturaleza del servicio</h2>
+<p>
+  TuClima es un servicio digital / SaaS. En muchos casos el acceso se activa de inmediato
+  tras confirmarse el pago. El uso de tokens o funciones premium puede consumir el valor del plan
+  de forma no reversible.
+</p>
+
+<h2>3. Cancelación</h2>
+<ul>
+  <li>Puede dejar de renovar o solicitar la no renovación de un plan
+    <span class="placeholder">[DEFINIR: desde Mi cuenta / email / panel]</span>.</li>
+  <li>La cancelación de la renovación <strong>no implica</strong>, por sí sola, reembolso del período ya abonado,
+    salvo lo previsto en esta política o en la ley aplicable.</li>
+  <li>Conservará el acceso hasta el fin del período pagado, salvo suspensión por incumplimiento.</li>
+</ul>
+
+<h2>4. Reembolsos (propuesta de reglas — a validar con el abogado)</h2>
+<p>
+  <span class="placeholder">[BORRADOR DE NEGOCIO — el abogado debe adecuar a Ley de Defensa del Consumidor]</span>
+</p>
+<ul>
+  <li><strong>Error técnico de activación:</strong> si el pago se acreditó y el plan no se activó por causa
+    imputable a TuClima, se reactivará el acceso o se reembolsará a opción del usuario.</li>
+  <li><strong>Duplicidad de cobro:</strong> se reembolsa el cobro duplicado.</li>
+  <li><strong>Desistimiento / arrepentimiento:</strong>
+    <span class="placeholder">[DEFINIR plazo, p. ej. 10 días corridos si no hubo uso material de tokens / funciones PRO]</span>.</li>
+  <li><strong>Tokens ya consumidos:</strong> por regla general <strong>no reembolsables</strong> en la proporción usada.</li>
+  <li><strong>Insatisfacción subjetiva</strong> tras uso intensivo del servicio: no genera reembolso automático.</li>
+</ul>
+
+<h2>5. Cómo solicitarlo</h2>
+<ol>
+  <li>Escribir a <span class="placeholder">[EMAIL SOPORTE]</span> desde el email de la cuenta.</li>
+  <li>Indicar: usuario/email, fecha de pago, medio de pago, ID de transacción (si lo tiene) y motivo.</li>
+  <li>Respuesta estimada:
+    <span class="placeholder">[p. ej. 5–10 días hábiles]</span>.</li>
+</ol>
+<p>
+  Si el cobro lo procesó un Merchant of Record (p. ej. Lemon Squeezy), el reembolso puede gestionarse
+  también según las reglas de ese proveedor; TuClima colaborará en lo que corresponda.
+</p>
+
+<h2>6. Transferencias bancarias (ARS)</h2>
+<ul>
+  <li>La acreditación es manual y puede demorar
+    <span class="placeholder">[p. ej. hasta 48–72 hs hábiles tras recepción del comprobante]</span>.</li>
+  <li>Si envió monto incorrecto o datos incompletos, contáctenos antes de insistir con nuevos pagos.</li>
+  <li>Reembolsos por transferencia se harán al mismo CVU/CBU informado, salvo acuerdo distinto.</li>
+</ul>
+
+<h2>7. Chargebacks</h2>
+<p>
+  Ante un contracargo o disputa en el medio de pago, podemos suspender la cuenta mientras se resuelve
+  y aportar evidencia del servicio prestado (logs de activación, uso, aceptación de términos).
+</p>
+
+<h2>8. Facturación</h2>
+<p>
+  <span class="placeholder">[DEFINIR]</span>
+  Quién emite el comprobante en cada canal (TuClima vs Lemon Squeezy / PayPal / MP) y cómo solicitar factura A/B/C
+  o ticket de monotributo.
+</p>
+
+<h2>9. Contacto</h2>
+<p>
+  Pagos y reembolsos: <span class="placeholder">[EMAIL SOPORTE]</span><br>
+  Legal: <span class="placeholder">[EMAIL LEGAL]</span>
+</p>
+{% endblock %}

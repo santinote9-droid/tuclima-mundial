@@ -661,6 +661,18 @@
             max-width: 100%;
             text-align: left;
             box-sizing: border-box;
+            cursor: pointer;
+            transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+            position: relative;
+        }
+        .detalle-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(56, 189, 248, 0.45);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+        }
+        .detalle-card:focus-visible {
+            outline: 2px solid #38bdf8;
+            outline-offset: 2px;
         }
         .detalle-card.detalle-alerta {
             background: rgba(0,0,0,0.4);
@@ -670,6 +682,63 @@
             justify-content: center;
             align-items: center;
             padding: 25px 20px;
+        }
+        .detalle-card-hint {
+            margin-top: 12px;
+            font-size: 0.72em;
+            color: #64748b;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+        .detalle-card:hover .detalle-card-hint { color: #7dd3fc; }
+
+        /* Modales didácticos — Detalles y Precauciones */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            z-index: 2000; display: none; justify-content: center; align-items: center;
+            padding: 16px; box-sizing: border-box;
+        }
+        .modal-overlay.is-open { display: flex; }
+        .modal-content {
+            background: #1e293b; border: 1px solid #334155; width: 100%; max-width: 720px; max-height: 90vh;
+            border-radius: 16px; padding: 36px 32px; overflow-y: auto; position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .btn-close {
+            position: absolute; top: 18px; right: 18px; background: none; border: none;
+            color: #94a3b8; font-size: 2em; cursor: pointer; transition: 0.2s; line-height: 0.5;
+        }
+        .btn-close:hover { color: #fff; transform: rotate(90deg); }
+        .pop-title {
+            font-family: 'JetBrains Mono', ui-monospace, monospace; color: #38bdf8;
+            font-size: 1.35em; margin: 0 0 10px; padding-right: 36px;
+        }
+        .pop-text { line-height: 1.7; color: #cbd5e1; margin: 0 0 20px; font-size: 0.98em; }
+        .pop-text strong { color: #fff; }
+        .tech-table {
+            width: 100%; border-collapse: separate; border-spacing: 0; margin: 16px 0 20px;
+            background: #0f172a; border-radius: 8px; overflow: hidden; border: 1px solid #334155;
+        }
+        .tech-table th {
+            background: #334155; color: #fff; font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-weight: bold; text-transform: uppercase; font-size: 0.75em; padding: 12px; text-align: left;
+        }
+        .tech-table td {
+            padding: 12px; border-bottom: 1px solid #334155; color: #cbd5e1; font-size: 0.9em;
+        }
+        .tech-table tr:last-child td { border-bottom: none; }
+        .highlight-box {
+            background: rgba(56, 189, 248, 0.1); border-left: 4px solid #38bdf8;
+            padding: 16px 18px; border-radius: 0 8px 8px 0; color: #fff; font-weight: 500;
+            margin-top: 8px; line-height: 1.5;
+        }
+        .risk-ok { color: #2ed573; font-weight: bold; }
+        .risk-warn { color: #ffa502; font-weight: bold; }
+        .risk-crit { color: #ff4757; font-weight: bold; }
+        @media (max-width: 600px) {
+            .modal-content { padding: 28px 18px; max-height: 94vh; }
+            .tech-table { display: block; overflow-x: auto; }
         }
 
         .paper-card {
@@ -1288,22 +1357,29 @@
     </div>
 
     <div id="sidebar-lang-list" style="display: none; background: rgba(0,0,0,0.3); margin: 5px 15px; border-radius: 8px; overflow: hidden;">
-        
-        <a href="#" onclick="Weglot.switchTo('es'); return false;" class="sl-item">
-            <img src="https://flagcdn.com/w20/ar.png" width="20" style="margin-right:10px; opacity:0.8;"> 
+        {% if WEGLOT_ENABLED %}
+        <a href="#" onclick="return tcSwitchLang('es');" class="sl-item">
+            <img src="https://flagcdn.com/w20/ar.png" width="20" style="margin-right:10px; opacity:0.8;" alt="">
             Español
         </a>
-        
-        <a href="#" onclick="Weglot.switchTo('en'); return false;" class="sl-item">
-            <img src="https://flagcdn.com/w20/us.png" width="20" style="margin-right:10px; opacity:0.8;"> 
+        <a href="#" onclick="return tcSwitchLang('en');" class="sl-item">
+            <img src="https://flagcdn.com/w20/us.png" width="20" style="margin-right:10px; opacity:0.8;" alt="">
             English
         </a>
-
+        {% else %}
+        <div class="sl-item" style="opacity:0.75; cursor:default;">
+            <img src="https://flagcdn.com/w20/ar.png" width="20" style="margin-right:10px; opacity:0.8;" alt="">
+            Español
+        </div>
+        <div class="sl-item" style="opacity:0.45; cursor:default; font-size:0.78em;">
+            English · próximamente (Weglot)
+        </div>
+        {% endif %}
     </div>
 </div>
 
 <script>
-    // Weglot ya está inicializado al final del body; aquí solo definimos las funciones del menú
+    // Weglot: real o stub desde base.html (WEGLOT_ENABLED)
 
     function toggleSidebarLang() {
         const list = document.getElementById('sidebar-lang-list');
@@ -1965,7 +2041,10 @@
                     </div>
                     <div style="width:100%;height:5px;background:#333;margin-top:10px;border-radius:5px;">
                         <div style="width:${Math.min(uv * 10, 100)}%;height:100%;background:linear-gradient(90deg,#2ed573,#ffa502,#ff4757);border-radius:5px;"></div>
-                    </div>`;
+                    </div>
+                    <div class="detalle-card-hint">Tocá para ver explicación →</div>`;
+                const mu = document.getElementById('mod-uv-val'); if (mu) mu.textContent = uv;
+                const mn = document.getElementById('mod-uv-nivel'); if (mn) mn.textContent = uvNivel;
             }
             // AQI
             const cardAqi = document.getElementById('card-aqi');
@@ -1981,7 +2060,11 @@
                     </div>
                     <div style="font-size:2.5em;font-weight:bold;color:${color};">${aqi != null ? aqi : '—'}</div>
                     <div style="font-size:0.85em;color:${color};font-weight:600;">${label}</div>
-                    <div style="font-size:0.75em;color:#94a3b8;margin-top:6px;">${pm}</div>`;
+                    <div style="font-size:0.75em;color:#94a3b8;margin-top:6px;">${pm}</div>
+                    <div class="detalle-card-hint">Tocá para ver explicación →</div>`;
+                const mav = document.getElementById('mod-aqi-val'); if (mav) mav.textContent = aqi != null ? aqi : '—';
+                const mal = document.getElementById('mod-aqi-label'); if (mal) mal.textContent = label;
+                const mpm = document.getElementById('mod-pm25'); if (mpm) mpm.textContent = pm;
             }
             // Confort
             const cardConf = document.getElementById('card-confort');
@@ -1995,16 +2078,23 @@
                         <div style="color:#ccc;font-size:0.9em;">CONFORT TÉRMICO</div>
                     </div>
                     <div style="font-size:2.2em;font-weight:bold;color:${color};">${label}</div>
-                    <div style="font-size:0.8em;color:#94a3b8;margin-top:6px;">Índice ${score}/100 · sensación ${Number(data.sensacion || 0).toFixed(1)}°</div>`;
+                    <div style="font-size:0.8em;color:#94a3b8;margin-top:6px;">Índice ${score}/100 · sensación ${Number(data.sensacion || 0).toFixed(1)}°</div>
+                    <div class="detalle-card-hint">Tocá para ver explicación →</div>`;
+                const mcl = document.getElementById('mod-confort-label'); if (mcl) mcl.textContent = label;
+                const mcv = document.getElementById('mod-confort-val'); if (mcv) mcv.textContent = score;
+                const mse = document.getElementById('mod-sensacion'); if (mse) mse.textContent = Number(data.sensacion || 0).toFixed(1);
             }
             // Nubes
             const tn = document.getElementById('val-tipo-nube');
             if (tn) tn.textContent = data.tipo_nube || '';
+            const mtn = document.getElementById('mod-tipo-nube'); if (mtn) mtn.textContent = data.tipo_nube || '';
             // Visibilidad y Presión
             const vis = document.getElementById('val-visibilidad');
             if (vis) vis.textContent = `${Number(data.visibilidad).toFixed(1)} km`;
             const pres = document.getElementById('val-presion');
             if (pres) pres.textContent = `${Number(data.presion).toFixed(1)} hPa`;
+            const mvis = document.getElementById('mod-vis'); if (mvis) mvis.textContent = Number(data.visibilidad).toFixed(1);
+            const mpres = document.getElementById('mod-pres'); if (mpres) mpres.textContent = Number(data.presion).toFixed(1);
             // Alerta
             const cardAlerta = document.getElementById('card-alerta');
             if (cardAlerta) {
@@ -2023,8 +2113,11 @@
                 cardAlerta.innerHTML = `
                     <div style="color:${c};margin-bottom:15px;"><svg style="width:60px;height:60px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></div>
                     <div style="color:${c};font-weight:800;font-size:0.85em;text-transform:uppercase;margin-bottom:8px;letter-spacing:1px;">PRECAUCIÓN SUGERIDA</div>
-                    <div id="_alerta-txt" style="color:#fff;font-weight:600;font-size:1em;line-height:1.4;"></div>`;
+                    <div id="_alerta-txt" style="color:#fff;font-weight:600;font-size:1em;line-height:1.4;"></div>
+                    <div class="detalle-card-hint">Tocá para ver explicación →</div>`;
                 document.getElementById('_alerta-txt').textContent = data.alerta_texto || '';
+                const mat = document.getElementById('mod-alerta-txt'); if (mat) mat.textContent = data.alerta_texto || '';
+                const mab = document.getElementById('mod-alerta-box'); if (mab) mab.style.borderLeftColor = c;
             }
             // Anomalía
             const cardAnom = document.getElementById('card-anomalia');
@@ -2044,9 +2137,36 @@
                         <div style="color:#ccc;font-size:0.8em;font-weight:800;letter-spacing:1px;text-transform:uppercase;">ANOMALÍA CLIMÁTICA</div>
                     </div>
                     ${anomBody}
-                    <div style="font-size:0.7em;color:#64748b;margin-top:15px;border-top:1px solid rgba(255,255,255,0.05);padding-top:8px;">Comparativa: Promedio de los ultimos 3 años.</div>`;
+                    <div style="font-size:0.7em;color:#64748b;margin-top:15px;border-top:1px solid rgba(255,255,255,0.05);padding-top:8px;">Comparativa: Promedio de los ultimos 3 años.</div>
+                    <div class="detalle-card-hint">Tocá para ver explicación →</div>`;
+                const mdt = document.getElementById('mod-delta-temp'); if (mdt) mdt.textContent = dt;
+                const mdtx = document.getElementById('mod-delta-txt');
+                if (mdtx) mdtx.textContent = dt > 1.5 ? 'Sobre el promedio histórico' : (dt < -1.5 ? 'Bajo el promedio histórico' : 'Dentro del rango normal');
             }
         }
+
+        function openDetalleModal(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.add('is-open');
+            el.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        function closeDetalleModal(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.remove('is-open');
+            el.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            document.querySelectorAll('.modal-overlay.is-open').forEach(function (m) {
+                m.classList.remove('is-open');
+                m.style.display = 'none';
+            });
+            document.body.style.overflow = '';
+        });
 
         // Renderiza las tarjetas del pronóstico semanal con los datos recibidos por AJAX
         function actualizarPronostico(pronostico) {
@@ -2330,7 +2450,9 @@
 
     <div class="detalle-grid">
 
-        <div id="card-uv" class="detalle-card">
+        <div id="card-uv" class="detalle-card" role="button" tabindex="0"
+             onclick="openDetalleModal('modDetalleUV')"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetalleModal('modDetalleUV')}">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                 <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/clear-day.svg" style="width: 30px; height: 30px;">
                 <div style="color: #ccc; font-size: 0.9em;">ÍNDICE UV MÁXIMO</div>
@@ -2356,9 +2478,12 @@
             <div style="width: 100%; height: 5px; background: #333; margin-top: 10px; border-radius: 5px;">
                 <div style="width: {{ uv_index }}0%; max-width: 100%; height: 100%; background: linear-gradient(90deg, #2ed573, #ffa502, #ff4757); border-radius: 5px;"></div>
             </div>
+            <div class="detalle-card-hint">Tocá para ver explicación →</div>
         </div>
 
-        <div id="card-aqi" class="detalle-card">
+        <div id="card-aqi" class="detalle-card" role="button" tabindex="0"
+             onclick="openDetalleModal('modDetalleAQI')"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetalleModal('modDetalleAQI')}">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                 <svg style="width:28px;height:28px;color:{{ aqi_color|default:'#94a3b8' }};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3c-1.5 4-4 6-4 10a4 4 0 0 0 8 0c0-4-2.5-6-4-10z"/><path d="M8 14h8"/></svg>
                 <div style="color: #ccc; font-size: 0.9em;">CALIDAD DEL AIRE</div>
@@ -2370,9 +2495,12 @@
             <div style="font-size: 0.75em; color: #94a3b8; margin-top: 6px;">
                 {% if pm25 != None %}PM2.5: {{ pm25 }}{% else %}Sin dato de partículas{% endif %}
             </div>
+            <div class="detalle-card-hint">Tocá para ver explicación →</div>
         </div>
 
-        <div id="card-confort" class="detalle-card">
+        <div id="card-confort" class="detalle-card" role="button" tabindex="0"
+             onclick="openDetalleModal('modDetalleConfort')"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetalleModal('modDetalleConfort')}">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                 <svg style="width:28px;height:28px;color:{{ confort_color|default:'#94a3b8' }};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
                 <div style="color: #ccc; font-size: 0.9em;">CONFORT TÉRMICO</div>
@@ -2383,9 +2511,12 @@
             <div style="font-size: 0.8em; color: #94a3b8; margin-top: 6px;">
                 Índice {% if confort != None %}{{ confort }}{% else %}—{% endif %}/100 · sensación {{ sensacion }}°
             </div>
+            <div class="detalle-card-hint">Tocá para ver explicación →</div>
         </div>
 
-        <div class="detalle-card">
+        <div id="card-nubes" class="detalle-card" role="button" tabindex="0"
+             onclick="openDetalleModal('modDetalleNubes')"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetalleModal('modDetalleNubes')}">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                 <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/cloudy.svg" style="width: 30px; height: 30px;">
                 <div style="color: #ccc; font-size: 0.9em;">FORMACIÓN DE NUBES</div>
@@ -2395,9 +2526,12 @@
             <div style="margin-top: 10px; text-align: right;">
                 <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/overcast.svg" style="width: 55px; height: 55px; opacity: 0.8;">
             </div>
+            <div class="detalle-card-hint">Tocá para ver explicación →</div>
         </div>
 
-        <div class="detalle-card">
+        <div id="card-vispres" class="detalle-card" role="button" tabindex="0"
+             onclick="openDetalleModal('modDetalleVisPres')"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetalleModal('modDetalleVisPres')}">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
                 <img src="https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/fog.svg" style="width: 25px; height: 25px;">
                 <div style="color: #ccc; font-size: 0.9em;">VISIBILIDAD</div>
@@ -2409,9 +2543,13 @@
                 <div style="color: #ccc; font-size: 0.9em;">PRESIÓN</div>
             </div>
             <div id="val-presion" style="font-size: 1.5em; font-weight: bold; color: #00d2ff;">{{ presion|floatformat:1 }} hPa</div>
+            <div class="detalle-card-hint">Tocá para ver explicación →</div>
         </div>
 
-        <div id="card-alerta" class="detalle-card detalle-alerta" style="border: 2px solid {{ alerta_color }}; box-shadow: 0 0 20px {{ alerta_color }}40;">
+        <div id="card-alerta" class="detalle-card detalle-alerta" role="button" tabindex="0"
+             style="border: 2px solid {{ alerta_color }}; box-shadow: 0 0 20px {{ alerta_color }}40;"
+             onclick="openDetalleModal('modDetalleAlerta')"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetalleModal('modDetalleAlerta')}">
     
     <div style="color: {{ alerta_color }}; margin-bottom: 15px;">
         
@@ -2443,9 +2581,12 @@
     <div style="color: #fff; font-weight: 600; font-size: 1em; line-height: 1.4;">
         {{ alerta_texto }}
     </div>
+    <div class="detalle-card-hint">Tocá para ver explicación →</div>
 </div>
 
-<div id="card-anomalia" class="detalle-card" style="position: relative; overflow: hidden;">
+<div id="card-anomalia" class="detalle-card" role="button" tabindex="0" style="position: relative; overflow: hidden;"
+     onclick="openDetalleModal('modDetalleAnomalia')"
+     onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetalleModal('modDetalleAnomalia')}">
     
     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
         <svg style="width: 24px; height: 24px; color: #cbd5e1;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/><path d="M12 2v2"/><path d="M12 14v.01"/><path d="M20 10h2"/><path d="M20 14h2"/><path d="M2 10h2"/><path d="M2 14h2"/></svg>
@@ -2491,9 +2632,12 @@
     <div style="font-size: 0.7em; color: #64748b; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
         Comparativa: Promedio de los ultimos 3 años.
     </div>
+    <div class="detalle-card-hint">Tocá para ver explicación →</div>
 </div>
 
     </div>
+
+    {% include 'partials/_modales_detalles_home.html' %}
 
     <br><br><hr style="border-color: #aaa; margin: 40px 0; opacity: 0.5;">
 
@@ -3182,14 +3326,16 @@
         modals.forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
-                    modal.style.display = 'none'; // Cierra el modal
+                    modal.classList.remove('is-open');
+                    modal.style.display = 'none';
+                    document.body.style.overflow = '';
                 }
             });
 
             const content = modal.querySelector('.modal-content');
             if (content) {
                 content.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Previene el cierre del modal al hacer clic en el contenido
+                    e.stopPropagation();
                 });
             }
         });

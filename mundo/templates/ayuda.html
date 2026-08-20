@@ -404,15 +404,15 @@
 
 {% block content %}
 <header class="ah-top">
-    <a href="/" class="ah-brand notranslate" translate="no">
+    <a href="{% url 'landing' %}" class="ah-brand notranslate" translate="no">
         <span class="ah-brand-mark" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
         </span>
         TuClima <span>Ayuda</span>
     </a>
-    <a href="/" class="ah-back">
+    <a href="{% url 'home' %}" class="ah-back">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        Volver al inicio
+        Volver al dashboard
     </a>
 </header>
 
@@ -666,7 +666,7 @@
     </section>
 
     <div class="ah-footer">
-        <a href="/">Volver al inicio</a>
+        <a href="{% url 'home' %}">Volver al dashboard</a>
         &nbsp;·&nbsp;
         <a href="/mi-cuenta/">Mi cuenta</a>
         &nbsp;·&nbsp;

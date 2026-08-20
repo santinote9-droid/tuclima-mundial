@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load l10n %}
 {% block title %}{{ pro_titulo }} · TuClima Pro{% endblock %}
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -18,6 +19,7 @@
 {% include 'partials/_pro_ui_polish.html' %}
 {% endblock %}
 {% block content %}
+{% localize off %}
 {% include 'partials/_nav_secciones.html' with tc_activo=pro_sector %}
 {% include 'partials/_menu_pro_interno.html' with sector=pro_sector %}
 <div class="tc-pro-page{% if pro_funcion == 'estadistica' %} tc-pro-page--wide{% endif %}">
@@ -38,4 +40,5 @@ window.enviarAccionRapida = window.enviarAccionRapida || function (msg) {
   window.location.href = '/' + sector + '/?lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lon) + '&open_chat=1';
 };
 </script>
+{% endlocalize %}
 {% endblock %}

@@ -187,6 +187,9 @@ LANGUAGES = [
     ('en', _('English')),
 ]
 
+# Español en textos, pero decimales con punto (datos científicos / modos PRO)
+FORMAT_MODULE_PATH = ['nucleo.formats']
+
 # Configuraciones de CSRF para producción y desarrollo
 CSRF_TRUSTED_ORIGINS = [
     'https://tuclima-mundial.onrender.com',
@@ -317,10 +320,24 @@ PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', '')
 # LEMONSQUEEZY_API_KEY:    API key de LS (https://app.lemonsqueezy.com/settings/api)
 # LEMONSQUEEZY_WEBHOOK_SECRET: whsec_... (LS → Settings → Webhooks)
 # ============================================================
-LEMONSQUEEZY_STORE_SLUG       = os.getenv('LEMONSQUEEZY_STORE_SLUG', '')
-LEMONSQUEEZY_STORE_ID         = os.getenv('LEMONSQUEEZY_STORE_ID', '')
-LEMONSQUEEZY_API_KEY          = os.getenv('LEMONSQUEEZY_API_KEY', '')
-LEMONSQUEEZY_WEBHOOK_SECRET   = os.getenv('LEMONSQUEEZY_WEBHOOK_SECRET', '')
+LEMONSQUEEZY_STORE_SLUG       = (os.getenv('LEMONSQUEEZY_STORE_SLUG', '') or '').strip().strip('"').strip("'")
+LEMONSQUEEZY_STORE_ID         = (os.getenv('LEMONSQUEEZY_STORE_ID', '') or '').strip().strip('"').strip("'")
+LEMONSQUEEZY_API_KEY          = (os.getenv('LEMONSQUEEZY_API_KEY', '') or '').strip().strip('"').strip("'")
+LEMONSQUEEZY_WEBHOOK_SECRET   = (os.getenv('LEMONSQUEEZY_WEBHOOK_SECRET', '') or '').strip().strip('"').strip("'")
+
+# ============================================================
+# WEGLOT — traductor ES↔EN (preparado; apagado hasta suscripción)
+# Dashboard: https://dashboard.weglot.com/
+# 1) Suscribite al plan
+# 2) Dominios: tuclima.com.ar + tuclima-mundial.onrender.com
+# 3) Original language: Spanish (es) · Destination: English (en)
+# 4) Pegá la API key y poné WEGLOT_ENABLED=true en Render
+# WEGLOT_API_KEY=wg_...
+# WEGLOT_ENABLED=false
+# ============================================================
+WEGLOT_API_KEY = (os.getenv('WEGLOT_API_KEY') or 'wg_169c193b22e7a117be85a2f56113ab415').strip().strip('"').strip("'")
+_weglot_flag = (os.getenv('WEGLOT_ENABLED') or 'false').strip().lower()
+WEGLOT_ENABLED = _weglot_flag in ('1', 'true', 'yes', 'on') and bool(WEGLOT_API_KEY)
 
 # ============================================================
 # N8N — webhooks / chat IA

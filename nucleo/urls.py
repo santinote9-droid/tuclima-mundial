@@ -82,6 +82,10 @@ urlpatterns = [
     path('espacio/', views.meteorologia_espacial, name='espacio'),
 
     path('legal/', views.legal, name='legal'),
+    path('legal/terminos/', views.legal_terminos, name='legal_terminos'),
+    path('legal/privacidad/', views.legal_privacidad, name='legal_privacidad'),
+    path('legal/cookies/', views.legal_cookies, name='legal_cookies'),
+    path('legal/reembolsos/', views.legal_reembolsos, name='legal_reembolsos'),
     
     # URLs para funcionalidad multisectorial
     path('carga-sectorial/', views.vista_carga_archivos, name='carga_sectorial'),

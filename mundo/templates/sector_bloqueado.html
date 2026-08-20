@@ -224,8 +224,8 @@
             <i class="fas fa-arrow-left"></i> Volver a {{ sector_actual|capfirst }}
         </a>
         {% else %}
-        <a href="/" class="btn-secondary">
-            <i class="fas fa-home"></i> Ir al inicio
+        <a href="{% url 'home' %}" class="btn-secondary">
+            <i class="fas fa-home"></i> Ir al dashboard
         </a>
         {% endif %}
     </div>

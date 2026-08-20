@@ -1,0 +1,184 @@
+{# Modales didácticos — Detalles y Precauciones (dashboard /clima/) #}
+<div id="modDetalleUV" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tit-uv">
+  <div class="modal-content">
+    <button type="button" class="btn-close" onclick="closeDetalleModal('modDetalleUV')" aria-label="Cerrar">×</button>
+    <h3 id="tit-uv" class="pop-title">Índice UV máximo</h3>
+    <p class="pop-text">
+      El <strong>índice UV</strong> estima la intensidad de la radiación ultravioleta que llega a la superficie.
+      Es un estándar OMS: a mayor valor, mayor riesgo de eritema y daño ocular en menos tiempo de exposición.
+    </p>
+    <table class="tech-table">
+      <thead><tr><th>Índice</th><th>Nivel</th><th>Recomendación</th></tr></thead>
+      <tbody>
+        <tr><td>0 – 2</td><td class="risk-ok">Bajo</td><td>Exposición segura para la mayoría. Gafas opcionales.</td></tr>
+        <tr><td>3 – 5</td><td class="risk-warn">Moderado</td><td>Buscá sombra al mediodía. Protector FPS 30+.</td></tr>
+        <tr><td>6 – 7</td><td class="risk-warn">Alto</td><td>Reducí exposición 10–16 h. Sombrero y FPS.</td></tr>
+        <tr><td>8 – 10</td><td class="risk-crit">Muy alto</td><td>Evitar sol directo. Cobertura corporal.</td></tr>
+        <tr><td>11+</td><td class="risk-crit">Extremo</td><td>Permanecé bajo techo si es posible.</td></tr>
+      </tbody>
+    </table>
+    <div class="highlight-box">
+      <strong>Hoy en tu punto:</strong>
+      UV <span id="mod-uv-val">{{ uv_index }}</span>
+      · <span id="mod-uv-nivel">{% if uv_index > 10 %}Extremo{% elif uv_index > 7 %}Muy Alto{% elif uv_index > 5 %}Alto{% elif uv_index > 2 %}Moderado{% else %}Bajo{% endif %}</span>
+    </div>
+  </div>
+</div>
+
+<div id="modDetalleAQI" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tit-aqi">
+  <div class="modal-content">
+    <button type="button" class="btn-close" onclick="closeDetalleModal('modDetalleAQI')" aria-label="Cerrar">×</button>
+    <h3 id="tit-aqi" class="pop-title">Calidad del aire</h3>
+    <p class="pop-text">
+      El valor mostrado resume la calidad del aire en una escala tipo AQI europeo.
+      El <strong>PM2.5</strong> son partículas finas (&lt;2.5 µm) que penetran en los pulmones; valores altos
+      afectan a asmáticos, niños y adultos mayores.
+    </p>
+    <table class="tech-table">
+      <thead><tr><th>AQI</th><th>Calidad</th><th>Qué implica</th></tr></thead>
+      <tbody>
+        <tr><td>0 – 20</td><td class="risk-ok">Buena</td><td>Actividad al aire libre sin restricción.</td></tr>
+        <tr><td>21 – 40</td><td class="risk-ok">Aceptable</td><td>Sensibles: mitigar esfuerzo prolongado.</td></tr>
+        <tr><td>41 – 60</td><td class="risk-warn">Moderada</td><td>Reducir ejercicio intenso afuera.</td></tr>
+        <tr><td>61 – 80</td><td class="risk-warn">Mala</td><td>Evitar exposición prolongada.</td></tr>
+        <tr><td>81+</td><td class="risk-crit">Muy mala / Peligrosa</td><td>Permanecer en interiores si es posible.</td></tr>
+      </tbody>
+    </table>
+    <div class="highlight-box">
+      <strong>Ahora:</strong>
+      AQI <span id="mod-aqi-val">{% if aqi != None %}{{ aqi }}{% else %}—{% endif %}</span>
+      (<span id="mod-aqi-label">{{ aqi_label|default:"N/D" }}</span>)
+      · <span id="mod-pm25">{% if pm25 != None %}PM2.5: {{ pm25 }}{% else %}Sin PM2.5{% endif %}</span>
+    </div>
+  </div>
+</div>
+
+<div id="modDetalleConfort" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tit-confort">
+  <div class="modal-content">
+    <button type="button" class="btn-close" onclick="closeDetalleModal('modDetalleConfort')" aria-label="Cerrar">×</button>
+    <h3 id="tit-confort" class="pop-title">Confort térmico</h3>
+    <p class="pop-text">
+      Combina temperatura, humedad y sensación térmica para estimar qué tan agradable
+      resulta el ambiente para el cuerpo humano. Un índice alto indica disconfort por calor;
+      bajo, por frío.
+    </p>
+    <table class="tech-table">
+      <thead><tr><th>Índice</th><th>Sensación</th><th>Orientación</th></tr></thead>
+      <tbody>
+        <tr><td>0 – 30</td><td>Frío / Muy fresco</td><td>Abrigo; riesgo de hipotermia en exposición larga.</td></tr>
+        <tr><td>31 – 55</td><td class="risk-ok">Fresco / Confortable</td><td>Condiciones favorables para actividades.</td></tr>
+        <tr><td>56 – 75</td><td class="risk-warn">Cálido</td><td>Hidratar; sombra en esfuerzo físico.</td></tr>
+        <tr><td>76 – 100</td><td class="risk-crit">Caluroso / Sofocante</td><td>Limitar esfuerzo; cuidado con golpes de calor.</td></tr>
+      </tbody>
+    </table>
+    <div class="highlight-box">
+      <strong>Ahora:</strong>
+      <span id="mod-confort-label">{{ confort_label|default:"N/D" }}</span>
+      · índice <span id="mod-confort-val">{% if confort != None %}{{ confort }}{% else %}—{% endif %}</span>/100
+      · sensación <span id="mod-sensacion">{{ sensacion }}</span>°
+    </div>
+  </div>
+</div>
+
+<div id="modDetalleNubes" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tit-nubes">
+  <div class="modal-content">
+    <button type="button" class="btn-close" onclick="closeDetalleModal('modDetalleNubes')" aria-label="Cerrar">×</button>
+    <h3 id="tit-nubes" class="pop-title">Formación de nubes</h3>
+    <p class="pop-text">
+      La clasificación se estima a partir de cobertura nubosa y tipo de cielo observado/modelado.
+      Sirve para anticipar cambios de insolación, lluvia y visibilidad.
+    </p>
+    <table class="tech-table">
+      <thead><tr><th>Tipo</th><th>Altura típica</th><th>Qué suele indicar</th></tr></thead>
+      <tbody>
+        <tr><td>Cúmulos</td><td>Baja</td><td>Inestabilidad diurna; chubascos posibles.</td></tr>
+        <tr><td>Estratos</td><td>Baja</td><td>Cielo gris uniforme; llovizna o persistencia.</td></tr>
+        <tr><td>Cirros</td><td>Alta</td><td>Aire seco en altura; posible cambio de frente.</td></tr>
+        <tr><td>Nimbostratos</td><td>Media-baja</td><td>Lluvia continua y generalizada.</td></tr>
+        <tr><td>Cumulonimbos</td><td>Gran desarrollo</td><td>Tormentas, rayos, rachas fuertes.</td></tr>
+      </tbody>
+    </table>
+    <div class="highlight-box">
+      <strong>Observación actual:</strong>
+      <span id="mod-tipo-nube">{{ tipo_nube }}</span>
+    </div>
+  </div>
+</div>
+
+<div id="modDetalleVisPres" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tit-vis">
+  <div class="modal-content">
+    <button type="button" class="btn-close" onclick="closeDetalleModal('modDetalleVisPres')" aria-label="Cerrar">×</button>
+    <h3 id="tit-vis" class="pop-title">Visibilidad y presión</h3>
+    <p class="pop-text">
+      La <strong>visibilidad</strong> indica hasta dónde se puede ver con claridad (niebla, humo, polvo o lluvia la reducen).
+      La <strong>presión</strong> atmosférica ayuda a interpretar sistemas: altas suelen asociarse a tiempo más estable;
+      caídas rápidas, a deterioro.
+    </p>
+    <table class="tech-table">
+      <thead><tr><th>Variable</th><th>Referencia</th><th>Interpretación</th></tr></thead>
+      <tbody>
+        <tr><td>Vis. &gt; 10 km</td><td class="risk-ok">Buena</td><td>Condiciones normales para tránsito y vuelo VFR.</td></tr>
+        <tr><td>Vis. 1 – 5 km</td><td class="risk-warn">Reducida</td><td>Precaución en ruta; posible niebla/lluvia.</td></tr>
+        <tr><td>Vis. &lt; 1 km</td><td class="risk-crit">Muy baja</td><td>Peligro vial y aeronáutico.</td></tr>
+        <tr><td>≈ 1013 hPa</td><td>—</td><td>Presión media a nivel del mar (referencia).</td></tr>
+        <tr><td>Sube / estable</td><td class="risk-ok">Alta</td><td>Tendencia a estabilización.</td></tr>
+        <tr><td>Cae rápido</td><td class="risk-warn">Baja</td><td>Posible frente o tormenta próxima.</td></tr>
+      </tbody>
+    </table>
+    <div class="highlight-box">
+      <strong>Ahora:</strong>
+      Visibilidad <span id="mod-vis">{{ visibilidad|floatformat:1 }}</span> km
+      · Presión <span id="mod-pres">{{ presion|floatformat:1 }}</span> hPa
+    </div>
+  </div>
+</div>
+
+<div id="modDetalleAlerta" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tit-alerta">
+  <div class="modal-content">
+    <button type="button" class="btn-close" onclick="closeDetalleModal('modDetalleAlerta')" aria-label="Cerrar">×</button>
+    <h3 id="tit-alerta" class="pop-title">Precaución sugerida</h3>
+    <p class="pop-text">
+      Este mensaje resume la recomendación operativa según el código de tiempo actual
+      (tormenta, lluvia, niebla, calor extremo, etc.). No reemplaza alertas oficiales del SMN u organismos locales.
+    </p>
+    <table class="tech-table">
+      <thead><tr><th>Situación</th><th>Qué mirar</th><th>Acción típica</th></tr></thead>
+      <tbody>
+        <tr><td>Tormenta</td><td>Rayos, rachas, granizo</td><td>Buscar refugio; evitar zonas abiertas.</td></tr>
+        <tr><td>Lluvia intensa</td><td>Inundaciones / aquaplaning</td><td>Reducir velocidad; evitar bajos.</td></tr>
+        <tr><td>Niebla</td><td>Visibilidad corta</td><td>Luces; aumentar distancia.</td></tr>
+        <tr><td>Calor</td><td>Golpe de calor</td><td>Hidratar; sombra; limitar esfuerzo.</td></tr>
+        <tr><td>Condición normal</td><td>—</td><td>Disfrutá el día con precauciones habituales.</td></tr>
+      </tbody>
+    </table>
+    <div class="highlight-box" id="mod-alerta-box" style="border-left-color: {{ alerta_color }};">
+      <strong>Recomendación actual:</strong>
+      <span id="mod-alerta-txt">{{ alerta_texto }}</span>
+    </div>
+  </div>
+</div>
+
+<div id="modDetalleAnomalia" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tit-anom">
+  <div class="modal-content">
+    <button type="button" class="btn-close" onclick="closeDetalleModal('modDetalleAnomalia')" aria-label="Cerrar">×</button>
+    <h3 id="tit-anom" class="pop-title">Anomalía climática</h3>
+    <p class="pop-text">
+      Compara la temperatura actual con el <strong>promedio de los últimos ~3 años</strong> para la misma época
+      en este punto. Una anomalía positiva indica más calor de lo habitual; negativa, más frío.
+      No es un pronóstico: es contexto histórico del día.
+    </p>
+    <table class="tech-table">
+      <thead><tr><th>Anomalía</th><th>Lectura</th><th>Implicancia</th></tr></thead>
+      <tbody>
+        <tr><td>&gt; +1.5 °C</td><td class="risk-crit">Más cálido</td><td>Día atípicamente cálido respecto al reciente.</td></tr>
+        <tr><td>−1.5 a +1.5 °C</td><td class="risk-ok">Normal</td><td>Dentro de la variabilidad esperada.</td></tr>
+        <tr><td>&lt; −1.5 °C</td><td class="risk-warn">Más frío</td><td>Día atípicamente fresco respecto al reciente.</td></tr>
+      </tbody>
+    </table>
+    <div class="highlight-box">
+      <strong>Delta actual:</strong>
+      <span id="mod-delta-temp">{{ delta_temp }}</span> °C
+      · <span id="mod-delta-txt">{% if delta_temp > 1.5 %}Sobre el promedio histórico{% elif delta_temp < -1.5 %}Bajo el promedio histórico{% else %}Dentro del rango normal{% endif %}</span>
+    </div>
+  </div>
+</div>

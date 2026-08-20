@@ -577,13 +577,13 @@
 <div class="mc-wrap">
 
     <header class="mc-top">
-        <a class="mc-brand" href="/">
+        <a class="mc-brand" href="{% url 'home' %}">
             <div class="mc-brand-mark"><i class="fas fa-cloud-sun"></i></div>
             TuClima <span>Cuenta</span>
         </a>
         <div class="mc-top-actions">
             <a class="mc-link-btn" href="/pricing/"><i class="fas fa-tags"></i> Planes</a>
-            <a class="mc-link-btn" href="/"><i class="fas fa-arrow-left"></i> Inicio</a>
+            <a class="mc-link-btn" href="{% url 'home' %}"><i class="fas fa-arrow-left"></i> Dashboard</a>
         </div>
     </header>
 
@@ -1245,7 +1245,7 @@
     </section>
 
     <div class="mc-footer">
-        <a href="/">&larr; Volver al inicio</a>
+        <a href="{% url 'home' %}">&larr; Volver al dashboard</a>
     </div>
 </div>
 {% endwith %}

@@ -1,0 +1,97 @@
+{% extends 'legal_base.html' %}
+
+{% block title %}Política de Cookies | TuClima{% endblock %}
+
+{% block legal_title %}Política de Cookies{% endblock %}
+
+{% block legal_body %}
+<h2>1. Qué son las cookies</h2>
+<p>
+  Las cookies y tecnologías similares (local storage, píxeles, identificadores) son archivos o datos
+  que el sitio o terceros guardan en su dispositivo para hacer funcionar el servicio, recordar
+  preferencias o, cuando corresponda, mostrar publicidad y medir audiencia.
+</p>
+
+<h2>2. Quién las utiliza</h2>
+<p>
+  En <span class="notranslate">TuClima</span> pueden utilizarse cookies:
+</p>
+<ul>
+  <li><strong>Propias (first-party):</strong> necesarias para sesión, seguridad y preferencias del sitio.</li>
+  <li><strong>De terceros:</strong> proveedores como Google (AdSense / CMP), procesadores de pago en sus flujos,
+    y Weglot u otros si están habilitados.</li>
+</ul>
+
+<h2>3. Tipos que podemos usar</h2>
+<table style="width:100%;border-collapse:collapse;font-size:0.92rem;margin:16px 0;">
+  <thead>
+    <tr style="border-bottom:1px solid #334155;text-align:left;color:#e2e8f0;">
+      <th style="padding:8px;">Tipo</th>
+      <th style="padding:8px;">Finalidad</th>
+      <th style="padding:8px;">Ejemplos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom:1px solid #1e293b;">
+      <td style="padding:8px;vertical-align:top;"><strong>Esenciales</strong></td>
+      <td style="padding:8px;">Autenticación, CSRF, sesión, seguridad.</td>
+      <td style="padding:8px;">Cookie de sesión Django, tokens de formularios.</td>
+    </tr>
+    <tr style="border-bottom:1px solid #1e293b;">
+      <td style="padding:8px;vertical-align:top;"><strong>Preferencias</strong></td>
+      <td style="padding:8px;">Recordar idioma, última ubicación consultada u opciones de UI.</td>
+      <td style="padding:8px;">localStorage / cookies propias.</td>
+    </tr>
+    <tr style="border-bottom:1px solid #1e293b;">
+      <td style="padding:8px;vertical-align:top;"><strong>Publicidad</strong></td>
+      <td style="padding:8px;">Mostrar anuncios y, según consentimiento, personalizarlos.</td>
+      <td style="padding:8px;">Google AdSense (si <code>ADSENSE_ENABLED</code>).</td>
+    </tr>
+    <tr style="border-bottom:1px solid #1e293b;">
+      <td style="padding:8px;vertical-align:top;"><strong>Funcionales de terceros</strong></td>
+      <td style="padding:8px;">Traducción u otros widgets opcionales.</td>
+      <td style="padding:8px;">Weglot (si está habilitado).</td>
+    </tr>
+  </tbody>
+</table>
+<p>
+  <span class="placeholder">[COMPLETAR inventario real de cookies con nombres, duración y proveedor antes de publicar definitivo]</span>
+</p>
+
+<h2>4. Consentimiento</h2>
+<ul>
+  <li>Las cookies <strong>esenciales</strong> son necesarias para el servicio y no requieren consentimiento equivalente
+    a las no esenciales <span class="placeholder">[ABOGADO: matizar para AR / EEA]</span>.</li>
+  <li>Para publicidad (AdSense), en el Espacio Económico Europeo Google puede mostrar su CMP
+    (Consentimiento / No consentir / Administrar).</li>
+  <li>
+    <span class="placeholder">[PENDIENTE PRODUCTO]</span>
+    Banner propio de cookies para usuarios en Argentina / resto del mundo, con opción de rechazar no esenciales.
+  </li>
+</ul>
+
+<h2>5. Cómo gestionarlas</h2>
+<p>Puede:</p>
+<ul>
+  <li>Usar la configuración de su navegador para bloquear o borrar cookies.</li>
+  <li>Usar controles del CMP de Google (cuando se muestre) para publicidad.</li>
+  <li>Desactivar personalización de anuncios en las herramientas de Google, cuando aplique.</li>
+</ul>
+<p>
+  Bloquear cookies esenciales puede impedir el inicio de sesión u otras funciones.
+</p>
+
+<h2>6. Relación con otras políticas</h2>
+<p>
+  El tratamiento de datos personales asociados a cookies se detalla en la
+  <a href="{% url 'legal_privacidad' %}">Política de Privacidad</a>.
+  El uso general del servicio se rige por los
+  <a href="{% url 'legal_terminos' %}">Términos de Servicio</a>.
+</p>
+
+<h2>7. Contacto</h2>
+<p>
+  Consultas sobre cookies:
+  <span class="placeholder">[EMAIL PRIVACIDAD]</span>
+</p>
+{% endblock %}

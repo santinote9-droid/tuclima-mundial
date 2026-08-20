@@ -32,7 +32,7 @@
 
     {# ── Preconnect CDNs (velocidad de carga) ────────────────── #}
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="preconnect" href="https://cdn.weglot.com">
+    {% if WEGLOT_ENABLED %}<link rel="preconnect" href="https://cdn.weglot.com">{% endif %}
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com">
@@ -48,22 +48,38 @@
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
 
     {% comment %}
-    Weglot (traductor automático — único traductor del sitio).
-    Nota: se carga de forma síncrona (sin defer) a propósito, porque
-    varias páginas de sector (aereo/naval/agro/energia) verifican
-    `typeof Weglot !== 'undefined'` e incluso llaman `Weglot.on(...)`
-    de forma inmediata en scripts inline más abajo en el documento;
-    con `defer` esas comprobaciones fallarían y se rompería el
-    re-renderizado de gráficos al cambiar de idioma.
+    Weglot: se activa con WEGLOT_ENABLED=true + WEGLOT_API_KEY.
+    Mientras está apagado dejamos un stub para que los modos PRO
+    (agro/naval/aereo/energia) no fallen al llamar Weglot.on / getCurrentLang.
+    Carga síncrona a propósito: scripts inline de sectores asumen Weglot presente.
     {% endcomment %}
+    {% if WEGLOT_ENABLED %}
     <script src="https://cdn.weglot.com/weglot.min.js"></script>
     <script>
         Weglot.initialize({
-            api_key: 'wg_169c193b22e7a117be85a2f56113ab415',
+            api_key: '{{ WEGLOT_API_KEY|escapejs }}',
             hide_switcher: true,
             auto_switch: true
         });
+        window.tcWeglotReady = true;
+        window.tcSwitchLang = function (lang) {
+            try { Weglot.switchTo(lang); } catch (e) {}
+            return false;
+        };
     </script>
+    {% else %}
+    <script>
+        /* Stub: Weglot desactivado hasta suscripción (WEGLOT_ENABLED=true) */
+        window.tcWeglotReady = false;
+        window.Weglot = {
+            initialize: function () {},
+            switchTo: function () {},
+            getCurrentLang: function () { return 'es'; },
+            on: function () {}
+        };
+        window.tcSwitchLang = function () { return false; };
+    </script>
+    {% endif %}
 
     {# ── Estilos / scripts adicionales por página ────────────── #}
     {% block extra_head %}{% endblock %}
