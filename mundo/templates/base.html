@@ -37,8 +37,8 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com">
 
-    {# ── Google AdSense (código del publisher en <head>) ─────── #}
-    {% if ADSENSE_CLIENT %}
+    {# ── Google AdSense: solo si está habilitado (alineado a Política de Cookies) ── #}
+    {% if ADSENSE_ENABLED and ADSENSE_CLIENT %}
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ ADSENSE_CLIENT }}"
             crossorigin="anonymous"></script>
     {% endif %}

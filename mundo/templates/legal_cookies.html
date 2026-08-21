@@ -2,96 +2,156 @@
 
 {% block title %}Política de Cookies | TuClima{% endblock %}
 
+{% block draft_banner %}{% endblock %}
+
+{% block legal_meta %}Última actualización: {% now "d/m/Y" %} · Idioma: español (Argentina) · Alineada al estado del producto{% endblock %}
+
 {% block legal_title %}Política de Cookies{% endblock %}
 
 {% block legal_body %}
+<p>
+  Esta política describe cómo <span class="notranslate">TuClima</span> utiliza cookies y
+  tecnologías similares (por ejemplo <em>local storage</em>). Es coherente con el estado
+  actual del producto: cookies técnicas propias siempre; publicidad de Google AdSense
+  {% if ADSENSE_ENABLED %}<strong>activa</strong> en páginas públicas (p. ej. la bienvenida)
+  {% else %}<strong>configurada pero pausada</strong> en este momento
+  {% endif %};
+  Weglot (traducción)
+  {% if WEGLOT_ENABLED %}<strong>activo</strong>
+  {% else %}<strong>preparado pero no activo</strong>
+  {% endif %}.
+</p>
+
 <h2>1. Qué son las cookies</h2>
 <p>
-  Las cookies y tecnologías similares (local storage, píxeles, identificadores) son archivos o datos
-  que el sitio o terceros guardan en su dispositivo para hacer funcionar el servicio, recordar
-  preferencias o, cuando corresponda, mostrar publicidad y medir audiencia.
+  Son archivos o datos que el sitio o un tercero guarda en su dispositivo para hacer
+  funcionar el servicio, recordar preferencias, medir uso o —cuando aplica— mostrar publicidad.
 </p>
 
-<h2>2. Quién las utiliza</h2>
-<p>
-  En <span class="notranslate">TuClima</span> pueden utilizarse cookies:
-</p>
-<ul>
-  <li><strong>Propias (first-party):</strong> necesarias para sesión, seguridad y preferencias del sitio.</li>
-  <li><strong>De terceros:</strong> proveedores como Google (AdSense / CMP), procesadores de pago en sus flujos,
-    y Weglot u otros si están habilitados.</li>
-</ul>
-
-<h2>3. Tipos que podemos usar</h2>
-<table style="width:100%;border-collapse:collapse;font-size:0.92rem;margin:16px 0;">
+<h2>2. Cookies propias (TuClima)</h2>
+<table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin:16px 0;">
   <thead>
     <tr style="border-bottom:1px solid #334155;text-align:left;color:#e2e8f0;">
-      <th style="padding:8px;">Tipo</th>
+      <th style="padding:8px;">Nombre / tecnología</th>
       <th style="padding:8px;">Finalidad</th>
-      <th style="padding:8px;">Ejemplos</th>
+      <th style="padding:8px;">Duración</th>
+      <th style="padding:8px;">Tipo</th>
     </tr>
   </thead>
   <tbody>
     <tr style="border-bottom:1px solid #1e293b;">
-      <td style="padding:8px;vertical-align:top;"><strong>Esenciales</strong></td>
-      <td style="padding:8px;">Autenticación, CSRF, sesión, seguridad.</td>
-      <td style="padding:8px;">Cookie de sesión Django, tokens de formularios.</td>
+      <td style="padding:8px;"><code>sessionid</code></td>
+      <td style="padding:8px;">Mantener la sesión iniciada.</td>
+      <td style="padding:8px;">Sesión (o según configuración del servidor)</td>
+      <td style="padding:8px;">Esencial</td>
     </tr>
     <tr style="border-bottom:1px solid #1e293b;">
-      <td style="padding:8px;vertical-align:top;"><strong>Preferencias</strong></td>
-      <td style="padding:8px;">Recordar idioma, última ubicación consultada u opciones de UI.</td>
-      <td style="padding:8px;">localStorage / cookies propias.</td>
+      <td style="padding:8px;"><code>csrftoken</code></td>
+      <td style="padding:8px;">Protección contra ataques CSRF en formularios.</td>
+      <td style="padding:8px;">Hasta 1 año (típico Django)</td>
+      <td style="padding:8px;">Esencial</td>
     </tr>
     <tr style="border-bottom:1px solid #1e293b;">
-      <td style="padding:8px;vertical-align:top;"><strong>Publicidad</strong></td>
-      <td style="padding:8px;">Mostrar anuncios y, según consentimiento, personalizarlos.</td>
-      <td style="padding:8px;">Google AdSense (si <code>ADSENSE_ENABLED</code>).</td>
+      <td style="padding:8px;"><code>tc_tz</code></td>
+      <td style="padding:8px;">Recordar la zona horaria del navegador (p. ej. en flujos de pago/tokens).</td>
+      <td style="padding:8px;">Hasta 1 año</td>
+      <td style="padding:8px;">Preferencia</td>
     </tr>
     <tr style="border-bottom:1px solid #1e293b;">
-      <td style="padding:8px;vertical-align:top;"><strong>Funcionales de terceros</strong></td>
-      <td style="padding:8px;">Traducción u otros widgets opcionales.</td>
-      <td style="padding:8px;">Weglot (si está habilitado).</td>
+      <td style="padding:8px;">localStorage / sessionStorage</td>
+      <td style="padding:8px;">Preferencias de interfaz, favoritos u otros datos locales del navegador.</td>
+      <td style="padding:8px;">Hasta que el usuario los borre</td>
+      <td style="padding:8px;">Preferencia / funcional</td>
     </tr>
   </tbody>
 </table>
 <p>
-  <span class="placeholder">[COMPLETAR inventario real de cookies con nombres, duración y proveedor antes de publicar definitivo]</span>
+  Las cookies <strong>esenciales</strong> son necesarias para iniciar sesión y usar el sitio
+  de forma segura. Si las bloquea, partes del servicio pueden dejar de funcionar.
 </p>
 
-<h2>4. Consentimiento</h2>
+<h2>3. Publicidad — Google AdSense</h2>
+{% if ADSENSE_ENABLED %}
+<p>
+  <strong>Estado actual: activo.</strong>
+  En páginas públicas (incluida la landing) mostramos anuncios de
+  <strong>Google AdSense</strong>. Eso implica la carga de scripts de Google y el uso de
+  cookies u otros identificadores de Google con fines publicitarios y de medición,
+  según la configuración de Google y, cuando corresponda, su consentimiento.
+</p>
+{% else %}
+<p>
+  <strong>Estado actual: pausado.</strong>
+  TuClima puede mostrar anuncios de <strong>Google AdSense</strong> en páginas públicas.
+  Mientras la publicidad esté pausada, no se cargan los scripts ni las unidades de anuncio.
+  Si se reactiva, volverán a aplicarse cookies/tecnologías de Google con fines publicitarios.
+</p>
+{% endif %}
 <ul>
-  <li>Las cookies <strong>esenciales</strong> son necesarias para el servicio y no requieren consentimiento equivalente
-    a las no esenciales <span class="placeholder">[ABOGADO: matizar para AR / EEA]</span>.</li>
-  <li>Para publicidad (AdSense), en el Espacio Económico Europeo Google puede mostrar su CMP
-    (Consentimiento / No consentir / Administrar).</li>
-  <li>
-    <span class="placeholder">[PENDIENTE PRODUCTO]</span>
-    Banner propio de cookies para usuarios en Argentina / resto del mundo, con opción de rechazar no esenciales.
+  <li>Proveedor: Google Ireland Limited / Google LLC (y afiliadas), según región.</li>
+  <li>Más información:
+    <a href="https://policies.google.com/technologies/ads" rel="noopener noreferrer" target="_blank">Cómo usa Google las cookies en publicidad</a>
+    y
+    <a href="https://policies.google.com/privacy" rel="noopener noreferrer" target="_blank">Privacidad de Google</a>.
   </li>
-</ul>
-
-<h2>5. Cómo gestionarlas</h2>
-<p>Puede:</p>
-<ul>
-  <li>Usar la configuración de su navegador para bloquear o borrar cookies.</li>
-  <li>Usar controles del CMP de Google (cuando se muestre) para publicidad.</li>
-  <li>Desactivar personalización de anuncios en las herramientas de Google, cuando aplique.</li>
+  <li>En el Espacio Económico Europeo / Reino Unido, Google puede mostrar su mensaje de
+    consentimiento (CMP) con opciones para aceptar, rechazar o administrar.</li>
 </ul>
 <p>
-  Bloquear cookies esenciales puede impedir el inicio de sesión u otras funciones.
+  <strong>No vendemos</strong> listas de datos de navegación a terceros ajenos a estos
+  servicios de publicidad. El uso de AdSense se rige también por las políticas de Google.
 </p>
 
-<h2>6. Relación con otras políticas</h2>
+<h2>4. Traducción — Weglot</h2>
+{% if WEGLOT_ENABLED %}
 <p>
-  El tratamiento de datos personales asociados a cookies se detalla en la
+  <strong>Estado actual: activo.</strong>
+  Usamos Weglot para ofrecer traducción del sitio. Weglot puede establecer cookies o
+  tecnologías propias/de terceros para recordar el idioma y prestar el servicio.
+</p>
+{% else %}
+<p>
+  <strong>Estado actual: no activo.</strong>
+  Tenemos preparado el servicio de traducción <strong>Weglot</strong>, pero
+  <strong>no está habilitado</strong> en este momento: no se carga su script ni se usan
+  sus cookies. Si lo activamos en el futuro, actualizaremos esta política y Weglot podrá
+  usar cookies para idioma y funcionamiento del traductor.
+</p>
+{% endif %}
+
+<h2>5. Pagos (terceros en sus propios dominios)</h2>
+<p>
+  Al pagar con Lemon Squeezy, PayPal o Mercado Pago, esos proveedores pueden usar cookies
+  en <strong>sus sitios o iframes</strong> durante el checkout. Eso ocurre bajo sus propias
+  políticas de privacidad/cookies, no como cookies publicitarias de TuClima.
+</p>
+
+<h2>6. Consentimiento y gestión</h2>
+<ul>
+  <li><strong>Esenciales:</strong> se usan para operar el servicio (sesión y seguridad).</li>
+  <li><strong>Publicidad (AdSense):</strong> cuando está activa, puede gestionarlas con el
+    CMP de Google (si se muestra), con la
+    <a href="https://adssettings.google.com/" rel="noopener noreferrer" target="_blank">configuración de anuncios de Google</a>
+    o bloqueando cookies de terceros en el navegador.</li>
+  <li><strong>Preferencias (p. ej. <code>tc_tz</code>, localStorage):</strong> puede borrarlas
+    desde la configuración del navegador.</li>
+</ul>
+<p>
+  Bloquear todas las cookies puede impedir el inicio de sesión u otras funciones esenciales.
+</p>
+
+<h2>7. Relación con otras políticas</h2>
+<p>
+  El tratamiento de datos personales vinculados a estas tecnologías se detalla en la
   <a href="{% url 'legal_privacidad' %}">Política de Privacidad</a>.
-  El uso general del servicio se rige por los
+  El uso del servicio se rige por los
   <a href="{% url 'legal_terminos' %}">Términos de Servicio</a>.
 </p>
 
-<h2>7. Contacto</h2>
+<h2>8. Contacto</h2>
 <p>
-  Consultas sobre cookies:
-  <span class="placeholder">[EMAIL PRIVACIDAD]</span>
+  Consultas sobre cookies: escribinos desde el sitio o a la cuenta de contacto publicada
+  en <a href="{% url 'legal' %}">/legal/</a> / pie de página
+  (cuando esté el email legal definitivo).
 </p>
 {% endblock %}

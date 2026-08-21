@@ -2,7 +2,10 @@
 {% block pro_body %}
 
 <div style="background:linear-gradient(135deg,#0f172a,#1e1b4b);border:1px solid rgba(167,139,250,0.35);border-radius:16px;padding:18px;margin-bottom:14px;">
-  <p style="margin:0 0 12px;color:#cbd5e1;font-size:0.9rem;line-height:1.5;">Chat IA del modo energia. Se abre el asistente del panel.</p>
+  <p style="margin:0 0 12px;color:#cbd5e1;font-size:0.9rem;line-height:1.5;">
+    Chat IA del modo energia. Apoyo informativo: puede equivocarse; no envíes secretos ni datos sensibles.
+    <a href="/legal/terminos/#ia-tokens" style="color:#c4b5fd;">Términos de IA</a>.
+  </p>
   <a href="/energia/?lat={{ lat }}&lon={{ lon }}&open_chat=1" style="display:inline-flex;align-items:center;min-height:42px;padding:10px 16px;border-radius:10px;background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.45);color:#c4b5fd;text-decoration:none;font-weight:700;">Abrir Chat IA en el panel →</a>
 </div>
 {% include 'partials/_modal_interactivo.html' %}

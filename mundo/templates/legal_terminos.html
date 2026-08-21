@@ -28,8 +28,9 @@
   Si no está de acuerdo, no utilice el servicio.
 </p>
 <p>
-  La aceptación puede formalizarse mediante checkbox en registro y/o checkout, y quedará
-  registrada con fecha y versión del documento <span class="placeholder">[MECANISMO A IMPLEMENTAR / CONFIRMAR]</span>.
+  La aceptación puede formalizarse mediante checkbox en el registro y/o antes de pagar.
+  Queda registrada en su perfil con fecha y versión del documento
+  (versión vigente: {{ LEGAL_TERMS_VERSION|default:"2026-08-22" }}).
 </p>
 
 <h2>3. Descripción del servicio</h2>
@@ -73,17 +74,102 @@
     <a href="{% url 'legal_reembolsos' %}">Política de Reembolsos</a>.</li>
 </ul>
 
-<h2>6. Tokens, IA y contenidos generados</h2>
+<h2 id="ia-tokens">6. Tokens, inteligencia artificial y contenidos generados</h2>
+
+<h3>6.1 Tokens y créditos</h3>
 <ul>
-  <li>Los tokens/créditos se consumen según el uso de funciones (chat IA, reportes, etc.) y
-    <strong>no son acumulables más allá de lo indicado en el plan</strong>, salvo que se indique lo contrario.</li>
-  <li>Los resultados de IA se generan de forma automática y <strong>pueden contener errores</strong>.
-    No constituyen asesoramiento profesional (agrónomo, piloto, náutico, energético, legal o financiero).</li>
-  <li>Usted no debe enviar secretos, datos de terceros sin base legal, ni información sensible innecesaria a la IA.</li>
-  <li>TuClima no garantiza exactitud, exhaustividad ni idoneidad de outputs de IA para un fin particular.</li>
+  <li>Los “tokens” o créditos se asignan según el plan contratado (p. ej. cupo diario) y se
+    <strong>consumen</strong> al usar funciones como chat IA, reportes asistidos u otras marcadas en pricing.</li>
+  <li>Salvo indicación expresa en el plan, los tokens <strong>no se acumulan</strong> indefinidamente:
+    el cupo diario suele reiniciarse y el acceso vence con el plan.</li>
+  <li>Los tokens <strong>no son dinero</strong>, no son transferibles a terceros y, en la proporción ya usada,
+    en general <strong>no son reembolsables</strong> (ver
+    <a href="{% url 'legal_reembolsos' %}">Política de Reembolsos</a>).</li>
+  <li>Podemos ajustar costos por función, mostrar el saldo en la cuenta y rechazar pedidos sin crédito suficiente.</li>
+  <li>El abuso (automatización no autorizada, consumo artificial masivo, elusión de límites) puede
+    implicar suspensión del plan o de la cuenta.</li>
 </ul>
 
-<h2>7. Limitación de responsabilidad meteorológica y sectorial</h2>
+<h3>6.2 Naturaleza de la IA</h3>
+<ul>
+  <li>Los asistentes, chat, resúmenes, sugerencias e informes generados por IA son
+    <strong>herramientas automáticas de apoyo</strong>. Pueden contener errores, omisiones,
+    desactualizaciones o interpretaciones incorrectas.</li>
+  <li><strong>No constituyen</strong> asesoramiento profesional (agrónomo, piloto, náutico, energético,
+    médico, legal, financiero ni de otra índole) ni reemplazan fuentes oficiales
+    (SMN, NOTAMs, organismos competentes, etc.).</li>
+  <li>Usted es responsable de verificar la información antes de tomar decisiones operativas o comerciales.</li>
+</ul>
+
+<h3>6.3 Qué puede y no puede enviar a la IA</h3>
+<ul>
+  <li><strong>No debe</strong> enviar secretos (contraseñas, claves API, datos bancarios),
+    datos personales sensibles de terceros sin base legal, ni información confidencial de terceros
+    sin autorización.</li>
+  <li>Debe cumplir la ley aplicable y estos Términos al usar el chat o cualquier función generativa.</li>
+  <li>Los prompts y respuestas pueden procesarse por proveedores de modelos externos
+    (p. ej. OpenAI, Google Gemini u otros configurados), sujetos también a sus políticas.</li>
+</ul>
+
+<h3>6.4 Contenido generado (output)</h3>
+<ul>
+  <li>Salvo acuerdo distinto, usted puede usar el output para su actividad profesional/interna,
+    bajo su propio riesgo y responsabilidad.</li>
+  <li>TuClima <strong>no garantiza</strong> exactitud, exhaustividad, originalidad, no infracción
+    ni idoneidad del output para un fin particular.</li>
+  <li>No puede presentar el output como dato oficial, certificado o “emitido por TuClima Labs”
+    de forma engañosa.</li>
+  <li>TuClima puede usar outputs/prompts de forma agregada o técnica para operar, asegurar
+    y mejorar el servicio, conforme a la
+    <a href="{% url 'legal_privacidad' %}">Política de Privacidad</a>.</li>
+</ul>
+
+<h3>6.5 Disponibilidad</h3>
+<p>
+  La IA y el consumo de tokens dependen de terceros y de cupos. Puede haber interrupciones,
+  latencia, cambios de modelo o límites temporales sin que ello genere derecho a compensación
+  más allá de lo previsto en la Política de Reembolsos o la ley aplicable.
+</p>
+
+<h2 id="alertas-mails">7. Alertas, emails y comunicaciones (incl. marketing)</h2>
+
+<h3>7.1 Tipos de mensajes</h3>
+<p>Podemos enviarle, según lo que active o contrate:</p>
+<ul>
+  <li><strong>Operativos / transaccionales:</strong> confirmación de cuenta, pagos, activación de plan,
+    seguridad, cambios esenciales del servicio.</li>
+  <li><strong>Alertas y reportes de servicio:</strong> alertas proactivas, reportes programados
+    u otros avisos climáticos que usted configure (email y/o avisos en la web).</li>
+  <li><strong>Marketing / novedades (opcionales):</strong> novedades del producto, invitaciones a pruebas,
+    tips de uso u ofertas, cuando haya base legal (p. ej. consentimiento o relación comercial aplicable).</li>
+</ul>
+
+<h3>7.2 Activación y baja de alertas</h3>
+<ul>
+  <li>Las alertas proactivas y reportes se activan desde su cuenta (p. ej. Mi cuenta) o funciones equivalentes.</li>
+  <li>Puede <strong>desactivarlas</strong> en cualquier momento desde la misma configuración.
+    La baja aplica a esos envíos de servicio; no elimina necesariamente los emails operativos del plan/pago.</li>
+  <li>Las alertas son informativas: <strong>no garantizan</strong> detección de todos los eventos ni
+    reemplazan monitoreo oficial o protocolos propios.</li>
+  <li>Usted debe mantener un email válido; no somos responsables si el mensaje no llega por filtros spam,
+    buzón lleno o dirección incorrecta.</li>
+</ul>
+
+<h3>7.3 Marketing</h3>
+<ul>
+  <li>Los mensajes comerciales/opcionales se distinguirán, en la medida razonable, de los operativos.</li>
+  <li>Podrá solicitar la baja de marketing respondiendo al mail, usando el enlace de baja cuando exista,
+    o escribiendo a <span class="placeholder">[EMAIL SOPORTE / PRIVACIDAD]</span>.</li>
+  <li>La baja de marketing <strong>no cancela</strong> su cuenta ni los avisos necesarios para prestar el servicio pago.</li>
+</ul>
+
+<h3>7.4 Contenido de los mails</h3>
+<p>
+  Resúmenes, umbrales y “acciones sugeridas” en alertas o reportes son apoyo informativo.
+  Aplican las mismas limitaciones de los apartados 6 y 8 (IA / responsabilidad meteorológica).
+</p>
+
+<h2>8. Limitación de responsabilidad meteorológica y sectorial</h2>
 <p>
   La Plataforma se ofrece “tal cual” y “según disponibilidad”. En la máxima medida permitida por la ley aplicable:
 </p>
@@ -97,39 +183,51 @@
   <span class="placeholder">[ABOGADO: ajustar techo de responsabilidad / exclusión de daños indirectos conforme derecho del consumidor AR]</span>
 </p>
 
-<h2>8. Uso aceptable y API</h2>
+<h2>9. Uso aceptable y API</h2>
 <p>Queda prohibido, entre otros:</p>
 <ul>
   <li>Usar la Plataforma de forma ilegal, abusiva o que afecte a terceros.</li>
   <li>Intentar acceder sin autorización a sistemas, cuentas o datos ajenos.</li>
   <li>Revender, redistribuir masivamente o scrapear el servicio sin autorización escrita.</li>
   <li>Exceder límites técnicos o de plan de forma deliberada.</li>
+  <li>Usar la IA para generar contenido ilícito, engañoso o que vulnere derechos de terceros.</li>
 </ul>
 <p>
   Si dispone de API key personal, su uso está limitado a su cuenta y plan; puede rotarse o revocarse ante abuso.
 </p>
 
-<h2>9. Propiedad intelectual</h2>
+<h2>10. Propiedad intelectual</h2>
 <p>
   El software, diseño, marcas y contenidos propios de TuClima son de
   <span class="placeholder">[RAZÓN SOCIAL]</span> o de sus licenciantes.
   Los datos meteorológicos pertenecen a sus proveedores respectivos y se usan bajo sus condiciones.
 </p>
 
-<h2>10. Publicidad y terceros</h2>
+<h2>11. Publicidad y terceros</h2>
 <p>
-  La Plataforma puede mostrar publicidad (p. ej. Google AdSense) y servicios de terceros
-  (pagos, traducción, analítica, IA). El uso de esos servicios se rige también por sus propias políticas.
+  {% if ADSENSE_ENABLED %}
+  La Plataforma <strong>muestra publicidad</strong> mediante Google AdSense en páginas públicas
+  (p. ej. la bienvenida). Eso implica cookies y tecnologías de Google, descritas en la
+  <a href="{% url 'legal_cookies' %}">Política de Cookies</a>.
+  {% else %}
+  La Plataforma <strong>puede mostrar publicidad</strong> mediante Google AdSense en páginas públicas.
+  Mientras esté pausada, no se cargan scripts de anuncios; el detalle está en la
+  <a href="{% url 'legal_cookies' %}">Política de Cookies</a>.
+  {% endif %}
+  También usamos o podemos usar servicios de terceros (pagos, IA
+  {% if WEGLOT_ENABLED %}, traducción Weglot{% endif %}).
+  El uso de esos servicios se rige además por sus propias políticas.
 </p>
 
-<h2>11. Modificaciones</h2>
+<h2>12. Modificaciones</h2>
 <p>
   Podemos actualizar estos Términos. La versión vigente se publicará en esta URL con fecha de actualización.
   Cambios materiales podrán comunicarse por email o aviso en la Plataforma
-  <span class="placeholder">[DEFINIR PLAZO DE AVISO]</span>.
+  <span class="placeholder">[DEFINIR PLAZO DE AVISO]</span>
+  y pueden requerir una nueva aceptación (nueva versión <code>LEGAL_TERMS_VERSION</code>).
 </p>
 
-<h2>12. Legislación y jurisdicción</h2>
+<h2>13. Legislación y jurisdicción</h2>
 <p>
   Estos Términos se interpretan conforme a las leyes de la República Argentina.
   Para controversias, serán competentes los tribunales ordinarios de
@@ -137,7 +235,7 @@
   sin perjuicio de derechos irrenunciables del consumidor.
 </p>
 
-<h2>13. Contacto</h2>
+<h2>14. Contacto</h2>
 <p>
   Consultas sobre estos Términos:
   <span class="placeholder">[EMAIL LEGAL]</span>

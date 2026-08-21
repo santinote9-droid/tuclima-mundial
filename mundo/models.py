@@ -79,6 +79,21 @@ class PerfilUsuario(models.Model):
         help_text='Para plan Starter: sector al que tiene acceso. Vacío = puede elegir.',
     )
 
+    # --- Aceptación legal ---
+    terminos_aceptados = models.BooleanField(
+        default=False,
+        verbose_name='Términos y Privacidad aceptados',
+    )
+    terminos_aceptados_en = models.DateTimeField(
+        null=True, blank=True,
+        verbose_name='Fecha de aceptación legal',
+    )
+    terminos_version = models.CharField(
+        max_length=32, default='', blank=True,
+        verbose_name='Versión de documentos legales aceptada',
+        help_text='Ej: 2026-08-21 — debe coincidir con LEGAL_TERMS_VERSION',
+    )
+
     # El @property debe estar alineado con 'user' y 'fecha...'
     @property
     def plan_nivel(self):

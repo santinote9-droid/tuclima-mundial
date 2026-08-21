@@ -91,14 +91,16 @@
     <a href="{% url 'legal_reembolsos' %}" {% if legal_doc == 'reembolsos' %}class="is-active"{% endif %}>Reembolsos</a>
   </nav>
 
+  {% block draft_banner %}
   <div class="draft-banner">
     <strong>Borrador para revisión legal</strong> — preparado para la cita del 27/08/2026.
     Los textos entre <span class="placeholder">[CORCHETES]</span> deben completarse con datos reales
     (razón social, CUIT, domicilio, email). No sustituye el dictamen de tu abogado.
   </div>
+  {% endblock %}
 
   <h1>{% block legal_title %}{% endblock %}</h1>
-  <p class="meta">Versión borrador · Última actualización: {% now "d/m/Y" %} · Idioma: español (Argentina)</p>
+  <p class="meta">{% block legal_meta %}Versión borrador · Última actualización: {% now "d/m/Y" %} · Idioma: español (Argentina){% endblock %}</p>
 
   {% block legal_body %}{% endblock %}
 

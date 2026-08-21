@@ -12,9 +12,11 @@ class PerfilUsuarioAdmin(admin.ModelAdmin):
     list_display = (
         'user', 'fecha_vencimiento', 'suscripcion_activa',
         'tokens_diarios_limite', 'tokens_disponibles', 'fecha_vencimiento_tokens',
+        'terminos_aceptados', 'terminos_version',
     )
     search_fields = ('user__username', 'user__email')
-    list_filter = ('tokens_diarios_limite',)
+    list_filter = ('tokens_diarios_limite', 'terminos_aceptados', 'terminos_version')
+    readonly_fields = ('terminos_aceptados_en',)
     actions = ['activar_plan_tokens_action']
 
     @admin.action(description='Activar plan de tokens…')

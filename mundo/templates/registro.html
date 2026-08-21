@@ -93,8 +93,32 @@
         .bottom-link a { color: #3b82f6; text-decoration: none; font-weight: bold; }
         .bottom-link a:hover { text-decoration: underline; }
         
-        /* Ocultar viñetas feas de errores/ayuda */
-        ul.errorlist { color: #ef4444; list-style: none; padding: 0; }
+        /* Checkbox términos */
+        .terms-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            margin-top: 6px;
+            padding: 12px 14px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+        }
+        .terms-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            flex-shrink: 0;
+            accent-color: #3b82f6;
+        }
+        .terms-row label {
+            margin: 0;
+            font-weight: 500;
+            font-size: 0.88rem;
+            line-height: 1.45;
+            color: #cbd5e1;
+        }
+        .terms-row a { color: #60a5fa; }
 
         /* Responsive: tablet ≤900 | móvil ≤600 */
         @media (max-width: 900px) {
@@ -123,8 +147,9 @@
             
             <form method="post">
                 {% csrf_token %}
-                
+
                 {% for field in form %}
+                    {% if field.name != 'acepto_terminos' %}
                     <div>
                         <label>{{ field.label }}</label>
                         {{ field }}
@@ -137,11 +162,30 @@
                             </div>
                         {% endfor %}
                     </div>
+                    {% endif %}
+                {% endfor %}
+
+                <div class="terms-row">
+                    {{ form.acepto_terminos }}
+                    <label for="{{ form.acepto_terminos.id_for_label }}">
+                        He leído y acepto los
+                        <a href="{% url 'legal_terminos' %}" target="_blank" rel="noopener">Términos de Servicio</a>,
+                        la
+                        <a href="{% url 'legal_privacidad' %}" target="_blank" rel="noopener">Política de Privacidad</a>,
+                        la
+                        <a href="{% url 'legal_cookies' %}" target="_blank" rel="noopener">Política de Cookies</a>
+                        y la
+                        <a href="{% url 'legal_reembolsos' %}" target="_blank" rel="noopener">Política de Reembolsos</a>.
+                    </label>
+                </div>
+                {% for error in form.acepto_terminos.errors %}
+                    <div style="color:#ef4444; font-size:0.8em; margin-top:5px;">
+                        <i class="fas fa-exclamation-circle"></i> {{ error }}
+                    </div>
                 {% endfor %}
 
                 <button type="submit">Registrarse Gratis</button>
             </form>
-
             <div class="bottom-link">
                 ¿Ya tienes cuenta? <a href="/login/">Inicia Sesión</a>
             </div>

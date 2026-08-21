@@ -127,6 +127,8 @@
         </div>
     </div>
 
+    {% include 'partials/_aceptacion_legal.html' %}
+
     <!-- Lemon Squeezy: via mundial USD -->
     {% if paquete.ls_variant_id %}
     <div class="section-label"><i class="fas fa-star" style="color:#f59e0b;margin-right:6px;"></i>Metodo recomendado · internacional</div>
@@ -137,16 +139,15 @@
         </div>
         <div class="ls-subtitle">Cobro en USD &middot; Activacion automatica &middot; Lemon Squeezy</div>
 
-        <a href="/ls-checkout/?paquete={{ paquete_id }}" class="btn-ls">
+        <a href="/ls-checkout/?paquete={{ paquete_id }}" class="btn-ls js-pay-link">
             <i class="fas fa-lock" style="font-size:.9rem;opacity:.85;"></i>
             Suscribirse — ${{ precio_usd }} USD
         </a>
 
-        <a href="/pagar-paypal/?paquete={{ paquete_id }}" class="btn-paypal-direct">
+        <a href="/pagar-paypal/?paquete={{ paquete_id }}" class="btn-paypal-direct js-pay-link">
             <i class="fab fa-paypal"></i>
             Pagar ${{ precio_usd }} USD con PayPal
         </a>
-
         <div class="ls-trust">
             <span class="badge-visa">VISA</span>
             <span class="badge-mc">Mastercard</span>
@@ -172,7 +173,7 @@
                 Disponible solo en Argentina. Pagos internacionales: Lemon Squeezy o PayPal arriba.
             </p>
 
-            <a href="/pagar-tokens/?paquete={{ paquete_id }}" class="btn-mp-checkout">
+            <a href="/pagar-tokens/?paquete={{ paquete_id }}" class="btn-mp-checkout js-pay-link">
                 <i class="fas fa-bolt"></i> Pagar con Mercado Pago (ARS)
             </a>
             <p style="color:#64748b;font-size:.72rem;line-height:1.4;margin:-8px 0 12px;">

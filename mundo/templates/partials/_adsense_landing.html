@@ -1,7 +1,15 @@
 {% comment %}AdSense landing: slots A/C Display, B Multiplex. Script publisher en base.html.{% endcomment %}
 <section class="ld-section" id="publicidad" aria-label="Espacio publicitario">
   <h2>Partners &amp; anuncios</h2>
-  <p class="ld-sub">Espacio reservado para publicidad y alianzas del ecosistema TuClima.</p>
+  <p class="ld-sub">
+    Espacio de publicidad y alianzas del ecosistema TuClima.
+    {% if ADSENSE_ENABLED %}
+    Los anuncios pueden usar cookies de Google;
+    {% else %}
+    La publicidad está pausada;
+    {% endif %}
+    más info en la <a href="{% url 'legal_cookies' %}" style="color:#7dd3fc;">Política de Cookies</a>.
+  </p>
 
   <div class="ld-ads">
     <p class="ld-ads-label">{% if ADSENSE_ENABLED %}Anuncios{% else %}Espacio publicitario{% endif %}</p>

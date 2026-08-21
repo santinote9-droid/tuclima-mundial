@@ -86,6 +86,7 @@ urlpatterns = [
     path('legal/privacidad/', views.legal_privacidad, name='legal_privacidad'),
     path('legal/cookies/', views.legal_cookies, name='legal_cookies'),
     path('legal/reembolsos/', views.legal_reembolsos, name='legal_reembolsos'),
+    path('aceptar-terminos/', views.aceptar_terminos, name='aceptar_terminos'),
     
     # URLs para funcionalidad multisectorial
     path('carga-sectorial/', views.vista_carga_archivos, name='carga_sectorial'),

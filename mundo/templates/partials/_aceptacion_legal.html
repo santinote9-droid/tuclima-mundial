@@ -1,0 +1,158 @@
+{% comment %}
+  Bloque de aceptación legal para checkout.
+  Requiere: legal_aceptado, legal_version (opcional).
+  Marca los enlaces de pago con class="js-pay-link".
+{% endcomment %}
+<style>
+  .legal-accept-box {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin: 0 0 18px;
+    text-align: left;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+  }
+  .legal-accept-box.ok {
+    border-color: rgba(34, 197, 94, 0.45);
+    background: rgba(22, 163, 74, 0.1);
+    color: #bbf7d0;
+  }
+  .legal-accept-box label {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .legal-accept-box input[type="checkbox"] {
+    margin-top: 3px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    accent-color: #3b82f6;
+  }
+  .legal-accept-box a { color: #7dd3fc; }
+  .legal-accept-box .legal-accept-error {
+    display: none;
+    color: #fca5a5;
+    font-size: 0.8rem;
+    margin-top: 10px;
+  }
+  .legal-accept-box .legal-accept-error.show { display: block; }
+  a.js-pay-link.is-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+    filter: grayscale(0.3);
+  }
+</style>
+
+<div class="legal-accept-box {% if legal_aceptado %}ok{% endif %}" id="legal-accept-box"
+     data-aceptado="{% if legal_aceptado %}1{% else %}0{% endif %}"
+     data-version="{{ legal_version|default:'2026-08-22' }}">
+  {% if legal_aceptado %}
+  <p style="margin:0;">
+    <i class="fas fa-check-circle" style="margin-right:6px;"></i>
+    Ya aceptaste los
+    <a href="{% url 'legal_terminos' %}" target="_blank" rel="noopener">Términos</a>,
+    <a href="{% url 'legal_privacidad' %}" target="_blank" rel="noopener">Privacidad</a>,
+    <a href="{% url 'legal_cookies' %}" target="_blank" rel="noopener">Cookies</a>
+    y
+    <a href="{% url 'legal_reembolsos' %}" target="_blank" rel="noopener">Reembolsos</a>
+    (versión {{ legal_version|default:'2026-08-22' }}).
+  </p>
+  {% else %}
+  <label for="acepto_terminos_pago">
+    <input type="checkbox" id="acepto_terminos_pago" name="acepto_terminos">
+    <span>
+      He leído y acepto los
+      <a href="{% url 'legal_terminos' %}" target="_blank" rel="noopener">Términos de Servicio</a>,
+      la
+      <a href="{% url 'legal_privacidad' %}" target="_blank" rel="noopener">Política de Privacidad</a>,
+      la
+      <a href="{% url 'legal_cookies' %}" target="_blank" rel="noopener">Política de Cookies</a>
+      y la
+      <a href="{% url 'legal_reembolsos' %}" target="_blank" rel="noopener">Política de Reembolsos</a>.
+    </span>
+  </label>
+  <div class="legal-accept-error" id="legal-accept-error">
+    Marcá la casilla para continuar con el pago.
+  </div>
+  {% endif %}
+</div>
+
+<script>
+(function () {
+  var box = document.getElementById('legal-accept-box');
+  if (!box) return;
+  var already = box.getAttribute('data-aceptado') === '1';
+  var cb = document.getElementById('acepto_terminos_pago');
+  var err = document.getElementById('legal-accept-error');
+  var csrf = (document.cookie.match(/(?:^|; )csrftoken=([^;]*)/) || [])[1] || '';
+
+  function payLinks() {
+    return Array.prototype.slice.call(document.querySelectorAll('a.js-pay-link'));
+  }
+
+  function setEnabled(on) {
+    payLinks().forEach(function (a) {
+      if (on) a.classList.remove('is-disabled');
+      else a.classList.add('is-disabled');
+    });
+  }
+
+  function saveAcceptance(cbOk, cbFail) {
+    fetch('{% url "aceptar_terminos" %}', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': decodeURIComponent(csrf),
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'acepto_terminos=1',
+      credentials: 'same-origin'
+    }).then(function (r) {
+      if (!r.ok) throw new Error('fail');
+      return r.json();
+    }).then(function () {
+      box.setAttribute('data-aceptado', '1');
+      if (cbOk) cbOk();
+    }).catch(function () {
+      if (cbFail) cbFail();
+    });
+  }
+
+  if (!already) {
+    setEnabled(false);
+    if (cb) {
+      cb.addEventListener('change', function () {
+        if (err) err.classList.remove('show');
+        if (cb.checked) {
+          saveAcceptance(function () { setEnabled(true); }, function () {
+            cb.checked = false;
+            setEnabled(false);
+            if (err) {
+              err.textContent = 'No se pudo guardar la aceptación. Probá de nuevo.';
+              err.classList.add('show');
+            }
+          });
+        } else {
+          setEnabled(false);
+        }
+      });
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a.js-pay-link');
+    if (!a) return;
+    if (box.getAttribute('data-aceptado') === '1') return;
+    e.preventDefault();
+    if (err) err.classList.add('show');
+    if (cb) cb.focus();
+  }, true);
+})();
+</script>

@@ -30,7 +30,7 @@ from .climatologia_utils import resumen_climatologia, fase_enso, climograma_hist
 from .hemisferica_utils import resumen_hemisferica
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 from django.db.models import Count
 from django.core.mail import send_mail
 from django.conf import settings
@@ -375,6 +375,16 @@ class RegistroConEmailForm(UserCreationForm):
         required=True,
         label='Correo electrónico',
         widget=forms.EmailInput(attrs={'placeholder': 'tu@email.com'})
+    )
+    acepto_terminos = forms.BooleanField(
+        required=True,
+        label=(
+            'Acepto los Términos de Servicio, la Política de Privacidad, '
+            'la Política de Cookies y la Política de Reembolsos'
+        ),
+        error_messages={
+            'required': 'Debés aceptar los términos y la privacidad para crear la cuenta.',
+        },
     )
 
     class Meta(UserCreationForm.Meta):
@@ -3374,6 +3384,10 @@ def crear_pago_paypal(request):
     - Tokens (flujo actual): ?paquete=starter_1m
     - Legacy renovación: ?plan=mensual|anual
     """
+    bloqueo = requerir_aceptacion_terminos(request)
+    if bloqueo:
+        return bloqueo
+
     from django.contrib import messages
 
     paquete_id = (request.GET.get('paquete') or '').strip()
@@ -3546,6 +3560,10 @@ def paypal_retorno(request):
 @login_required
 def ls_checkout(request):
     """Crea una sesión de checkout en Lemon Squeezy via API y redirige a ella."""
+    bloqueo = requerir_aceptacion_terminos(request)
+    if bloqueo:
+        return bloqueo
+
     from django.http import HttpResponse
     import urllib.request as _req
     import urllib.error as _uerr
@@ -3818,6 +3836,10 @@ def metodos_pago(request):
         'precio': precio,
         'paypal_sandbox': paypal_mode == 'sandbox',
         'opciones_ar': _es_usuario_argentina(request),
+        'legal_aceptado': (
+            request.user.is_authenticated and usuario_acepto_terminos(request.user)
+        ),
+        'legal_version': _legal_terms_version(),
     })
 
 @login_required
@@ -3902,6 +3924,10 @@ def activar_30_dias(usuario):
 @login_required
 def mp_crear_preferencia(request):
     """Crea una preferencia de pago en MP Checkout Pro y redirige al usuario."""
+    bloqueo = requerir_aceptacion_terminos(request)
+    if bloqueo:
+        return bloqueo
+
     plan = request.GET.get('plan', 'mensual')
     if plan not in ('mensual', 'anual'):
         plan = 'mensual'
@@ -4135,21 +4161,105 @@ def pago_exitoso_view(request):
 # 7. SISTEMA DE USUARIOS (LOGIN / REGISTRO)
 # ==========================================
 
+def _legal_terms_version():
+    return (getattr(settings, 'LEGAL_TERMS_VERSION', None) or '2026-08-22').strip()
+
+
+def _perfil_de(user):
+    if not user or not getattr(user, 'is_authenticated', False):
+        return None
+    try:
+        return user.perfil
+    except PerfilUsuario.DoesNotExist:
+        return None
+    except Exception:
+        try:
+            return PerfilUsuario.objects.get(user=user)
+        except PerfilUsuario.DoesNotExist:
+            return None
+
+
+def usuario_acepto_terminos(user):
+    """True si el usuario aceptó la versión vigente de los docs legales."""
+    perfil = _perfil_de(user)
+    if not perfil or not perfil.terminos_aceptados:
+        return False
+    return (perfil.terminos_version or '') == _legal_terms_version()
+
+
+def guardar_aceptacion_terminos(user):
+    """Marca aceptación de la versión legal vigente en el perfil."""
+    from django.utils import timezone as dj_tz
+
+    perfil = _perfil_de(user)
+    if perfil is None:
+        perfil = PerfilUsuario.objects.create(user=user)
+    perfil.terminos_aceptados = True
+    perfil.terminos_aceptados_en = dj_tz.now()
+    perfil.terminos_version = _legal_terms_version()
+    perfil.save(update_fields=['terminos_aceptados', 'terminos_aceptados_en', 'terminos_version'])
+    return perfil
+
+
+def requerir_aceptacion_terminos(request):
+    """
+    Si el usuario aún no aceptó la versión vigente, redirige al origen del pago.
+    Devuelve None si puede continuar.
+    """
+    from django.contrib import messages
+
+    if usuario_acepto_terminos(request.user):
+        return None
+
+    messages.error(
+        request,
+        'Para continuar con el pago debés aceptar los Términos, la Privacidad, '
+        'las Cookies y la Política de Reembolsos.',
+    )
+    paquete = (request.GET.get('paquete') or '').strip()
+    if paquete:
+        return redirect(f'/activar-plan/?paquete={paquete}')
+    plan = (request.GET.get('plan') or '').strip()
+    if plan:
+        return redirect(f'/metodos-pago/?legacy=1&plan={plan}')
+    return redirect('/pricing/#tokens')
+
+
+@login_required
+@require_POST
+def aceptar_terminos(request):
+    """Guarda aceptación legal (AJAX o form). Usado desde checkout."""
+    guardar_aceptacion_terminos(request.user)
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in (
+        request.headers.get('Accept') or ''
+    ):
+        return JsonResponse({
+            'ok': True,
+            'version': _legal_terms_version(),
+            'aceptado_en': request.user.perfil.terminos_aceptados_en.isoformat()
+            if request.user.perfil.terminos_aceptados_en else None,
+        })
+    next_url = request.POST.get('next') or request.GET.get('next') or '/pricing/'
+    return redirect(next_url)
+
+
 def registro(request):
     if request.method == 'POST':
         form = RegistroConEmailForm(request.POST)
         if form.is_valid():
             user = form.save()
-            # Guardar email en el modelo User
             user.email = form.cleaned_data['email']
             user.save()
-            # Creamos el perfil vacio al registrarse
             PerfilUsuario.objects.create(user=user)
+            guardar_aceptacion_terminos(user)
             login(request, user)
             return redirect('pricing')
     else:
         form = RegistroConEmailForm()
-    return render(request, 'registro.html', {'form': form})
+    return render(request, 'registro.html', {
+        'form': form,
+        'legal_version': _legal_terms_version(),
+    })
 
 def login_view(request):
     if request.method == 'POST':
@@ -5229,6 +5339,8 @@ def seleccionar_pago_tokens(request):
         'moneda':      'USD',
         'periodo':     meses_label + regalo_label,
         'opciones_ar': opciones_ar,
+        'legal_aceptado': usuario_acepto_terminos(request.user),
+        'legal_version': _legal_terms_version(),
     })
 
 
@@ -5248,6 +5360,10 @@ def recargar_tokens_view(request):
 @login_required
 def mp_crear_preferencia_tokens(request):
     """Crea una preferencia de pago en MP para un plan de tokens (con variante de duración)."""
+    bloqueo = requerir_aceptacion_terminos(request)
+    if bloqueo:
+        return bloqueo
+
     from django.contrib import messages
 
     paquete_id = request.GET.get('paquete', '')

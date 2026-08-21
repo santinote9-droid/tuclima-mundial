@@ -15,7 +15,8 @@
 <ul>
   <li>
     <a href="{% url 'legal_terminos' %}"><strong>Términos de Servicio</strong></a>
-    — contrato de uso, planes, IA, limitación meteorológica, jurisdicción.
+    — contrato de uso, planes, <a href="{% url 'legal_terminos' %}#ia-tokens">IA/tokens</a>,
+    <a href="{% url 'legal_terminos' %}#alertas-mails">alertas/mails</a>, limitación meteorológica.
   </li>
   <li>
     <a href="{% url 'legal_privacidad' %}"><strong>Política de Privacidad</strong></a>
@@ -23,7 +24,7 @@
   </li>
   <li>
     <a href="{% url 'legal_cookies' %}"><strong>Política de Cookies</strong></a>
-    — cookies esenciales, AdSense, Weglot, consentimiento.
+    — inventario propio, AdSense y Weglot alineados al estado real del sitio (sin contradicciones).
   </li>
   <li>
     <a href="{% url 'legal_reembolsos' %}"><strong>Reembolsos y cancelación</strong></a>
@@ -37,16 +38,18 @@
   <li>Quién factura en cada medio de pago (TuClima vs Lemon Squeezy MoR).</li>
   <li>Plazo de arrepentimiento / reembolso compatible con Defensa del Consumidor.</li>
   <li>Jurisdicción (ciudad/provincia) y techo de responsabilidad.</li>
-  <li>Inventario real de cookies (nombre, duración, proveedor).</li>
+  <li>Revisión fina de cookies (ya hay inventario base en /legal/cookies/).</li>
   <li>Procedimiento de baja de cuenta y plazos de respuesta AAIP.</li>
 </ul>
 
 <h2>Pendientes de producto (después de la cita)</h2>
 <ul>
-  <li>Checkbox “Acepto Términos y Privacidad” en registro y checkout.</li>
-  <li>Guardar versión aceptada + fecha en la cuenta.</li>
-  <li>Banner de cookies propio (además del CMP de Google en EEA).</li>
-  <li>Flujo “eliminar mi cuenta y datos”.</li>
+  <li>Flujo “eliminar mi cuenta y datos” en Mi cuenta.</li>
+  <li>Banner de cookies propio para Argentina (además del CMP de Google en EEA), si el abogado lo pide.</li>
   <li>Publicar datos fiscales en el footer.</li>
 </ul>
+<p style="margin-top:18px;color:#94a3b8;font-size:0.92rem;">
+  Ya implementado: aceptación versionada en registro y checkout; Política de Cookies alineada a AdSense/Weglot;
+  Privacidad alineada a cuentas, ubicaciones, tokens, IA y pagos.
+</p>
 {% endblock %}

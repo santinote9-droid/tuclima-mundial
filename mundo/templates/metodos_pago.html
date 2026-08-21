@@ -196,9 +196,12 @@
         </div>
         {% endif %}
         <h2>Selecciona tu método de pago seguro</h2>
+
+        {% include 'partials/_aceptacion_legal.html' %}
+
         <div class="grid">
 
-            <a href="/pagar-paypal/?plan={{ plan }}" class="option option-paypal">
+            <a href="/pagar-paypal/?plan={{ plan }}" class="option option-paypal js-pay-link">
                 <div class="icon-container">
                     <i class="fab fa-paypal"></i>
                 </div>
@@ -210,7 +213,7 @@
             </a>
 
             {% if opciones_ar %}
-            <a href="/pagar-mercadopago/?plan={{ plan }}" class="option">
+            <a href="/pagar-mercadopago/?plan={{ plan }}" class="option js-pay-link">
                 <div class="icon-container">
                     <i class="fas fa-credit-card"></i>
                 </div>
@@ -221,8 +224,7 @@
                 </div>
             </a>
             {% endif %}
-        </div>
-        {% if not opciones_ar %}
+        </div>        {% if not opciones_ar %}
         <p style="margin-top:22px;color:#64748b;font-size:.88rem;">
             ¿Estás en Argentina?
             <a href="?plan={{ plan }}&amp;pais=AR" style="color:#7dd3fc;font-weight:600;text-decoration:none;">Ver Mercado Pago</a>

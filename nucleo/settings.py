@@ -284,10 +284,14 @@ SITE_URL = (
 # En Render: GOOGLE_SITE_VERIFICATION=contenido_del_meta_sin_comillas
 GOOGLE_SITE_VERIFICATION = (os.getenv('GOOGLE_SITE_VERIFICATION') or '').strip()
 
+# Versión de Términos / Privacidad / Cookies / Reembolsos (checkbox registro y pago)
+LEGAL_TERMS_VERSION = (os.getenv('LEGAL_TERMS_VERSION') or '2026-08-22').strip()
+
 # ============================================================
 # GOOGLE ADSENSE — landing (Partners & anuncios)
 # Script en <head> (base.html) + unidades en partials/_adsense_landing.html
-# ADSENSE_ENABLED=false para apagar banners sin quitar el script de verificación
+# ADSENSE_ENABLED=false pausa banners Y el script (coherente con /legal/cookies/)
+# Para verificación AdSense alcanza ads.txt + cuenta; reactivá con true cuando quieras anuncios.
 # ============================================================
 ADSENSE_CLIENT = (os.getenv('ADSENSE_CLIENT') or 'ca-pub-6917571231301347').strip()
 ADSENSE_SLOT_A = (os.getenv('ADSENSE_SLOT_A') or '4234611639').strip()  # Display auto

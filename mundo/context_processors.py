@@ -23,4 +23,5 @@ def site_seo(request):
         'ADSENSE_SLOT_C': getattr(settings, 'ADSENSE_SLOT_C', '') or '',
         'WEGLOT_ENABLED': weglot_enabled,
         'WEGLOT_API_KEY': weglot_key,
+        'LEGAL_TERMS_VERSION': getattr(settings, 'LEGAL_TERMS_VERSION', '') or '2026-08-22',
     }
