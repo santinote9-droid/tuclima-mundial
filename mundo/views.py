@@ -5110,6 +5110,7 @@ def admin_recargar_tokens(request):
 
 # Planes de tokens con variantes de duración (1, 3 y 6 meses)
 # Cada variante: meses pagados + meses de regalo = días de acceso total
+# ls_variant_id = Variant ID Lemon Squeezy LIVE (actualizado 2026-08-22)
 PLANES_TOKENS = [
     {
         'id':          'starter',
@@ -5121,9 +5122,9 @@ PLANES_TOKENS = [
         'popular':     False,
         'descripcion': 'Para uso diario moderado',
         'variantes': [
-            {'sufijo': '1m', 'meses': 1, 'regalo': 0, 'dias': 30,  'precio': 20.0,  'ls_variant_id': '1404219'},
-            {'sufijo': '3m', 'meses': 3, 'regalo': 1, 'dias': 120, 'precio': 60.0,  'ls_variant_id': '1404160'},
-            {'sufijo': '6m', 'meses': 6, 'regalo': 2, 'dias': 240, 'precio': 120.0, 'ls_variant_id': '1404236'},
+            {'sufijo': '1m', 'meses': 1, 'regalo': 0, 'dias': 30,  'precio': 20.0,  'ls_variant_id': '2044455'},
+            {'sufijo': '3m', 'meses': 3, 'regalo': 1, 'dias': 120, 'precio': 60.0,  'ls_variant_id': '2044456'},
+            {'sufijo': '6m', 'meses': 6, 'regalo': 2, 'dias': 240, 'precio': 120.0, 'ls_variant_id': '2044458'},
         ],
     },
     {
@@ -5136,9 +5137,9 @@ PLANES_TOKENS = [
         'popular':     True,
         'descripcion': 'Ideal para análisis frecuentes',
         'variantes': [
-            {'sufijo': '1m', 'meses': 1, 'regalo': 0, 'dias': 30,  'precio': 35.0,  'ls_variant_id': '1404246'},
-            {'sufijo': '3m', 'meses': 3, 'regalo': 1, 'dias': 120, 'precio': 105.0, 'ls_variant_id': '1404247'},
-            {'sufijo': '6m', 'meses': 6, 'regalo': 2, 'dias': 240, 'precio': 210.0, 'ls_variant_id': '1404252'},
+            {'sufijo': '1m', 'meses': 1, 'regalo': 0, 'dias': 30,  'precio': 35.0,  'ls_variant_id': '2044438'},
+            {'sufijo': '3m', 'meses': 3, 'regalo': 1, 'dias': 120, 'precio': 105.0, 'ls_variant_id': '2044439'},
+            {'sufijo': '6m', 'meses': 6, 'regalo': 2, 'dias': 240, 'precio': 210.0, 'ls_variant_id': '2044440'},
         ],
     },
     {
@@ -5151,9 +5152,9 @@ PLANES_TOKENS = [
         'popular':     False,
         'descripcion': 'Para usuarios intensivos',
         'variantes': [
-            {'sufijo': '1m', 'meses': 1, 'regalo': 0, 'dias': 30,  'precio': 75.0,  'ls_variant_id': '1404261'},
-            {'sufijo': '3m', 'meses': 3, 'regalo': 1, 'dias': 120, 'precio': 225.0, 'ls_variant_id': '1404272'},
-            {'sufijo': '6m', 'meses': 6, 'regalo': 2, 'dias': 240, 'precio': 450.0, 'ls_variant_id': '1404275'},
+            {'sufijo': '1m', 'meses': 1, 'regalo': 0, 'dias': 30,  'precio': 75.0,  'ls_variant_id': '2044451'},
+            {'sufijo': '3m', 'meses': 3, 'regalo': 1, 'dias': 120, 'precio': 225.0, 'ls_variant_id': '2044452'},
+            {'sufijo': '6m', 'meses': 6, 'regalo': 2, 'dias': 240, 'precio': 450.0, 'ls_variant_id': '2044453'},
         ],
     },
     {
@@ -5166,9 +5167,9 @@ PLANES_TOKENS = [
         'popular':     False,
         'descripcion': 'Máxima capacidad — ideal para empresas',
         'variantes': [
-            {'sufijo': '1m', 'meses': 1, 'regalo': 0, 'dias': 30,  'precio': 150.0, 'ls_variant_id': '1404277'},
-            {'sufijo': '3m', 'meses': 3, 'regalo': 1, 'dias': 120, 'precio': 450.0, 'ls_variant_id': '1404280'},
-            {'sufijo': '6m', 'meses': 6, 'regalo': 2, 'dias': 240, 'precio': 900.0, 'ls_variant_id': '1404282'},
+            {'sufijo': '1m', 'meses': 1, 'regalo': 0, 'dias': 30,  'precio': 150.0, 'ls_variant_id': '2044447'},
+            {'sufijo': '3m', 'meses': 3, 'regalo': 1, 'dias': 120, 'precio': 450.0, 'ls_variant_id': '2044448'},
+            {'sufijo': '6m', 'meses': 6, 'regalo': 2, 'dias': 240, 'precio': 900.0, 'ls_variant_id': '2044449'},
         ],
     },
 ]
