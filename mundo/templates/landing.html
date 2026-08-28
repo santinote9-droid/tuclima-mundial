@@ -382,6 +382,7 @@
     <nav class="ld-nav" aria-label="Menú principal">
       <a href="{% url 'home' %}">Dashboard</a>
       <a href="#nosotros">La plataforma</a>
+      <a href="#articulos">Artículos</a>
       <a href="#noticias">Noticias</a>
       <a href="{% url 'pricing' %}">Planes</a>
       {% if user.is_authenticated %}
@@ -485,6 +486,33 @@
       <a class="ld-chip" href="{% url 'laboratorio' %}">Laboratorio 3D</a>
       <a class="ld-chip" href="{% url 'mapas' %}">Mapas &amp; Radar</a>
     </div>
+  </section>
+
+  <section class="ld-section" id="articulos">
+    <h2>Artículos por sector</h2>
+    <p class="ld-sub">
+      Guías originales de clima operativo para agro, aéreo, naval y energía.
+      Contenido público pensado para lectura sin cuenta.
+    </p>
+    <div class="ld-news-grid">
+      {% for art in articulos_destacados %}
+      <a class="ld-news-card" href="{% url 'articulo_detalle' art.slug %}">
+        <div class="ld-news-body">
+          <div class="ld-news-meta">
+            <span style="color:#5aa2ff;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;font-size:0.68rem;">{{ art.sector_label }}</span>
+            <time datetime="{{ art.fecha }}">{{ art.fecha }}</time>
+          </div>
+          <h3>{{ art.titulo }}</h3>
+          <p>{{ art.resumen }}</p>
+        </div>
+      </a>
+      {% empty %}
+      <div class="ld-news-estado">Pronto publicaremos más artículos.</div>
+      {% endfor %}
+    </div>
+    <p class="ld-news-more">
+      <a href="{% url 'articulos' %}">Ver todos los artículos →</a>
+    </p>
   </section>
 
   <section class="ld-section" id="noticias">

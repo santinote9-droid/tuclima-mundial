@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ articulo.titulo }} | TuClima{% endblock %}
+{% block meta_description %}{{ articulo.resumen }}{% endblock %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { background: #06101f; }
+  .art-wrap {
+    max-width: 740px; margin: 0 auto; padding: 28px 20px 64px;
+    color: #e2e8f0; font-family: 'Source Sans 3', sans-serif; line-height: 1.75;
+  }
+  .art-nav { display: flex; flex-wrap: wrap; gap: 10px 14px; margin-bottom: 22px; font-size: 0.88rem; }
+  .art-nav a { color: #7dd3fc; text-decoration: none; }
+  .art-nav a:hover { text-decoration: underline; }
+  .art-kicker {
+    font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #5aa2ff; font-weight: 700; margin: 0 0 10px;
+  }
+  .art-wrap h1 {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    color: #fff; font-size: clamp(1.45rem, 3.5vw, 2rem); line-height: 1.3; margin: 0 0 14px;
+  }
+  .art-meta { color: #64748b; font-size: 0.88rem; margin-bottom: 28px; }
+  .art-wrap h2 {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    color: #93c5fd; font-size: 1.15rem; margin: 32px 0 12px;
+  }
+  .art-wrap p { margin: 0 0 16px; }
+  .art-note {
+    margin-top: 36px; padding: 14px 16px; border-radius: 8px;
+    border: 1px solid rgba(148,163,184,0.25); background: rgba(255,255,255,0.03);
+    font-size: 0.9rem; color: #94a3b8;
+  }
+  .art-cta { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 10px; }
+  .art-cta a {
+    display: inline-flex; align-items: center; min-height: 42px; padding: 10px 16px;
+    border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.9rem;
+  }
+  .art-cta .primary { background: #fff; color: #06101f; }
+  .art-cta .ghost { border: 1px solid rgba(90,162,255,0.45); color: #7dd3fc; }
+</style>
+{% endblock %}
+
+{% block content %}
+<article class="art-wrap">
+  <nav class="art-nav" aria-label="Migas">
+    <a href="{% url 'landing' %}">Inicio</a>
+    <a href="{% url 'articulos' %}">Artículos</a>
+    <a href="{% url 'articulos' %}?sector={{ articulo.sector }}">{{ sector_label }}</a>
+  </nav>
+
+  <p class="art-kicker">{{ sector_label }} · Guía operativa</p>
+  <h1>{{ articulo.titulo }}</h1>
+  <p class="art-meta">
+    {{ articulo.fecha }} · {{ articulo.lectura_min }} min de lectura · Contenido original TuClima
+  </p>
+
+  {% for tipo, texto in articulo.cuerpo %}
+    {% if tipo == 'h2' %}<h2>{{ texto }}</h2>{% else %}<p>{{ texto }}</p>{% endif %}
+  {% endfor %}
+
+  <div class="art-note">
+    Este artículo es informativo y de apoyo a la decisión. No reemplaza fuentes oficiales
+    (SMN, METAR/TAF, cartas, protocolos de planta) ni el criterio profesional del sector.
+  </div>
+
+  <div class="art-cta">
+    <a class="primary" href="{% url 'home' %}">Abrir dashboard</a>
+    <a class="ghost" href="{% url 'articulos' %}">Más artículos</a>
+    <a class="ghost" href="{% url 'pricing' %}">Ver planes</a>
+  </div>
+</article>
+{% endblock %}

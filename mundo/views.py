@@ -762,8 +762,49 @@ def error_500(request):
 # --- VISTA HOME (PÚBLICA) ---
 def landing(request):
     """Pantalla de bienvenida pública (sin Open-Meteo)."""
+    from .articulos_data import listar_articulos, SECTOR_LABELS
+
+    arts = []
+    for art in listar_articulos()[:8]:
+        item = dict(art)
+        item['sector_label'] = SECTOR_LABELS.get(art['sector'], art['sector'])
+        arts.append(item)
     return render(request, 'landing.html', {
         'user': request.user,
+        'articulos_destacados': arts,
+    })
+
+
+def articulos(request):
+    """Índice público de artículos por sector (contenido original)."""
+    from .articulos_data import listar_articulos, SECTOR_LABELS
+
+    sector = (request.GET.get('sector') or '').strip().lower()
+    if sector not in SECTOR_LABELS:
+        sector = ''
+    items = []
+    for art in listar_articulos(sector or None):
+        item = dict(art)
+        item['sector_label'] = SECTOR_LABELS[art['sector']]
+        items.append(item)
+    return render(request, 'articulos.html', {
+        'articulos': items,
+        'sectores': SECTOR_LABELS,
+        'sector_activo': sector,
+    })
+
+
+def articulo_detalle(request, slug):
+    """Detalle de un artículo público."""
+    from .articulos_data import get_articulo, SECTOR_LABELS
+    from django.http import Http404
+
+    art = get_articulo(slug)
+    if not art:
+        raise Http404('Artículo no encontrado')
+    return render(request, 'articulo_detalle.html', {
+        'articulo': art,
+        'sector_label': SECTOR_LABELS.get(art['sector'], art['sector']),
     })
 
 

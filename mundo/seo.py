@@ -16,6 +16,7 @@ def _site_base():
 SITEMAP_PATHS = [
     ('landing', 1.0, 'daily'),
     ('home', 1.0, 'daily'),
+    ('articulos', 0.9, 'weekly'),
     ('pricing', 0.9, 'weekly'),
     ('ayuda', 0.7, 'monthly'),
     ('ciencia', 0.7, 'weekly'),
@@ -24,6 +25,9 @@ SITEMAP_PATHS = [
     ('espacio', 0.6, 'weekly'),
     ('comparador', 0.5, 'weekly'),
     ('legal', 0.3, 'yearly'),
+    ('legal_terminos', 0.3, 'yearly'),
+    ('legal_privacidad', 0.3, 'yearly'),
+    ('legal_cookies', 0.3, 'yearly'),
     ('registro', 0.5, 'monthly'),
     ('login', 0.3, 'monthly'),
 ]
@@ -89,6 +93,25 @@ def sitemap_xml(request):
             f'    <priority>{priority:.1f}</priority>\n'
             f'  </url>'
         )
+
+    # Artículos públicos individuales
+    try:
+        from .articulos_data import ARTICULOS
+        for art in ARTICULOS:
+            path = reverse('articulo_detalle', kwargs={'slug': art['slug']})
+            loc = f'{base}{path}'
+            art_mod = art.get('fecha') or lastmod
+            urls.append(
+                f'  <url>\n'
+                f'    <loc>{loc}</loc>\n'
+                f'    <lastmod>{art_mod}</lastmod>\n'
+                f'    <changefreq>monthly</changefreq>\n'
+                f'    <priority>0.8</priority>\n'
+                f'  </url>'
+            )
+    except Exception:
+        pass
+
     body = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'

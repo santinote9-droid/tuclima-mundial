@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Artículos climáticos por sector | TuClima{% endblock %}
+{% block meta_description %}Guías originales de TuClima sobre clima operativo en agro, aéreo, naval y energía.{% endblock %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { background: #06101f; }
+  .arts {
+    max-width: 1100px; margin: 0 auto; padding: 28px 20px 72px;
+    color: #e2e8f0; font-family: 'Source Sans 3', sans-serif;
+  }
+  .arts-top { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-end; margin-bottom: 28px; }
+  .arts h1 {
+    font-family: 'Libre Baskerville', Georgia, serif; color: #fff;
+    font-size: clamp(1.5rem, 3.5vw, 2rem); margin: 0 0 8px;
+  }
+  .arts .sub { color: #94a3b8; margin: 0; max-width: 560px; line-height: 1.55; }
+  .arts-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .arts-filters a {
+    text-decoration: none; color: #94a3b8; border: 1px solid rgba(255,255,255,0.12);
+    padding: 8px 12px; border-radius: 999px; font-size: 0.85rem; font-weight: 600;
+  }
+  .arts-filters a.is-on, .arts-filters a:hover { color: #fff; border-color: #5aa2ff; background: rgba(47,125,225,0.2); }
+  .arts-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 16px;
+  }
+  .arts-card {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 18px; border-radius: 12px; text-decoration: none; color: inherit;
+    border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03);
+    transition: border-color .2s, transform .15s;
+  }
+  .arts-card:hover { border-color: rgba(90,162,255,0.55); transform: translateY(-2px); }
+  .arts-card .sec {
+    font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #5aa2ff; font-weight: 700;
+  }
+  .arts-card h2 {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 1.05rem; color: #fff; margin: 0; line-height: 1.35;
+  }
+  .arts-card p { margin: 0; color: #94a3b8; font-size: 0.9rem; line-height: 1.5; flex: 1; }
+  .arts-card .meta { color: #64748b; font-size: 0.78rem; }
+  .arts-back { margin-bottom: 18px; }
+  .arts-back a { color: #7dd3fc; text-decoration: none; font-size: 0.9rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="arts">
+  <p class="arts-back"><a href="{% url 'landing' %}">← Volver al inicio</a></p>
+  <div class="arts-top">
+    <div>
+      <h1>Artículos por sector</h1>
+      <p class="sub">
+        Contenido original de TuClima: guías operativas de clima para agro, aéreo, naval y energía.
+        Pensadas para lectura pública (sin login).
+      </p>
+    </div>
+    <nav class="arts-filters" aria-label="Filtrar por sector">
+      <a href="{% url 'articulos' %}" class="{% if not sector_activo %}is-on{% endif %}">Todos</a>
+      {% for key, label in sectores.items %}
+      <a href="{% url 'articulos' %}?sector={{ key }}" class="{% if sector_activo == key %}is-on{% endif %}">{{ label }}</a>
+      {% endfor %}
+    </nav>
+  </div>
+
+  <div class="arts-grid">
+    {% for art in articulos %}
+    <a class="arts-card" href="{% url 'articulo_detalle' art.slug %}">
+      <span class="sec">{{ art.sector_label }}</span>
+      <h2>{{ art.titulo }}</h2>
+      <p>{{ art.resumen }}</p>
+      <span class="meta">{{ art.fecha }} · {{ art.lectura_min }} min</span>
+    </a>
+    {% empty %}
+    <p>No hay artículos en este filtro.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -37,9 +37,9 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com">
 
-    {# ── Google AdSense: solo si está habilitado (alineado a Política de Cookies) ── #}
+    {# ── Google AdSense (script oficial del publisher) ───────── #}
     {% if ADSENSE_ENABLED and ADSENSE_CLIENT %}
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ ADSENSE_CLIENT }}"
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ ADSENSE_CLIENT|default:'ca-pub-6917571231301347' }}"
             crossorigin="anonymous"></script>
     {% endif %}
 
