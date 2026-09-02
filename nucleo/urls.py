@@ -120,6 +120,7 @@ urlpatterns = [
     # Admin — acciones sobre suscripciones
     path('admin-activar-usuario/', views.admin_activar_usuario, name='admin_activar_usuario'),
     path('admin-toggle-renovacion/', views.admin_toggle_renovacion, name='admin_toggle_renovacion'),
+    path('admin-buscar-usuario/', views.admin_buscar_usuario, name='admin_buscar_usuario'),
 
     # Sistema de Tokens IA
     path('api/tokens/saldo/', views.api_saldo_tokens, name='api_saldo_tokens'),

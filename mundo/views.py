@@ -3815,6 +3815,7 @@ def ls_webhook(request):
         computed   = hmac.new(secret, request.body, hashlib.sha256).hexdigest()
         if not hmac.compare_digest(computed, sig_header):
             logger.warning('[LS WEBHOOK] Firma inválida')
+            _ls_webhook_mark_issue('Firma inválida (HMAC)')
             return HttpResponse(status=401)
 
     try:
@@ -3833,25 +3834,49 @@ def ls_webhook(request):
 
         if not user_id or not paquete_id:
             logger.warning(f'[LS WEBHOOK] Faltan custom_data: {custom}')
+            _ls_webhook_mark_issue(f'Pagó sin custom_data: {custom}')
             return HttpResponse(status=200)
 
         paquete = _PAQUETES_MAP.get(paquete_id)
         if not paquete:
             logger.warning(f'[LS WEBHOOK] Paquete desconocido: {paquete_id}')
+            _ls_webhook_mark_issue(f'Pagó con paquete desconocido: {paquete_id}')
             return HttpResponse(status=200)
 
         user = User.objects.get(id=int(user_id))
         if _activar_plan_tokens_si_nuevo(user, paquete):
             logger.info(f"[LS WEBHOOK] Plan activado: {user.username} — {paquete_id}")
+            _ls_webhook_mark_ok(f'Activado {user.username} — {paquete_id}')
         else:
             logger.info(f"[LS WEBHOOK] Ya procesado: {user.username} — {paquete_id}")
+            _ls_webhook_mark_ok(f'Reintento idempotente {user.username} — {paquete_id}')
 
     except User.DoesNotExist:
         logger.error(f'[LS WEBHOOK] Usuario no encontrado: user_id={user_id}')
+        _ls_webhook_mark_issue(f'Pagó user_id inexistente: {user_id}')
     except Exception as e:
         logger.error(f'[LS WEBHOOK] Error: {e}')
+        _ls_webhook_mark_issue(f'Error: {e}')
 
     return HttpResponse(status=200)
+
+
+def _ls_webhook_mark_ok(detalle=''):
+    """Marca el último webhook LS exitoso (para semáforo del admin dashboard)."""
+    now_iso = timezone.now().isoformat()
+    django_cache.set('ls_webhook_last_ok', {'at': now_iso, 'detalle': detalle}, 60 * 60 * 24 * 30)
+
+
+def _ls_webhook_mark_issue(detalle=''):
+    """Registra un problema de webhook LS (pagó sin activar / firma / etc.)."""
+    now_iso = timezone.now().isoformat()
+    entry = {'at': now_iso, 'detalle': str(detalle)[:240]}
+    django_cache.set('ls_webhook_last_fail', entry, 60 * 60 * 24 * 30)
+    recent = django_cache.get('ls_webhook_recent_issues') or []
+    if not isinstance(recent, list):
+        recent = []
+    recent.insert(0, entry)
+    django_cache.set('ls_webhook_recent_issues', recent[:12], 60 * 60 * 24 * 30)
 
 
 # ==========================================
@@ -6668,115 +6693,300 @@ def marcar_feedback_revisado(request, feedback_id):
 
 
 @login_required
+@login_required
 def admin_dashboard(request):
     """
     Panel de control administrativo completo
     Solo accesible para superusuarios
     """
-    # Verificar que sea superusuario
     if not request.user.is_superuser:
         return JsonResponse({'error': 'Acceso denegado. Solo superusuarios.'}, status=403)
-    
-    from .models import FeedbackIA, ReporteUsuario, DatoSectorial, PerfilUsuario
+
+    from .models import FeedbackIA, ReporteUsuario, DatoSectorial, PerfilUsuario, HistorialTokens
     from django.contrib.auth.models import User
-    from datetime import datetime, timedelta
-    
-    # Fechas para filtros
+    from django.db.models import Sum, Q
+    from django.conf import settings as dj_settings
+
     hoy = timezone.now()
     hace_30_dias = hoy - timedelta(days=30)
     hace_7_dias = hoy - timedelta(days=7)
+    en_7_dias = hoy + timedelta(days=7)
     primer_dia_mes = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    
+
+    # Planes de tokens activos (excluye staff; umbrales = PLANES_TOKENS)
+    token_activos = PerfilUsuario.objects.filter(
+        fecha_vencimiento_tokens__gt=hoy,
+        user__is_staff=False,
+        user__is_superuser=False,
+    )
+    plan_starter = token_activos.filter(
+        tokens_diarios_limite__gte=24_000, tokens_diarios_limite__lt=42_000
+    ).count()
+    plan_plus = token_activos.filter(
+        tokens_diarios_limite__gte=42_000, tokens_diarios_limite__lt=90_000
+    ).count()
+    plan_pro_ia = token_activos.filter(
+        tokens_diarios_limite__gte=90_000, tokens_diarios_limite__lt=180_000
+    ).count()
+    plan_power = token_activos.filter(tokens_diarios_limite__gte=180_000).count()
+    total_planes_tokens = plan_starter + plan_plus + plan_pro_ia + plan_power
+
+    # MRR aproximado (precio 1 mes del nivel activo)
+    ingresos_mrr = (
+        plan_starter * 20 + plan_plus * 35 + plan_pro_ia * 75 + plan_power * 150
+    )
+
+    tokens_usados_hoy = abs(
+        HistorialTokens.objects.filter(
+            tipo='USO', fecha__date=hoy.date(), cantidad__lt=0
+        ).aggregate(total=Sum('cantidad'))['total'] or 0
+    )
+
+    vencen_tokens_7 = PerfilUsuario.objects.filter(
+        fecha_vencimiento_tokens__gt=hoy,
+        fecha_vencimiento_tokens__lt=en_7_dias,
+        user__is_staff=False,
+        user__is_superuser=False,
+    ).count()
+    vencen_clasico_7 = PerfilUsuario.objects.filter(
+        fecha_vencimiento__gt=hoy,
+        fecha_vencimiento__lt=en_7_dias,
+    ).count()
+
+    legal_version = _legal_terms_version()
+    legal_ok = PerfilUsuario.objects.filter(
+        terminos_aceptados=True, terminos_version=legal_version
+    ).count()
+    legal_total = PerfilUsuario.objects.count()
+
+    feedback_pendiente = FeedbackIA.objects.filter(
+        revisado=False,
+        tipo_feedback__in=['DISLIKE', 'COMENTARIO'],
+        fecha_creacion__gte=hace_7_dias,
+    ).count()
+    bugs_7d = ReporteUsuario.objects.filter(tipo='BUG', fecha__gte=hace_7_dias).count()
+
     # ============ ESTADÍSTICAS GENERALES ============
     stats = {
-        # Usuarios
         'total_usuarios': User.objects.count(),
         'usuarios_activos': PerfilUsuario.objects.filter(
-            fecha_vencimiento__gt=hoy
-        ).count(),
-        'usuarios_nuevos_mes': User.objects.filter(
-            date_joined__gte=primer_dia_mes
-        ).count(),
-
-        # Suscripciones por plan
-        'usuarios_mensual': PerfilUsuario.objects.filter(
-            fecha_vencimiento__gt=hoy, plan_tipo='mensual'
-        ).count(),
-        'usuarios_anual': PerfilUsuario.objects.filter(
-            fecha_vencimiento__gt=hoy, plan_tipo='anual'
-        ).count(),
-        'vencen_7_dias': PerfilUsuario.objects.filter(
-            fecha_vencimiento__gt=hoy,
-            fecha_vencimiento__lt=hoy + timedelta(days=7)
-        ).count(),
+            Q(fecha_vencimiento__gt=hoy) | Q(fecha_vencimiento_tokens__gt=hoy)
+        ).distinct().count(),
+        'usuarios_nuevos_mes': User.objects.filter(date_joined__gte=primer_dia_mes).count(),
+        'plan_starter': plan_starter,
+        'plan_plus': plan_plus,
+        'plan_pro_ia': plan_pro_ia,
+        'plan_power': plan_power,
+        'total_planes_tokens': total_planes_tokens,
+        'tokens_usados_hoy': tokens_usados_hoy,
+        'vencen_tokens_7_dias': vencen_tokens_7,
+        'vencen_7_dias': vencen_clasico_7,
         'con_recordatorio': PerfilUsuario.objects.filter(
             renovacion_automatica=True, fecha_vencimiento__gt=hoy
         ).count(),
-        'ingresos_estimados': (
-            PerfilUsuario.objects.filter(fecha_vencimiento__gt=hoy, plan_tipo='mensual').count() * 20 +
-            PerfilUsuario.objects.filter(fecha_vencimiento__gt=hoy, plan_tipo='anual').count() * 200
-        ),
-
-        # Feedback
+        'ingresos_estimados': ingresos_mrr,
         'total_feedback': FeedbackIA.objects.count(),
-        'feedback_hoy': FeedbackIA.objects.filter(
-            fecha_creacion__date=hoy.date()
-        ).count(),
+        'feedback_hoy': FeedbackIA.objects.filter(fecha_creacion__date=hoy.date()).count(),
         'total_likes': FeedbackIA.objects.filter(tipo_feedback='LIKE').count(),
         'total_dislikes': FeedbackIA.objects.filter(tipo_feedback='DISLIKE').count(),
         'total_comentarios': FeedbackIA.objects.filter(tipo_feedback='COMENTARIO').count(),
-        
-        # Datos sectoriales
+        'feedback_pendiente': feedback_pendiente,
         'total_datos': DatoSectorial.objects.count(),
-        'datos_mes': DatoSectorial.objects.filter(
-            fecha_registro__gte=primer_dia_mes
-        ).count(),
-        
-        # Reportes
-        'reportes_pendientes': ReporteUsuario.objects.filter(
-            fecha__gte=hace_7_dias
-        ).count(),
+        'datos_mes': DatoSectorial.objects.filter(fecha_registro__gte=primer_dia_mes).count(),
+        'reportes_pendientes': ReporteUsuario.objects.filter(fecha__gte=hace_7_dias).count(),
+        'bugs_7d': bugs_7d,
+        'legal_version': legal_version,
+        'legal_aceptaron': legal_ok,
+        'legal_total': legal_total,
     }
-    
-    # ============ DATOS PARA GRÁFICOS ============
-    # Datos por sector (últimos 30 días)
+
+    # ============ SALUD DEL SISTEMA ============
+    ls_cfg = bool(
+        getattr(dj_settings, 'LEMONSQUEEZY_API_KEY', '')
+        and getattr(dj_settings, 'LEMONSQUEEZY_WEBHOOK_SECRET', '')
+        and getattr(dj_settings, 'LEMONSQUEEZY_STORE_ID', '')
+    )
+    n8n_cfg = bool(
+        getattr(dj_settings, 'N8N_BASE_URL', '')
+        and getattr(dj_settings, 'N8N_WEBHOOK_SECRET', '')
+    )
+    db_ok = True
+    try:
+        User.objects.exists()
+    except Exception:
+        db_ok = False
+
+    ls_last_ok = django_cache.get('ls_webhook_last_ok') or {}
+    ls_last_fail = django_cache.get('ls_webhook_last_fail') or {}
+    ls_issues = django_cache.get('ls_webhook_recent_issues') or []
+    if not isinstance(ls_issues, list):
+        ls_issues = []
+
+    salud = {
+        'ls_config': ls_cfg,
+        'n8n_config': n8n_cfg,
+        'db_ok': db_ok,
+        'ls_last_ok': ls_last_ok.get('at') if isinstance(ls_last_ok, dict) else None,
+        'ls_last_ok_detalle': ls_last_ok.get('detalle', '') if isinstance(ls_last_ok, dict) else '',
+        'ls_last_fail': ls_last_fail.get('at') if isinstance(ls_last_fail, dict) else None,
+        'ls_last_fail_detalle': ls_last_fail.get('detalle', '') if isinstance(ls_last_fail, dict) else '',
+        'ls_issues_count': len(ls_issues),
+    }
+
+    # ============ ATENCIÓN HOY ============
+    atencion = []
+    for p in PerfilUsuario.objects.filter(
+        fecha_vencimiento_tokens__gt=hoy,
+        fecha_vencimiento_tokens__lt=en_7_dias,
+        user__is_staff=False,
+    ).select_related('user').order_by('fecha_vencimiento_tokens')[:8]:
+        atencion.append({
+            'tipo': 'vence_tokens',
+            'titulo': f"Tokens: {p.user.username} ({p.plan_nivel})",
+            'detalle': f"Vence {p.fecha_vencimiento_tokens.strftime('%d/%m/%Y')}",
+            'prioridad': 'alta',
+        })
+    for p in PerfilUsuario.objects.filter(
+        fecha_vencimiento__gt=hoy,
+        fecha_vencimiento__lt=en_7_dias,
+    ).select_related('user').order_by('fecha_vencimiento')[:5]:
+        atencion.append({
+            'tipo': 'vence_clasico',
+            'titulo': f"Suscripción: {p.user.username}",
+            'detalle': f"Vence {p.fecha_vencimiento.strftime('%d/%m/%Y')}",
+            'prioridad': 'media',
+        })
+    for fb in FeedbackIA.objects.filter(
+        revisado=False,
+        tipo_feedback__in=['DISLIKE', 'COMENTARIO'],
+        fecha_creacion__gte=hace_7_dias,
+    ).select_related('usuario').order_by('-fecha_creacion')[:6]:
+        who = fb.usuario.username if fb.usuario else 'Anónimo'
+        atencion.append({
+            'tipo': 'feedback',
+            'titulo': f"{fb.tipo_feedback} — {who} ({fb.sector})",
+            'detalle': (fb.comentario or fb.mensaje_ia or '')[:120],
+            'prioridad': 'alta' if fb.tipo_feedback == 'DISLIKE' else 'media',
+        })
+    for r in ReporteUsuario.objects.filter(
+        tipo='BUG', fecha__gte=hace_7_dias
+    ).select_related('usuario').order_by('-fecha')[:6]:
+        atencion.append({
+            'tipo': 'bug',
+            'titulo': f"Bug — {r.usuario.username}",
+            'detalle': (r.mensaje or '')[:120],
+            'prioridad': 'alta',
+        })
+    for issue in ls_issues[:5]:
+        atencion.append({
+            'tipo': 'pago',
+            'titulo': 'Pago LS sin activar / fallo webhook',
+            'detalle': issue.get('detalle', '') if isinstance(issue, dict) else str(issue),
+            'prioridad': 'alta',
+        })
+
+    # ============ GRÁFICOS ============
     sectores_data = DatoSectorial.objects.filter(
         fecha_registro__gte=hace_30_dias
-    ).values('sector').annotate(
-        total=Count('id')
-    ).order_by('sector')
-    
-    sectores_labels = [item['sector'] for item in sectores_data]
-    sectores_values = [item['total'] for item in sectores_data]
-    
-    # Feedback por tipo
-    feedback_likes = FeedbackIA.objects.filter(tipo_feedback='LIKE').count()
-    feedback_dislikes = FeedbackIA.objects.filter(tipo_feedback='DISLIKE').count()
-    feedback_comentarios = FeedbackIA.objects.filter(tipo_feedback='COMENTARIO').count()
-    
+    ).values('sector').annotate(total=Count('id')).order_by('sector')
     chart_data = {
-        'sectores_labels': json.dumps(sectores_labels),
-        'sectores_values': json.dumps(sectores_values),
-        'feedback_values': json.dumps([feedback_likes, feedback_dislikes, feedback_comentarios]),
+        'sectores_labels': json.dumps([item['sector'] for item in sectores_data]),
+        'sectores_values': json.dumps([item['total'] for item in sectores_data]),
+        'feedback_values': json.dumps([
+            FeedbackIA.objects.filter(tipo_feedback='LIKE').count(),
+            FeedbackIA.objects.filter(tipo_feedback='DISLIKE').count(),
+            FeedbackIA.objects.filter(tipo_feedback='COMENTARIO').count(),
+        ]),
+        'planes_labels': json.dumps(['Starter', 'Plus', 'Pro IA', 'Power']),
+        'planes_values': json.dumps([plan_starter, plan_plus, plan_pro_ia, plan_power]),
     }
-    
-    # ============ DATOS RECIENTES ============
+
     feedback_reciente = FeedbackIA.objects.select_related('usuario').order_by('-fecha_creacion')[:20]
     reportes = ReporteUsuario.objects.select_related('usuario').order_by('-fecha')[:15]
     datos_recientes = DatoSectorial.objects.select_related('usuario_carga').order_by('-fecha_registro')[:15]
-    perfiles_suscripcion = PerfilUsuario.objects.select_related('user').order_by('-fecha_vencimiento')[:60]
-    
+    perfiles_suscripcion = PerfilUsuario.objects.select_related('user').order_by(
+        '-fecha_vencimiento_tokens', '-fecha_vencimiento'
+    )[:60]
+    pagos_recientes = HistorialTokens.objects.filter(tipo='BONO').select_related('usuario').order_by('-fecha')[:12]
+    vencimientos_tokens = PerfilUsuario.objects.filter(
+        fecha_vencimiento_tokens__gt=hoy,
+        fecha_vencimiento_tokens__lt=en_7_dias,
+        user__is_staff=False,
+    ).select_related('user').order_by('fecha_vencimiento_tokens')[:15]
+
     context = {
         'stats': stats,
+        'salud': salud,
+        'atencion': atencion,
         'chart_data': chart_data,
         'feedback_reciente': feedback_reciente,
         'reportes': reportes,
         'datos_recientes': datos_recientes,
         'perfiles_suscripcion': perfiles_suscripcion,
+        'pagos_recientes': pagos_recientes,
+        'vencimientos_tokens': vencimientos_tokens,
+        'ls_issues': ls_issues[:8],
         'hoy': hoy,
+        'en_7_dias': en_7_dias,
     }
-    
+
     return render(request, 'admin_dashboard.html', context)
+
+
+@login_required
+def admin_buscar_usuario(request):
+    """AJAX: buscar usuario por email/username para el admin dashboard."""
+    if not request.user.is_superuser:
+        return JsonResponse({'error': 'Acceso denegado'}, status=403)
+
+    from django.contrib.auth.models import User as AuthUser
+    from django.db.models import Q
+    from .models import HistorialTokens
+
+    q = (request.GET.get('q') or '').strip()
+    if len(q) < 2:
+        return JsonResponse({'ok': False, 'error': 'Escribí al menos 2 caracteres'}, status=400)
+
+    users = AuthUser.objects.filter(
+        Q(username__icontains=q) | Q(email__icontains=q)
+    ).select_related('perfil')[:8]
+
+    resultados = []
+    for u in users:
+        try:
+            p = u.perfil
+        except PerfilUsuario.DoesNotExist:
+            p = None
+        ultimo_uso = (
+            HistorialTokens.objects.filter(usuario=u, tipo='USO')
+            .order_by('-fecha').values_list('fecha', flat=True).first()
+        )
+        resultados.append({
+            'id': u.id,
+            'username': u.username,
+            'email': u.email or '',
+            'is_active': u.is_active,
+            'date_joined': u.date_joined.strftime('%d/%m/%Y') if u.date_joined else '',
+            'plan_nivel': p.plan_nivel if p else '—',
+            'tokens_disponibles': p.tokens_disponibles if p else 0,
+            'tokens_diarios_limite': p.tokens_diarios_limite if p else 0,
+            'vence_tokens': (
+                p.fecha_vencimiento_tokens.strftime('%d/%m/%Y %H:%M')
+                if p and p.fecha_vencimiento_tokens else '—'
+            ),
+            'vence_clasico': (
+                p.fecha_vencimiento.strftime('%d/%m/%Y')
+                if p and p.fecha_vencimiento else '—'
+            ),
+            'suscripcion_activa': bool(p and p.suscripcion_activa),
+            'terminos': (
+                f"{'OK' if p.terminos_aceptados else 'NO'} ({p.terminos_version or '—'})"
+                if p else '—'
+            ),
+            'ultimo_uso_tokens': ultimo_uso.strftime('%d/%m/%Y %H:%M') if ultimo_uso else '—',
+        })
+
+    return JsonResponse({'ok': True, 'resultados': resultados})
 
 
 # ─────────────────────────────────────────────────────────────────────────────
