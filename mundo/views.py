@@ -3946,7 +3946,7 @@ def _enviar_mail_activacion(usuario, plan):
                     <tr><td style="color:#94a3b8;padding:6px 0;">Acceso</td><td style="color:#4ade80;">Modo Agro · Aéreo · Naval · Energías + IA Gemini</td></tr>
                 </table>
                 <a href="{settings.SITE_URL}" style="display:inline-block;background:#3b82f6;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:bold;">Ir a la plataforma →</a>
-                <p style="color:#475569;font-size:0.82em;margin-top:30px;">Si no realizaste este pago, contactanos en climapro00@gmail.com</p>
+                <p style="color:#475569;font-size:0.82em;margin-top:30px;">Si no realizaste este pago, contactanos en {getattr(settings, 'SUPPORT_EMAIL', 'soporte@tuclima.com.ar')}</p>
             </div>
             """
         )

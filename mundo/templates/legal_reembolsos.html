@@ -15,7 +15,7 @@
 <p>
   Prestador: <span class="placeholder">[RAZÓN SOCIAL]</span>,
   CUIT <span class="placeholder">[CUIT]</span>.
-  Soporte de pagos: <span class="placeholder">[EMAIL SOPORTE / PAGOS]</span>.
+  Soporte de pagos: <a class="notranslate" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>.
 </p>
 
 <h2>2. Naturaleza del servicio</h2>
@@ -50,7 +50,7 @@
 
 <h2>5. Cómo solicitarlo</h2>
 <ol>
-  <li>Escribir a <span class="placeholder">[EMAIL SOPORTE]</span> desde el email de la cuenta.</li>
+  <li>Escribir a <a class="notranslate" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a> desde el email de la cuenta.</li>
   <li>Indicar: usuario/email, fecha de pago, medio de pago, ID de transacción (si lo tiene) y motivo.</li>
   <li>Respuesta estimada:
     <span class="placeholder">[p. ej. 5–10 días hábiles]</span>.</li>
@@ -83,7 +83,7 @@
 
 <h2>9. Contacto</h2>
 <p>
-  Pagos y reembolsos: <span class="placeholder">[EMAIL SOPORTE]</span><br>
-  Legal: <span class="placeholder">[EMAIL LEGAL]</span>
+  Pagos y reembolsos: <a class="notranslate" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a><br>
+  Legal: <a class="notranslate" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>
 </p>
 {% endblock %}

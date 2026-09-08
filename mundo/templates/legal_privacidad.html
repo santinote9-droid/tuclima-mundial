@@ -20,7 +20,7 @@
 </p>
 <p>
   Contacto de privacidad:
-  <span class="placeholder">[EMAIL PRIVACIDAD / LEGAL]</span>.
+  <a class="notranslate" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>.
 </p>
 <p>
   Marco aplicable: Ley 25.326 de Protección de los Datos Personales (Argentina) y normas
@@ -154,11 +154,12 @@
 <p>
   Puede solicitar acceso, rectificación, actualización o supresión de sus datos,
   y demás derechos de la normativa aplicable, a
-  <span class="placeholder">[EMAIL PRIVACIDAD]</span>.
+  <a class="notranslate" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>.
 </p>
 <p>
   También puede pedir la baja de cuenta / eliminación de datos personales asociados
-  <span class="placeholder">[vía email o formulario en Mi cuenta — a completar en producto]</span>.
+  vía <a class="notranslate" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>
+  o el formulario de <a href="{% url 'ayuda' %}">Ayuda</a>.
   Responderemos en los plazos legales
   <span class="placeholder">[ABOGADO: plazo AAIP]</span>.
 </p>
@@ -183,7 +184,7 @@
 
 <h2>11. Contacto</h2>
 <p>
-  Privacidad: <span class="placeholder">[EMAIL PRIVACIDAD]</span><br>
+  Privacidad: <a class="notranslate" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a><br>
   Responsable: <span class="placeholder">[RAZÓN SOCIAL]</span>
 </p>
 {% endblock %}

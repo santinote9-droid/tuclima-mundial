@@ -16,7 +16,7 @@ Antes de activar, confirmar el pago en la app de Brubank:
       Plan Mensual → $20.000 ARS aprox (equivalente a $20 USD al tipo de cambio vigente)
       Plan Anual   → $200.000 ARS aprox (equivalente a $200 USD)
   - Verificar nombre/alias del emisor
-  - Revisar el comprobante que envia el usuario a climapro00@gmail.com
+  - Revisar el comprobante que envia el usuario a soporte@tuclima.com.ar
 
 Una vez confirmado, elegir uno de los metodos de abajo.
 
@@ -147,7 +147,7 @@ RESUMEN RAPIDO
      O via Shell  →  activar_suscripcion_dias(usuario, 30, 'mensual')
   3. Enviar mail manual de confirmacion
 
-Correo de soporte: climapro00@gmail.com
+Correo de soporte: soporte@tuclima.com.ar
 CVU Brubank:       1430001713031490640018
 Alias Brubank:     santigioffre
 

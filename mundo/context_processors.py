@@ -24,4 +24,5 @@ def site_seo(request):
         'WEGLOT_ENABLED': weglot_enabled,
         'WEGLOT_API_KEY': weglot_key,
         'LEGAL_TERMS_VERSION': getattr(settings, 'LEGAL_TERMS_VERSION', '') or '2026-08-22',
+        'SUPPORT_EMAIL': getattr(settings, 'SUPPORT_EMAIL', '') or 'soporte@tuclima.com.ar',
     }

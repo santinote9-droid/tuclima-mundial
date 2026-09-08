@@ -6,6 +6,11 @@ from .models import (
     ConfiguracionModal, AlertaModal, NotaModal,
 )
 
+admin.site.site_header = 'TuClima Admin'
+admin.site.site_title = 'TuClima Admin'
+admin.site.index_title = 'Gestión de datos y operaciones'
+
+
 
 @admin.register(PerfilUsuario)
 class PerfilUsuarioAdmin(admin.ModelAdmin):

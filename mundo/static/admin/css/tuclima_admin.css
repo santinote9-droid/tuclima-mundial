@@ -1,0 +1,331 @@
+/* TuClima Django Admin — dark slate + sky accents */
+:root {
+  --tc-bg: #0b1220;
+  --tc-bg-2: #0f172a;
+  --tc-panel: #1e293b;
+  --tc-panel-2: #273549;
+  --tc-border: rgba(148, 163, 184, 0.22);
+  --tc-text: #e2e8f0;
+  --tc-muted: #94a3b8;
+  --tc-accent: #38bdf8;
+  --tc-accent-2: #0ea5e9;
+  --tc-ok: #34d399;
+  --tc-warn: #fbbf24;
+  --tc-danger: #f87171;
+  --tc-font: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+}
+
+html, body {
+  background: var(--tc-bg) !important;
+  color: var(--tc-text) !important;
+  font-family: var(--tc-font) !important;
+}
+
+#container {
+  background: linear-gradient(160deg, var(--tc-bg) 0%, var(--tc-bg-2) 55%, #132033 100%) !important;
+  min-height: 100vh;
+}
+
+/* Header */
+#header {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.25) !important;
+  color: var(--tc-text) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+#branding h1,
+#branding h1 a:link,
+#branding h1 a:visited {
+  color: var(--tc-accent) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
+}
+
+#user-tools,
+#user-tools a,
+#user-tools strong {
+  color: var(--tc-muted) !important;
+}
+
+#user-tools a:hover {
+  color: var(--tc-accent) !important;
+}
+
+.tc-ops-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 14px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(14, 165, 233, 0.12);
+  color: #7dd3fc !important;
+  text-decoration: none !important;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tc-ops-link:hover {
+  background: rgba(14, 165, 233, 0.22) !important;
+  color: #e0f2fe !important;
+}
+
+/* Breadcrumbs */
+div.breadcrumbs {
+  background: transparent !important;
+  color: var(--tc-muted) !important;
+  border-bottom: 1px solid var(--tc-border);
+}
+
+div.breadcrumbs a {
+  color: var(--tc-accent) !important;
+}
+
+/* Content panels */
+#content {
+  color: var(--tc-text);
+}
+
+#content-main,
+.module,
+#changelist,
+.dashboard #content,
+.inline-group,
+.filtered #changelist-form .results {
+  background: transparent !important;
+}
+
+.module,
+#changelist .results,
+.change-list .filtered,
+fieldset.module,
+.inline-group,
+.form-row,
+.submit-row,
+#changelist-filter {
+  background: var(--tc-panel) !important;
+  border: 1px solid var(--tc-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.module h2,
+.module caption,
+.inline-group h2,
+#changelist-filter h2,
+#changelist-filter h3 {
+  background: var(--tc-panel-2) !important;
+  color: var(--tc-text) !important;
+  border-bottom: 1px solid var(--tc-border) !important;
+  border-radius: 12px 12px 0 0 !important;
+  font-weight: 600 !important;
+}
+
+.module table,
+#result_list,
+.change-list table {
+  background: transparent !important;
+}
+
+th, td {
+  border-color: var(--tc-border) !important;
+  color: var(--tc-text) !important;
+}
+
+thead th,
+#result_list thead th {
+  background: rgba(14, 165, 233, 0.08) !important;
+  color: #cbd5e1 !important;
+}
+
+tr:nth-child(even),
+#result_list tr.row-even,
+#result_list tr:nth-child(even) {
+  background: rgba(15, 23, 42, 0.35) !important;
+}
+
+tr:hover,
+#result_list tbody tr:hover {
+  background: rgba(14, 165, 233, 0.08) !important;
+}
+
+a:link, a:visited {
+  color: #7dd3fc;
+}
+
+a:hover {
+  color: #e0f2fe;
+}
+
+/* Forms */
+input, textarea, select, .vTextField, .vLargeTextField, .vURLField {
+  background: #0f172a !important;
+  color: var(--tc-text) !important;
+  border: 1px solid var(--tc-border) !important;
+  border-radius: 8px !important;
+  padding: 8px 10px !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--tc-accent) !important;
+  outline: 2px solid rgba(56, 189, 248, 0.25);
+}
+
+label, .form-row label, .aligned label {
+  color: var(--tc-muted) !important;
+}
+
+.help, .helptext, p.help {
+  color: #64748b !important;
+}
+
+/* Buttons */
+.button, input[type="submit"], input[type="button"], submit, .submit-row input,
+a.button, .object-tools a {
+  background: linear-gradient(135deg, var(--tc-accent-2), #0284c7) !important;
+  border: none !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.25);
+}
+
+.button:hover, input[type="submit"]:hover, .object-tools a:hover, a.button:hover {
+  filter: brightness(1.08);
+}
+
+.deletelink, .deletelink-box a, a.deletelink {
+  background: #b91c1c !important;
+  color: #fff !important;
+}
+
+.default, input.default {
+  background: linear-gradient(135deg, #0891b2, #0ea5e9) !important;
+}
+
+/* Messages */
+.messagelist li {
+  border-radius: 10px !important;
+  border: 1px solid var(--tc-border) !important;
+}
+
+.messagelist .success {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: var(--tc-ok) !important;
+}
+
+.messagelist .warning {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: var(--tc-warn) !important;
+}
+
+.messagelist .error {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: var(--tc-danger) !important;
+}
+
+/* Login */
+.login {
+  background: var(--tc-bg) !important;
+}
+
+.login #container {
+  background: transparent !important;
+}
+
+.login #header {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.login #content {
+  background: var(--tc-panel) !important;
+  border: 1px solid var(--tc-border);
+  border-radius: 16px;
+  padding: 28px !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+
+.login #content-main {
+  float: none !important;
+  width: auto !important;
+}
+
+.login .form-row {
+  box-shadow: none !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+.login .submit-row {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Pagination & actions */
+.paginator {
+  color: var(--tc-muted) !important;
+  background: transparent !important;
+}
+
+.paginator a {
+  background: var(--tc-panel) !important;
+  border: 1px solid var(--tc-border) !important;
+  border-radius: 6px !important;
+}
+
+.actions {
+  background: transparent !important;
+  color: var(--tc-muted) !important;
+}
+
+#changelist-filter li.selected a {
+  color: var(--tc-accent) !important;
+}
+
+/* Related widget / calendar leftovers */
+.calendarbox, .clockbox {
+  background: var(--tc-panel) !important;
+  color: var(--tc-text) !important;
+  border: 1px solid var(--tc-border) !important;
+}
+
+/* Token activation helper page */
+.tc-admin-card {
+  background: var(--tc-panel);
+  border: 1px solid var(--tc-border);
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 720px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.tc-admin-card h1 {
+  margin-top: 0;
+  color: var(--tc-text);
+}
+
+.tc-admin-card ul {
+  color: var(--tc-muted);
+}
+
+.tc-admin-card select {
+  min-width: min(100%, 420px);
+  margin: 8px 0 18px;
+  display: block;
+}
+
+.tc-admin-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.tc-admin-actions a {
+  color: var(--tc-muted);
+}

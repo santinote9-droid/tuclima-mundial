@@ -1962,6 +1962,13 @@
                     window.datosSemana = data.datos_json;
                 }
 
+                // Reset título horario al día HOY tras refresco AJAX
+                const tituloHoras = document.getElementById('tituloHoras');
+                if (tituloHoras && data.pronostico && data.pronostico[0]) {
+                    const d0 = data.pronostico[0];
+                    tituloHoras.innerText = `Pronóstico por Horas (${d0.nombre_dia} ${d0.fecha_corta})`;
+                }
+
                 // Gráfico
                 if (window.chartInstance && data.horas_grafico && data.temps_grafico) {
                     window.chartInstance.data.labels = data.horas_grafico;
@@ -3020,10 +3027,24 @@
         })();
     </script>
 
+    <script id="datos-semana-json" type="application/json">{{ datos_json|safe }}</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script>
-        // datos_json puede venir vacío en cold start — defensivo
-        const datosSemana = (function() { try { return JSON.parse('{{ datos_json|escapejs }}'); } catch(e) { return {}; } })();
+        // Fuente única de horas por día (SSR + AJAX). cambiarDia siempre lee window.datosSemana.
+        window.datosSemana = (function () {
+            try {
+                const el = document.getElementById('datos-semana-json');
+                if (!el) return {};
+                const raw = (el.textContent || '').trim();
+                if (!raw || raw === 'undefined' || raw === 'null') return {};
+                const parsed = JSON.parse(raw);
+                return (parsed && typeof parsed === 'object') ? parsed : {};
+            } catch (e) {
+                console.warn('No se pudo parsear datos_json del pronóstico horario:', e);
+                return {};
+            }
+        })();
+
         let labelsIniciales = {{ horas_grafico|default:"[]"|safe }};
         let tempsIniciales = {{ temps_grafico|default:"[]"|safe }};
         
@@ -3055,54 +3076,66 @@
 
         function cambiarDia(fechaFull, nombreDia, fechaCorta, elementoClick) {
             document.querySelectorAll('.tarjeta-dia').forEach(el => el.classList.remove('dia-activo'));
-            elementoClick.classList.add('dia-activo');
-            document.getElementById('tituloHoras').innerText = `Pronóstico por Horas (${nombreDia} ${fechaCorta})`;
+            if (elementoClick) elementoClick.classList.add('dia-activo');
 
-            const datosDelDia = datosSemana[fechaFull];
-            
-            if (datosDelDia) {
-                const contenedor = document.getElementById('carruselHoras');
-                contenedor.innerHTML = '';
-                
-                let nuevosLabels = [];
-                let nuevasTemps = [];
+            const titulo = document.getElementById('tituloHoras');
+            if (titulo) titulo.innerText = `Pronóstico por Horas (${nombreDia} ${fechaCorta})`;
 
-                datosDelDia.forEach(h => {
-                    if (h.tipo === 'normal') {
-                        nuevosLabels.push(h.hora);
-                        nuevasTemps.push(h.temp);
-                    }
+            const store = window.datosSemana || {};
+            const datosDelDia = store[fechaFull];
 
-                    let htmlHora = '';
-                    if (h.tipo === 'evento') {
-                        htmlHora = `
-                            <div class="item-hora evento-solar">
-                                <span style="color: #fff; font-weight: bold; font-size: 1em;">${h.hora}</span>
-                                <img src="${h.icono}" class="icono-hora">
-                                <span style="color: #ffcc00; font-weight: bold; font-size: 0.8em; margin-top: 5px;">${h.evento_titulo}</span>
-                            </div>
-                        `;
-                    } else {
-                        let claseExtra = h.es_actual ? 'hora-destacada' : '';
-                        let etiquetaAhora = h.es_actual ? '<div style="font-size: 0.7em; color: #00d2ff; font-weight: bold; margin-top: 8px;">AHORA</div>' : '';
-                        htmlHora = `
-                            <div class="item-hora ${claseExtra}">
-                                <span style="color: #ccc; font-size: 0.9em;">${h.hora}</span>
-                                <img src="${h.icono}" class="icono-hora">
-                                <span style="color: #ffcc00; font-weight: bold; font-size: 1.1em;">${h.temp}°</span>
-                                <span style="font-size: 0.8em; color: #4ecdc4; margin-top: 4px;">💧${h.lluvia}%</span>
-                                ${etiquetaAhora}
-                            </div>
-                        `;
-                    }
-                    contenedor.innerHTML += htmlHora;
-                });
+            if (!datosDelDia || !datosDelDia.length) {
+                console.warn('Sin datos horarios para', fechaFull, '— claves:', Object.keys(store));
+                return;
+            }
 
+            const contenedor = document.getElementById('carruselHoras');
+            if (!contenedor) return;
+            contenedor.innerHTML = '';
+
+            let nuevosLabels = [];
+            let nuevasTemps = [];
+
+            datosDelDia.forEach(h => {
+                if (h.tipo === 'normal') {
+                    nuevosLabels.push(h.hora);
+                    nuevasTemps.push(h.temp);
+                }
+
+                let htmlHora = '';
+                if (h.tipo === 'evento') {
+                    htmlHora = `
+                        <div class="item-hora evento-solar">
+                            <span style="color: #fff; font-weight: bold; font-size: 1em;">${h.hora}</span>
+                            <img src="${h.icono}" class="icono-hora">
+                            <span style="color: #ffcc00; font-weight: bold; font-size: 0.8em; margin-top: 5px;">${h.evento_titulo}</span>
+                        </div>
+                    `;
+                } else {
+                    let claseExtra = h.es_actual ? 'hora-destacada' : '';
+                    let etiquetaAhora = h.es_actual ? '<div style="font-size: 0.7em; color: #00d2ff; font-weight: bold; margin-top: 8px;">AHORA</div>' : '';
+                    htmlHora = `
+                        <div class="item-hora ${claseExtra}">
+                            <span style="color: #ccc; font-size: 0.9em;">${h.hora}</span>
+                            <img src="${h.icono}" class="icono-hora">
+                            <span style="color: #ffcc00; font-weight: bold; font-size: 1.1em;">${h.temp}°</span>
+                            <span style="font-size: 0.8em; color: #4ecdc4; margin-top: 4px;">💧${h.lluvia}%</span>
+                            ${etiquetaAhora}
+                        </div>
+                    `;
+                }
+                contenedor.innerHTML += htmlHora;
+            });
+
+            if (window.chartInstance) {
                 window.chartInstance.data.labels = nuevosLabels;
                 window.chartInstance.data.datasets[0].data = nuevasTemps;
                 window.chartInstance.update();
             }
+
+            contenedor.scrollLeft = 0;
         }
+        window.cambiarDia = cambiarDia;
     </script>
 <br><br><hr style="border-color: #aaa; margin: 40px 0; opacity: 0.3;">
 

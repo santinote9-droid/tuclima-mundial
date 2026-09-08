@@ -3,6 +3,9 @@
 {% block title %}Panel de Administración - TuClima{% endblock %}
 
 {% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
@@ -13,8 +16,8 @@
 
         html { overflow-x: hidden; }
         body {
-            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(160deg, #0b1220 0%, #0f172a 45%, #1e293b 100%);
             color: #e2e8f0;
             min-height: 100vh;
             padding: 20px;
@@ -28,8 +31,8 @@
 
         /* Header */
         .header {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
-            border: 1px solid rgba(99, 102, 241, 0.2);
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(6, 182, 212, 0.08));
+            border: 1px solid rgba(56, 189, 248, 0.22);
             border-radius: 16px;
             padding: 24px 32px;
             margin-bottom: 32px;
@@ -45,7 +48,7 @@
         .header h1 {
             font-size: clamp(1.35rem, 3vw, 28px);
             font-weight: 700;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            background: linear-gradient(135deg, #38bdf8, #22d3ee);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -63,9 +66,10 @@
             align-items: center;
             gap: 8px;
             padding: 8px 16px;
-            background: rgba(99, 102, 241, 0.1);
+            background: rgba(14, 165, 233, 0.12);
             border-radius: 12px;
-            border: 1px solid rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            color: #e2e8f0;
         }
 
         .btn-logout {
@@ -129,18 +133,26 @@
         .stat-icon {
             width: 48px;
             height: 48px;
-            background: linear-gradient(135deg, var(--card-color), rgba(255, 255, 255, 0.1));
+            background: color-mix(in srgb, var(--card-color) 22%, transparent);
+            border: 1px solid color-mix(in srgb, var(--card-color) 45%, transparent);
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 16px;
+            color: var(--card-color);
         }
 
-        .stat-icon svg {
-            width: 24px;
-            height: 24px;
-            stroke: white;
+        .stat-icon svg,
+        .action-btn svg,
+        .user-badge svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.75;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .stat-value {
@@ -230,10 +242,10 @@
 
         .filter-btn {
             padding: 10px 16px;
-            background: rgba(99, 102, 241, 0.1);
-            border: 1px solid rgba(99, 102, 241, 0.3);
+            background: rgba(14, 165, 233, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.28);
             border-radius: 8px;
-            color: #a5b4fc;
+            color: #7dd3fc;
             cursor: pointer;
             font-size: 13px;
             transition: all 0.2s;
@@ -241,9 +253,9 @@
         }
 
         .filter-btn:hover, .filter-btn.active {
-            background: rgba(99, 102, 241, 0.2);
-            border-color: #6366f1;
-            color: #c7d2fe;
+            background: rgba(14, 165, 233, 0.2);
+            border-color: #38bdf8;
+            color: #e0f2fe;
         }
 
         .data-table {
@@ -261,8 +273,8 @@
         }
 
         thead {
-            background: rgba(99, 102, 241, 0.1);
-            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+            background: rgba(14, 165, 233, 0.08);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.2);
         }
 
         th {
@@ -373,8 +385,8 @@
 
         .action-btn {
             padding: 16px 24px;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
-            border: 1px solid rgba(99, 102, 241, 0.3);
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.14), rgba(6, 182, 212, 0.1));
+            border: 1px solid rgba(56, 189, 248, 0.28);
             border-radius: 12px;
             color: #e2e8f0;
             cursor: pointer;
@@ -387,13 +399,15 @@
 
         .action-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
-            border-color: #6366f1;
+            box-shadow: 0 8px 24px rgba(14, 165, 233, 0.22);
+            border-color: #38bdf8;
         }
 
         .action-btn svg {
             width: 20px;
             height: 20px;
+            flex-shrink: 0;
+            color: #7dd3fc;
         }
 
         /* Responsive: tablet ≤900 | móvil ≤600 */
@@ -535,15 +549,12 @@
         <!-- Header -->
         <div class="header">
             <div>
-                <h1>🎛️ Panel de Administración</h1>
-                <p style="color: #94a3b8; margin-top: 4px;">TuClima Dashboard</p>
+                <h1>Panel de Administración</h1>
+                <p style="color: #94a3b8; margin-top: 4px;">TuClima · Ops Dashboard</p>
             </div>
             <div class="header-info">
                 <div class="user-badge">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                    </svg>
+                    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     <span>{{ user.username }}</span>
                 </div>
                 <button class="btn-logout" onclick="window.location.href='/logout/'">
@@ -555,37 +566,24 @@
         <!-- Quick Actions -->
         <div class="quick-actions">
             <a href="/admin/" class="action-btn" style="text-decoration: none;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                    <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
-                </svg>
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
                 Admin Django
             </a>
             <a href="/panel-feedback/" class="action-btn" style="text-decoration: none;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
+                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 Panel Feedback
             </a>
             <button class="action-btn" onclick="location.reload()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/>
-                </svg>
+                <svg viewBox="0 0 24 24"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
                 Actualizar
             </button>
             <a href="/clima/" class="action-btn" style="text-decoration: none;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                    <polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
+                <svg viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 1 0-.3-9 6 6 0 1 0-11.4 1.6A3.5 3.5 0 0 0 6.5 19z"/><circle cx="17" cy="6" r="2.5"/><path d="M17 2v1.2M17 8.8V10M13.5 4.5l.9.9M19.6 10.6l.9.9M21 6h-1.2M14.2 6H13"/></svg>
                 Ir al clima
             </a>
             <a href="#suscripciones" class="action-btn" style="text-decoration: none; --card-color:#10b981; border-color:rgba(16,185,129,.3); background:rgba(16,185,129,.1);">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                    <line x1="1" y1="10" x2="23" y2="10"/>
-                </svg>
-                💳 Suscripciones
+                <svg viewBox="0 0 24 24" style="color:#34d399"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                Suscripciones
             </a>
         </div>
 
@@ -593,11 +591,7 @@
         <div class="stats-grid">
             <div class="stat-card blue">
                 <div class="stat-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
+                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 </div>
                 <div class="stat-value">{{ stats.total_usuarios }}</div>
                 <div class="stat-label">Total Usuarios</div>
@@ -608,10 +602,7 @@
 
             <div class="stat-card green">
                 <div class="stat-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                        <polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
+                    <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
                 </div>
                 <div class="stat-value">{{ stats.usuarios_activos }}</div>
                 <div class="stat-label">Usuarios Activos</div>
@@ -620,9 +611,7 @@
 
             <div class="stat-card purple">
                 <div class="stat-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
+                    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 </div>
                 <div class="stat-value">{{ stats.total_feedback }}</div>
                 <div class="stat-label">Feedback Total</div>
@@ -633,9 +622,7 @@
 
             <div class="stat-card orange">
                 <div class="stat-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
-                    </svg>
+                    <svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
                 </div>
                 <div class="stat-value">{{ stats.total_likes }}</div>
                 <div class="stat-label">Likes Recibidos</div>
@@ -643,10 +630,7 @@
 
             <div class="stat-card pink">
                 <div class="stat-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                        <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
-                    </svg>
+                    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6c0 1.7 4 3 9 3s9-1.3 9-3V5"/><path d="M3 11v6c0 1.7 4 3 9 3s9-1.3 9-3v-6"/></svg>
                 </div>
                 <div class="stat-value">{{ stats.total_datos }}</div>
                 <div class="stat-label">Datos Procesados</div>
@@ -654,10 +638,7 @@
 
             <div class="stat-card cyan">
                 <div class="stat-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12 6 12 12 16 14"/>
-                    </svg>
+                    <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
                 </div>
                 <div class="stat-value">{{ stats.reportes_pendientes }}</div>
                 <div class="stat-label">Reportes (7 días)</div>
@@ -665,42 +646,56 @@
 
             <!-- Planes de tokens -->
             <div class="stat-card orange" style="--card-color:#f59e0b">
-                <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                </div>
                 <div class="stat-value">{{ stats.plan_starter }}</div>
                 <div class="stat-label">Starter activo</div>
                 <div class="stat-change positive">$20 / mes</div>
             </div>
             <div class="stat-card blue" style="--card-color:#3b82f6">
-                <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+                </div>
                 <div class="stat-value">{{ stats.plan_plus }}</div>
                 <div class="stat-label">Plus activo</div>
                 <div class="stat-change positive">$35 / mes</div>
             </div>
             <div class="stat-card purple" style="--card-color:#a855f7">
-                <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg></div>
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 13L2 9l4-6z"/><path d="M2 9h20"/></svg>
+                </div>
                 <div class="stat-value">{{ stats.plan_pro_ia }}</div>
                 <div class="stat-label">Pro IA activo</div>
                 <div class="stat-change positive">$75 / mes</div>
             </div>
             <div class="stat-card green" style="--card-color:#eab308">
-                <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15 8.5 22 9.3 17 14.1 18.4 21 12 17.8 5.6 21 7 14.1 2 9.3 9 8.5 12 2"/></svg></div>
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24"><path d="m12 2 2.4 7.2H22l-6 4.8 2.3 7L12 16.4 5.7 21 8 14 2 9.2h7.6L12 2z"/></svg>
+                </div>
                 <div class="stat-value">{{ stats.plan_power }}</div>
                 <div class="stat-label">Power activo</div>
                 <div class="stat-change positive">$150 / mes</div>
             </div>
             <div class="stat-card cyan" style="--card-color:#06b6d4">
-                <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
                 <div class="stat-value">${{ stats.ingresos_estimados }}</div>
                 <div class="stat-label">MRR estimado USD</div>
                 <div class="stat-change positive">{{ stats.total_planes_tokens }} planes tokens</div>
             </div>
             <div class="stat-card pink" style="--card-color:#ec4899">
-                <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
                 <div class="stat-value">{{ stats.tokens_usados_hoy }}</div>
                 <div class="stat-label">Tokens usados hoy</div>
             </div>
             <div class="stat-card orange" style="--card-color:#f59e0b">
-                <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
                 <div class="stat-value">{{ stats.vencen_tokens_7_dias }}</div>
                 <div class="stat-label">Tokens vencen ≤7 días</div>
                 {% if stats.vencen_tokens_7_dias > 0 %}
@@ -710,7 +705,9 @@
                 {% endif %}
             </div>
             <div class="stat-card green" style="--card-color:#10b981">
-                <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="m9 15 2 2 4-4"/></svg>
+                </div>
                 <div class="stat-value">{{ stats.legal_aceptaron }}/{{ stats.legal_total }}</div>
                 <div class="stat-label">Términos v{{ stats.legal_version }}</div>
                 <div class="stat-change positive">Aceptaciones vigentes</div>
@@ -811,7 +808,7 @@
         <!-- Charts Section -->
         <div class="charts-section">
             <div class="chart-card">
-                <h2>📊 Actividad por Sector (Últimos 30 días)</h2>
+                <h2>Actividad por Sector (Últimos 30 días)</h2>
                 <div class="chart-container">
                     <canvas id="sectorChart"></canvas>
                 </div>
@@ -835,7 +832,7 @@
         <!-- Feedback Reciente -->
         <div class="data-section">
             <div class="section-header">
-                <h2>💬 Feedback Reciente</h2>
+                <h2>Feedback Reciente</h2>
                 <div class="filter-buttons">
                     <button class="filter-btn active" onclick="filterFeedback('all')">Todos</button>
                     <button class="filter-btn" onclick="filterFeedback('LIKE')">Likes</button>
@@ -896,7 +893,7 @@
         <!-- Reportes de Usuarios -->
         <div class="data-section">
             <div class="section-header">
-                <h2>📝 Reportes de Usuarios</h2>
+                <h2>Reportes de Usuarios</h2>
             </div>
 
             <div class="data-table">
@@ -1008,7 +1005,7 @@
                                     id="renov-{{ uid }}"
                                     onclick="toggleRenovacion({{ uid }}, this)"
                                     title="{% if perfil.renovacion_automatica %}Recordatorio ON — click para desactivar{% else %}Recordatorio OFF — click para activar{% endif %}">
-                                    {% if perfil.renovacion_automatica %}🔔 ON{% else %}🔕 OFF{% endif %}
+                                    {% if perfil.renovacion_automatica %}ON{% else %}OFF{% endif %}
                                 </button>
                             </td>
                             <td style="white-space:nowrap;">
@@ -1041,7 +1038,7 @@
         <!-- Datos Sectoriales Recientes -->
         <div class="data-section">
             <div class="section-header">
-                <h2>🌍 Últimos Datos Procesados</h2>
+                <h2>Últimos Datos Procesados</h2>
             </div>
 
             <div class="data-table">
@@ -1299,7 +1296,7 @@
                     if (vencEl) vencEl.textContent = data.vencimiento;
                     const row = document.getElementById(`sub-row-${userId}`);
                     if (row) { row.dataset.estado = 'activo'; row.classList.add('flash-ok'); }
-                    btn.textContent = '✓ Listo';
+                    btn.textContent = 'Listo';
                     setTimeout(() => { btn.textContent = dias === 30 ? '+30 días' : '+1 año'; btn.disabled = false; }, 2000);
                 } else {
                     alert(data.error || 'Error al activar');
@@ -1321,7 +1318,7 @@
             .then(r => r.json())
             .then(data => {
                 if (data.ok) {
-                    btn.textContent = data.renovacion_automatica ? '🔔 ON' : '🔕 OFF';
+                    btn.textContent = data.renovacion_automatica ? 'ON' : 'OFF';
                     btn.classList.toggle('renovacion-on',  data.renovacion_automatica);
                     btn.classList.toggle('renovacion-off', !data.renovacion_automatica);
                     btn.title = data.renovacion_automatica
