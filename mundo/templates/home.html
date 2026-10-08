@@ -1929,6 +1929,12 @@
                 const pais = document.querySelector('p[style*="color: #ddd"]');
                 if (pais) pais.textContent = data.pais || '';
 
+                // La hora ya viene en la zona de esa ubicación (no la del servidor).
+                const reloj = document.getElementById('hora-local');
+                const horaTxt = String(data.hora_local || '');
+                const horaMatch = horaTxt.match(/(\d{2}:\d{2})/);
+                if (reloj && horaMatch) reloj.textContent = horaMatch[1];
+
                 const coord = document.querySelector('.coord');
                 if (coord) coord.innerHTML = `<span class="notranslate">${Number(data.lat).toFixed(6)}, ${Number(data.lon).toFixed(6)}</span>`;
 
@@ -2318,7 +2324,7 @@
         <h1>{{ ciudad }}</h1>
         <p style="font-size: 1.1em; color: #ddd;">{{ pais }}</p>
         <div style="background: rgba(0,0,0,0.4); display: inline-block; padding: 5px 15px; border-radius: 20px; margin-top: 5px; border: 1px solid rgba(255,255,255,0.2);">
-             Hora local: <span style="color: #ffcc00; font-weight: bold;">{{ hora_local|date:"H:i" }}</span>
+             Hora local: <span id="hora-local" style="color: #ffcc00; font-weight: bold;">{{ hora_local|date:"H:i" }}</span>
         </div>
         <hr style="border-color: #aaa; opacity: 0.3; margin-top: 15px; width: 80%;">
         <img src="{{ icono }}" class="icono-principal">

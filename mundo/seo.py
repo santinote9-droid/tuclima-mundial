@@ -16,6 +16,10 @@ def _site_base():
 SITEMAP_PATHS = [
     ('landing', 1.0, 'daily'),
     ('home', 1.0, 'daily'),
+    ('agro', 0.8, 'weekly'),
+    ('naval', 0.8, 'weekly'),
+    ('aereo', 0.8, 'weekly'),
+    ('energia', 0.8, 'weekly'),
     ('articulos', 0.9, 'weekly'),
     ('pricing', 0.9, 'weekly'),
     ('ayuda', 0.7, 'monthly'),
@@ -35,7 +39,18 @@ SITEMAP_PATHS = [
 
 def robots_txt(request):
     base = _site_base()
-    body = f"""User-agent: *
+    # AdsBot obedece las reglas de User-agent: *. Si una landing de anuncio
+    # (o una página enlazada) cae en un Disallow, Google Ads la rechaza.
+    # Un Disallow vacío significa "podés rastrear todo el sitio".
+    # Mediapartners-Google (AdSense) no se restringe: solo obedece reglas
+    # con su propio nombre, y bloquearlo corta los anuncios.
+    body = f"""User-agent: AdsBot-Google
+Disallow:
+
+User-agent: AdsBot-Google-Mobile
+Disallow:
+
+User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /api/
@@ -47,6 +62,7 @@ Disallow: /carga-sectorial/
 Disallow: /devorador/
 Disallow: /panel-feedback/
 Disallow: /admin-dashboard/
+Disallow: /mapas-lab/
 Disallow: /admin-activar-usuario/
 Disallow: /admin-toggle-renovacion/
 Disallow: /activar-pro/
@@ -63,12 +79,6 @@ Disallow: /enviar-
 Disallow: /procesar-
 Disallow: /probar-n8n/
 Disallow: /widget-demo/
-
-# Modos PRO (requieren login — no indexar)
-Disallow: /agro/
-Disallow: /naval/
-Disallow: /aereo/
-Disallow: /energia/
 
 Sitemap: {base}/sitemap.xml
 """
