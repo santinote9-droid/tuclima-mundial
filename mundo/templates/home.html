@@ -7,25 +7,173 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="dns-prefetch" href="//openmeteo.com">
     <style>
-        /* FONDO: div fijo detras del contenido.
-           Siempre cubre el viewport exacto. Funciona en iOS Safari. */
+        /* Cielo animado (estilo app Clima): gradiente + sol/luna + partículas. */
         #bg-layer {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background-image: url('/static/{{ fondo }}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-color: #1a2a3a;
             z-index: -2;
+            overflow: hidden;
+            background: #1d4f86;
+            pointer-events: none;
         }
+        #bg-layer .sky-wash,
+        #bg-layer .sky-stars,
+        #bg-layer .sky-clouds,
+        #bg-layer .sky-fog,
+        #bg-layer .sky-flash,
+        #bg-layer #sky-particles {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+        #bg-layer .sky-wash {
+            background: linear-gradient(180deg, #1d6cb5 0%, #4aa3e0 40%, #8ecff2 72%, #f3d7a4 100%);
+            transition: background 0.8s ease;
+        }
+        #bg-layer[data-escena="clear-night"] .sky-wash,
+        #bg-layer[data-escena="cloudy-night"] .sky-wash {
+            background: linear-gradient(180deg, #070b18 0%, #121a38 46%, #243056 100%);
+        }
+        #bg-layer[data-escena="cloudy-day"] .sky-wash {
+            background: linear-gradient(180deg, #4e6f8c 0%, #7f9bb3 46%, #c3d2e0 100%);
+        }
+        #bg-layer[data-escena="rain"] .sky-wash {
+            background: linear-gradient(180deg, #243044 0%, #3d5168 50%, #5c7084 100%);
+        }
+        #bg-layer[data-escena="storm"] .sky-wash {
+            background: linear-gradient(180deg, #121722 0%, #1c2638 46%, #2c3a52 100%);
+        }
+        #bg-layer[data-escena="snow"] .sky-wash {
+            background: linear-gradient(180deg, #3e5570 0%, #6d8aa6 46%, #c5d5e4 100%);
+        }
+        #bg-layer[data-escena="snow-night"] .sky-wash {
+            background: linear-gradient(180deg, #0c121c 0%, #1a2838 52%, #31465e 100%);
+        }
+        #bg-layer[data-escena="fog"] .sky-wash {
+            background: linear-gradient(180deg, #4e5c6a 0%, #7d8c9b 52%, #b7c2cc 100%);
+        }
+        #bg-layer[data-escena="fog-night"] .sky-wash {
+            background: linear-gradient(180deg, #121820 0%, #2a3542 50%, #455566 100%);
+        }
+        .sky-sun, .sky-moon {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s ease;
+        }
+        .sky-sun {
+            top: 9%;
+            right: 12%;
+            width: 148px;
+            height: 148px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #fffdf4 0%, #ffe7a3 42%, rgba(255, 196, 80, 0.15) 68%, transparent 72%);
+            box-shadow: 0 0 60px 28px rgba(255, 206, 92, 0.55), 0 0 140px 70px rgba(255, 176, 60, 0.28);
+        }
+        .sky-sun::before {
+            content: "";
+            position: absolute;
+            inset: -90px;
+            border-radius: 50%;
+            background: repeating-conic-gradient(from 0deg, rgba(255, 230, 160, 0.38) 0 8deg, transparent 8deg 28deg);
+            -webkit-mask: radial-gradient(circle, transparent 38%, #000 52%, transparent 74%);
+            mask: radial-gradient(circle, transparent 38%, #000 52%, transparent 74%);
+            animation: skySpin 48s linear infinite;
+        }
+        #bg-layer[data-escena="clear-day"] .sky-sun { opacity: 1; }
+        #bg-layer[data-escena="cloudy-day"] .sky-sun { opacity: 0.45; filter: saturate(0.8); }
+        .sky-moon {
+            top: 11%;
+            right: 14%;
+            width: 92px;
+            height: 92px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #fff 0%, #e7eefc 55%, #c5d0ea 100%);
+            box-shadow: 0 0 40px 16px rgba(210, 220, 255, 0.35);
+        }
+        #bg-layer[data-escena="clear-night"] .sky-moon,
+        #bg-layer[data-escena="cloudy-night"] .sky-moon { opacity: 1; }
+        #bg-layer[data-escena="cloudy-night"] .sky-moon { opacity: 0.55; }
+        .sky-stars { opacity: 0; transition: opacity 0.6s ease; }
+        #bg-layer[data-escena="clear-night"] .sky-stars { opacity: 1; }
+        #bg-layer[data-escena="cloudy-night"] .sky-stars { opacity: 0.45; }
+        .sky-stars i {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 6px #fff;
+            animation: skyTwinkle 3.4s ease-in-out infinite;
+        }
+        .sky-clouds span, .sky-fog span {
+            position: absolute;
+            display: block;
+            border-radius: 50%;
+            filter: blur(8px);
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+        .sky-clouds span {
+            background: rgba(255, 255, 255, 0.72);
+            height: 70px;
+        }
+        .sky-clouds span:nth-child(1) { width: 280px; top: 16%; left: -5%; animation: skyDrift 36s ease-in-out infinite; }
+        .sky-clouds span:nth-child(2) { width: 360px; top: 28%; left: 30%; height: 86px; animation: skyDrift 48s ease-in-out infinite reverse; }
+        .sky-clouds span:nth-child(3) { width: 220px; top: 12%; right: 8%; animation: skyDrift 40s ease-in-out infinite 4s; }
+        .sky-clouds span:nth-child(4) { width: 300px; top: 38%; left: 55%; height: 64px; background: rgba(255,255,255,0.5); animation: skyDrift 52s ease-in-out infinite reverse; }
+        #bg-layer[data-escena="cloudy-day"] .sky-clouds span,
+        #bg-layer[data-escena="cloudy-night"] .sky-clouds span,
+        #bg-layer[data-escena="rain"] .sky-clouds span,
+        #bg-layer[data-escena="storm"] .sky-clouds span { opacity: 0.9; }
+        #bg-layer[data-escena="cloudy-day"] .sky-clouds span {
+            background: rgba(255, 255, 255, 0.88);
+            filter: blur(3px);
+        }
+        #bg-layer[data-escena="clear-day"] .sky-clouds span:nth-child(2),
+        #bg-layer[data-escena="clear-night"] .sky-clouds span:nth-child(2) { opacity: 0.35; }
+        #bg-layer[data-escena="rain"] .sky-clouds span,
+        #bg-layer[data-escena="storm"] .sky-clouds span { background: rgba(180, 196, 214, 0.45); filter: blur(12px); }
+        .sky-fog span {
+            left: -15%;
+            width: 130%;
+            height: 28%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+            filter: blur(18px);
+        }
+        .sky-fog span:nth-child(1) { top: 8%; height: 34%; animation: skyDrift 28s linear infinite; }
+        .sky-fog span:nth-child(2) { top: 36%; height: 40%; animation: skyDrift 40s linear infinite reverse; }
+        .sky-fog span:nth-child(3) { top: 62%; height: 32%; animation: skyDrift 34s linear infinite; }
+        #bg-layer[data-escena="fog"] .sky-fog span,
+        #bg-layer[data-escena="fog-night"] .sky-fog span { opacity: 0.72; }
+        #bg-layer[data-escena="fog-night"] .sky-fog span {
+            background: linear-gradient(90deg, transparent, rgba(226, 234, 242, 0.62), transparent);
+        }
+        .sky-flash {
+            background: rgba(255, 255, 255, 0.0);
+            transition: background 0.08s linear;
+        }
+        #sky-particles { width: 100%; height: 100%; }
         #bg-overlay {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.4);
+            background: linear-gradient(180deg, rgba(6, 12, 24, 0.18) 0%, rgba(6, 12, 24, 0.06) 38%, rgba(6, 12, 24, 0.28) 100%);
             z-index: -1;
+            pointer-events: none;
+        }
+        @keyframes skySpin { to { transform: rotate(360deg); } }
+        @keyframes skyDrift {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(7%); }
+        }
+        @keyframes skyTwinkle {
+            0%, 100% { opacity: 0.35; }
+            50% { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .sky-sun::before, .sky-clouds span, .sky-fog span, .sky-stars i { animation: none; }
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -695,47 +843,70 @@
         /* Modales didácticos — Detalles y Precauciones */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            background: rgba(15, 23, 42, 0.28);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             z-index: 2000; display: none; justify-content: center; align-items: center;
             padding: 16px; box-sizing: border-box;
         }
         .modal-overlay.is-open { display: flex; }
         .modal-content {
-            background: #1e293b; border: 1px solid #334155; width: 100%; max-width: 720px; max-height: 90vh;
-            border-radius: 16px; padding: 36px 32px; overflow-y: auto; position: relative;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            background: rgba(255, 255, 255, 0.78);
+            backdrop-filter: blur(22px) saturate(1.35);
+            -webkit-backdrop-filter: blur(22px) saturate(1.35);
+            border: 1px solid rgba(255, 255, 255, 0.72);
+            width: 100%; max-width: 720px; max-height: 90vh;
+            border-radius: 22px; padding: 34px 32px; overflow-y: auto; position: relative;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            color: #1e293b;
+        }
+        .modal-content::-webkit-scrollbar { width: 8px; }
+        .modal-content::-webkit-scrollbar-thumb {
+            background: rgba(2, 132, 199, 0.35); border-radius: 99px;
         }
         .btn-close {
-            position: absolute; top: 18px; right: 18px; background: none; border: none;
-            color: #94a3b8; font-size: 2em; cursor: pointer; transition: 0.2s; line-height: 0.5;
+            position: absolute; top: 16px; right: 16px;
+            width: 34px; height: 34px; border-radius: 999px;
+            background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(148, 163, 184, 0.35);
+            color: #475569; font-size: 1.4em; cursor: pointer; transition: 0.2s;
+            line-height: 1; display: flex; align-items: center; justify-content: center;
         }
-        .btn-close:hover { color: #fff; transform: rotate(90deg); }
+        .btn-close:hover { color: #0369a1; background: #fff; transform: rotate(90deg); }
         .pop-title {
-            font-family: 'JetBrains Mono', ui-monospace, monospace; color: #38bdf8;
-            font-size: 1.35em; margin: 0 0 10px; padding-right: 36px;
+            font-family: 'Segoe UI', system-ui, sans-serif; color: #0369a1;
+            font-size: 1.45em; font-weight: 700; letter-spacing: -0.02em;
+            margin: 0 0 10px; padding-right: 42px;
         }
-        .pop-text { line-height: 1.7; color: #cbd5e1; margin: 0 0 20px; font-size: 0.98em; }
-        .pop-text strong { color: #fff; }
+        .pop-text { line-height: 1.7; color: #475569; margin: 0 0 20px; font-size: 0.98em; }
+        .pop-text strong { color: #0e7490; }
         .tech-table {
             width: 100%; border-collapse: separate; border-spacing: 0; margin: 16px 0 20px;
-            background: #0f172a; border-radius: 8px; overflow: hidden; border: 1px solid #334155;
+            background: rgba(255, 255, 255, 0.55);
+            border-radius: 14px; overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.32);
         }
         .tech-table th {
-            background: #334155; color: #fff; font-family: 'JetBrains Mono', ui-monospace, monospace;
-            font-weight: bold; text-transform: uppercase; font-size: 0.75em; padding: 12px; text-align: left;
+            background: rgba(14, 165, 233, 0.1); color: #0369a1;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+            font-size: 0.72em; padding: 12px 14px; text-align: left;
         }
         .tech-table td {
-            padding: 12px; border-bottom: 1px solid #334155; color: #cbd5e1; font-size: 0.9em;
+            padding: 12px 14px; border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+            color: #334155; font-size: 0.92em;
         }
+        .tech-table td:first-child { color: #0369a1; font-weight: 650; }
+        .tech-table tbody tr:hover td { background: rgba(14, 165, 233, 0.07); }
         .tech-table tr:last-child td { border-bottom: none; }
         .highlight-box {
-            background: rgba(56, 189, 248, 0.1); border-left: 4px solid #38bdf8;
-            padding: 16px 18px; border-radius: 0 8px 8px 0; color: #fff; font-weight: 500;
+            background: rgba(14, 165, 233, 0.12); border-left: 4px solid #0284c7;
+            padding: 16px 18px; border-radius: 12px; color: #0f172a; font-weight: 500;
             margin-top: 8px; line-height: 1.5;
         }
-        .risk-ok { color: #2ed573; font-weight: bold; }
-        .risk-warn { color: #ffa502; font-weight: bold; }
-        .risk-crit { color: #ff4757; font-weight: bold; }
+        .highlight-box strong { color: #0369a1; }
+        .risk-ok { color: #059669; font-weight: 700; }
+        .risk-warn { color: #d97706; font-weight: 700; }
+        .risk-crit { color: #e11d48; font-weight: 700; }
         @media (max-width: 600px) {
             .modal-content { padding: 28px 18px; max-height: 94vh; }
             .tech-table { display: block; overflow-x: auto; }
@@ -1083,8 +1254,26 @@
 {% endblock %}
 
 {% block content %}
-<!-- Fondo fijo: cubre siempre el viewport, funciona en todos los navegadores -->
-<div id="bg-layer"></div>
+<!-- Cielo animado según el tiempo actual -->
+<div id="bg-layer" data-escena="{{ escena|default:'clear-day' }}">
+    <div class="sky-wash"></div>
+    <div class="sky-stars" aria-hidden="true">
+        <i style="top:8%;left:12%"></i><i style="top:14%;left:28%;animation-delay:1s"></i>
+        <i style="top:6%;left:46%"></i><i style="top:18%;left:62%;animation-delay:.6s"></i>
+        <i style="top:10%;left:78%"></i><i style="top:22%;left:88%;animation-delay:1.4s"></i>
+        <i style="top:28%;left:8%;animation-delay:.3s"></i><i style="top:34%;left:22%"></i>
+        <i style="top:26%;left:40%;animation-delay:1.8s"></i><i style="top:32%;left:70%"></i>
+        <i style="top:16%;left:54%;width:3px;height:3px"></i><i style="top:40%;left:84%;animation-delay:.9s"></i>
+        <i style="top:44%;left:16%"></i><i style="top:12%;left:36%;animation-delay:2s"></i>
+        <i style="top:38%;left:52%;animation-delay:.4s"></i><i style="top:20%;left:92%"></i>
+    </div>
+    <div class="sky-sun" aria-hidden="true"></div>
+    <div class="sky-moon" aria-hidden="true"></div>
+    <div class="sky-clouds" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+    <div class="sky-fog" aria-hidden="true"><span></span><span></span><span></span></div>
+    <canvas id="sky-particles" aria-hidden="true"></canvas>
+    <div class="sky-flash" aria-hidden="true"></div>
+</div>
 <div id="bg-overlay"></div>
 
 <!-- Loader de progreso (barra superior + spinner esquina) -->
@@ -1794,8 +1983,10 @@
 
         // 1. FILTRO ANTI-COMAS
         function limpiarCoordenada(coord) {
-            if (!coord) return null;
-            return String(coord).replace(',', '.').trim();
+            if (coord === null || coord === undefined) return null;
+            const txt = String(coord).replace(',', '.').trim();
+            if (!txt || txt === 'null' || txt === 'undefined') return null;
+            return txt;
         }
 
         // 2. INICIO Y GESTIÓN DE RUTA
@@ -1877,8 +2068,13 @@
             const safeLon = limpiarCoordenada(lon);
             
             try {
-                let url = `/api/clima-data/?lat=${safeLat}&lon=${safeLon}`;
-                if (ciudad) url += `&ciudad=${encodeURIComponent(ciudad)}`;
+                const params = new URLSearchParams();
+                if (ciudad) params.set('ciudad', ciudad);
+                if (safeLat !== null && safeLon !== null) {
+                    params.set('lat', safeLat);
+                    params.set('lon', safeLon);
+                }
+                let url = `/api/clima-data/?${params.toString()}`;
                 
                 console.log('📡 Fetching:', url);
                 const response = await fetch(url);
@@ -1896,10 +2092,12 @@
                     } catch (e) {}
                     actualizarInterfaz(data);
                     cargarAlertasWeb(data.lat, data.lon);
-                    // Actualizar URL sin recargar
-                    if (safeLat && safeLon && safeLat !== '0' && safeLon !== '0') {
-                        const newUrl = `/clima/?lat=${safeLat}&lon=${safeLon}`;
-                        window.history.replaceState({lat: safeLat, lon: safeLon}, '', newUrl);
+                    // La URL queda con el punto resuelto, también si se buscó por nombre.
+                    const latRes = Number(data.lat);
+                    const lonRes = Number(data.lon);
+                    if (Number.isFinite(latRes) && Number.isFinite(lonRes) && !(latRes === 0 && lonRes === 0)) {
+                        const newUrl = `/clima/?lat=${latRes}&lon=${lonRes}`;
+                        window.history.replaceState({lat: latRes, lon: lonRes}, '', newUrl);
                     }
                 } else {
                     console.error('❌ Error API:', data.error);
@@ -1914,13 +2112,126 @@
             }
         }
 
+        // Cielo animado: sol, nubes, lluvia, nieve o tormenta según el código del tiempo.
+        const ESCENAS_CIELO = ['clear-day','clear-night','cloudy-day','cloudy-night','rain','snow','snow-night','storm','fog','fog-night'];
+        let skyRaf = 0;
+        let skyDrops = [];
+        let skyKind = '';
+        let skyNextFlash = 0;
+
+        function escenaDesdeDatos(data) {
+            if (data && ESCENAS_CIELO.includes(data.escena)) return data.escena;
+            const f = String((data && data.fondo) || '');
+            if (f.includes('tormenta')) return 'storm';
+            if (f.includes('lluvia')) return 'rain';
+            if (f.includes('nieve')) return 'snow';
+            if (f.includes('niebla')) return 'fog';
+            if (f.includes('noche_nublada')) return 'cloudy-night';
+            if (f.includes('noche')) return 'clear-night';
+            if (f.includes('nublado')) return 'cloudy-day';
+            return 'clear-day';
+        }
+
+        function aplicarEscena(escena) {
+            if (!ESCENAS_CIELO.includes(escena)) escena = 'clear-day';
+            const layer = document.getElementById('bg-layer');
+            if (layer) layer.dataset.escena = escena;
+            iniciarCielo(escena);
+        }
+
+        function iniciarCielo(escena) {
+            const canvas = document.getElementById('sky-particles');
+            if (!canvas) return;
+            const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const esNieve = escena === 'snow' || escena === 'snow-night';
+            const quiere = (escena === 'rain' || escena === 'storm' || esNieve) && !reducido;
+            if (skyRaf) { cancelAnimationFrame(skyRaf); skyRaf = 0; }
+            const ctx = canvas.getContext('2d');
+            if (!quiere) {
+                skyKind = '';
+                skyDrops = [];
+                if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                return;
+            }
+            const ancho = window.innerWidth;
+            const alto = window.innerHeight;
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            canvas.width = Math.floor(ancho * dpr);
+            canvas.height = Math.floor(alto * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            const movil = ancho < 700;
+            const n = escena === 'storm' ? (movil ? 90 : 150) : esNieve ? (movil ? 50 : 90) : (movil ? 60 : 100);
+            if (skyKind !== escena) {
+                skyDrops = [];
+                for (let i = 0; i < n; i++) {
+                    skyDrops.push({
+                        x: Math.random() * ancho,
+                        y: Math.random() * alto,
+                        v: esNieve ? (0.35 + Math.random() * 1.1) : (7 + Math.random() * 8),
+                        l: esNieve ? (1.8 + Math.random() * 3.2) : (10 + Math.random() * 14),
+                        w: Math.random() * Math.PI * 2,
+                    });
+                }
+                skyKind = escena;
+            }
+            const flash = layerFlash();
+            const paso = (t) => {
+                if (document.hidden) { skyRaf = requestAnimationFrame(paso); return; }
+                ctx.clearRect(0, 0, ancho, alto);
+                if (esNieve) {
+                    skyDrops.forEach(p => {
+                        p.y += p.v;
+                        p.x += Math.sin(t / 700 + p.w) * 0.45;
+                        if (p.y > alto) { p.y = -4; p.x = Math.random() * ancho; }
+                        ctx.beginPath();
+                        ctx.fillStyle = 'rgba(40, 60, 80, 0.28)';
+                        ctx.arc(p.x + 0.6, p.y + 0.6, p.l, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+                        ctx.arc(p.x, p.y, p.l, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                } else {
+                    ctx.strokeStyle = escena === 'storm' ? 'rgba(210,225,245,0.55)' : 'rgba(220,235,255,0.42)';
+                    ctx.lineWidth = escena === 'storm' ? 1.4 : 1.1;
+                    ctx.beginPath();
+                    skyDrops.forEach(p => {
+                        p.y += p.v;
+                        p.x += 1.1;
+                        if (p.y > alto) { p.y = -16; p.x = Math.random() * ancho; }
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p.x + 2, p.y + p.l);
+                    });
+                    ctx.stroke();
+                    if (escena === 'storm' && flash && t > skyNextFlash) {
+                        flash.style.background = 'rgba(255,255,255,0.45)';
+                        setTimeout(() => { flash.style.background = 'transparent'; }, 80);
+                        skyNextFlash = t + 2800 + Math.random() * 4200;
+                    }
+                }
+                skyRaf = requestAnimationFrame(paso);
+            };
+            skyRaf = requestAnimationFrame(paso);
+        }
+
+        function layerFlash() {
+            return document.querySelector('#bg-layer .sky-flash');
+        }
+
+        aplicarEscena(document.getElementById('bg-layer')?.dataset?.escena || 'clear-day');
+        window.addEventListener('resize', () => {
+            const escena = document.getElementById('bg-layer')?.dataset?.escena;
+            if (escena === 'rain' || escena === 'storm' || escena === 'snow' || escena === 'snow-night') {
+                skyKind = '';
+                iniciarCielo(escena);
+            }
+        });
+
         // 5. ACTUALIZACIÓN VISUAL
         function actualizarInterfaz(data) {
             try {
-                // Fondo
-                const fondoUrl = data.fondo_url || `/static/${data.fondo}`;
-                const bgLayer = document.getElementById('bg-layer');
-                if (bgLayer) bgLayer.style.backgroundImage = `url('${fondoUrl}')`;
+                aplicarEscena(escenaDesdeDatos(data));
 
                 // Texto principal
                 const titulo = document.querySelector('h1');

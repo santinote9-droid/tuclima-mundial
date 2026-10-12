@@ -51,7 +51,7 @@
 
 <div class="legal-accept-box {% if legal_aceptado %}ok{% endif %}" id="legal-accept-box"
      data-aceptado="{% if legal_aceptado %}1{% else %}0{% endif %}"
-     data-version="{{ legal_version|default:'2026-08-22' }}">
+     data-version="{{ legal_version|default:'2026-09-10' }}">
   {% if legal_aceptado %}
   <p style="margin:0;">
     <i class="fas fa-check-circle" style="margin-right:6px;"></i>
@@ -61,7 +61,7 @@
     <a href="{% url 'legal_cookies' %}" target="_blank" rel="noopener">Cookies</a>
     y
     <a href="{% url 'legal_reembolsos' %}" target="_blank" rel="noopener">Reembolsos</a>
-    (versión {{ legal_version|default:'2026-08-22' }}).
+    (versión {{ legal_version|default:'2026-09-10' }}).
   </p>
   {% else %}
   <label for="acepto_terminos_pago">

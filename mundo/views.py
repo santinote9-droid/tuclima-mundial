@@ -31,6 +31,7 @@ from .hemisferica_utils import resumen_hemisferica
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.gzip import gzip_page
 from django.db.models import Count
 from django.core.mail import send_mail
 from django.conf import settings
@@ -435,6 +436,21 @@ def descifrar_desc(codigo):
     elif codigo >= 95: return 'Tormenta'
     else: return 'Variable'
 
+def escena_cielo(codigo, es_dia):
+    """Clave de animación del cielo en el inicio. Misma lógica que las fotos."""
+    noche = es_dia == 0
+    if codigo >= 95:
+        return 'storm'
+    if codigo in (71, 73, 75, 77, 85, 86):
+        return 'snow-night' if noche else 'snow'
+    if codigo in (51, 53, 55, 61, 63, 65, 80, 81, 82):
+        return 'rain'
+    if codigo in (45, 48):
+        return 'fog-night' if noche else 'fog'
+    if codigo in (1, 2, 3):
+        return 'cloudy-night' if noche else 'cloudy-day'
+    return 'clear-night' if noche else 'clear-day'
+
 def obtener_fondo(codigo, es_dia):
     ruta = "img/"
     if es_dia == 0:
@@ -825,6 +841,7 @@ def home(request):
         'hora_local': datetime.now(), 'delta_temp': 0,
         'icono': 'https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/not-available.svg',
         'fondo': 'img/dia_radiante.jpg',
+        'escena': 'clear-day',
         'descripcion': 'Cargando...', 'tipo_nube': '', 'alerta_texto': '',
         'alerta_color': '#a4b0be', 'alerta_tipo': 'normal',
         'sunrise': '--:--', 'sunset': '--:--',
@@ -940,6 +957,7 @@ def home(request):
             
             contexto['icono'] = obtener_icono_url(code, actual['is_day'])
             contexto['fondo'] = obtener_fondo(code, actual['is_day'])
+            contexto['escena'] = escena_cielo(code, actual['is_day'])
             contexto['descripcion'] = descifrar_desc(code)
 
             # Si Nominatim no resolvió un nombre, usamos el timezone de Open-Meteo
@@ -1019,6 +1037,7 @@ def home(request):
                 'visibilidad': '--', 'uv_index': '--', 'lluvia_hoy': '--',
                 'icono': 'https://cdn.jsdelivr.net/npm/@meteocons/svg-static@0.1.0/fill/not-available.svg',
                 'fondo': 'img/dia_radiante.jpg',
+                'escena': 'clear-day',
                 'descripcion': 'Esperando geolocalización...',
                 'tipo_nube': 'Detectando...',
                 'alerta_texto': 'Obteniendo su ubicación',
@@ -1058,15 +1077,23 @@ def clima_data_api(request):
     Endpoint API que devuelve datos del clima en JSON
     Permite actualizar datos sin recargar la página completa
     """
-    lat = request.GET.get('lat', '0.0')
-    lon = request.GET.get('lon', '0.0')
+    # lat/lon pueden llegar como "null" cuando la búsqueda es por ciudad.
+    lat_raw = request.GET.get('lat')
+    lon_raw = request.GET.get('lon')
     busqueda = request.GET.get('ciudad')
-    
+
+    def _coord(raw):
+        if raw is None or str(raw).strip().lower() in ('', 'null', 'none', 'undefined'):
+            return 0.0
+        return float(str(raw).replace(',', '.').strip())
+
     try:
-        lat = float(str(lat).replace(',', '.').strip())
-        lon = float(str(lon).replace(',', '.').strip())
-    except:
-        return JsonResponse({'error': 'Coordenadas inválidas'}, status=400)
+        lat = _coord(lat_raw)
+        lon = _coord(lon_raw)
+    except (TypeError, ValueError):
+        if not busqueda:
+            return JsonResponse({'success': False, 'error': 'Coordenadas inválidas'}, status=400)
+        lat, lon = 0.0, 0.0
     
     nombre_ciudad = "Ubicación Desconocida"
     pais = ""
@@ -1238,6 +1265,7 @@ def clima_data_api(request):
             'icono': obtener_icono_url(code, actual['is_day']),
             'fondo': obtener_fondo(code, actual['is_day']),
             'fondo_url': settings.STATIC_URL + obtener_fondo(code, actual['is_day']),
+            'escena': escena_cielo(code, actual['is_day']),
             'descripcion': descifrar_desc(code),
             'tipo_nube': nube_txt,
             'alerta_texto': alerta_txt,
@@ -4228,7 +4256,7 @@ def pago_exitoso_view(request):
 # ==========================================
 
 def _legal_terms_version():
-    return (getattr(settings, 'LEGAL_TERMS_VERSION', None) or '2026-08-22').strip()
+    return (getattr(settings, 'LEGAL_TERMS_VERSION', None) or '2026-09-10').strip()
 
 
 def _perfil_de(user):
@@ -4395,6 +4423,131 @@ def mapas(request):
         'zoom': 3      # <--- Zoom 3: Ideal para ver continentes enteros
     }
     return render(request, 'mapas.html', context)
+
+
+def _mapas_lab_permitido(user) -> bool:
+    return bool(user.is_authenticated and (user.is_staff or user.is_superuser))
+
+
+@login_required
+def mapas_lab(request):
+    """Página interna de mapas (capas comunes). Staff/superuser, no indexable."""
+    if not _mapas_lab_permitido(request.user):
+        return HttpResponse('Lab de mapas: solo staff por ahora.', status=403)
+
+    def _f(name, default):
+        try:
+            return float(request.GET.get(name, default))
+        except (TypeError, ValueError):
+            return default
+
+    lat = _f('lat', -34.6)
+    lon = _f('lon', -58.4)
+    capa = (request.GET.get('capa') or 'temp').strip().lower()
+    if capa not in ('temp', 'lluvia', 'presion', 'viento'):
+        capa = 'temp'
+
+    from . import grilla_modelo
+    grilla_modelo.asegurar_actualizada(chequear_remoto=True)
+    estado = grilla_modelo.estado()
+
+    return render(request, 'mapas_lab.html', {
+        'lat': lat,
+        'lon': lon,
+        'capa': capa,
+        'estado_grilla': {
+            **estado,
+            'capas': {
+                k: {'nombre': v['nombre'], 'unidad': v['unidad']}
+                for k, v in grilla_modelo.CAPAS.items()
+            },
+        },
+    })
+
+
+@gzip_page
+@login_required
+def api_mapas_lab_grilla(request):
+    """Valores de una capa para una hora, recortados al viewport del mapa."""
+    if not _mapas_lab_permitido(request.user):
+        return JsonResponse({'ok': False, 'error': 'Solo staff'}, status=403)
+
+    from . import grilla_modelo
+    grilla_modelo.asegurar_actualizada(chequear_remoto=False)
+
+    def _opt(name):
+        raw = request.GET.get(name)
+        return None if raw in (None, '') else float(raw)
+
+    try:
+        sur, norte = _opt('sur'), _opt('norte')
+        oeste, este = _opt('oeste'), _opt('este')
+        hora = int(request.GET.get('hora') or 0)
+    except (TypeError, ValueError):
+        return JsonResponse({'ok': False, 'error': 'parámetros inválidos'}, status=400)
+
+    capa = (request.GET.get('capa') or 'temp').strip().lower()
+    if None in (sur, norte, oeste, este):
+        region = grilla_modelo.region_disponible()
+        sur, norte = region['sur'], region['norte']
+        oeste, este = region['oeste'], region['este']
+
+    # Se guarda el JSON ya armado: el cliente recorre las horas de ida y de
+    # vuelta, y rearmar la lista de valores es lo más caro del pedido.
+    cache = grilla_modelo.cache_respuestas()
+    estado_actual = grilla_modelo.estado()
+    fuente = (request.GET.get('fuente') or '').strip().lower()
+    clave = (f'mapas_lab:v9:{estado_actual.get("reference_time")}:{capa}:{hora}'
+             f':{fuente}:{sur}:{norte}:{oeste}:{este}')
+    guardado = cache.get(clave)
+    if guardado is not None:
+        resp = HttpResponse(guardado, content_type='application/json')
+        resp['Cache-Control'] = f'private, max-age={grilla_modelo.CACHE_TTL}'
+        return resp
+
+    try:
+        # ICON si el pedido toca lo que hay en disco (aunque sea solo América).
+        # Los puntos se usan para el resto del mundo, o si se pide fuente=puntos.
+        if fuente == 'puntos' or not grilla_modelo.viewport_intersecta(
+                sur, norte, oeste, este):
+            from .mapas_lab import recortar_puntos
+            data = recortar_puntos(capa, hora, sur, norte, oeste, este)
+        else:
+            data = grilla_modelo.recortar(capa, hora, sur, norte, oeste, este)
+    except grilla_modelo.SinCorrida:
+        estado = grilla_modelo.estado()
+        if not estado['sincronizando']:
+            grilla_modelo.sincronizar_en_hilo()
+            estado = grilla_modelo.estado()
+        return JsonResponse({'ok': False, 'motivo': 'sincronizando', **estado},
+                            status=503)
+    except grilla_modelo.CapaIncompleta:
+        return JsonResponse(
+            {'ok': False, 'motivo': 'capa_incompleta',
+             'error': 'Esa capa todavía se está bajando'}, status=503)
+    except grilla_modelo.FueraDeRegion:
+        # Afuera de la ventana del modelo servimos la grilla gruesa de puntos:
+        # se pierde detalle pero el mapa sigue mostrando algo.
+        from .mapas_lab import recortar_puntos
+        try:
+            data = recortar_puntos(capa, hora, sur, norte, oeste, este)
+        except Exception as e:
+            logger.warning(f'[mapas-lab] respaldo por puntos: {e}')
+            return JsonResponse(
+                {'ok': False, 'motivo': 'fuera_de_region',
+                 'region': grilla_modelo.region_disponible()}, status=422)
+    except ValueError as e:
+        return JsonResponse({'ok': False, 'error': str(e)}, status=400)
+    except Exception as e:
+        logger.warning(f'[mapas-lab] grilla: {e}')
+        return JsonResponse({'ok': False, 'error': 'No se pudo armar la grilla'},
+                            status=502)
+
+    cuerpo = json.dumps(data)
+    cache.set(clave, cuerpo, grilla_modelo.CACHE_TTL)
+    resp = HttpResponse(cuerpo, content_type='application/json')
+    resp['Cache-Control'] = f"private, max-age={data.get('cache_s', 600)}"
+    return resp
 
 
 

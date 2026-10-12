@@ -5,186 +5,65 @@
 {% block legal_title %}Política de Privacidad{% endblock %}
 
 {% block legal_body %}
+<h2>1. Responsable de los datos</h2>
 <p>
-  Esta política describe de forma <strong>realista</strong> qué datos trata
-  <span class="notranslate">TuClima</span> hoy. Si una función no está activa para usted
-  (p. ej. no guardó ubicaciones), esos datos simplemente no se generan.
-</p>
-
-<h2>1. Responsable</h2>
-<p>
-  Responsable del tratamiento:
-  <span class="placeholder">[RAZÓN SOCIAL]</span>,
-  CUIT <span class="placeholder">[CUIT]</span>,
-  domicilio <span class="placeholder">[DOMICILIO FISCAL]</span>, República Argentina.
+  Santino Gioffre,
+  CUIT <span class="placeholder">a completar</span>,
+  con domicilio fiscal en <span class="placeholder">a completar</span>,
+  es el responsable del tratamiento de los datos personales recopilados en la Plataforma,
+  en estricto cumplimiento de la Ley N.º 25.326 de Protección de Datos Personales de la
+  República Argentina.
 </p>
 <p>
-  Contacto de privacidad:
+  Contacto:
   <a class="notranslate" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>.
 </p>
+
+<h2>2. Datos recopilados y finalidad</h2>
 <p>
-  Marco aplicable: Ley 25.326 de Protección de los Datos Personales (Argentina) y normas
-  complementarias
-  <span class="placeholder">[ABOGADO: AAIP / disposiciones]</span>.
-</p>
-
-<h2>2. Qué datos tratamos (realidad del producto)</h2>
-
-<h3>2.1 Cuenta y autenticación</h3>
-<ul>
-  <li>Nombre de usuario, email y contraseña (almacenada como hash; no en texto plano).</li>
-  <li>Fecha de alta, último acceso y estado de staff/admin si aplica.</li>
-  <li>Registro de aceptación de Términos/Privacidad/Cookies/Reembolsos
-    (fecha y versión del documento, p. ej. {{ LEGAL_TERMS_VERSION|default:"2026-08-22" }}).</li>
-</ul>
-
-<h3>2.2 Perfil, planes y tokens</h3>
-<ul>
-  <li>Tipo de plan / suscripción, fechas de vencimiento y flag de renovación automática.</li>
-  <li>Saldo y límites de tokens de IA, uso histórico y recargas diarias.</li>
-  <li>Sector elegido (p. ej. en plan Starter: agro, aéreo, naval o energía).</li>
-</ul>
-
-<h3>2.3 Ubicaciones, alertas y notas</h3>
-<ul>
-  <li><strong>Sí almacenamos</strong> ubicaciones que usted guarda (nombre, coordenadas u otros datos asociados).</li>
-  <li>Configuración de alertas proactivas (sectores, hora de envío, ubicación de referencia).</li>
-  <li>Alertas y notas vinculadas a modales/funciones sectoriales (umbrales, texto).</li>
-  <li>La geolocalización del navegador puede usarse en el momento para mostrar el clima;
-    si no la guarda como favorita/alerta, no queda como ubicación permanente.</li>
-</ul>
-
-<h3>2.4 Comunicaciones (alertas, reportes, operativos y marketing)</h3>
-<ul>
-  <li><strong>Operativos:</strong> emails de cuenta, pagos, seguridad y servicio.</li>
-  <li><strong>Alertas y reportes:</strong> si usted los activa, enviamos resúmenes/avisos a su email
-    (y/o avisos en la web) según sectores, horarios y ubicaciones configurados.</li>
-  <li><strong>Marketing / novedades (opcionales):</strong> cuando exista base legal, podemos enviar
-    información comercial o de producto. Puede darse de baja sin afectar los mails operativos del servicio.</li>
-  <li>Detalle de reglas de uso: sección 7 de los
-    <a href="{% url 'legal_terminos' %}">Términos de Servicio</a>.</li>
-</ul>
-
-<h3>2.5 Pagos</h3>
-<ul>
-  <li>Confirmaciones e IDs de transacción de Lemon Squeezy, PayPal y/o Mercado Pago.</li>
-  <li><strong>No almacenamos</strong> el número completo de tarjeta ni el CVV; eso lo procesan los proveedores de pago.</li>
-</ul>
-
-<h3>2.6 API e integraciones</h3>
-<ul>
-  <li>Claves de API personales y metadatos de uso asociados a su cuenta.</li>
-  <li>Datos que usted sube en flujos sectoriales (archivos / cargas) cuando usa esas funciones.</li>
-</ul>
-
-<h3>2.7 Inteligencia artificial</h3>
-<ul>
-  <li>Prompts y respuestas del chat/asistentes, en la medida necesaria para prestar el servicio.</li>
-  <li>Esos contenidos pueden procesarse en proveedores de modelos (p. ej. OpenAI, Google Gemini u otros configurados).</li>
-  <li>No envíe secretos, datos de terceros sin base legal ni información sensible innecesaria.</li>
-  <li>Reglas de uso, tokens y ownership del output: sección 6 de los
-    <a href="{% url 'legal_terminos' %}">Términos de Servicio</a>.</li>
-</ul>
-
-<h3>2.8 Datos técnicos y cookies</h3>
-<ul>
-  <li>IP, logs de servidor, tipo de dispositivo/navegador.</li>
-  <li>Cookies y almacenamiento local (sesión, CSRF, preferencias como zona horaria).</li>
-  <li>Detalle completo:
-    <a href="{% url 'legal_cookies' %}">Política de Cookies</a>.</li>
-</ul>
-
-<h3>2.9 Publicidad</h3>
-<ul>
-  <li>
-    {% if ADSENSE_ENABLED %}
-    Usamos <strong>Google AdSense</strong> en páginas públicas; Google puede tratar identificadores
-    y datos de navegación con fines publicitarios y de medición.
-    {% else %}
-    Podemos usar <strong>Google AdSense</strong>; mientras esté pausado no cargamos sus scripts.
-    {% endif %}
-  </li>
-  <li>Weglot (traducción):
-    {% if WEGLOT_ENABLED %}activo{% else %}preparado pero no activo hoy{% endif %}.</li>
-</ul>
-
-<h2>3. Para qué los usamos</h2>
-<ul>
-  <li>Crear y administrar su cuenta, plan y consumo de tokens.</li>
-  <li>Prestar clima, modos sectoriales, reportes, alertas, API y funciones de IA.</li>
-  <li>Procesar pagos, activar accesos y prevenir fraude/abuso.</li>
-  <li>Seguridad, soporte y mejora del servicio.</li>
-  <li>Cumplir obligaciones legales.</li>
-  <li>Mostrar publicidad cuando corresponda (AdSense), con la base legal aplicable.</li>
-</ul>
-
-<h2>4. Base legal</h2>
-<p>
-  Según el caso: ejecución del contrato de servicio; su consentimiento
-  (aceptación de términos, cookies no esenciales cuando aplique, comunicaciones opcionales);
-  interés legítimo en seguridad y mejora; y obligaciones legales
-  <span class="placeholder">[ABOGADO: precisar por categoría]</span>.
-</p>
-
-<h2>5. Con quién compartimos datos</h2>
-<p>Solo con proveedores necesarios para operar, por ejemplo:</p>
-<ul>
-  <li>Hosting / infraestructura (p. ej. Render).</li>
-  <li>Datos meteorológicos (p. ej. Open-Meteo y fuentes asociadas).</li>
-  <li>Pagos: Lemon Squeezy, PayPal, Mercado Pago.</li>
-  <li>IA: OpenAI, Google Gemini u otros configurados.</li>
-  <li>Email / automatizaciones (p. ej. n8n u operador de correo).</li>
-  <li>Google AdSense / Google (publicidad), cuando esté activo.</li>
-  <li>Weglot, solo si la traducción está habilitada.</li>
-</ul>
-<p>
-  Algunos proveedores están fuera de Argentina (transferencias internacionales)
-  <span class="placeholder">[ABOGADO: salvaguardas / países]</span>.
-</p>
-<p>No vendemos bases de usuarios.</p>
-
-<h2>6. Conservación</h2>
-<p>
-  Mientras la cuenta esté activa y el tiempo adicional necesario para obligaciones legales,
-  disputas, seguridad o facturación.
-  <span class="placeholder">[DEFINIR PLAZOS: p. ej. logs 12 meses; facturación según AFIP]</span>.
-</p>
-
-<h2>7. Sus derechos (Argentina)</h2>
-<p>
-  Puede solicitar acceso, rectificación, actualización o supresión de sus datos,
-  y demás derechos de la normativa aplicable, a
-  <a class="notranslate" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>.
+  Para el correcto funcionamiento del servicio y la ejecución del contrato, la Plataforma
+  recopila y almacena la siguiente información: nombre de usuario, dirección de correo
+  electrónico, geolocalización, ubicaciones favoritas, configuración de alertas meteorológicas,
+  notas, historial de consumo de tokens y claves API.
 </p>
 <p>
-  También puede pedir la baja de cuenta / eliminación de datos personales asociados
-  vía <a class="notranslate" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>
-  o el formulario de <a href="{% url 'ayuda' %}">Ayuda</a>.
-  Responderemos en los plazos legales
-  <span class="placeholder">[ABOGADO: plazo AAIP]</span>.
+  Estos datos se utilizan exclusivamente para: proveer los servicios y planes contratados,
+  gestionar la facturación, enviar las alertas climáticas solicitadas y mantener el registro
+  operativo de la cuenta del Usuario.
+</p>
+<p>
+  También se registra la aceptación de estos documentos (fecha y versión
+  {{ LEGAL_TERMS_VERSION }}) y, según el medio de pago, identificadores de transacción de
+  Lemon Squeezy, PayPal y/o Mercado Pago.
 </p>
 
-<h2>8. Seguridad</h2>
+<h2>3. Terceros y transferencia internacional de datos</h2>
 <p>
-  Aplicamos medidas razonables (HTTPS, control de acceso, hashing de contraseñas, etc.).
-  Ningún sistema es 100&nbsp;% seguro: proteja su usuario, contraseña y API key.
+  La Plataforma opera de manera integrada con proveedores de servicios (encargados y
+  subencargados de tratamiento) que pueden estar ubicados fuera de la República Argentina.
+  Estos incluyen, entre otros:
+</p>
+<ul>
+  <li>Proveedores de infraestructura web y datos climáticos (p. ej. Render, Open-Meteo).</li>
+  <li>Proveedores de Inteligencia Artificial (OpenAI / Gemini).</li>
+  <li>Pasarelas de pago y procesamiento (Lemon Squeezy, Mercado Pago, PayPal).</li>
+  <li>Servicios de analítica y publicidad (Google AdSense).</li>
+</ul>
+<p>
+  El Usuario consiente expresamente la transferencia internacional de sus datos a estos
+  proveedores exclusivamente para los fines operativos y de facturación del servicio.
 </p>
 
-<h2>9. Menores</h2>
+<h2>4. Derechos del titular y baja de cuenta</h2>
 <p>
-  El servicio está pensado para mayores de 18 años (o con representación legal suficiente).
-  Si detectamos una cuenta de un menor sin legitimación, podremos eliminarla.
-</p>
-
-<h2>10. Cambios</h2>
-<p>
-  Si actualizamos esta política, publicaremos la versión vigente en esta URL con su fecha.
-  Cambios materiales pueden requerir nueva aceptación (nueva <code>LEGAL_TERMS_VERSION</code>).
-</p>
-
-<h2>11. Contacto</h2>
-<p>
-  Privacidad: <a class="notranslate" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a><br>
-  Responsable: <span class="placeholder">[RAZÓN SOCIAL]</span>
+  El Usuario titular de los datos personales tiene la facultad de ejercer el derecho de acceso
+  a los mismos en forma gratuita, así como solicitar su rectificación, actualización o
+  supresión (Ley 25.326). Para ejercer estos derechos, o para solicitar la eliminación definitiva
+  de su cuenta y de toda la información asociada a ella, el Usuario debe enviar un correo
+  electrónico a
+  <a class="notranslate" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>
+  especificando su solicitud. El Proveedor tramitará la solicitud en los plazos legales
+  correspondientes.
 </p>
 {% endblock %}
+

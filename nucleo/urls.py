@@ -113,6 +113,8 @@ urlpatterns = [
     path('laboratorio/', views.laboratorio, name='laboratorio'),
     path('api/laboratorio/viento/', views.api_viento_proxy, name='api_viento_proxy'),
     path('api/laboratorio/eventos/', views.api_eventos_proxy, name='api_eventos_proxy'),
+    path('mapas-lab/', views.mapas_lab, name='mapas_lab'),
+    path('api/mapas-lab/grilla/', views.api_mapas_lab_grilla, name='api_mapas_lab_grilla'),
 
     # Mi Cuenta — perfil y preferencias
     path('mi-cuenta/', views.mi_cuenta, name='mi_cuenta'),

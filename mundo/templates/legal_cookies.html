@@ -2,156 +2,52 @@
 
 {% block title %}Política de Cookies | TuClima{% endblock %}
 
-{% block draft_banner %}{% endblock %}
-
-{% block legal_meta %}Última actualización: {% now "d/m/Y" %} · Idioma: español (Argentina) · Alineada al estado del producto{% endblock %}
-
 {% block legal_title %}Política de Cookies{% endblock %}
 
 {% block legal_body %}
+<h2>1. Implementación y categorización de tecnologías de seguimiento</h2>
 <p>
-  Esta política describe cómo <span class="notranslate">TuClima</span> utiliza cookies y
-  tecnologías similares (por ejemplo <em>local storage</em>). Es coherente con el estado
-  actual del producto: cookies técnicas propias siempre; publicidad de Google AdSense
-  {% if ADSENSE_ENABLED %}<strong>activa</strong> en páginas públicas (p. ej. la bienvenida)
-  {% else %}<strong>configurada pero pausada</strong> en este momento
-  {% endif %};
-  Weglot (traducción)
-  {% if WEGLOT_ENABLED %}<strong>activo</strong>
-  {% else %}<strong>preparado pero no activo</strong>
-  {% endif %}.
+  Queda expresamente establecido que el Proveedor implementa y utiliza cookies, scripts y
+  tecnologías de seguimiento análogas en la Plataforma con el objeto de garantizar su
+  funcionamiento técnico, operativizar las pasarelas de pago y gestionar las sesiones de los
+  Usuarios. En tal sentido, la Plataforma emplea cookies de carácter estrictamente necesario,
+  cuya función resulta insustituible para el mantenimiento de los protocolos de seguridad,
+  el procesamiento de transacciones y el resguardo de la manifestación de voluntad del Usuario
+  respecto a la aceptación de los instrumentos legales vigentes. Dichas herramientas resultan
+  imperativas para la operatividad del servicio, no siendo susceptibles de desactivación
+  unilateral por parte del Usuario.
 </p>
 
-<h2>1. Qué son las cookies</h2>
+<h2>2. Cookies de terceros y servicios publicitarios</h2>
 <p>
-  Son archivos o datos que el sitio o un tercero guarda en su dispositivo para hacer
-  funcionar el servicio, recordar preferencias, medir uso o —cuando aplica— mostrar publicidad.
+  Asimismo, se hace saber que la Plataforma integra servicios de terceros, específicamente la
+  red Google AdSense, a los fines de la exhibición de pautas publicitarias. La utilización de
+  dichos servicios importa la inserción de cookies o rastreadores de titularidad de Google y
+  sus respectivos socios comerciales, los cuales operan con el propósito ineludible de perfilar
+  y personalizar el contenido publicitario en función del historial de navegación e interacciones
+  previas del Usuario.
 </p>
-
-<h2>2. Cookies propias (TuClima)</h2>
-<table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin:16px 0;">
-  <thead>
-    <tr style="border-bottom:1px solid #334155;text-align:left;color:#e2e8f0;">
-      <th style="padding:8px;">Nombre / tecnología</th>
-      <th style="padding:8px;">Finalidad</th>
-      <th style="padding:8px;">Duración</th>
-      <th style="padding:8px;">Tipo</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr style="border-bottom:1px solid #1e293b;">
-      <td style="padding:8px;"><code>sessionid</code></td>
-      <td style="padding:8px;">Mantener la sesión iniciada.</td>
-      <td style="padding:8px;">Sesión (o según configuración del servidor)</td>
-      <td style="padding:8px;">Esencial</td>
-    </tr>
-    <tr style="border-bottom:1px solid #1e293b;">
-      <td style="padding:8px;"><code>csrftoken</code></td>
-      <td style="padding:8px;">Protección contra ataques CSRF en formularios.</td>
-      <td style="padding:8px;">Hasta 1 año (típico Django)</td>
-      <td style="padding:8px;">Esencial</td>
-    </tr>
-    <tr style="border-bottom:1px solid #1e293b;">
-      <td style="padding:8px;"><code>tc_tz</code></td>
-      <td style="padding:8px;">Recordar la zona horaria del navegador (p. ej. en flujos de pago/tokens).</td>
-      <td style="padding:8px;">Hasta 1 año</td>
-      <td style="padding:8px;">Preferencia</td>
-    </tr>
-    <tr style="border-bottom:1px solid #1e293b;">
-      <td style="padding:8px;">localStorage / sessionStorage</td>
-      <td style="padding:8px;">Preferencias de interfaz, favoritos u otros datos locales del navegador.</td>
-      <td style="padding:8px;">Hasta que el usuario los borre</td>
-      <td style="padding:8px;">Preferencia / funcional</td>
-    </tr>
-  </tbody>
-</table>
+{% if not ADSENSE_ENABLED %}
 <p>
-  Las cookies <strong>esenciales</strong> son necesarias para iniciar sesión y usar el sitio
-  de forma segura. Si las bloquea, partes del servicio pueden dejar de funcionar.
-</p>
-
-<h2>3. Publicidad — Google AdSense</h2>
-{% if ADSENSE_ENABLED %}
-<p>
-  <strong>Estado actual: activo.</strong>
-  En páginas públicas (incluida la landing) mostramos anuncios de
-  <strong>Google AdSense</strong>. Eso implica la carga de scripts de Google y el uso de
-  cookies u otros identificadores de Google con fines publicitarios y de medición,
-  según la configuración de Google y, cuando corresponda, su consentimiento.
-</p>
-{% else %}
-<p>
-  <strong>Estado actual: pausado.</strong>
-  TuClima puede mostrar anuncios de <strong>Google AdSense</strong> en páginas públicas.
-  Mientras la publicidad esté pausada, no se cargan los scripts ni las unidades de anuncio.
-  Si se reactiva, volverán a aplicarse cookies/tecnologías de Google con fines publicitarios.
-</p>
-{% endif %}
-<ul>
-  <li>Proveedor: Google Ireland Limited / Google LLC (y afiliadas), según región.</li>
-  <li>Más información:
-    <a href="https://policies.google.com/technologies/ads" rel="noopener noreferrer" target="_blank">Cómo usa Google las cookies en publicidad</a>
-    y
-    <a href="https://policies.google.com/privacy" rel="noopener noreferrer" target="_blank">Privacidad de Google</a>.
-  </li>
-  <li>En el Espacio Económico Europeo / Reino Unido, Google puede mostrar su mensaje de
-    consentimiento (CMP) con opciones para aceptar, rechazar o administrar.</li>
-</ul>
-<p>
-  <strong>No vendemos</strong> listas de datos de navegación a terceros ajenos a estos
-  servicios de publicidad. El uso de AdSense se rige también por las políticas de Google.
-</p>
-
-<h2>4. Traducción — Weglot</h2>
-{% if WEGLOT_ENABLED %}
-<p>
-  <strong>Estado actual: activo.</strong>
-  Usamos Weglot para ofrecer traducción del sitio. Weglot puede establecer cookies o
-  tecnologías propias/de terceros para recordar el idioma y prestar el servicio.
-</p>
-{% else %}
-<p>
-  <strong>Estado actual: no activo.</strong>
-  Tenemos preparado el servicio de traducción <strong>Weglot</strong>, pero
-  <strong>no está habilitado</strong> en este momento: no se carga su script ni se usan
-  sus cookies. Si lo activamos en el futuro, actualizaremos esta política y Weglot podrá
-  usar cookies para idioma y funcionamiento del traductor.
+  En este momento los banners de AdSense pueden estar pausados en el sitio; cuando estén activos,
+  aplican las cookies de Google descritas en este apartado.
 </p>
 {% endif %}
 
-<h2>5. Pagos (terceros en sus propios dominios)</h2>
+<h2>3. Gestión, revocación y consentimiento</h2>
 <p>
-  Al pagar con Lemon Squeezy, PayPal o Mercado Pago, esos proveedores pueden usar cookies
-  en <strong>sus sitios o iframes</strong> durante el checkout. Eso ocurre bajo sus propias
-  políticas de privacidad/cookies, no como cookies publicitarias de TuClima.
+  El Usuario conserva en todo momento la facultad inalienable de configurar los parámetros de
+  su navegador web a fin de bloquear, restringir o generar alertas ante la inserción de las
+  referidas cookies. Adicionalmente, y en estricta observancia de las normativas de jurisdicciones
+  con regulaciones específicas en materia de privacidad —incluyendo el Espacio Económico Europeo
+  (EEA)—, la Plataforma instrumenta una Plataforma de Gestión del Consentimiento (CMP) administrada
+  por Google, mediante la cual el Usuario podrá prestar, denegar o administrar su consentimiento
+  de forma granular respecto a las cookies de naturaleza exclusivamente publicitaria y analítica.
 </p>
-
-<h2>6. Consentimiento y gestión</h2>
-<ul>
-  <li><strong>Esenciales:</strong> se usan para operar el servicio (sesión y seguridad).</li>
-  <li><strong>Publicidad (AdSense):</strong> cuando está activa, puede gestionarlas con el
-    CMP de Google (si se muestra), con la
-    <a href="https://adssettings.google.com/" rel="noopener noreferrer" target="_blank">configuración de anuncios de Google</a>
-    o bloqueando cookies de terceros en el navegador.</li>
-  <li><strong>Preferencias (p. ej. <code>tc_tz</code>, localStorage):</strong> puede borrarlas
-    desde la configuración del navegador.</li>
-</ul>
-<p>
-  Bloquear todas las cookies puede impedir el inicio de sesión u otras funciones esenciales.
-</p>
-
-<h2>7. Relación con otras políticas</h2>
 <p>
   El tratamiento de datos personales vinculados a estas tecnologías se detalla en la
   <a href="{% url 'legal_privacidad' %}">Política de Privacidad</a>.
-  El uso del servicio se rige por los
-  <a href="{% url 'legal_terminos' %}">Términos de Servicio</a>.
-</p>
-
-<h2>8. Contacto</h2>
-<p>
-  Consultas sobre cookies: escribinos a
-  <a class="notranslate" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>
-  o desde el <a href="{% url 'ayuda' %}">centro de ayuda</a>.
+  Consultas:
+  <a class="notranslate" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>.
 </p>
 {% endblock %}

@@ -6,50 +6,33 @@
 
 {% block legal_body %}
 <p>
-  Acá están los borradores que TuClima usará en el sitio. Están preparados para revisión
-  con el abogado (cita 27/08/2026). Completá los
-  <span class="placeholder">[PLACEHOLDERS]</span> antes de publicar la versión definitiva.
+  Estos documentos rigen el uso de <span class="notranslate">TuClima</span>
+  (versión {{ LEGAL_TERMS_VERSION }}). El operador es Santino Gioffre.
+  El CUIT y el domicilio fiscal se publicarán en esta misma sección cuando estén definidos.
 </p>
 
 <h2>Documentos</h2>
 <ul>
   <li>
-    <a href="{% url 'legal_terminos' %}"><strong>Términos de Servicio</strong></a>
-    — contrato de uso, planes, <a href="{% url 'legal_terminos' %}#ia-tokens">IA/tokens</a>,
-    <a href="{% url 'legal_terminos' %}#alertas-mails">alertas/mails</a>, limitación meteorológica.
+    <a href="{% url 'legal_terminos' %}"><strong>Términos y Condiciones de Servicio</strong></a>
+    — naturaleza del servicio, limitación meteorológica, IA/tokens, API, facturación y cesión.
   </li>
   <li>
     <a href="{% url 'legal_privacidad' %}"><strong>Política de Privacidad</strong></a>
-    — datos tratados, finalidades, encargados, derechos Ley 25.326.
+    — datos tratados, terceros, transferencia internacional y derechos (Ley 25.326).
   </li>
   <li>
     <a href="{% url 'legal_cookies' %}"><strong>Política de Cookies</strong></a>
-    — inventario propio, AdSense y Weglot alineados al estado real del sitio (sin contradicciones).
+    — cookies necesarias, AdSense y gestión del consentimiento.
   </li>
   <li>
-    <a href="{% url 'legal_reembolsos' %}"><strong>Reembolsos y cancelación</strong></a>
-    — reglas de cobro, chargebacks, transferencias, facturación.
+    <a href="{% url 'legal_reembolsos' %}"><strong>Reembolsos y cancelaciones</strong></a>
+    — arrepentimiento (10 días), consumo material, fallas técnicas y contracargos.
   </li>
 </ul>
 
-<h2>Datos que tenés que llevar / confirmar con el abogado</h2>
-<ul>
-  <li>Razón social, CUIT, domicilio fiscal, email legal y de privacidad.</li>
-  <li>Quién factura en cada medio de pago (TuClima vs Lemon Squeezy MoR).</li>
-  <li>Plazo de arrepentimiento / reembolso compatible con Defensa del Consumidor.</li>
-  <li>Jurisdicción (ciudad/provincia) y techo de responsabilidad.</li>
-  <li>Revisión fina de cookies (ya hay inventario base en /legal/cookies/).</li>
-  <li>Procedimiento de baja de cuenta y plazos de respuesta AAIP.</li>
-</ul>
-
-<h2>Pendientes de producto (después de la cita)</h2>
-<ul>
-  <li>Flujo “eliminar mi cuenta y datos” en Mi cuenta.</li>
-  <li>Banner de cookies propio para Argentina (además del CMP de Google en EEA), si el abogado lo pide.</li>
-  <li>Publicar datos fiscales en el footer.</li>
-</ul>
-<p style="margin-top:18px;color:#94a3b8;font-size:0.92rem;">
-  Ya implementado: aceptación versionada en registro y checkout; Política de Cookies alineada a AdSense/Weglot;
-  Privacidad alineada a cuentas, ubicaciones, tokens, IA y pagos.
+<h2>Contacto</h2>
+<p>
+  Canal oficial: <a class="notranslate" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>
 </p>
 {% endblock %}

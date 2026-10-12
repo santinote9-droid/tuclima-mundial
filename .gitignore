@@ -34,9 +34,19 @@ Thumbs.db
 # Media files (si tienes uploads)
 media/
 
+# Dependencias del build de frontend (el bundle compilado si se versiona:
+# mundo/static/js/mapas_lab_deck.js)
+node_modules/
+frontend/**/node_modules/
+
 # Archivos estáticos compilados
 staticfiles/
 collected-static/
+
+# Grilla del modelo bajada de Open-Meteo (decenas de MB, se regenera con
+# python manage.py sincronizar_grilla)
+datos_grilla/
+om_cache/
 
 # Variables de entorno específicas
 supabase_keys.txt

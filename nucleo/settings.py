@@ -92,12 +92,20 @@ WSGI_APPLICATION = 'nucleo.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-# Configuración mejorada de base de datos con persistencia garantizada
+# Reutilizar la conexión: con conn_max_age=0 cada request abría una conexión
+# SSL nueva contra la base remota, ~450 ms medidos, solo para leer la sesión del
+# usuario. El pooler en modo transacción sí admite conexiones persistentes; lo
+# que no admite son los cursores del lado del servidor, desactivados más abajo.
+# Se puede volver atrás sin tocar código con DB_CONN_MAX_AGE=0.
+DB_CONN_MAX_AGE = int(os.getenv('DB_CONN_MAX_AGE', '60'))
+
 DATABASES = {
     'default': dj_database_url.config(
         default=os.getenv('DATABASE_URL'),
-        conn_max_age=0,           # Transaction pooler requiere conn_max_age=0
-        conn_health_checks=False,
+        conn_max_age=DB_CONN_MAX_AGE,
+        # Verifica que la conexión reutilizada siga viva antes de usarla, para
+        # que un corte del pooler no haga fallar el request.
+        conn_health_checks=DB_CONN_MAX_AGE > 0,
     )
 }
 
@@ -108,6 +116,8 @@ DATABASES['default']['OPTIONS'] = {
     'connect_timeout': 30,
     'sslmode': 'require',
 }
+# Requisito para reutilizar conexiones detrás de un pooler en modo transacción.
+DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 
 # ============================================================
 # CACHÉ DE DJANGO — persiste en la base de datos PostgreSQL
@@ -123,8 +133,36 @@ CACHES = {
         'OPTIONS': {
             'MAX_ENTRIES': 1000,
         },
-    }
+    },
+    # Capas de mapas: payloads de 100-200 KB. Guardarlos en el caché de
+    # Postgres cuesta segundos porque conn_max_age=0 abre una conexión SSL
+    # nueva por operación, así que viven en memoria del proceso.
+    'mapas': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'mapas-capas',
+        'TIMEOUT': 900,  # 15 minutos
+        'OPTIONS': {
+            # Una entrada por capa y hora visitada, de 20 a 110 KB cada una.
+            'MAX_ENTRIES': 160,
+            'CULL_FREQUENCY': 4,
+        },
+    },
+    'sesiones': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'sesiones',
+        'TIMEOUT': 3600,
+        'OPTIONS': {
+            'MAX_ENTRIES': 2000,
+        },
+    },
 }
+
+# Cada consulta a la base cuesta 200-450 ms porque está lejos, y todo request
+# autenticado hacía una solo para leer la sesión. Con cached_db la sesión se
+# lee de memoria y la base queda como respaldo: si el proceso se reinicia o el
+# pedido cae en otro worker, se vuelve a leer de la base y sigue funcionando.
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+SESSION_CACHE_ALIAS = 'sesiones'
 
 
 # Password validation
@@ -287,7 +325,7 @@ SITE_URL = (
 GOOGLE_SITE_VERIFICATION = (os.getenv('GOOGLE_SITE_VERIFICATION') or '').strip()
 
 # Versión de Términos / Privacidad / Cookies / Reembolsos (checkbox registro y pago)
-LEGAL_TERMS_VERSION = (os.getenv('LEGAL_TERMS_VERSION') or '2026-08-22').strip()
+LEGAL_TERMS_VERSION = (os.getenv('LEGAL_TERMS_VERSION') or '2026-09-10').strip()
 
 # ============================================================
 # GOOGLE ADSENSE — landing (Partners & anuncios)

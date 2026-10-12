@@ -1,0 +1,1151 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%230ea5e9' width='32' height='32' rx='6'/%3E%3Cpath fill='%23fff' d='M6 20c4-8 16-8 20 0'/%3E%3C/svg%3E">
+  <title>Lab de mapas | TuClima</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; background: #0b1220; color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, sans-serif; }
+    #stack, #map-base, #map-clima, #map-rotulos { position: absolute; inset: 0; }
+    #map-clima {
+      pointer-events: none;
+      /* Overlay (no opacity lechosa): el color se fusiona con el relieve. */
+      mix-blend-mode: overlay;
+    }
+    #map-rotulos { pointer-events: none; background: transparent; }
+    #map-clima .maplibregl-ctrl, #map-rotulos .maplibregl-ctrl { display: none; }
+    .hud {
+      position: absolute; z-index: 900; top: 12px; left: 12px; right: 12px;
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start;
+      pointer-events: none;
+    }
+    .hud > * { pointer-events: auto; }
+    .panel {
+      background: rgba(15, 23, 42, 0.92); border: 1px solid rgba(56,189,248,.28);
+      border-radius: 12px; padding: 10px 12px;
+      backdrop-filter: blur(6px);
+    }
+    h1 { margin: 0; font-size: 0.95rem; font-weight: 700; color: #7dd3fc; }
+    .sub { font-size: 0.72rem; color: #94a3b8; margin-top: 2px; }
+    .caps { display: flex; flex-wrap: wrap; gap: 6px; }
+    .caps button {
+      border: 1px solid #334155; background: #0f172a; color: #cbd5e1;
+      border-radius: 999px; padding: 6px 12px; font-size: 0.78rem; cursor: pointer;
+    }
+    .caps button.on { border-color: #38bdf8; color: #e0f2fe; background: rgba(14,165,233,.18); }
+    .slider-wrap { min-width: min(420px, 100%); }
+    .slider-wrap input { width: 100%; }
+    .slider-label { font-size: 0.78rem; color: #e2e8f0; margin-bottom: 4px; }
+    .legend { font-size: 0.72rem; color: #94a3b8; display: flex; gap: 8px; align-items: center; }
+    .bar { width: 140px; height: 8px; border-radius: 99px; }
+    .status { font-size: 0.75rem; color: #94a3b8; max-width: 260px; line-height: 1.4; }
+    .status.err { color: #f87171; }
+    a.back { color: #7dd3fc; text-decoration: none; font-size: 0.78rem; }
+    .lectura {
+      position: absolute; z-index: 900; bottom: 34px; left: 12px;
+      font-size: 0.8rem; color: #e2e8f0; pointer-events: none;
+    }
+    .lectura b { color: #7dd3fc; font-size: 1.05rem; }
+    .maplibregl-ctrl-attrib { font-size: 10px; }
+  </style>
+</head>
+<body>
+  <div id="stack">
+    <div id="map-base"></div>
+    <div id="map-clima"></div>
+    <div id="map-rotulos"></div>
+  </div>
+
+  <div class="hud">
+    <div class="panel">
+      <h1>Lab de mapas</h1>
+      <div class="sub">Interno · mundial · polos</div>
+      <a class="back" href="/admin-dashboard/">← Ops</a>
+    </div>
+    <div class="panel caps" id="caps">
+      <button type="button" data-capa="temp">Temperatura</button>
+      <button type="button" data-capa="lluvia">Lluvia</button>
+      <button type="button" data-capa="presion">Presión</button>
+      <button type="button" data-capa="viento">Viento</button>
+    </div>
+    <div class="panel caps" id="motor">
+      <button type="button" id="btnDeck" title="Render GPU (WeatherLayers + deck.gl), solo temperatura">GPU temp (beta)</button>
+    </div>
+    <div class="panel slider-wrap">
+      <div class="slider-label" id="horaLabel">Cargando grilla…</div>
+      <input type="range" id="horaSlider" min="0" max="0" value="0" disabled>
+      <div class="legend">
+        <span id="legMin">—</span><span class="bar" id="legBar"></span><span id="legMax">—</span>
+      </div>
+    </div>
+    <div class="panel status" id="status">Staff only · no indexado</div>
+  </div>
+
+  <div class="panel lectura" id="lectura" style="display:none"></div>
+
+  {{ estado_grilla|json_script:"estado-grilla" }}
+  <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+  <!-- Bundle vendorizado: deck.gl + luma + WeatherLayers GL (build en
+       frontend/mapas_lab, `npm run build`). Render GPU tipo Windy. -->
+  <script src="{% static 'js/mapas_lab_deck.js' %}"></script>
+  <script>
+    const ESTADO = JSON.parse(document.getElementById('estado-grilla').textContent);
+    const START = {
+      lat: {{ lat|floatformat:4 }},
+      lon: {{ lon|floatformat:4 }},
+      capa: '{{ capa|escapejs }}'
+    };
+
+    // Anclaje por valor real + interpolación Lab (no RGB): 22 °C es amarillo
+    // aunque el recuadro vaya de -40 a 42. La lluvia va en peldaños, como Windy.
+    const RAMPAS = {
+      temp: { unidad: '°C', modo: 'continuo', stops: [
+        [-50, [62, 26, 93], 0.90],
+        [-30, [88, 28, 135], 0.88],
+        [-15, [37, 99, 235], 0.86],
+        [-2,  [14, 165, 233], 0.84],
+        [8,   [45, 212, 191], 0.85],
+        [16,  [163, 230, 53], 0.88],
+        [22,  [250, 204, 21], 0.90],
+        [28,  [249, 115, 22], 0.93],
+        [35,  [220, 38, 38], 0.95],
+        [42,  [127, 29, 29], 0.97]
+      ]},
+      lluvia: { unidad: 'mm', modo: 'escalones', stops: [
+        [0.1, [187, 247, 208], 0.28],
+        [1,   [74, 222, 128], 0.50],
+        [3,   [37, 99, 235], 0.68],
+        [8,   [250, 204, 21], 0.80],
+        [16,  [220, 38, 38], 0.90],
+        [30,  [232, 121, 249], 0.95]
+      ]},
+      presion: { unidad: 'hPa', modo: 'continuo', stops: [
+        [980, [185, 28, 28], 0.78],
+        [1000, [249, 115, 22], 0.55],
+        [1013, [52, 211, 153], 0.28],
+        [1026, [56, 189, 248], 0.55],
+        [1040, [29, 78, 216], 0.78]
+      ]},
+      viento: { unidad: 'km/h', modo: 'continuo', stops: [
+        [0,   [15, 23, 56], 0.06],
+        [12,  [30, 64, 175], 0.32],
+        [25,  [8, 145, 178], 0.52],
+        [40,  [34, 197, 94], 0.70],
+        [60,  [250, 204, 21], 0.82],
+        [85,  [249, 115, 22], 0.90],
+        [110, [220, 38, 38], 0.95],
+        [140, [147, 51, 234], 1.00]
+      ]}
+    };
+
+    function srgbALineal(c) {
+      c /= 255;
+      return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    }
+    function linealASrgb(c) {
+      const x = c <= 0.0031308 ? 12.92 * c
+        : 1.055 * Math.pow(Math.max(0, c), 1 / 2.4) - 0.055;
+      return Math.round(Math.min(255, Math.max(0, x * 255)));
+    }
+    function rgbALab(r, g, b) {
+      const R = srgbALineal(r), G = srgbALineal(g), B = srgbALineal(b);
+      let x = (R * 0.4124564 + G * 0.3575761 + B * 0.1804375) / 0.95047;
+      let y = R * 0.2126729 + G * 0.7151522 + B * 0.0721750;
+      let z = (R * 0.0193339 + G * 0.1191920 + B * 0.9503041) / 1.08883;
+      const f = (t) => t > 0.008856 ? Math.cbrt(t) : (7.787 * t + 16 / 116);
+      x = f(x); y = f(y); z = f(z);
+      return [116 * y - 16, 500 * (x - y), 200 * (y - z)];
+    }
+    function labARgb(L, a, b) {
+      let y = (L + 16) / 116, x = a / 500 + y, z = y - b / 200;
+      const finv = (t) => {
+        const t3 = t * t * t;
+        return t3 > 0.008856 ? t3 : (t - 16 / 116) / 7.787;
+      };
+      x = finv(x) * 0.95047;
+      y = finv(y);
+      z = finv(z) * 1.08883;
+      return [
+        linealASrgb(x * 3.2404542 + y * -1.5371385 + z * -0.4985314),
+        linealASrgb(x * -0.9692660 + y * 1.8760108 + z * 0.0415560),
+        linealASrgb(x * 0.0556434 + y * -0.2040259 + z * 1.0572252)
+      ];
+    }
+
+    function prepararRampa(rampa) {
+      if (rampa._labs) return rampa;
+      rampa._labs = rampa.stops.map(([, rgb]) => rgbALab(rgb[0], rgb[1], rgb[2]));
+      return rampa;
+    }
+
+    function colorAnclado(rampa, v) {
+      const stops = rampa.stops;
+      if (v <= stops[0][0]) return { rgb: stops[0][1], a: stops[0][2] };
+      const ultimo = stops[stops.length - 1];
+      if (v >= ultimo[0]) return { rgb: ultimo[1], a: ultimo[2] };
+      if (rampa.modo === 'escalones') {
+        let rgb = stops[0][1], a = stops[0][2];
+        for (let i = 0; i < stops.length; i++) {
+          if (v >= stops[i][0]) { rgb = stops[i][1]; a = stops[i][2]; }
+        }
+        return { rgb, a };
+      }
+      prepararRampa(rampa);
+      for (let i = 0; i < stops.length - 1; i++) {
+        const v0 = stops[i][0], v1 = stops[i + 1][0];
+        if (v <= v1) {
+          const f = (v - v0) / (v1 - v0);
+          const L0 = rampa._labs[i], L1 = rampa._labs[i + 1];
+          return {
+            rgb: labARgb(
+              L0[0] + (L1[0] - L0[0]) * f,
+              L0[1] + (L1[1] - L0[1]) * f,
+              L0[2] + (L1[2] - L0[2]) * f
+            ),
+            a: stops[i][2] + (stops[i + 1][2] - stops[i][2]) * f
+          };
+        }
+      }
+      return { rgb: ultimo[1], a: ultimo[2] };
+    }
+
+    function gradienteCss(rampa) {
+      const stops = rampa.stops;
+      const min = stops[0][0], max = stops[stops.length - 1][0];
+      const partes = [];
+      for (let i = 0; i <= 24; i++) {
+        const v = min + (max - min) * (i / 24);
+        const { rgb } = colorAnclado(rampa, v);
+        partes.push(`rgb(${rgb[0]},${rgb[1]},${rgb[2]}) ${Math.round(i * 100 / 24)}%`);
+      }
+      return 'linear-gradient(90deg, ' + partes.join(', ') + ')';
+    }
+
+    function rgbaFor(kind, v) {
+      if (v == null || Number.isNaN(v)) return [0, 0, 0, 0];
+      const rampa = RAMPAS[kind];
+      if (kind === 'lluvia' && v < 0.1) return [0, 0, 0, 0];
+      const { rgb, a } = colorAnclado(rampa, v);
+      return [rgb[0], rgb[1], rgb[2], Math.round(255 * a)];
+    }
+
+    function muestraBilinear(plano, cols, filas, fx, fy) {
+      if (fx < 0 || fy < 0 || fx > cols - 1 || fy > filas - 1) return null;
+      const x0 = Math.floor(fx), y0 = Math.floor(fy);
+      const x1 = Math.min(cols - 1, x0 + 1), y1 = Math.min(filas - 1, y0 + 1);
+      const tx = fx - x0, ty = fy - y0;
+      const q00 = plano[y0 * cols + x0], q10 = plano[y0 * cols + x1];
+      const q01 = plano[y1 * cols + x0], q11 = plano[y1 * cols + x1];
+      if ([q00, q10, q01, q11].some((q) => q == null || Number.isNaN(q))) {
+        return q00 ?? q10 ?? q01 ?? q11 ?? null;
+      }
+      return q00 * (1 - tx) * (1 - ty) + q10 * tx * (1 - ty)
+        + q01 * (1 - tx) * ty + q11 * tx * ty;
+    }
+
+    // ---------------------------------------------------------------- mapa
+    const DEM = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+    // Tope del zoom de la capa de clima: el mismo que Windy (nivel 11).
+    // Mas cerca la grilla no aporta detalle y los rotulos se despegan.
+    const ZOOM_MIN = 0.8;
+    const ZOOM_MAX = 11;
+    const CAMARA = {
+      center: [START.lon, START.lat],
+      zoom: 3.2,
+      minZoom: ZOOM_MIN,
+      maxZoom: ZOOM_MAX,
+      projection: { type: 'globe' }
+    };
+    const ESTILO_OSCURO = 'https://tiles.openfreemap.org/styles/dark';
+    const ESTILO_VACIO = {
+      version: 8,
+      sources: {},
+      layers: [{
+        id: 'fondo-vacio', type: 'background',
+        paint: { 'background-color': 'rgba(0,0,0,0)' }
+      }]
+    };
+
+    const map = new maplibregl.Map({
+      container: 'map-base',
+      style: ESTILO_OSCURO,
+      ...CAMARA,
+      attributionControl: { compact: true }
+    });
+    const mapClima = new maplibregl.Map({
+      container: 'map-clima',
+      style: ESTILO_VACIO,
+      ...CAMARA,
+      interactive: false,
+      attributionControl: false,
+      canvasContextAttributes: { alpha: true, antialias: true }
+    });
+    const mapRotulos = new maplibregl.Map({
+      container: 'map-rotulos',
+      style: ESTILO_OSCURO,
+      ...CAMARA,
+      interactive: false,
+      attributionControl: false,
+      // Sin fundido: si no, el nombre se desliza y queda fuera del pais
+      // mientras el mapa de abajo ya se movio.
+      fadeDuration: 0,
+      canvasContextAttributes: { alpha: true, antialias: true }
+    });
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), 'bottom-right');
+    map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }));
+
+    function poseCamara(cam) {
+      const p = cam && cam.position;
+      const o = cam && cam.orientation;
+      if (!p || !o) return null;
+      return [p.x, p.y, p.z || 0, o[0], o[1], o[2], o[3]];
+    }
+
+    function poseDistinta(a, b) {
+      if (!a || !b) return true;
+      for (let i = 0; i < 7; i++) {
+        if (Math.abs(a[i] - b[i]) > 1e-7) return true;
+      }
+      return false;
+    }
+
+    function copiarCamaraPlana() {
+      const centro = map.getCenter();
+      const vista = {
+        center: [centro.lng, centro.lat],
+        zoom: map.getZoom(),
+        bearing: map.getBearing(),
+        pitch: map.getPitch()
+      };
+      if (mapClima.isStyleLoaded()) mapClima.jumpTo(vista);
+      if (mapRotulos.isStyleLoaded()) mapRotulos.jumpTo(vista);
+    }
+
+    // El globo no se reproduce con centro+zoom (se pierde el punto bajo el
+    // cursor). Se copia la camara libre. No usar map.loaded(): es falso
+    // mientras llegan teselas, o sea justo cuando el usuario mueve o hace
+    // zoom, y ahi la copia se salteaba y los nombres quedaban clavados.
+    let sincronizando = false;
+    function copiarCamara() {
+      if (sincronizando) return;
+      sincronizando = true;
+      try {
+        const src = map.getFreeCameraOptions();
+        const origen = poseCamara(src);
+        const aplicar = (destino) => {
+          if (!destino.isStyleLoaded()) return;
+          const ca = map.getContainer();
+          const cb = destino.getContainer();
+          if (ca.clientWidth !== cb.clientWidth || ca.clientHeight !== cb.clientHeight) {
+            destino.resize();
+          }
+          if (!origen || !poseDistinta(origen, poseCamara(destino.getFreeCameraOptions()))) return;
+          const copia = new maplibregl.FreeCameraOptions();
+          const p = src.position;
+          copia.position = new maplibregl.MercatorCoordinate(p.x, p.y, p.z || 0);
+          const o = src.orientation;
+          copia.orientation = [o[0], o[1], o[2], o[3]];
+          destino.setFreeCameraOptions(copia);
+        };
+        aplicar(mapClima);
+        aplicar(mapRotulos);
+      } catch (e) {
+        copiarCamaraPlana();
+      } finally {
+        sincronizando = false;
+      }
+    }
+    map.on('render', copiarCamara);
+
+    let capa = START.capa || 'temp';
+    let hora = 0;
+    let datos = null;
+    let datosMundo = null;
+    let pidiendo = false;
+    let temporizador = null;
+    let reintento = null;
+    let planoActual = null;
+    const cache = [];
+    let planoMundo = null;
+    const pendientes = new Map();
+    const lienzo = document.createElement('canvas');
+
+    const slider = document.getElementById('horaSlider');
+    const horaLabel = document.getElementById('horaLabel');
+    const status = document.getElementById('status');
+    const lectura = document.getElementById('lectura');
+
+    function cadaCapa(mapa, fn) {
+      for (const c of (mapa.getStyle().layers || [])) fn(c);
+    }
+
+    // OpenMapTiles trae name, name:es y a veces name_es. Se prioriza el
+    // español y se fuerzan los topónimos que OSM publica en inglés.
+    const NOMBRE_ES = (() => {
+      const base = ['coalesce',
+        ['get', 'name:es'], ['get', 'name_es'],
+        ['get', 'name:latin'], ['get', 'name'], ''];
+      return ['match', ['downcase', base],
+        ['falkland', 'falklands', 'falkland islands',
+         'falkland islands (islas malvinas)',
+         'islas malvinas (falkland islands)'], 'Islas Malvinas',
+        ['south georgia', 'south georgia and the south sandwich islands',
+         'south georgia and south sandwich islands'],
+        'Islas Georgias del Sur',
+        ['stanley', 'port stanley', 'puerto stanley'], 'Puerto Argentino',
+        base];
+    })();
+
+    // Por si el estilo ignora el text-field: rótulos propios encima.
+    const TOPONIMOS_AR = {
+      type: 'FeatureCollection',
+      features: [
+        { type: 'Feature', properties: { nombre: 'Islas Malvinas', minz: 3 },
+          geometry: { type: 'Point', coordinates: [-59.7, -51.75] } },
+        { type: 'Feature', properties: { nombre: 'Puerto Argentino', minz: 6 },
+          geometry: { type: 'Point', coordinates: [-57.85, -51.7] } },
+        { type: 'Feature', properties: { nombre: 'Islas Georgias del Sur', minz: 4 },
+          geometry: { type: 'Point', coordinates: [-36.7, -54.3] } }
+      ]
+    };
+
+    function limpiarBase() {
+      cadaCapa(map, (c) => {
+        const origen = c['source-layer'] || '';
+        if (c.type === 'symbol' || /^(transportation|transportation_name|building|aeroway)$/.test(origen)) {
+          try { map.setLayoutProperty(c.id, 'visibility', 'none'); } catch (e) { /* */ }
+        }
+      });
+      if (map.getSource('relieve')) return;
+      map.addSource('relieve', {
+        type: 'raster-dem', tiles: [DEM], encoding: 'terrarium',
+        tileSize: 256, maxzoom: 13,
+        attribution: 'Relieve © Mapzen / AWS Open Data'
+      });
+      map.addLayer({
+        id: 'relieve', type: 'hillshade', source: 'relieve',
+        paint: {
+          'hillshade-exaggeration': 0.65,
+          'hillshade-shadow-color': 'rgba(0,0,0,0.55)',
+          'hillshade-highlight-color': 'rgba(255,255,255,0.12)',
+          'hillshade-accent-color': 'rgba(0,0,0,0.15)'
+        }
+      });
+    }
+
+    function limpiarRotulos() {
+      cadaCapa(mapRotulos, (c) => {
+        const origen = c['source-layer'] || '';
+        if (c.type === 'background') {
+          try {
+            mapRotulos.setPaintProperty(c.id, 'background-opacity', 0);
+            mapRotulos.setPaintProperty(c.id, 'background-color', 'rgba(0,0,0,0)');
+          } catch (e) { /* */ }
+        } else if (c.type === 'symbol') {
+          try {
+            mapRotulos.setLayoutProperty(c.id, 'text-field', NOMBRE_ES);
+            mapRotulos.setPaintProperty(c.id, 'text-color', '#f8fafc');
+            mapRotulos.setPaintProperty(c.id, 'text-halo-color', 'rgba(2,6,23,0.9)');
+            mapRotulos.setPaintProperty(c.id, 'text-halo-width', 1.4);
+            mapRotulos.setPaintProperty(c.id, 'text-opacity-transition', { duration: 0, delay: 0 });
+            const filtro = c.filter || ['all'];
+            mapRotulos.setFilter(c.id, ['all', filtro, ['!', ['any',
+              ['in', 'falkland', ['downcase', ['coalesce', ['get', 'name'], '']]],
+              ['in', 'stanley', ['downcase', ['coalesce', ['get', 'name'], '']]]
+            ]]]);
+          } catch (e) { /* */ }
+        } else if (origen === 'boundary') {
+          try { mapRotulos.setPaintProperty(c.id, 'line-color', 'rgba(255,255,255,0.55)'); }
+          catch (e) { /* */ }
+        } else {
+          try { mapRotulos.setLayoutProperty(c.id, 'visibility', 'none'); }
+          catch (e) { /* */ }
+        }
+      });
+    }
+
+    function ponerToponimos() {
+      if (mapRotulos.getSource('toponimos-ar')) return;
+      mapRotulos.addSource('toponimos-ar', { type: 'geojson', data: TOPONIMOS_AR });
+      mapRotulos.addLayer({
+        id: 'toponimos-ar',
+        type: 'symbol',
+        source: 'toponimos-ar',
+        layout: {
+          'text-field': ['get', 'nombre'],
+          'text-size': 13,
+          'text-font': ['Noto Sans Regular'],
+          'text-anchor': 'center',
+          'text-allow-overlap': true
+        },
+        paint: {
+          'text-color': '#f8fafc',
+          'text-halo-color': 'rgba(2,6,23,0.9)',
+          'text-halo-width': 1.6
+        },
+        filter: ['>=', ['zoom'], ['get', 'minz']]
+      });
+    }
+
+    // El encuadre es el objetivo (mundo), no el recuadro de la última corrida
+    // en disco: si no, el mapa queda trabado en América mientras se baja
+    // el resto de los continentes.
+    function regionNavegacion() {
+      return ESTADO.objetivo || ESTADO.region;
+    }
+
+    function esMundo(r) {
+      return r && (r.norte - r.sur) >= 160 && (r.este - r.oeste) >= 350;
+    }
+
+    function limitarAlaRegion() {
+      const r = regionNavegacion();
+      const mundial = !r || esMundo(r);
+      if (mundial) map.setMaxBounds(null);
+      else map.setMaxBounds([[r.oeste, r.sur], [r.este, r.norte]]);
+      // Mismo tope en los tres mapas: si uno recorta el zoom y otro no,
+      // los nombres quedan a otra escala que el relieve.
+      const min = mundial ? ZOOM_MIN : 2;
+      for (const m of [map, mapClima, mapRotulos]) {
+        m.setMinZoom(min);
+        m.setMaxZoom(ZOOM_MAX);
+      }
+    }
+
+    function regionDisco() {
+      const r = ESTADO.region || regionNavegacion();
+      return { sur: r.sur, norte: r.norte, oeste: r.oeste, este: r.este };
+    }
+
+    function regionMundo() {
+      // ±85: en ±90 el quad del globo se degenera y no se ve nada.
+      return { sur: -85, norte: 85, oeste: -180, este: 179.75 };
+    }
+
+    function cubreMundo() {
+      return esMundo(ESTADO.objetivo);
+    }
+
+    function iconMundial() {
+      return cubreMundo() && ESTADO.cobertura_incompleta === false;
+    }
+
+    function fmtHora(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return iso;
+      return d.toLocaleString('es-AR', {
+        weekday: 'short', day: '2-digit', month: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+      });
+    }
+
+    // Recuadro visible, solo cuando se acercó lo suficiente como para que
+    // valga la pena una grilla más fina que la del continente.
+    function vistaCerrada() {
+      if (map.getZoom() < 7) return null;
+      const b = map.getBounds();
+      const q = 0.5;
+      const sur = Math.floor(b.getSouth() / q) * q;
+      const norte = Math.ceil(b.getNorth() / q) * q;
+      let oeste = Math.floor(b.getWest() / q) * q;
+      let este = Math.ceil(b.getEast() / q) * q;
+      // Cruce del antimeridiano: un solo recuadro no alcanza; se pide
+      // todo el paralelo para no dejar un hueco en el Pacífico.
+      if (oeste > este) {
+        oeste = -180;
+        este = 180;
+      }
+      return { sur, norte, oeste, este };
+    }
+
+    // Cada respuesta trae un bloque de horas, no una sola. Se guardan los
+    // últimos bloques y se busca entre ellos: mover el deslizador dentro de un
+    // bloque ya bajado no pide nada al servidor.
+    function firma(k, v, ref, fuente) {
+      return [k, ref || '', fuente || '', v.sur, v.norte, v.oeste, v.este].join('|');
+    }
+
+    function buscarBloque(k, h, v, fuente) {
+      return cache.find(b => {
+        const f = firma(k, v, b.payload.reference_time, fuente);
+        return b.firma === f
+          && h >= b.payload.hora_desde
+          && h < b.payload.hora_desde + b.payload.horas_en_bloque;
+      }) || null;
+    }
+
+    async function pedir(k, h, v, fuente) {
+      const ya = buscarBloque(k, h, v, fuente);
+      if (ya) return ya.payload;
+      const f = firma(k, v, (datos && datos.reference_time) || '', fuente);
+      const enVuelo = pendientes.get(f + '|' + h);
+      if (enVuelo) return enVuelo;
+
+      const q = `/api/mapas-lab/grilla/?capa=${k}&hora=${h}`
+        + `&sur=${v.sur}&norte=${v.norte}&oeste=${v.oeste}&este=${v.este}`
+        + (fuente ? `&fuente=${fuente}` : '');
+      const promesa = (async () => {
+        const r = await fetch(q, { credentials: 'same-origin' });
+        const j = await r.json();
+        if (!j.ok) {
+          const err = new Error(j.motivo || j.error || 'error');
+          err.payload = j;
+          throw err;
+        }
+        cache.push({ firma: firma(k, v, j.reference_time, fuente), payload: j });
+        while (cache.length > 10) cache.shift();
+        return j;
+      })();
+      pendientes.set(f + '|' + h, promesa);
+      try {
+        return await promesa;
+      } finally {
+        pendientes.delete(f + '|' + h);
+      }
+    }
+
+    // ------------------------------------------------------------- pintado
+    function clampLat(lat) {
+      return Math.max(-85, Math.min(85, lat));
+    }
+
+    function fadeBorde(lat, lon, box, margen) {
+      const d = Math.min(lon - box.o, box.e - lon, lat - box.s, box.n - lat);
+      if (d >= margen) return 1;
+      if (d <= 0) return 0;
+      return d / margen;
+    }
+
+    function valorCompuesto(lat, lon) {
+      const icon = muestraEn(lat, lon, datos, planoActual);
+      const mundo = muestraEn(lat, lon, datosMundo, planoMundo);
+      if (icon == null) return mundo;
+      if (mundo == null) return icon;
+      const [o, s, e, n] = datos.bbox;
+      const f = fadeBorde(lat, lon, { o, s, e, n }, 8);
+      return icon * f + mundo * (1 - f);
+    }
+
+    function coberturaPintado() {
+      // Siempre el mismo recuadro: si no, América queda como un rectángulo
+      // aparte y el resto del mundo como otra grilla.
+      if (cubreMundo() || datosMundo) {
+        return { o: -180, s: -85, e: 179.75, n: 85 };
+      }
+      if (!datos) return null;
+      const [o, s, e, n] = datos.bbox;
+      return { o, s, e, n };
+    }
+
+    function ponerImagenClima(id, url, esquinas) {
+      const paint = {
+        'raster-resampling': 'linear',
+        'raster-opacity': 1,
+        'raster-fade-duration': 0
+      };
+      const fuente = mapClima.getSource(id);
+      if (fuente) {
+        fuente.updateImage({ url, coordinates: esquinas });
+        mapClima.setPaintProperty(id, 'raster-resampling', 'linear');
+      } else {
+        mapClima.addSource(id, { type: 'image', url, coordinates: esquinas });
+        mapClima.addLayer({ id, type: 'raster', source: id, paint });
+      }
+    }
+
+    function quitarImagenClima(id) {
+      if (mapClima.getLayer(id)) mapClima.removeLayer(id);
+      if (mapClima.getSource(id)) mapClima.removeSource(id);
+    }
+
+    function repintarClima() {
+      const cubre = coberturaPintado();
+      if (!cubre || !mapClima.loaded()) return;
+      const kind = (datos && datos.capa) || (datosMundo && datosMundo.capa) || capa;
+      const mundi = cubreMundo() || !!datosMundo;
+      const w = mundi ? 360 : Math.min(420, Math.max(240, (datos.cols || 160) * 2));
+      const hpx = mundi ? 170 : Math.min(360, Math.max(180, (datos.filas || 160) * 2));
+      lienzo.width = w;
+      lienzo.height = hpx;
+      const ctx = lienzo.getContext('2d');
+      const img = ctx.createImageData(w, hpx);
+      const spanLon = cubre.e - cubre.o;
+      const spanLat = cubre.n - cubre.s;
+      const lluvia = kind === 'lluvia';
+      for (let y = 0; y < hpx; y++) {
+        const lat = cubre.n - (y + 0.5) / hpx * spanLat;
+        for (let x = 0; x < w; x++) {
+          const lon = cubre.o + (x + 0.5) / w * spanLon;
+          const val = valorCompuesto(lat, lon);
+          const [r, g, b, a] = rgbaFor(kind, lluvia && val != null && val < 0.1 ? null : val);
+          const i = (y * w + x) * 4;
+          img.data[i] = r;
+          img.data[i + 1] = g;
+          img.data[i + 2] = b;
+          img.data[i + 3] = a;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+
+      const latN = clampLat(cubre.n);
+      const latS = clampLat(cubre.s);
+      // Un solo recuadro si no es el planeta: partir en meridiános era
+      // la raya de Argentina. El mundo se parte en dos con solape y fade.
+      const planetario = spanLon > 300;
+      if (!planetario) {
+        ponerImagenClima('clima', lienzo.toDataURL('image/png'), [
+          [cubre.o, latN], [cubre.e, latN], [cubre.e, latS], [cubre.o, latS]
+        ]);
+        quitarImagenClima('clima-1');
+        return;
+      }
+      const corte = 8;
+      const xMed = Math.round(w * ((0 + corte) - cubre.o) / spanLon);
+      const xSolape = Math.round(w * (corte * 2) / spanLon);
+      function franja(x0, x1, lon0, lon1, fadeIzq, fadeDer) {
+        const fw = Math.max(1, x1 - x0);
+        const c = document.createElement('canvas');
+        c.width = fw;
+        c.height = hpx;
+        const ic = c.getContext('2d');
+        ic.drawImage(lienzo, x0, 0, fw, hpx, 0, 0, fw, hpx);
+        if (fadeIzq || fadeDer) {
+          const pix = ic.getImageData(0, 0, fw, hpx);
+          const fadePx = Math.max(8, xSolape);
+          for (let y = 0; y < hpx; y++) {
+            for (let x = 0; x < fw; x++) {
+              let m = 1;
+              if (fadeIzq) m = Math.min(m, Math.min(1, x / fadePx));
+              if (fadeDer) m = Math.min(m, Math.min(1, (fw - 1 - x) / fadePx));
+              pix.data[(y * fw + x) * 4 + 3] *= m;
+            }
+          }
+          ic.putImageData(pix, 0, 0);
+        }
+        return c.toDataURL('image/png');
+      }
+      const xCorte = Math.max(1, Math.min(w - 1, xMed));
+      ponerImagenClima('clima', franja(0, Math.min(w, xCorte + xSolape), cubre.o, corte, false, true), [
+        [cubre.o, latN], [corte, latN], [corte, latS], [cubre.o, latS]
+      ]);
+      ponerImagenClima('clima-1', franja(Math.max(0, xCorte - xSolape), w, -corte, cubre.e, true, false), [
+        [-corte, latN], [cubre.e, latN], [cubre.e, latS], [-corte, latS]
+      ]);
+    }
+
+    // ------------------------------------------------- deck.gl (Fase 1)
+    // Render GPU tipo Windy para TEMPERATURA: WeatherLayers RasterLayer con
+    // interpolacion CUBIC sobre la misma grilla ICON, montado dentro del mapa
+    // de clima (hereda el mix-blend-mode: overlay que lo funde con el relieve).
+    // El resto de capas y el modo por defecto siguen usando el pintado por
+    // canvas de repintarClima(); esto es un camino alternativo con toggle.
+    let overlayDeck = null;
+    let deckActivo = false;
+
+    function deckDisponible() {
+      return !!(window.MapasLabDeck && window.MapasLabDeck.MapboxOverlay);
+    }
+
+    function deckTempActivo() {
+      return deckActivo && capa === 'temp' && deckDisponible();
+    }
+
+    function iniciarDeck() {
+      if (overlayDeck || !deckDisponible()) return;
+      overlayDeck = new window.MapasLabDeck.MapboxOverlay({
+        interleaved: false,
+        layers: []
+      });
+      mapClima.addControl(overlayDeck);
+    }
+
+    function limpiarDeck() {
+      if (overlayDeck) overlayDeck.setProps({ layers: [] });
+    }
+
+    function paletaWL(rampa) {
+      // WeatherLayers mapea valor -> color; se respeta el alfa por peldano
+      // para que el overlay se funda igual que el pintado por canvas.
+      return rampa.stops.map(([v, rgb, a]) =>
+        [v, `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${a})`]);
+    }
+
+    function imagenFloat(bloque, plano) {
+      // plano: fila 0 = norte, largo cols*filas; null/NaN = sin dato (nodata).
+      const cols = bloque.cols, filas = bloque.filas;
+      const data = new Float32Array(cols * filas);
+      for (let i = 0; i < data.length; i++) {
+        const v = plano[i];
+        data[i] = (v == null || Number.isNaN(v)) ? NaN : v;
+      }
+      return { data, width: cols, height: filas };
+    }
+
+    function repintarDeckTemp() {
+      if (!overlayDeck) return;
+      // Grilla mundial regular si esta; si hay ICON local mas fino, ese.
+      const bloque = datosMundo || datos;
+      const plano = planoMundo || planoActual;
+      if (!bloque || !plano) { overlayDeck.setProps({ layers: [] }); return; }
+      const [o, s, e, n] = bloque.bbox;
+      const D = window.MapasLabDeck;
+      const capaR = new D.RasterLayer({
+        id: 'wl-temp',
+        image: imagenFloat(bloque, plano),
+        bounds: [o, s, e, n],
+        imageType: D.WL.ImageType.SCALAR,
+        imageInterpolation: D.WL.ImageInterpolation.CUBIC,
+        palette: paletaWL(RAMPAS.temp),
+        extensions: [new D.ClipExtension()],
+        clipBounds: [o, s, e, n]
+      });
+      overlayDeck.setProps({ layers: [capaR] });
+    }
+
+    // Despacha entre el render por canvas (actual) y el GPU (WeatherLayers).
+    function pintarClima() {
+      if (deckTempActivo()) {
+        quitarImagenClima('clima');
+        quitarImagenClima('clima-1');
+        repintarDeckTemp();
+      } else {
+        limpiarDeck();
+        repintarClima();
+      }
+    }
+
+    function horaAlineada(j, h) {
+      if (!j || !j.times || !j.times.length) return 0;
+      const ref = (datos && datos.times && datos.times[h]) || null;
+      if (ref) {
+        const t = new Date(ref).getTime();
+        let mejor = 0, dist = Infinity;
+        j.times.forEach((iso, i) => {
+          const d = Math.abs(new Date(iso).getTime() - t);
+          if (d < dist) { dist = d; mejor = i; }
+        });
+        return mejor;
+      }
+      if (h >= 0 && h < j.times.length) return h;
+      return horaMasCercana(j.times);
+    }
+
+    function cargarPlano(j, h, prefijo) {
+      const indice = Math.max(0, Math.min(j.horas_en_bloque - 1,
+                                          h - j.hora_desde));
+      const valores = j.valores[indice];
+      if (prefijo === 'mundo') {
+        datosMundo = j;
+        planoMundo = valores;
+        if (!datos) {
+          const rampa = RAMPAS[j.capa];
+          document.getElementById('legMin').textContent =
+            rampa.stops[0][0] + ' ' + rampa.unidad;
+          document.getElementById('legMax').textContent =
+            rampa.stops[rampa.stops.length - 1][0] + ' ' + rampa.unidad;
+          document.getElementById('legBar').style.background = gradienteCss(rampa);
+          slider.max = Math.max(0, j.times.length - 1);
+          slider.value = h;
+          slider.disabled = false;
+          horaLabel.textContent = fmtHora(j.times[h]);
+        }
+        return;
+      }
+      datos = j;
+      planoActual = valores;
+      const rampa = RAMPAS[j.capa];
+      document.getElementById('legMin').textContent =
+        rampa.stops[0][0] + ' ' + rampa.unidad;
+      document.getElementById('legMax').textContent =
+        rampa.stops[rampa.stops.length - 1][0] + ' ' + rampa.unidad;
+      document.getElementById('legBar').style.background = gradienteCss(rampa);
+      slider.max = Math.max(0, j.times.length - 1);
+      slider.value = h;
+      slider.disabled = false;
+      horaLabel.textContent = fmtHora(j.times[h]);
+    }
+
+    function pintar(j, h, prefijo) {
+      cargarPlano(j, h, prefijo);
+      pintarClima();
+    }
+
+    function mostrarStatus(j, extra) {
+      status.classList.remove('err');
+      status.innerHTML =
+        `${j.filas}×${j.cols} · ${j.res_km} km · `
+        + `${j.horas_en_bloque} h${extra}<br>`
+        + `<span style="color:#64748b">${j.fuente}</span>`;
+    }
+
+    function sincronizarUrl() {
+      const c = map.getCenter();
+      const u = new URL(location.href);
+      u.searchParams.set('lat', c.lat.toFixed(4));
+      u.searchParams.set('lon', c.lng.toFixed(4));
+      u.searchParams.set('capa', capa);
+      history.replaceState({}, '', u);
+    }
+
+    async function actualizar() {
+      const zoom = vistaCerrada();
+      const iconBox = ESTADO.region ? regionDisco() : regionMundo();
+      const mundo = regionMundo();
+      const compuesto = cubreMundo() && !iconMundial() && !zoom;
+
+      if (zoom) {
+        const local = buscarBloque(capa, hora, zoom);
+        if (local) {
+          datos = local.payload;
+          datosMundo = null;
+          planoMundo = null;
+          pintar(datos, hora);
+          mostrarStatus(datos, ' · en memoria');
+          sincronizarUrl();
+          prefetch(zoom);
+          return;
+        }
+      } else if (iconMundial()) {
+        const local = buscarBloque(capa, hora, mundo);
+        if (local) {
+          datos = local.payload;
+          datosMundo = null;
+          planoMundo = null;
+          pintar(datos, hora);
+          mostrarStatus(datos, ' · en memoria');
+          sincronizarUrl();
+          prefetch(mundo);
+          return;
+        }
+      } else if (compuesto) {
+        const iconLocal = buscarBloque(capa, hora, iconBox);
+        const mundoLocal = buscarBloque(capa, hora, mundo, 'puntos');
+        if (iconLocal && mundoLocal) {
+          cargarPlano(iconLocal.payload, hora);
+          cargarPlano(mundoLocal.payload,
+            horaAlineada(mundoLocal.payload, hora), 'mundo');
+          pintarClima();
+          mostrarStatus(iconLocal.payload, ' · en memoria');
+          sincronizarUrl();
+          prefetch(iconBox);
+          return;
+        }
+      }
+
+      if (pidiendo) return;
+      pidiendo = true;
+      const tenia = !!datos || !!datosMundo;
+      status.textContent = tenia ? 'Afinando capa…' : 'Cargando grilla del modelo…';
+      status.classList.remove('err');
+      const t0 = performance.now();
+      try {
+        let j = null;
+        if (zoom) {
+          datosMundo = null;
+          planoMundo = null;
+          j = await pedir(capa, hora, zoom);
+          pintar(j, hora);
+          prefetch(zoom);
+        } else if (iconMundial()) {
+          datosMundo = null;
+          planoMundo = null;
+          j = await pedir(capa, hora, mundo);
+          pintar(j, hora);
+          prefetch(mundo);
+        } else {
+          const [icon, puntos] = await Promise.all([
+            pedir(capa, hora, iconBox).catch(() => null),
+            cubreMundo() ? pedir(capa, hora, mundo, 'puntos').catch(() => null) : null
+          ]);
+          if (icon) {
+            cargarPlano(icon, hora);
+            j = icon;
+          }
+          if (puntos) {
+            cargarPlano(puntos, horaAlineada(puntos, hora), 'mundo');
+            if (!j) j = puntos;
+          }
+          if (!j) throw new Error('sin datos');
+          pintarClima();
+          prefetch(iconBox);
+        }
+        const ms = Math.round(performance.now() - t0);
+        mostrarStatus(j, ` · ${ms} ms`);
+        sincronizarUrl();
+      } catch (e) {
+        const p = e.payload || {};
+        if (p.motivo === 'sincronizando') {
+          status.textContent = 'Ampliando la grilla al mundo. El mapa usa la '
+            + 'misma capa para todos los continentes; el detalle llega con la bajada.';
+          if (!reintento) {
+            reintento = setTimeout(() => {
+              reintento = null;
+              actualizar();
+            }, 30000);
+          }
+        } else if (p.motivo === 'capa_incompleta') {
+          status.textContent = 'Esa capa todavía se está bajando.';
+        } else if (p.motivo === 'fuera_de_region') {
+          status.textContent = 'Sin datos del modelo en esta zona.';
+          status.classList.add('err');
+        } else {
+          status.textContent = tenia
+            ? 'No se pudo afinar la capa.' : 'No se pudo cargar la grilla.';
+          status.classList.add('err');
+        }
+      } finally {
+        pidiendo = false;
+      }
+    }
+
+    function prefetch(v) {
+      if (!datos) return;
+      const siguiente = datos.hora_desde + datos.horas_en_bloque;
+      if (siguiente < datos.times.length && !buscarBloque(capa, siguiente, v)) {
+        pedir(capa, siguiente, v).catch(() => {});
+      }
+    }
+
+    function programar(ms) {
+      clearTimeout(temporizador);
+      temporizador = setTimeout(actualizar, ms);
+    }
+
+    // ------------------------------------------------------------- lectura
+    function muestraEn(lat, lon, bloque, plano) {
+      if (!bloque || !plano) return null;
+      const [o, s, e, n] = bloque.bbox;
+      const { filas, cols } = bloque;
+      const valores = plano;
+      const fy = (n - lat) / (n - s) * (filas - 1);
+      const fx = (lon - o) / (e - o) * (cols - 1);
+      if (fy < 0 || fx < 0 || fy > filas - 1 || fx > cols - 1) return null;
+      const y0 = Math.floor(fy), x0 = Math.floor(fx);
+      const y1 = Math.min(filas - 1, y0 + 1), x1 = Math.min(cols - 1, x0 + 1);
+      const ty = fy - y0, tx = fx - x0;
+      const q = [
+        valores[y0 * cols + x0], valores[y0 * cols + x1],
+        valores[y1 * cols + x0], valores[y1 * cols + x1]
+      ];
+      if (q.some(v => v == null)) return q.find(v => v != null) ?? null;
+      const arriba = q[0] * (1 - tx) + q[1] * tx;
+      const abajo = q[2] * (1 - tx) + q[3] * tx;
+      return arriba * (1 - ty) + abajo * ty;
+    }
+
+    function valorEn(lat, lon) {
+      return muestraEn(lat, lon, datos, planoActual)
+        ?? muestraEn(lat, lon, datosMundo, planoMundo);
+    }
+
+    map.on('mousemove', (ev) => {
+      const v = valorEn(ev.lngLat.lat, ev.lngLat.lng);
+      const meta = datos || datosMundo;
+      if (v == null || !meta) { lectura.style.display = 'none'; return; }
+      const dec = (meta.decimales != null)
+        ? meta.decimales
+        : (capa === 'temp' || capa === 'lluvia' ? 1 : 0);
+      lectura.style.display = 'block';
+      lectura.innerHTML = `<b>${v.toFixed(dec)} ${meta.unidad}</b> `
+        + `<span style="color:#94a3b8">${meta.nombre} · `
+        + `${ev.lngLat.lat.toFixed(2)}, ${ev.lngLat.lng.toFixed(2)}</span>`;
+    });
+    map.on('mouseout', () => { lectura.style.display = 'none'; });
+
+    // ------------------------------------------------------------ controles
+    function marcarCapas() {
+      document.querySelectorAll('#caps button').forEach(b => {
+        b.classList.toggle('on', b.dataset.capa === capa);
+      });
+    }
+    document.querySelectorAll('#caps button').forEach(b => {
+      b.addEventListener('click', () => {
+        capa = b.dataset.capa;
+        marcarCapas();
+        actualizar();
+      });
+    });
+    const btnDeck = document.getElementById('btnDeck');
+    if (!deckDisponible()) {
+      btnDeck.disabled = true;
+      btnDeck.title = 'El bundle GPU no cargó (mapas_lab_deck.js)';
+    }
+    btnDeck.addEventListener('click', () => {
+      deckActivo = !deckActivo;
+      btnDeck.classList.toggle('on', deckActivo);
+      pintarClima();
+    });
+
+    slider.addEventListener('input', () => {
+      hora = parseInt(slider.value, 10) || 0;
+      const times = (datos && datos.times) || (datosMundo && datosMundo.times);
+      horaLabel.textContent = times ? fmtHora(times[hora]) : '—';
+      programar(60);
+    });
+
+    map.on('moveend', () => {
+      sincronizarUrl();
+      // Alejado: la región ya está en memoria, no se pide de nuevo.
+      // Acercado: se pide un recorte más fino, si no está cacheado.
+      if (vistaCerrada()) programar(280);
+    });
+
+    function horaMasCercana(times) {
+      const ahora = Date.now();
+      let mejor = 0, dist = Infinity;
+      times.forEach((iso, i) => {
+        const d = Math.abs(new Date(iso).getTime() - ahora);
+        if (d < dist) { dist = d; mejor = i; }
+      });
+      return mejor;
+    }
+
+    marcarCapas();
+    map.on('styleimagemissing', (ev) => {
+      if (map.hasImage(ev.id)) return;
+      map.addImage(ev.id, { width: 1, height: 1, data: new Uint8Array(4) });
+    });
+    async function iniciar() {
+      mapClima.getCanvas().style.background = 'transparent';
+      mapRotulos.getCanvas().style.background = 'transparent';
+      iniciarDeck();
+      limpiarBase();
+      limpiarRotulos();
+      ponerToponimos();
+      limitarAlaRegion();
+      copiarCamara();
+      try {
+        await actualizar();
+        const times = (datos && datos.times) || (datosMundo && datosMundo.times);
+        if (times && times.length) {
+          const h = horaMasCercana(times);
+          if (h !== hora) {
+            hora = h;
+            await actualizar();
+          }
+        }
+      } catch (e) {
+        const p = (e && e.payload) || {};
+        if (p.motivo === 'sincronizando') {
+          status.textContent = 'Ampliando la grilla al mundo. Recargá en un rato.';
+        } else {
+          actualizar();
+        }
+      }
+      setInterval(() => { cache.length = 0; actualizar(); }, 10 * 60 * 1000);
+    }
+
+    Promise.all([
+      new Promise((r) => map.on('load', r)),
+      new Promise((r) => mapClima.on('load', r)),
+      new Promise((r) => mapRotulos.on('load', r))
+    ]).then(iniciar);
+  </script>
+</body>
+</html>
